@@ -36,6 +36,15 @@
 
 namespace dftfe
 {
+  // List of operators
+  enum operatorList
+  {
+    Laplace   = 1,
+    Helmholtz = 2,
+    LDA       = 3,
+    GGA       = 4
+  };
+
   /**
    * @brief MatrixFree class template. template parameter nDofsPerDim
    * is the finite element polynomial order. nQuadPointsPerDim is the order of
@@ -45,6 +54,7 @@ namespace dftfe
    */
   template <typename T,
             typename TypeFEBasis,
+            dftfe::operatorList       operatorID,
             dftfe::utils::MemorySpace memorySpace,
             std::uint32_t             nDofsPerDim,
             std::uint32_t             nQuadPointsPerDim,
@@ -61,7 +71,6 @@ namespace dftfe
                  dftfe::utils::MemorySpace::HOST>> basisOperationsPtrHost,
                std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
                                    BLASWrapperPtr,
-               const std::uint32_t operatorID,
                const std::uint32_t quadratureID,
                const std::uint32_t nVectors);
 
@@ -100,8 +109,8 @@ namespace dftfe
       std::is_same_v<TypeFEBasis, std::complex<double>>;
     typedef std::conditional_t<d_isComplex, std::complex<T>, T> DataType;
 
-    const std::uint32_t d_operatorID, d_quadratureID, d_nVectors, d_nBatch,
-      d_nDofsPerCell, d_nQuadsPerCell;
+    const std::uint32_t d_quadratureID, d_nVectors, d_nBatch, d_nDofsPerCell,
+      d_nQuadsPerCell;
 
     std::uint32_t d_nOwnedDofs, d_nRelaventDofs, d_nGhostDofs, d_nCells,
       d_localBlockSize, d_localSize, d_ghostBlockSize, d_ghostSize,
@@ -165,22 +174,6 @@ namespace dftfe
     std::vector<T>             tempGhostStorage, tempCompressStorage;
     std::vector<MPI_Request>   mpiRequestsGhost;
     std::vector<MPI_Request>   mpiRequestsCompress;
-  };
-
-  // List of operators
-  enum operatorList
-  {
-    Laplace   = 1,
-    Helmholtz = 2,
-    LDA       = 3,
-    GGA       = 4
-  };
-
-  // List of floating point representations
-  enum floatingPointList
-  {
-    FP64 = 1,
-    FP32 = 2
   };
 
 } // namespace dftfe

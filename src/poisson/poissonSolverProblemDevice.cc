@@ -165,13 +165,12 @@ namespace dftfe
         d_matrixFreeWrapperDevice = std::make_unique<
           dftfe::MatrixFreeWrapperClass<double,
                                         double,
+                                        dftfe::operatorList::Laplace,
                                         dftfe::utils::MemorySpace::DEVICE>>(
-          dftfe::floatingPointList::FP64,
           FEOrderElectro + 1,
           mpi_communicator,
           d_basisOperationsPtr,
           d_BLASWrapperPtr,
-          dftfe::operatorList::Laplace,
           d_matrixFreeQuadratureComponentAX,
           nVectors);
 

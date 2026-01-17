@@ -216,6 +216,7 @@ namespace dftfe
     std::unique_ptr<
       dftfe::MatrixFreeWrapperClass<double,
                                     double,
+                                    dftfe::operatorList::Laplace,
                                     dftfe::utils::MemorySpace::DEVICE>>
       d_matrixFreeWrapperDevice;
 

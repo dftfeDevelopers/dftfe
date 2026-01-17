@@ -5,6 +5,15 @@ constexpr int subBatchSizeDeviceFP64 = 1;
 #  define MatrixFreeTemplates(T)                                        \
     template class dftfe::MatrixFree<double,                            \
                                      double,                            \
+                                     dftfe::operatorList::Laplace,      \
+                                     dftfe::utils::MemorySpace::DEVICE, \
+                                     T,                                 \
+                                     T,                                 \
+                                     batchSizeDeviceFP64,               \
+                                     subBatchSizeDeviceFP64>;           \
+    template class dftfe::MatrixFree<double,                            \
+                                     double,                            \
+                                     dftfe::operatorList::Helmholtz,    \
                                      dftfe::utils::MemorySpace::DEVICE, \
                                      T,                                 \
                                      T,                                 \

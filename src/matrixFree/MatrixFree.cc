@@ -26,6 +26,7 @@ namespace dftfe
 {
   template <typename T,
             typename TypeFEBasis,
+            dftfe::operatorList       operatorID,
             dftfe::utils::MemorySpace memorySpace,
             std::uint32_t             nDofsPerDim,
             std::uint32_t             nQuadPointsPerDim,
@@ -33,6 +34,7 @@ namespace dftfe
             std::uint32_t             subBatchSize>
   MatrixFree<T,
              TypeFEBasis,
+             operatorID,
              memorySpace,
              nDofsPerDim,
              nQuadPointsPerDim,
@@ -45,7 +47,6 @@ namespace dftfe
                  dftfe::utils::MemorySpace::HOST>> basisOperationsPtrHost,
                std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
                                    BLASWrapperPtr,
-               const std::uint32_t operatorID,
                const std::uint32_t quadratureID,
                const std::uint32_t nVectors)
     : mpi_communicator(mpi_comm)
@@ -55,7 +56,6 @@ namespace dftfe
             (dealii::Utilities::MPI::this_mpi_process(mpi_comm) == 0))
     , d_basisOperationsPtrHost(basisOperationsPtrHost)
     , d_BLASWrapperPtr(BLASWrapperPtr)
-    , d_operatorID(operatorID)
     , d_quadratureID(quadratureID)
     , d_nVectors(nVectors)
     , d_nBatch(nVectors / batchSize)
@@ -83,6 +83,7 @@ namespace dftfe
 
   template <typename T,
             typename TypeFEBasis,
+            dftfe::operatorList       operatorID,
             dftfe::utils::MemorySpace memorySpace,
             std::uint32_t             nDofsPerDim,
             std::uint32_t             nQuadPointsPerDim,
@@ -91,6 +92,7 @@ namespace dftfe
   void
   MatrixFree<T,
              TypeFEBasis,
+             operatorID,
              memorySpace,
              nDofsPerDim,
              nQuadPointsPerDim,
@@ -132,12 +134,10 @@ namespace dftfe
 
 #if (DEAL_II_VERSION_MAJOR >= 9 && DEAL_II_VERSION_MINOR >= 6)
           shapeData.shape_values[iQuad + iDoF * nQuadPointsPerDim] *
-          (d_operatorID < 4 ? std::sqrt(shapeData.quadrature.weight(iQuad)) :
-                              1);
+          (operatorID < 4 ? std::sqrt(shapeData.quadrature.weight(iQuad)) : 1);
 #else
           shapeData.shape_values[iQuad + iDoF * nQuadPointsPerDim][0] *
-          (d_operatorID < 4 ? std::sqrt(shapeData.quadrature.weight(iQuad)) :
-                              1);
+          (operatorID < 4 ? std::sqrt(shapeData.quadrature.weight(iQuad)) : 1);
 #endif
 
     for (std::uint32_t iQuad2 = 0; iQuad2 < nQuadPointsPerDim; iQuad2++)
@@ -147,15 +147,15 @@ namespace dftfe
 #if (DEAL_II_VERSION_MAJOR >= 9 && DEAL_II_VERSION_MINOR >= 6)
           shapeData
             .shape_gradients_collocation[iQuad1 + iQuad2 * nQuadPointsPerDim] *
-          (d_operatorID < 4 ? std::sqrt(shapeData.quadrature.weight(iQuad1)) /
-                                std::sqrt(shapeData.quadrature.weight(iQuad2)) :
-                              1);
+          (operatorID < 4 ? std::sqrt(shapeData.quadrature.weight(iQuad1)) /
+                              std::sqrt(shapeData.quadrature.weight(iQuad2)) :
+                            1);
 #else
           shapeData.shape_gradients_collocation[iQuad1 +
                                                 iQuad2 * nQuadPointsPerDim][0] *
-          (d_operatorID < 4 ? std::sqrt(shapeData.quadrature.weight(iQuad1)) /
-                                std::sqrt(shapeData.quadrature.weight(iQuad2)) :
-                              1);
+          (operatorID < 4 ? std::sqrt(shapeData.quadrature.weight(iQuad1)) /
+                              std::sqrt(shapeData.quadrature.weight(iQuad2)) :
+                            1);
 #endif
 
     for (std::uint32_t iDoF = 0; iDoF < d_dofEDim; iDoF++)
@@ -236,20 +236,13 @@ namespace dftfe
           }
       }
 
-    double coeff;
+    double coeff = 1.0;
 
-    switch (d_operatorID)
-      {
-        case operatorList::Laplace:
-          coeff = 1.0 / (4.0 * M_PI);
-          break;
-        case operatorList::Helmholtz:
-          coeff = 1.0;
-          break;
-        default:
-          coeff = 1.0;
-          break;
-      }
+    if constexpr (operatorID == operatorList::Laplace)
+      coeff = 1.0 / (4.0 * M_PI);
+
+    if constexpr (operatorID == operatorList::Helmholtz)
+      coeff = 1.0;
 
     // Initialize Jacobian matrix
     constexpr std::uint32_t dim = 3;
@@ -502,6 +495,7 @@ namespace dftfe
 
   template <typename T,
             typename TypeFEBasis,
+            dftfe::operatorList       operatorID,
             dftfe::utils::MemorySpace memorySpace,
             std::uint32_t             nDofsPerDim,
             std::uint32_t             nQuadPointsPerDim,
@@ -510,6 +504,7 @@ namespace dftfe
   void
   MatrixFree<T,
              TypeFEBasis,
+             operatorID,
              memorySpace,
              nDofsPerDim,
              nQuadPointsPerDim,
@@ -535,6 +530,7 @@ namespace dftfe
 
   template <typename T,
             typename TypeFEBasis,
+            dftfe::operatorList       operatorID,
             dftfe::utils::MemorySpace memorySpace,
             std::uint32_t             nDofsPerDim,
             std::uint32_t             nQuadPointsPerDim,
@@ -543,6 +539,7 @@ namespace dftfe
   void
   MatrixFree<T,
              TypeFEBasis,
+             operatorID,
              memorySpace,
              nDofsPerDim,
              nQuadPointsPerDim,
@@ -637,6 +634,7 @@ namespace dftfe
 
   template <typename T,
             typename TypeFEBasis,
+            dftfe::operatorList       operatorID,
             dftfe::utils::MemorySpace memorySpace,
             std::uint32_t             nDofsPerDim,
             std::uint32_t             nQuadPointsPerDim,
@@ -645,6 +643,7 @@ namespace dftfe
   inline void
   MatrixFree<T,
              TypeFEBasis,
+             operatorID,
              memorySpace,
              nDofsPerDim,
              nQuadPointsPerDim,
@@ -676,6 +675,7 @@ namespace dftfe
 
   template <typename T,
             typename TypeFEBasis,
+            dftfe::operatorList       operatorID,
             dftfe::utils::MemorySpace memorySpace,
             std::uint32_t             nDofsPerDim,
             std::uint32_t             nQuadPointsPerDim,
@@ -684,6 +684,7 @@ namespace dftfe
   inline void
   MatrixFree<T,
              TypeFEBasis,
+             operatorID,
              memorySpace,
              nDofsPerDim,
              nQuadPointsPerDim,
@@ -715,6 +716,7 @@ namespace dftfe
 
   template <typename T,
             typename TypeFEBasis,
+            dftfe::operatorList       operatorID,
             dftfe::utils::MemorySpace memorySpace,
             std::uint32_t             nDofsPerDim,
             std::uint32_t             nQuadPointsPerDim,
@@ -723,6 +725,7 @@ namespace dftfe
   inline void
   MatrixFree<T,
              TypeFEBasis,
+             operatorID,
              memorySpace,
              nDofsPerDim,
              nQuadPointsPerDim,
@@ -731,30 +734,29 @@ namespace dftfe
   {
     if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
       {
-        switch (d_operatorID)
-          {
-            case Laplace:
-              dftfe::
-                MatrixFreeDevice<T, nDofsPerDim, nQuadPointsPerDim, batchSize>::
-                  computeLaplaceX(dst,
-                                  src,
-                                  d_jacobianFactor.data(),
-                                  d_map.data(),
-                                  d_nCells,
-                                  d_nBatch);
-              break;
+        if constexpr (operatorID == dftfe::operatorList::Laplace)
+          dftfe::MatrixFreeDevice<T,
+                                  nDofsPerDim,
+                                  nQuadPointsPerDim,
+                                  batchSize>::computeLaplaceX(dst,
+                                                              src,
+                                                              d_jacobianFactor
+                                                                .data(),
+                                                              d_map.data(),
+                                                              d_nCells,
+                                                              d_nBatch);
 
-            case Helmholtz:
-              dftfe::
-                MatrixFreeDevice<T, nDofsPerDim, nQuadPointsPerDim, batchSize>::
-                  computeLaplaceX(dst,
-                                  src,
-                                  d_jacobianFactor.data(),
-                                  d_map.data(),
-                                  d_nCells,
-                                  d_nBatch);
-              break;
-          }
+        if constexpr (operatorID == dftfe::operatorList::Helmholtz)
+          dftfe::MatrixFreeDevice<T,
+                                  nDofsPerDim,
+                                  nQuadPointsPerDim,
+                                  batchSize>::computeLaplaceX(dst,
+                                                              src,
+                                                              d_jacobianFactor
+                                                                .data(),
+                                                              d_map.data(),
+                                                              d_nCells,
+                                                              d_nBatch);
       }
   }
 
