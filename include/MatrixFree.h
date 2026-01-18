@@ -147,7 +147,6 @@ namespace dftfe
     std::vector<T>              d_inhomogenityList;
 
     // Device only Data Structures
-#ifdef DFTFE_WITH_DEVICE
     dftfe::utils::MemoryStorage<T, dftfe::utils::MemorySpace::DEVICE>
       d_weightMatrixListDevice, d_inhomogenityListDevice;
 
@@ -156,7 +155,6 @@ namespace dftfe
       d_constrainingNodeBucketsDevice, d_constrainedNodeBucketsDevice,
       d_constrainingNodeOffsetDevice, d_constrainedNodeOffsetDevice,
       d_weightMatrixOffsetDevice;
-#endif
 
     std::shared_ptr<
       dftfe::basis::
