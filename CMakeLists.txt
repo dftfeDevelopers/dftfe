@@ -22,7 +22,7 @@ add_definitions(-w)
 
 #FIXME: find a better way to replace O3 with O2 in CMAKE_CXX_FLAGS_RELEASE
 IF("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-  add_compile_options("-O2")
+  add_compile_options("-O3")
 ENDIF()
 
 IF (USE_64BIT_INT)
@@ -236,7 +236,6 @@ SET(DEVICE_SRC
   ./utils/MPICommunicatorP2PKernelsDevice.cc
   ./src/solvers/linearSolverCGDeviceKernels.cc
   ./src/matrixFree/MatrixFreeDevice.cc
-  ./utils/matrixFreeDeviceKernels.cc
   ./utils/FEBasisOperationsKernelsInternalDevice.cc
   ./src/atom/AtomicCenteredNonLocalOperatorKernelsDevice.cc
   ./src/force/configurationalForceKernels.cc
@@ -259,7 +258,6 @@ SET(DEVICE_SRC
   ./utils/MPICommunicatorP2PKernelsDevice.cc
   ./src/solvers/linearSolverCGDeviceKernels.cc
   ./src/matrixFree/MatrixFreeDevice.cc
-  ./utils/matrixFreeDeviceKernels.cc
   ./utils/FEBasisOperationsKernelsInternalDevice.cc
   ./src/atom/AtomicCenteredNonLocalOperatorKernelsDevice.cc
   ./src/dftOperator/KohnShamHamiltonianOperatorDeviceKernels.cc
@@ -282,7 +280,6 @@ SET(DEVICE_SRC
   ./utils/MPICommunicatorP2PKernelsDevice.cc
   ./src/solvers/linearSolverCGDeviceKernels.cc
   ./src/matrixFree/MatrixFreeDevice.cc
-  ./utils/matrixFreeDeviceKernels.cc
   ./utils/FEBasisOperationsKernelsInternalDevice.cc
   ./src/atom/AtomicCenteredNonLocalOperatorKernelsDevice.cc
   ./src/dftOperator/KohnShamHamiltonianOperatorDeviceKernels.cc

@@ -36,15 +36,6 @@
 
 namespace dftfe
 {
-  // List of operators
-  enum operatorList
-  {
-    Laplace   = 1,
-    Helmholtz = 2,
-    LDA       = 3,
-    GGA       = 4
-  };
-
   /**
    * @brief MatrixFree class template. template parameter nDofsPerDim
    * is the finite element polynomial order. nQuadPointsPerDim is the order of
@@ -78,8 +69,15 @@ namespace dftfe
      * @brief Initialize data structures for MatrixFree class
      *
      */
-    void
+    inline void
     init();
+
+    /**
+     * @brief Initialize Helmholtz operator coefficient
+     *
+     */
+    inline void
+    initOperatorCoeffs(T coeffHelmholtz);
 
     /**
      * @brief Compute Laplace operator multipled by X
@@ -88,9 +86,17 @@ namespace dftfe
     inline void
     computeAX(T *dst, T *src);
 
+    /**
+     * @brief Apply constraints to src vector
+     *
+     */
     inline void
     constraintsDistribute(T *src);
 
+    /**
+     * @brief Apply transpose of constraints to src vector and set zero on src
+     *
+     */
     inline void
     constraintsDistributeTranspose(T *dst, T *src);
 
@@ -115,6 +121,8 @@ namespace dftfe
     std::uint32_t d_nOwnedDofs, d_nRelaventDofs, d_nGhostDofs, d_nCells,
       d_localBlockSize, d_localSize, d_ghostBlockSize, d_ghostSize,
       d_nOMPThreads;
+
+    T d_coeffHelmholtz;
 
     static constexpr std::uint32_t d_quadODim = nQuadPointsPerDim / 2;
     static constexpr std::uint32_t d_quadEDim =

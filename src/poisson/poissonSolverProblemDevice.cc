@@ -22,7 +22,6 @@
 
 #include <poissonSolverProblemDevice.h>
 #include <MemoryTransfer.h>
-#include "matrixFreeDeviceKernels.h"
 #include <feevaluationWrapper.h>
 namespace dftfe
 {
@@ -174,7 +173,7 @@ namespace dftfe
           d_matrixFreeQuadratureComponentAX,
           nVectors);
 
-        // Setup MatrixFree
+        // Init MatrixFree
         d_matrixFreeWrapperDevice->init();
 
         d_isFastConstraintsInitialized       = true;

@@ -150,10 +150,24 @@ namespace dftfe
             nVectors))
     {}
 
-    void
+    /**
+     * @brief Initialize data structures for MatrixFree class
+     */
+    inline void
     init()
     {
       std::visit([&](auto &t) { t->init(); }, d_MatrixFreeObject);
+    }
+
+    /**
+     * @brief Initialize Helmholtz operator coefficient
+     *
+     */
+    inline void
+    initOperatorCoeffs(T coeffHelmholtz)
+    {
+      std::visit([&](auto &t) { t->initOperatorCoeffs(coeffHelmholtz); },
+                 d_MatrixFreeObject);
     }
 
     /**

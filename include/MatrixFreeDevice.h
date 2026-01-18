@@ -29,10 +29,27 @@
 
 namespace dftfe
 {
+  // List of operators
+  enum operatorList
+  {
+    Laplace   = 1,
+    Helmholtz = 2,
+    LDA       = 3,
+    GGA       = 4
+  };
+
+  /**
+   * @brief MatrixFreeDevice class template. template parameter nDofsPerDim
+   * is the finite element polynomial order. nQuadPointsPerDim is the order of
+   * the Gauss quadrature rule. batchSize is the size of batch tuned to hardware
+   *
+   * @author Gourab Panigrahi
+   */
   template <typename T,
-            std::uint32_t nDofsPerDim,
-            std::uint32_t nQuadPointsPerDim,
-            std::uint32_t batchSize>
+            dftfe::operatorList operatorID,
+            std::uint32_t       nDofsPerDim,
+            std::uint32_t       nQuadPointsPerDim,
+            std::uint32_t       batchSize>
   struct MatrixFreeDevice
   {
     static inline void
@@ -45,6 +62,15 @@ namespace dftfe
                     std::uint32_t *map,
                     std::uint32_t  nCells,
                     std::uint32_t  nBatch);
+
+    static inline void
+    computeHelmholtzX(T             *dst,
+                      T             *src,
+                      T             *jacobianFactor,
+                      std::uint32_t *map,
+                      T              coeffHelmholtz,
+                      std::uint32_t  nCells,
+                      std::uint32_t  nBatch);
 
     static inline void
     constraintsDistribute(T                   *src,

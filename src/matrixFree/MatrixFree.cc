@@ -486,10 +486,36 @@ namespace dftfe
         d_inhomogenityListDevice.resize(d_inhomogenityList.size());
         d_inhomogenityListDevice.copyFrom(d_inhomogenityList);
 
-        dftfe::MatrixFreeDevice<T, nDofsPerDim, nQuadPointsPerDim, batchSize>::
-          init(shapeFunctionValueGradient.data(),
-               shapeFunctionValueGradient.size());
+        dftfe::MatrixFreeDevice<
+          T,
+          operatorID,
+          nDofsPerDim,
+          nQuadPointsPerDim,
+          batchSize>::init(shapeFunctionValueGradient.data(),
+                           shapeFunctionValueGradient.size());
       }
+  }
+
+
+  template <typename T,
+            typename TypeFEBasis,
+            dftfe::operatorList       operatorID,
+            dftfe::utils::MemorySpace memorySpace,
+            std::uint32_t             nDofsPerDim,
+            std::uint32_t             nQuadPointsPerDim,
+            std::uint32_t             batchSize,
+            std::uint32_t             subBatchSize>
+  void
+  MatrixFree<T,
+             TypeFEBasis,
+             operatorID,
+             memorySpace,
+             nDofsPerDim,
+             nQuadPointsPerDim,
+             batchSize,
+             subBatchSize>::initOperatorCoeffs(T coeffHelmholtz)
+  {
+    d_coeffHelmholtz = coeffHelmholtz;
   }
 
 
@@ -655,7 +681,11 @@ namespace dftfe
         if (d_constrainedNodeBucketsDevice.size() == 0)
           return;
 
-        dftfe::MatrixFreeDevice<T, nDofsPerDim, nQuadPointsPerDim, batchSize>::
+        dftfe::MatrixFreeDevice<T,
+                                operatorID,
+                                nDofsPerDim,
+                                nQuadPointsPerDim,
+                                batchSize>::
           constraintsDistribute(src,
                                 d_constrainingNodeBucketsDevice.data(),
                                 d_constrainingNodeOffsetDevice.data(),
@@ -696,7 +726,11 @@ namespace dftfe
         if (d_constrainedNodeBucketsDevice.size() == 0)
           return;
 
-        dftfe::MatrixFreeDevice<T, nDofsPerDim, nQuadPointsPerDim, batchSize>::
+        dftfe::MatrixFreeDevice<T,
+                                operatorID,
+                                nDofsPerDim,
+                                nQuadPointsPerDim,
+                                batchSize>::
           constraintsDistributeTranspose(dst,
                                          src,
                                          d_constrainingNodeBucketsDevice.data(),
@@ -736,6 +770,7 @@ namespace dftfe
       {
         if constexpr (operatorID == dftfe::operatorList::Laplace)
           dftfe::MatrixFreeDevice<T,
+                                  operatorID,
                                   nDofsPerDim,
                                   nQuadPointsPerDim,
                                   batchSize>::computeLaplaceX(dst,
@@ -747,16 +782,18 @@ namespace dftfe
                                                               d_nBatch);
 
         if constexpr (operatorID == dftfe::operatorList::Helmholtz)
-          dftfe::MatrixFreeDevice<T,
-                                  nDofsPerDim,
-                                  nQuadPointsPerDim,
-                                  batchSize>::computeLaplaceX(dst,
-                                                              src,
-                                                              d_jacobianFactor
-                                                                .data(),
-                                                              d_map.data(),
-                                                              d_nCells,
-                                                              d_nBatch);
+          dftfe::MatrixFreeDevice<
+            T,
+            operatorID,
+            nDofsPerDim,
+            nQuadPointsPerDim,
+            batchSize>::computeHelmholtzX(dst,
+                                          src,
+                                          d_jacobianFactor.data(),
+                                          d_map.data(),
+                                          d_coeffHelmholtz,
+                                          d_nCells,
+                                          d_nBatch);
       }
   }
 

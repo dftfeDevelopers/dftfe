@@ -32,6 +32,7 @@
 #    include "FEBasisOperations.h"
 #    include "BLASWrapper.h"
 #    include "MatrixFreeWrapper.h"
+#    include <DeviceAPICalls.h>
 
 namespace dftfe
 {

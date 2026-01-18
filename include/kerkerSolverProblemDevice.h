@@ -28,7 +28,9 @@
 #    include <MemoryStorage.h>
 #    include <dftUtils.h>
 #    include <FEBasisOperations.h>
-
+#    include "BLASWrapper.h"
+#    include "MatrixFreeWrapper.h"
+#    include <DeviceAPICalls.h>
 
 namespace dftfe
 {
@@ -56,17 +58,16 @@ namespace dftfe
      *
      */
     void
-    init(
-      std::shared_ptr<
-        dftfe::basis::
-          FEBasisOperations<double, double, dftfe::utils::MemorySpace::DEVICE>>
-                                        &basisOperationsPtr,
-      dealii::AffineConstraints<double> &constraintMatrix,
-      distributedCPUVec<double>         &x,
-      double                             kerkerMixingParameter,
-      const dftfe::uInt                  matrixFreeVectorComponent,
-      const dftfe::uInt                  matrixFreeQuadratureComponent,
-      const dftfe::uInt                  matrixFreeAxQuadratureComponent);
+    init(std::shared_ptr<
+           dftfe::basis::
+             FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
+                                           &basisOperationsPtr,
+         dealii::AffineConstraints<double> &constraintMatrix,
+         distributedCPUVec<double>         &x,
+         double                             kerkerMixingParameter,
+         const dftfe::uInt                  matrixFreeVectorComponent,
+         const dftfe::uInt                  matrixFreeQuadratureComponent,
+         const dftfe::uInt                  matrixFreeAxQuadratureComponent);
 
 
     /**
@@ -179,17 +180,13 @@ namespace dftfe
     // kerker mixing constant
     double d_gamma;
 
-    // shape function value, gradient, jacobian and map for matrixfree
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
-      d_shapeFunction, d_jacobianFactor;
-    dftfe::utils::MemoryStorage<dftfe::Int, dftfe::utils::MemorySpace::DEVICE>
-      d_map;
-
-    // Pointers to shape function value, gradient, jacobian and map for
-    // matrixfree
-    double     *d_shapeFunctionPtr;
-    double     *d_jacobianFactorPtr;
-    dftfe::Int *d_mapPtr;
+    // Matrix free wrapper object
+    std::unique_ptr<
+      dftfe::MatrixFreeWrapperClass<double,
+                                    double,
+                                    dftfe::operatorList::Helmholtz,
+                                    dftfe::utils::MemorySpace::DEVICE>>
+      d_matrixFreeWrapperDevice;
 
     // constraints
     dftUtils::constraintMatrixInfo<dftfe::utils::MemorySpace::DEVICE>
@@ -203,7 +200,6 @@ namespace dftfe
     dftfe::uInt d_matrixFreeQuadratureComponent;
     dftfe::uInt d_matrixFreeAxQuadratureComponent;
 
-
     /// pointer to electron density cell and grad residual data
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
                                             *d_residualQuadValuesPtr;
@@ -212,10 +208,8 @@ namespace dftfe
     const dealii::MatrixFree<3, double>     *d_matrixFreeDataPRefinedPtr;
     std::shared_ptr<
       dftfe::basis::
-        FEBasisOperations<double, double, dftfe::utils::MemorySpace::DEVICE>>
+        FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
       d_basisOperationsPtr;
-
-
 
     const MPI_Comm             d_mpiCommParent;
     const MPI_Comm             mpi_communicator;

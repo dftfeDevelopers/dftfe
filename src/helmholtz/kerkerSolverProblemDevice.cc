@@ -20,8 +20,8 @@
 #include <constants.h>
 #include <kerkerSolverProblemDevice.h>
 #include <MemoryTransfer.h>
-#include "matrixFreeDeviceKernels.h"
 #include <feevaluationWrapper.h>
+
 namespace dftfe
 {
   //
@@ -46,7 +46,7 @@ namespace dftfe
   kerkerSolverProblemDevice<FEOrderElectro>::init(
     std::shared_ptr<
       dftfe::basis::
-        FEBasisOperations<double, double, dftfe::utils::MemorySpace::DEVICE>>
+        FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
                                       &basisOperationsPtr,
     dealii::AffineConstraints<double> &constraintMatrixPRefined,
     distributedCPUVec<double>         &x,
@@ -75,12 +75,32 @@ namespace dftfe
     d_xLen      = d_xDevice.localSize() * d_xDevice.numVectors();
 
     computeDiagonalA();
-
-    // Setup MatrixFree Mesh
-    setupMatrixFree();
-
-    // Setup MatrixFree Constraints
     setupConstraints();
+
+    // Setup MatrixFree
+    unsigned int nVectors = 1;
+
+    std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+      BLASWrapperPtr;
+
+    d_matrixFreeWrapperDevice = std::make_unique<
+      dftfe::MatrixFreeWrapperClass<double,
+                                    double,
+                                    dftfe::operatorList::Helmholtz,
+                                    dftfe::utils::MemorySpace::DEVICE>>(
+      FEOrderElectro + 1,
+      mpi_communicator,
+      d_basisOperationsPtr,
+      BLASWrapperPtr,
+      d_matrixFreeAxQuadratureComponent,
+      nVectors);
+
+    // Init MatrixFree
+    d_matrixFreeWrapperDevice->init();
+
+    // Set Helmholtz coefficient
+    d_matrixFreeWrapperDevice->initOperatorCoeffs(4 * M_PI * d_gamma);
   }
 
 
@@ -289,162 +309,20 @@ namespace dftfe
 
   template <dftfe::uInt FEOrderElectro>
   void
-  kerkerSolverProblemDevice<FEOrderElectro>::setupMatrixFree()
-  {
-    constexpr dftfe::Int p            = FEOrderElectro + 1;
-    constexpr dftfe::Int q            = p;
-    constexpr dftfe::Int nDofsPerCell = p * p * p;
-    constexpr dftfe::Int dim          = 3;
-
-    auto dofInfo =
-      d_matrixFreeDataPRefinedPtr->get_dof_info(d_matrixFreeVectorComponent);
-    auto shapeInfo = d_matrixFreeDataPRefinedPtr->get_shape_info(
-      d_matrixFreeVectorComponent, d_matrixFreeAxQuadratureComponent);
-    auto mappingData = d_matrixFreeDataPRefinedPtr->get_mapping_info()
-                         .cell_data[d_matrixFreeAxQuadratureComponent];
-    auto shapeData = shapeInfo.get_shape_data();
-
-    // Shape Function Values, Gradients and their Transposes
-    // P(q*p), D(q*q), PT(p*q), DT(q*q)
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      shapeFunction(2 * q * (p + q));
-
-    for (dftfe::Int i = 0; i < p; i++)
-      for (dftfe::Int j = 0; j < q; j++)
-        {
-#if (DEAL_II_VERSION_MAJOR >= 9 && DEAL_II_VERSION_MINOR >= 6)
-          double value = shapeData.shape_values[j + i * q] *
-                         std::sqrt(shapeData.quadrature.weight(j));
-#else
-          double value = shapeData.shape_values[j + i * q][0] *
-                         std::sqrt(shapeData.quadrature.weight(j));
-#endif
-          shapeFunction[j + i * q]               = value;
-          shapeFunction[i + j * p + q * (p + q)] = value;
-        }
-
-    for (dftfe::Int i = 0; i < q; i++)
-      for (dftfe::Int j = 0; j < q; j++)
-        {
-#if (DEAL_II_VERSION_MAJOR >= 9 && DEAL_II_VERSION_MINOR >= 6)
-          double grad = shapeData.shape_gradients_collocation[j + i * q] *
-                        std::sqrt(shapeData.quadrature.weight(j)) /
-                        std::sqrt(shapeData.quadrature.weight(i));
-#else
-          double grad = shapeData.shape_gradients_collocation[j + i * q][0] *
-                        std::sqrt(shapeData.quadrature.weight(j)) /
-                        std::sqrt(shapeData.quadrature.weight(i));
-#endif
-          shapeFunction[j + i * q + q * p]           = grad;
-          shapeFunction[i + j * q + (2 * p + q) * q] = grad;
-        }
-
-    // Jacobian
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      jacobianFactor(dim * dim * d_nLocalCells);
-
-    auto cellOffsets = mappingData.data_index_offsets;
-
-    for (dftfe::Int cellIdx = 0; cellIdx < d_nLocalCells; cellIdx++)
-      for (dftfe::Int k = 0; k < dim; k++)
-        for (dftfe::Int i = 0; i < dim; i++)
-          for (dftfe::Int j = 0; j < dim; j++)
-            jacobianFactor[j + i * dim + cellIdx * dim * dim] +=
-              mappingData
-                .JxW_values[cellOffsets[cellIdx / dofInfo.vectorization_length]]
-                           [0] *
-              mappingData
-                .jacobians[0]
-                          [cellOffsets[cellIdx / dofInfo.vectorization_length]]
-                          [k][j][0] *
-              mappingData
-                .jacobians[0]
-                          [cellOffsets[cellIdx / dofInfo.vectorization_length]]
-                          [k][i][0];
-
-    // Map making
-    dftfe::utils::MemoryStorage<dftfe::Int, dftfe::utils::MemorySpace::HOST>
-      map(nDofsPerCell * d_nLocalCells);
-
-    for (auto cellIdx = 0; cellIdx < d_nLocalCells; ++cellIdx)
-      std::transform((dofInfo.row_starts[cellIdx].second ==
-                        dofInfo.row_starts[cellIdx + 1].second &&
-                      dofInfo.row_starts_plain_indices[cellIdx] ==
-                        dealii::numbers::invalid_unsigned_int) ?
-                       dofInfo.dof_indices.data() +
-                         dofInfo.row_starts[cellIdx].first :
-                       dofInfo.plain_dof_indices.data() +
-                         dofInfo.row_starts_plain_indices[cellIdx],
-                     (dofInfo.row_starts[cellIdx].second ==
-                        dofInfo.row_starts[cellIdx + 1].second &&
-                      dofInfo.row_starts_plain_indices[cellIdx] ==
-                        dealii::numbers::invalid_unsigned_int) ?
-                       dofInfo.dof_indices.data() +
-                         dofInfo.row_starts[cellIdx].first + nDofsPerCell :
-                       dofInfo.plain_dof_indices.data() +
-                         dofInfo.row_starts_plain_indices[cellIdx] +
-                         nDofsPerCell,
-                     map.data() + cellIdx * nDofsPerCell,
-                     [](unsigned int &v) { return v; });
-
-    // Construct the device vectors
-    d_shapeFunction.resize(shapeFunction.size());
-    d_shapeFunction.copyFrom(shapeFunction);
-
-    d_jacobianFactor.resize(jacobianFactor.size());
-    d_jacobianFactor.copyFrom(jacobianFactor);
-
-    d_map.resize(map.size());
-    d_map.copyFrom(map);
-
-    d_shapeFunctionPtr  = d_shapeFunction.data();
-    d_jacobianFactorPtr = d_jacobianFactor.data();
-    d_mapPtr            = d_map.data();
-    constexpr std::size_t smem =
-      (4 * q * q * q + 2 * p * q + 2 * q * q + dim * dim) * sizeof(double);
-    matrixFreeDeviceKernels<double, p * p, q, p, dim>::
-      computeAXDeviceHelmholtzSetAttributes(smem);
-  }
-
-
-  template <dftfe::uInt FEOrderElectro>
-  void
   kerkerSolverProblemDevice<FEOrderElectro>::computeAX(
     distributedDeviceVec<double> &Ax,
     distributedDeviceVec<double> &x)
   {
-    constexpr dftfe::Int dim     = 3;
-    constexpr dftfe::Int p       = FEOrderElectro + 1;
-    constexpr dftfe::Int q       = p;
-    constexpr dftfe::Int threads = 64;
-    // constexpr dftfe::Int threads =
-    //  (FEOrderElectro < 7 ? 96 : FEOrderElectro == 7 ? 64 : 256);
-    const dftfe::Int      blocks         = d_nLocalCells;
-    const double          coeffHelmholtz = 4 * M_PI * d_gamma;
-    constexpr std::size_t smem =
-      (4 * q * q * q + 2 * p * q + 2 * q * q + dim * dim) * sizeof(double);
-
     dftfe::utils::deviceMemset(Ax.begin(), 0, d_xLen * sizeof(double));
 
     x.updateGhostValues();
 
-    d_constraintsTotalPotentialInfo.distribute(x);
+    d_matrixFreeWrapperDevice->constraintsDistribute(x.data());
 
-    matrixFreeDeviceKernels<double, p * p, q, p, dim>::computeAXDeviceHelmholtz(
-      blocks,
-      threads,
-      smem,
-      Ax.begin(),
-      x.begin(),
-      d_shapeFunctionPtr,
-      d_jacobianFactorPtr,
-      d_mapPtr,
-      coeffHelmholtz);
+    d_matrixFreeWrapperDevice->computeAX(Ax.data(), x.data());
 
-
-    d_constraintsTotalPotentialInfo.set_zero(x);
-
-    d_constraintsTotalPotentialInfo.distribute_slave_to_master(Ax);
+    d_matrixFreeWrapperDevice->constraintsDistributeTranspose(Ax.data(),
+                                                              x.data());
 
     Ax.accumulateAddLocallyOwned();
   }
