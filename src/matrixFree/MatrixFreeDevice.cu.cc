@@ -1263,14 +1263,12 @@ HelmholtzKernel(T *__restrict__ dst,
             sharedU[threadIdx.x + i * batchSize +
                     k * batchSize * nQuadPointsPerDim * nQuadPointsPerDim];
 
-          temp1 = regP[k];
-
-          temp2 = sharedU[threadIdx.x + i * batchSize +
+          regP[nQuadPointsPerDim - 1 - k] = sharedU[threadIdx.x + i * batchSize +
                           (nQuadPointsPerDim - 1 - k) * batchSize *
                             nQuadPointsPerDim * nQuadPointsPerDim];
 
-          tempE = temp1 + temp2;
-          tempO = temp1 - temp2;
+          tempE = regP[k] + regP[nQuadPointsPerDim - 1 - k];
+          tempO = regP[k] - regP[nQuadPointsPerDim - 1 - k];
 
 #pragma unroll
           for (std::uint32_t j = 0; j < qOdd; j++)
@@ -1286,11 +1284,10 @@ HelmholtzKernel(T *__restrict__ dst,
           regP[qOdd] =
             sharedU[threadIdx.x + i * batchSize +
                     qOdd * batchSize * nQuadPointsPerDim * nQuadPointsPerDim];
-          tempE = regP[qOdd];
 
 #pragma unroll
           for (std::uint32_t j = 0; j < qOdd; j++)
-            regT[j] += constD[j + qOdd * qOdd] * tempE;
+            regT[j] += constD[j + qOdd * qOdd] * regP[qOdd];
         }
 
 #pragma unroll

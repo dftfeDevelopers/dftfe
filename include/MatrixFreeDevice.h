@@ -25,7 +25,7 @@
 #include <cstdint>
 #include <stdexcept>
 #include <DeviceTypeConfig.h>
-#include <DeviceExceptions.cu.h>
+#include <DeviceExceptions.h>
 
 namespace dftfe
 {
