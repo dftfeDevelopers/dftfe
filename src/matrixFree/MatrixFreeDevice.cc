@@ -103,38 +103,6 @@ namespace dftfe
                                        constMemSize * sizeof(T),
                                        0,
                                        hipMemcpyHostToDevice));
-
-    int deviceId = 0;
-    DEVICE_API_CHECK(hipGetDevice(&deviceId));
-
-    int maxDynSharedDefault = 0;
-    DEVICE_API_CHECK(
-      hipDeviceGetAttribute(&maxDynSharedDefault,
-                            hipDeviceAttributeMaxSharedMemoryPerBlock,
-                            deviceId));
-
-    // HIP does not provide a distinct "opt-in" dynamic shared memory attribute
-    // in the same way CUDA does, so use the default as the opt-in limit too.
-    int maxDynSharedOptIn = maxDynSharedDefault;
-
-    if (sharedMemSize > static_cast<std::size_t>(maxDynSharedDefault))
-      {
-        if (sharedMemSize > static_cast<std::size_t>(maxDynSharedOptIn))
-          throw std::runtime_error(
-            "Requested dynamic shared memory exceeds opt-in limit");
-
-        if constexpr (operatorID == dftfe::operatorList::Laplace)
-          DEVICE_API_CHECK(hipFuncSetAttribute(
-            LaplaceKernel<T, nDofsPerDim, nQuadPointsPerDim, batchSize, dim>,
-            hipFuncAttributeMaxDynamicSharedMemorySize,
-            sharedMemSize));
-
-        if constexpr (operatorID == dftfe::operatorList::Helmholtz)
-          DEVICE_API_CHECK(hipFuncSetAttribute(
-            HelmholtzKernel<T, nDofsPerDim, nQuadPointsPerDim, batchSize, dim>,
-            hipFuncAttributeMaxDynamicSharedMemorySize,
-            sharedMemSize));
-      }
 #endif
   }
 
