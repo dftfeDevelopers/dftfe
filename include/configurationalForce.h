@@ -127,6 +127,7 @@ namespace dftfe
       const std::vector<distributedCPUVec<double>>
                         &vselfFieldGateauxDerStrainFDBins,
       const dftfe::uInt &binsStartDofHandlerIndexElectro,
+      const dftfe::uInt &phiExtDofHandlerIndexElectro,
       const std::map<dealii::CellId, std::vector<dftfe::Int>>
         &bQuadAtomIdsAllAtoms,
       const std::map<dealii::CellId, std::vector<dftfe::Int>>
@@ -300,6 +301,7 @@ namespace dftfe
 
     void
     createBinObjectsForce(
+      const dftfe::uInt           &phiExtDofHandlerIndexElectro,
       const dealii::DoFHandler<3> &dofHandlerRhoNodal,
       const vselfBinsManager      &vselfBinsManager,
       std::vector<std::vector<dealii::DoFHandler<3>::active_cell_iterator>>

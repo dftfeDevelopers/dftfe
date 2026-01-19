@@ -829,8 +829,8 @@ namespace dftfe
         partitioner->local_range();
       // std::cout<<locallyOwnedRange.first<<"
       // "<<locallyOwnedRange.second<<std::endl;
-      std::vector<dealii::types::global_dof_index> ghostIndices;
-      (partitioner->ghost_indices()).fill_index_vector(ghostIndices);
+      std::vector<dealii::types::global_dof_index> ghostIndices =
+        (partitioner->ghost_indices()).get_index_vector();
 
       // for (dftfe::uInt i=0;i<ghostIndices.size();++i)
       // if (ghostIndices.size()>0)

@@ -144,14 +144,14 @@ namespace dftfe
       dftUtils::printCurrentMemoryUsage(mpi_communicator,
                                         "Dofs distributed again");
     d_supportPoints.clear();
-    dealii::DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3, 3>(),
-                                                 dofHandler,
-                                                 d_supportPoints);
+    d_supportPoints =
+      dealii::DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3, 3>(),
+                                                   dofHandler);
 
     d_supportPointsEigen.clear();
-    dealii::DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3, 3>(),
-                                                 dofHandlerEigen,
-                                                 d_supportPointsEigen);
+    d_supportPointsEigen =
+      dealii::DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3, 3>(),
+                                                   dofHandlerEigen);
 
     MPI_Barrier(d_mpiCommParent);
     init_dofhandlerobjs = MPI_Wtime() - init_dofhandlerobjs;
