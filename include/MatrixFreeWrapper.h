@@ -32,12 +32,11 @@
 namespace dftfe
 {
   /**
-   * @brief MatrixFreeWrapper class
+   * @brief Datastructure to hold different MatrixFree class objects
    *
    * @author Gourab Panigrahi
    *
    */
-
   using MatrixFreeObject = std::variant<
 #define MatrixFreeWrapperTemplates(NDOFSPERDIM)                          \
   std::shared_ptr<dftfe::MatrixFree<double,                              \
@@ -78,7 +77,10 @@ namespace dftfe
 #undef MatrixFreeWrapperTemplatesL
     >;
 
-
+  /**
+   * @brief Factory function to create MatrixFree object
+   *
+   */
   template <typename T,
             typename TypeFEBasis,
             dftfe::operatorList       operatorID,
@@ -119,7 +121,10 @@ namespace dftfe
       }
   }
 
-
+  /**
+   * @brief MatrixFreeWrapper class
+   *
+   */
   template <typename T,
             typename TypeFEBasis,
             dftfe::operatorList       operatorID,
@@ -152,6 +157,7 @@ namespace dftfe
 
     /**
      * @brief Initialize data structures for MatrixFree class
+     *
      */
     inline void
     init()
@@ -180,6 +186,10 @@ namespace dftfe
       std::visit([&](auto &t) { t->computeAX(dst, src); }, d_MatrixFreeObject);
     }
 
+    /**
+     * @brief Distribute constraints on vector src
+     *
+     */
     inline void
     constraintsDistribute(T *src)
     {
@@ -187,6 +197,10 @@ namespace dftfe
                  d_MatrixFreeObject);
     }
 
+    /**
+     * @brief Distribute transpose constraints on vector src
+     *
+     */
     inline void
     constraintsDistributeTranspose(T *dst, T *src)
     {

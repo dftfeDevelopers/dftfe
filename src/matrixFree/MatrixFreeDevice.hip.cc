@@ -53,12 +53,12 @@ constraintsDistributeKernel(
 {
   __shared__ T sharedConstrainingData[batchSize * nDofsPerDim * nDofsPerDim];
 
+  constexpr int yThreads                = 64;
   std::uint32_t constrainingBucketStart = constrainingNodeOffset[blockIdx.x];
   std::uint32_t constrainingBucketSize =
     constrainingNodeOffset[blockIdx.x + 1] - constrainingNodeOffset[blockIdx.x];
 
-  for (std::uint32_t k = threadIdx.y; k < constrainingBucketSize;
-       k += blockDim.y)
+  for (std::uint32_t k = threadIdx.y; k < constrainingBucketSize; k += yThreads)
     {
       std::uint32_t idx;
 
@@ -85,8 +85,7 @@ constraintsDistributeKernel(
 
   T inhomogenity = inhomogenityList[blockIdx.x];
 
-  for (std::uint32_t j = threadIdx.y; j < constrainedBucketSize;
-       j += blockDim.y)
+  for (std::uint32_t j = threadIdx.y; j < constrainedBucketSize; j += yThreads)
     {
       T tmp = inhomogenity;
 
@@ -129,6 +128,7 @@ constraintsDistributeTransposeKernel(
 {
   __shared__ T sharedConstrainedData[batchSize * nDofsPerDim * nDofsPerDim * 4];
 
+  constexpr int yThreads                = 64;
   std::uint32_t constrainingBucketStart = constrainingNodeOffset[blockIdx.x];
   std::uint32_t constrainingBucketSize =
     constrainingNodeOffset[blockIdx.x + 1] - constrainingNodeOffset[blockIdx.x];
@@ -140,7 +140,7 @@ constraintsDistributeTransposeKernel(
   if (constrainingBucketSize > 0)
     {
       for (std::uint32_t k = threadIdx.y; k < constrainedBucketSize;
-           k += blockDim.y)
+           k += yThreads)
         {
           std::uint32_t idx;
 
@@ -166,7 +166,7 @@ constraintsDistributeTransposeKernel(
       std::uint32_t weightMatrixStart = weightMatrixOffset[blockIdx.x];
 
       for (std::uint32_t j = threadIdx.y; j < constrainingBucketSize;
-           j += blockDim.y)
+           j += yThreads)
         {
           T tmp = 0.;
 
@@ -193,7 +193,7 @@ constraintsDistributeTransposeKernel(
   else
     {
       for (std::uint32_t k = threadIdx.y; k < constrainedBucketSize;
-           k += blockDim.y)
+           k += yThreads)
         {
           std::uint32_t idx;
 
@@ -243,6 +243,10 @@ LaplaceKernel(T *__restrict__ dst,
   constexpr std::uint32_t pEven   = nDofsPerDim % 2 == 1 ? pOdd + 1 : pOdd;
   constexpr std::uint32_t qOdd    = nQuadPointsPerDim / 2;
   constexpr std::uint32_t qEven = nQuadPointsPerDim % 2 == 1 ? qOdd + 1 : qOdd;
+  constexpr std::uint32_t yThreads =
+    dftfe::utils::DEVICE_WARP_SIZE * ((nQuadPointsPerDim * nQuadPointsPerDim +
+                                       dftfe::utils::DEVICE_WARP_SIZE - 1) /
+                                      dftfe::utils::DEVICE_WARP_SIZE);
 
   T *__restrict__ sharedU = reinterpret_cast<T *>(sharedMem);
   T *__restrict__ sharedV = &sharedU[batchSize * nQuadPointsPerDim *
@@ -270,7 +274,7 @@ LaplaceKernel(T *__restrict__ dst,
   // 1st GEMM of N
   // Z Direction
   for (std::uint32_t i = threadIdx.y; i < nDofsPerDim * nDofsPerDim;
-       i += blockDim.y)
+       i += yThreads)
     {
       memset(regT, 0, nQuadPointsPerDim * sizeof(T));
 
@@ -296,7 +300,7 @@ LaplaceKernel(T *__restrict__ dst,
   // 2nd GEMM of N
   // Y Direction
   for (std::uint32_t i = threadIdx.y; i < nDofsPerDim * nQuadPointsPerDim;
-       i += blockDim.y)
+       i += yThreads)
     {
       std::uint32_t a = i % nDofsPerDim;
       std::uint32_t b = i / nDofsPerDim;
@@ -361,7 +365,7 @@ LaplaceKernel(T *__restrict__ dst,
   // 3rd GEMM of N
   // X Direction
   for (std::uint32_t i = threadIdx.y; i < nQuadPointsPerDim * nQuadPointsPerDim;
-       i += blockDim.y)
+       i += yThreads)
     {
       T tempE, tempO, temp1, temp2;
 
@@ -426,7 +430,7 @@ LaplaceKernel(T *__restrict__ dst,
   // 1st GEMM of D
   // Z Direction
   for (std::uint32_t i = threadIdx.y; i < nQuadPointsPerDim * nQuadPointsPerDim;
-       i += blockDim.y)
+       i += yThreads)
     {
       T tempE, tempO, temp1, temp2;
 
@@ -479,7 +483,7 @@ LaplaceKernel(T *__restrict__ dst,
   // 2nd GEMM of D
   // Y Direction
   for (std::uint32_t i = threadIdx.y; i < nQuadPointsPerDim * nQuadPointsPerDim;
-       i += blockDim.y)
+       i += yThreads)
     {
       std::uint32_t a = i % nQuadPointsPerDim;
       std::uint32_t b = i / nQuadPointsPerDim;
@@ -549,7 +553,7 @@ LaplaceKernel(T *__restrict__ dst,
   // 3rd GEMM of D
   // X Direction
   for (std::uint32_t i = threadIdx.y; i < nQuadPointsPerDim * nQuadPointsPerDim;
-       i += blockDim.y)
+       i += yThreads)
     {
       T tempE, tempO, temp1, temp2;
 
@@ -590,7 +594,7 @@ LaplaceKernel(T *__restrict__ dst,
   __syncthreads();
 
   for (std::uint32_t i = threadIdx.y; i < nQuadPointsPerDim * nQuadPointsPerDim;
-       i += blockDim.y)
+       i += yThreads)
     {
 #pragma unroll
       for (std::uint32_t j = 0; j < qOdd; j++)
@@ -614,7 +618,7 @@ LaplaceKernel(T *__restrict__ dst,
   // coeff.J^-T.J^-1.[sharedU sharedV regR]
 
   for (std::uint32_t i = threadIdx.y; i < nQuadPointsPerDim * nQuadPointsPerDim;
-       i += blockDim.y)
+       i += yThreads)
     {
       T t[dim];
 
@@ -656,7 +660,7 @@ LaplaceKernel(T *__restrict__ dst,
   // 1st GEMM of DT
   // Z Direction
   for (std::uint32_t i = threadIdx.y; i < nQuadPointsPerDim * nQuadPointsPerDim;
-       i += blockDim.y)
+       i += yThreads)
     {
       T tempE, tempO;
 
@@ -697,7 +701,7 @@ LaplaceKernel(T *__restrict__ dst,
   // 2nd GEMM of DT
   // Y Direction
   for (std::uint32_t i = threadIdx.y; i < nQuadPointsPerDim * nQuadPointsPerDim;
-       i += blockDim.y)
+       i += yThreads)
     {
       std::uint32_t a = i % nQuadPointsPerDim;
       std::uint32_t b = i / nQuadPointsPerDim;
@@ -757,7 +761,7 @@ LaplaceKernel(T *__restrict__ dst,
   // 3rd GEMM of DT
   // X Direction
   for (std::uint32_t i = threadIdx.y; i < nQuadPointsPerDim * nQuadPointsPerDim;
-       i += blockDim.y)
+       i += yThreads)
     {
       T tempE, tempO, temp1, temp2;
 
@@ -808,7 +812,7 @@ LaplaceKernel(T *__restrict__ dst,
   __syncthreads();
 
   for (std::uint32_t i = threadIdx.y; i < nQuadPointsPerDim * nQuadPointsPerDim;
-       i += blockDim.y)
+       i += yThreads)
     {
       std::uint32_t a = i % nQuadPointsPerDim;
       std::uint32_t b = i / nQuadPointsPerDim;
@@ -829,7 +833,7 @@ LaplaceKernel(T *__restrict__ dst,
   __syncthreads();
 
   for (std::uint32_t i = threadIdx.y; i < nQuadPointsPerDim * nQuadPointsPerDim;
-       i += blockDim.y)
+       i += yThreads)
     {
 #pragma unroll
       for (std::uint32_t j = 0; j < nQuadPointsPerDim; j++)
@@ -852,7 +856,7 @@ LaplaceKernel(T *__restrict__ dst,
   // 1st GEMM of NT
   // Z Direction
   for (std::uint32_t i = threadIdx.y; i < nQuadPointsPerDim * nQuadPointsPerDim;
-       i += blockDim.y)
+       i += yThreads)
     {
       T tempE, tempO;
 
@@ -902,7 +906,7 @@ LaplaceKernel(T *__restrict__ dst,
   // 2nd GEMM of NT
   // Y Direction
   for (std::uint32_t i = threadIdx.y; i < nQuadPointsPerDim * nDofsPerDim;
-       i += blockDim.y)
+       i += yThreads)
     {
       std::uint32_t a = i % nQuadPointsPerDim;
       std::uint32_t b = i / nQuadPointsPerDim;
@@ -973,7 +977,7 @@ LaplaceKernel(T *__restrict__ dst,
   // 3rd GEMM of NT
   // X Direction
   for (std::uint32_t i = threadIdx.y; i < nDofsPerDim * nDofsPerDim;
-       i += blockDim.y)
+       i += yThreads)
     {
       T tempE, tempO, temp1, temp2;
 
@@ -1060,6 +1064,10 @@ HelmholtzKernel(T *__restrict__ dst,
   constexpr std::uint32_t pEven   = nDofsPerDim % 2 == 1 ? pOdd + 1 : pOdd;
   constexpr std::uint32_t qOdd    = nQuadPointsPerDim / 2;
   constexpr std::uint32_t qEven = nQuadPointsPerDim % 2 == 1 ? qOdd + 1 : qOdd;
+  constexpr std::uint32_t yThreads =
+    dftfe::utils::DEVICE_WARP_SIZE * ((nQuadPointsPerDim * nQuadPointsPerDim +
+                                       dftfe::utils::DEVICE_WARP_SIZE - 1) /
+                                      dftfe::utils::DEVICE_WARP_SIZE);
 
   T *__restrict__ sharedU = reinterpret_cast<T *>(sharedMem);
   T *__restrict__ sharedV = &sharedU[batchSize * nQuadPointsPerDim *
@@ -1087,7 +1095,7 @@ HelmholtzKernel(T *__restrict__ dst,
   // 1st GEMM of N
   // Z Direction
   for (std::uint32_t i = threadIdx.y; i < nDofsPerDim * nDofsPerDim;
-       i += blockDim.y)
+       i += yThreads)
     {
       memset(regT, 0, nQuadPointsPerDim * sizeof(T));
 
@@ -1113,7 +1121,7 @@ HelmholtzKernel(T *__restrict__ dst,
   // 2nd GEMM of N
   // Y Direction
   for (std::uint32_t i = threadIdx.y; i < nDofsPerDim * nQuadPointsPerDim;
-       i += blockDim.y)
+       i += yThreads)
     {
       std::uint32_t a = i % nDofsPerDim;
       std::uint32_t b = i / nDofsPerDim;
@@ -1178,7 +1186,7 @@ HelmholtzKernel(T *__restrict__ dst,
   // 3rd GEMM of N
   // X Direction
   for (std::uint32_t i = threadIdx.y; i < nQuadPointsPerDim * nQuadPointsPerDim;
-       i += blockDim.y)
+       i += yThreads)
     {
       T tempE, tempO, temp1, temp2;
 
@@ -1243,7 +1251,7 @@ HelmholtzKernel(T *__restrict__ dst,
   // 1st GEMM of D
   // Z Direction
   for (std::uint32_t i = threadIdx.y; i < nQuadPointsPerDim * nQuadPointsPerDim;
-       i += blockDim.y)
+       i += yThreads)
     {
       T tempE, tempO, temp1, temp2;
 
@@ -1299,7 +1307,7 @@ HelmholtzKernel(T *__restrict__ dst,
   // 2nd GEMM of D
   // Y Direction
   for (std::uint32_t i = threadIdx.y; i < nQuadPointsPerDim * nQuadPointsPerDim;
-       i += blockDim.y)
+       i += yThreads)
     {
       std::uint32_t a = i % nQuadPointsPerDim;
       std::uint32_t b = i / nQuadPointsPerDim;
@@ -1369,7 +1377,7 @@ HelmholtzKernel(T *__restrict__ dst,
   // 3rd GEMM of D
   // X Direction
   for (std::uint32_t i = threadIdx.y; i < nQuadPointsPerDim * nQuadPointsPerDim;
-       i += blockDim.y)
+       i += yThreads)
     {
       T tempE, tempO, temp1, temp2;
 
@@ -1410,7 +1418,7 @@ HelmholtzKernel(T *__restrict__ dst,
   __syncthreads();
 
   for (std::uint32_t i = threadIdx.y; i < nQuadPointsPerDim * nQuadPointsPerDim;
-       i += blockDim.y)
+       i += yThreads)
     {
 #pragma unroll
       for (std::uint32_t j = 0; j < qOdd; j++)
@@ -1436,7 +1444,7 @@ HelmholtzKernel(T *__restrict__ dst,
   T detJ;
 
   for (std::uint32_t i = threadIdx.y; i < nQuadPointsPerDim * nQuadPointsPerDim;
-       i += blockDim.y)
+       i += yThreads)
     {
       T t[dim];
 
@@ -1485,7 +1493,7 @@ HelmholtzKernel(T *__restrict__ dst,
   // 1st GEMM of DT
   // Z Direction
   for (std::uint32_t i = threadIdx.y; i < nQuadPointsPerDim * nQuadPointsPerDim;
-       i += blockDim.y)
+       i += yThreads)
     {
       T tempE, tempO;
 
@@ -1528,7 +1536,7 @@ HelmholtzKernel(T *__restrict__ dst,
   // 2nd GEMM of DT
   // Y Direction
   for (std::uint32_t i = threadIdx.y; i < nQuadPointsPerDim * nQuadPointsPerDim;
-       i += blockDim.y)
+       i += yThreads)
     {
       std::uint32_t a = i % nQuadPointsPerDim;
       std::uint32_t b = i / nQuadPointsPerDim;
@@ -1588,7 +1596,7 @@ HelmholtzKernel(T *__restrict__ dst,
   // 3rd GEMM of DT
   // X Direction
   for (std::uint32_t i = threadIdx.y; i < nQuadPointsPerDim * nQuadPointsPerDim;
-       i += blockDim.y)
+       i += yThreads)
     {
       T tempE, tempO, temp1, temp2;
 
@@ -1639,7 +1647,7 @@ HelmholtzKernel(T *__restrict__ dst,
   __syncthreads();
 
   for (std::uint32_t i = threadIdx.y; i < nQuadPointsPerDim * nQuadPointsPerDim;
-       i += blockDim.y)
+       i += yThreads)
     {
       std::uint32_t a = i % nQuadPointsPerDim;
       std::uint32_t b = i / nQuadPointsPerDim;
@@ -1660,7 +1668,7 @@ HelmholtzKernel(T *__restrict__ dst,
   __syncthreads();
 
   for (std::uint32_t i = threadIdx.y; i < nQuadPointsPerDim * nQuadPointsPerDim;
-       i += blockDim.y)
+       i += yThreads)
     {
 #pragma unroll
       for (std::uint32_t j = 0; j < nQuadPointsPerDim; j++)
@@ -1683,7 +1691,7 @@ HelmholtzKernel(T *__restrict__ dst,
   // 1st GEMM of NT
   // Z Direction
   for (std::uint32_t i = threadIdx.y; i < nQuadPointsPerDim * nQuadPointsPerDim;
-       i += blockDim.y)
+       i += yThreads)
     {
       T tempE, tempO;
 
@@ -1733,7 +1741,7 @@ HelmholtzKernel(T *__restrict__ dst,
   // 2nd GEMM of NT
   // Y Direction
   for (std::uint32_t i = threadIdx.y; i < nQuadPointsPerDim * nDofsPerDim;
-       i += blockDim.y)
+       i += yThreads)
     {
       std::uint32_t a = i % nQuadPointsPerDim;
       std::uint32_t b = i / nQuadPointsPerDim;
@@ -1804,7 +1812,7 @@ HelmholtzKernel(T *__restrict__ dst,
   // 3rd GEMM of NT
   // X Direction
   for (std::uint32_t i = threadIdx.y; i < nDofsPerDim * nDofsPerDim;
-       i += blockDim.y)
+       i += yThreads)
     {
       T tempE, tempO, temp1, temp2;
 

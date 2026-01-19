@@ -227,12 +227,12 @@ namespace dftfe
                                    const std::uint32_t  nOwnedDofs,
                                    const std::uint32_t  nGhostDofs)
   {
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-
     constexpr int yThreads = 64;
 
     dim3 blocks(inhomogenityListSize, nBatch, 1);
     dim3 threads(batchSize, yThreads, 1);
+
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
 
     constraintsDistributeTransposeKernel<double, nDofsPerDim, batchSize>
       <<<blocks, threads>>>(dst,

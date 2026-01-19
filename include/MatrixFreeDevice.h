@@ -44,6 +44,7 @@ namespace dftfe
    * the Gauss quadrature rule. batchSize is the size of batch tuned to hardware
    *
    * @author Gourab Panigrahi
+   *
    */
   template <typename T,
             dftfe::operatorList operatorID,
