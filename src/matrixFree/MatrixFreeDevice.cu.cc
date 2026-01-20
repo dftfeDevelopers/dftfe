@@ -1253,7 +1253,7 @@ HelmholtzKernel(T *__restrict__ dst,
   for (std::uint32_t i = threadIdx.y; i < nQuadPointsPerDim * nQuadPointsPerDim;
        i += yThreads)
     {
-      T tempE, tempO, temp1, temp2;
+      T tempE, tempO;
 
       memset(regT, 0, nQuadPointsPerDim * sizeof(T));
 
@@ -1263,9 +1263,10 @@ HelmholtzKernel(T *__restrict__ dst,
             sharedU[threadIdx.x + i * batchSize +
                     k * batchSize * nQuadPointsPerDim * nQuadPointsPerDim];
 
-          regP[nQuadPointsPerDim - 1 - k] = sharedU[threadIdx.x + i * batchSize +
-                          (nQuadPointsPerDim - 1 - k) * batchSize *
-                            nQuadPointsPerDim * nQuadPointsPerDim];
+          regP[nQuadPointsPerDim - 1 - k] =
+            sharedU[threadIdx.x + i * batchSize +
+                    (nQuadPointsPerDim - 1 - k) * batchSize *
+                      nQuadPointsPerDim * nQuadPointsPerDim];
 
           tempE = regP[k] + regP[nQuadPointsPerDim - 1 - k];
           tempO = regP[k] - regP[nQuadPointsPerDim - 1 - k];

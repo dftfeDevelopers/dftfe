@@ -103,6 +103,21 @@ namespace dftfe
                                        constMemSize * sizeof(T),
                                        0,
                                        hipMemcpyHostToDevice));
+
+    int deviceId = 0;
+    DEVICE_API_CHECK(hipGetDevice(&deviceId));
+
+    int maxDynSharedDefault = 0;
+    DEVICE_API_CHECK(
+      hipDeviceGetAttribute(&maxDynSharedDefault,
+                            hipDeviceAttributeMaxSharedMemoryPerBlock,
+                            deviceId));
+
+    if (sharedMemSize > static_cast<std::size_t>(maxDynSharedDefault))
+      throw std::runtime_error(
+        "Requested dynamic shared memory exceeds max limit");
+
+#elif DFTFE_WITH_DEVICE_LANG_SYCL
 #endif
   }
 
