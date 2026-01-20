@@ -118,6 +118,23 @@ namespace dftfe
         "Requested dynamic shared memory exceeds max limit");
 
 #elif DFTFE_WITH_DEVICE_LANG_SYCL
+    // Allocate device memory for constant data and copy from host
+    sycl::queue &queue =
+      dftfe::utils::queueRegistry.find(dftfe::utils::defaultStream)->second;
+
+    // Free previous allocation if any
+    if (d_constMem != nullptr)
+      {
+        sycl::free(d_constMem, queue);
+        d_constMem = nullptr;
+      }
+
+    // Allocate new device memory
+    d_constMem     = sycl::malloc_device<double>(constMemSize, queue);
+    d_constMemSize = constMemSize;
+
+    // Copy data from host to device
+    queue.memcpy(d_constMem, constMemHost, constMemSize * sizeof(T)).wait();
 #endif
   }
 
@@ -185,6 +202,36 @@ namespace dftfe
       nGhostDofs);
 
 #elif DFTFE_WITH_DEVICE_LANG_SYCL
+    sycl::queue &queue =
+      dftfe::utils::queueRegistry.find(dftfe::utils::defaultStream)->second;
+
+    constexpr std::size_t sharedMemSizeConstraints =
+      batchSize * nDofsPerDim * nDofsPerDim;
+
+    queue.submit([&](sycl::handler &cgh) {
+      sycl::local_accessor<T, 1> sharedConstrainingData(
+        sharedMemSizeConstraints, cgh);
+      cgh.parallel_for(
+        sycl::nd_range<3>(sycl::range<3>(1, nBatch, inhomogenityListSize) *
+                            sycl::range<3>(1, yThreads, batchSize),
+                          sycl::range<3>(1, yThreads, batchSize)),
+        [=](sycl::nd_item<3> item) {
+          constraintsDistributeKernelSYCL<T, nDofsPerDim, batchSize>(
+            item,
+            src,
+            constrainingNodeBuckets,
+            constrainingNodeOffset,
+            constrainedNodeBuckets,
+            constrainedNodeOffset,
+            weightMatrixList,
+            weightMatrixOffset,
+            inhomogenityList,
+            ghostMap,
+            nOwnedDofs,
+            nGhostDofs,
+            sharedConstrainingData);
+        });
+    });
 #endif
   }
 
@@ -252,6 +299,36 @@ namespace dftfe
       nGhostDofs);
 
 #elif DFTFE_WITH_DEVICE_LANG_SYCL
+    sycl::queue &queue =
+      dftfe::utils::queueRegistry.find(dftfe::utils::defaultStream)->second;
+
+    constexpr std::size_t sharedMemSizeConstraints =
+      batchSize * nDofsPerDim * nDofsPerDim * 4;
+
+    queue.submit([&](sycl::handler &cgh) {
+      sycl::local_accessor<T, 1> sharedConstrainedData(sharedMemSizeConstraints,
+                                                       cgh);
+      cgh.parallel_for(
+        sycl::nd_range<3>(sycl::range<3>(1, nBatch, inhomogenityListSize) *
+                            sycl::range<3>(1, yThreads, batchSize),
+                          sycl::range<3>(1, yThreads, batchSize)),
+        [=](sycl::nd_item<3> item) {
+          constraintsDistributeTransposeKernelSYCL<T, nDofsPerDim, batchSize>(
+            item,
+            dst,
+            src,
+            constrainingNodeBuckets,
+            constrainingNodeOffset,
+            constrainedNodeBuckets,
+            constrainedNodeOffset,
+            weightMatrixList,
+            weightMatrixOffset,
+            ghostMap,
+            nOwnedDofs,
+            nGhostDofs,
+            sharedConstrainedData);
+        });
+    });
 #endif
   }
 
@@ -302,6 +379,25 @@ namespace dftfe
       map);
 
 #elif DFTFE_WITH_DEVICE_LANG_SYCL
+    sycl::queue &queue =
+      dftfe::utils::queueRegistry.find(dftfe::utils::defaultStream)->second;
+
+    constexpr std::size_t sharedMemElements =
+      2 * batchSize * nQuadPointsPerDim * nQuadPointsPerDim * nQuadPointsPerDim;
+
+    const T *constMemPtr = d_constMem;
+
+    queue.submit([&](sycl::handler &cgh) {
+      sycl::local_accessor<T, 1> sharedMem(sharedMemElements, cgh);
+      cgh.parallel_for(
+        sycl::nd_range<3>(sycl::range<3>(1, nBatch, nCells) *
+                            sycl::range<3>(1, yThreads, batchSize),
+                          sycl::range<3>(1, yThreads, batchSize)),
+        [=](sycl::nd_item<3> item) {
+          LaplaceKernelSYCL<T, nDofsPerDim, nQuadPointsPerDim, batchSize, dim>(
+            item, dst, src, jacobianFactor, map, constMemPtr, sharedMem);
+        });
+    });
 #endif
   }
 
@@ -354,6 +450,35 @@ namespace dftfe
       coeffHelmholtz);
 
 #elif DFTFE_WITH_DEVICE_LANG_SYCL
+    sycl::queue &queue =
+      dftfe::utils::queueRegistry.find(dftfe::utils::defaultStream)->second;
+
+    constexpr std::size_t sharedMemElements =
+      2 * batchSize * nQuadPointsPerDim * nQuadPointsPerDim * nQuadPointsPerDim;
+
+    const T *constMemPtr = d_constMem;
+
+    queue.submit([&](sycl::handler &cgh) {
+      sycl::local_accessor<T, 1> sharedMem(sharedMemElements, cgh);
+      cgh.parallel_for(
+        sycl::nd_range<3>(sycl::range<3>(1, nBatch, nCells) *
+                            sycl::range<3>(1, yThreads, batchSize),
+                          sycl::range<3>(1, yThreads, batchSize)),
+        [=](sycl::nd_item<3> item) {
+          HelmholtzKernelSYCL<T,
+                              nDofsPerDim,
+                              nQuadPointsPerDim,
+                              batchSize,
+                              dim>(item,
+                                   dst,
+                                   src,
+                                   jacobianFactor,
+                                   map,
+                                   coeffHelmholtz,
+                                   constMemPtr,
+                                   sharedMem);
+        });
+    });
 #endif
   }
 
