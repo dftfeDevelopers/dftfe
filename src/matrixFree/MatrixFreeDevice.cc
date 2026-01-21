@@ -162,10 +162,10 @@ namespace dftfe
   {
     constexpr int yThreads = 64;
 
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
+
     dim3 blocks(inhomogenityListSize, nBatch, 1);
     dim3 threads(batchSize, yThreads, 1);
-
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
 
     constraintsDistributeKernel<double, nDofsPerDim, batchSize>
       <<<blocks, threads>>>(src,
@@ -181,6 +181,9 @@ namespace dftfe
                             nGhostDofs);
 
 #elif DFTFE_WITH_DEVICE_LANG_HIP
+
+    dim3 blocks(inhomogenityListSize, nBatch, 1);
+    dim3 threads(batchSize, yThreads, 1);
 
     hipLaunchKernelGGL(
       HIP_KERNEL_NAME(
@@ -259,10 +262,10 @@ namespace dftfe
   {
     constexpr int yThreads = 64;
 
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
+
     dim3 blocks(inhomogenityListSize, nBatch, 1);
     dim3 threads(batchSize, yThreads, 1);
-
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
 
     constraintsDistributeTransposeKernel<double, nDofsPerDim, batchSize>
       <<<blocks, threads>>>(dst,
@@ -278,6 +281,9 @@ namespace dftfe
                             nGhostDofs);
 
 #elif DFTFE_WITH_DEVICE_LANG_HIP
+
+    dim3 blocks(inhomogenityListSize, nBatch, 1);
+    dim3 threads(batchSize, yThreads, 1);
 
     hipLaunchKernelGGL(
       HIP_KERNEL_NAME(
@@ -356,15 +362,18 @@ namespace dftfe
                                           nQuadPointsPerDim *
                                           nQuadPointsPerDim * sizeof(T);
 
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
+
     const dim3 blocks(nCells, nBatch, 1);
     const dim3 threads(batchSize, yThreads, 1);
-
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
 
     LaplaceKernel<T, nDofsPerDim, nQuadPointsPerDim, batchSize, dim>
       <<<blocks, threads, sharedMemSize>>>(dst, src, jacobianFactor, map);
 
 #elif DFTFE_WITH_DEVICE_LANG_HIP
+
+    const dim3 blocks(nCells, nBatch, 1);
+    const dim3 threads(batchSize, yThreads, 1);
 
     hipLaunchKernelGGL(
       HIP_KERNEL_NAME(
@@ -425,16 +434,19 @@ namespace dftfe
                                           nQuadPointsPerDim *
                                           nQuadPointsPerDim * sizeof(T);
 
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
+
     const dim3 blocks(nCells, nBatch, 1);
     const dim3 threads(batchSize, yThreads, 1);
-
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
 
     HelmholtzKernel<T, nDofsPerDim, nQuadPointsPerDim, batchSize, dim>
       <<<blocks, threads, sharedMemSize>>>(
         dst, src, jacobianFactor, map, coeffHelmholtz);
 
 #elif DFTFE_WITH_DEVICE_LANG_HIP
+
+    const dim3 blocks(nCells, nBatch, 1);
+    const dim3 threads(batchSize, yThreads, 1);
 
     hipLaunchKernelGGL(
       HIP_KERNEL_NAME(
