@@ -147,11 +147,11 @@ namespace dftfe
                                    ValueTypeBasisData,
                                    memorySpaceSrc> &basisOperationsSrc);
 
-      /*The shape functions centered at the quadrature points derived from TEMP
-       * DENSITY QUADRATURE RULE evaluated at DENSITY QUADRATURE RULE */
+      /*The shape functions centered at the quadrature points derived from
+       * quadId1 evaluated at quadId2 */
       void
-      createShapeFnsTempDensityQuad(const dftfe::uInt tempDensityquadId,
-                                    const dftfe::uInt densityquadId);
+      shapeFunctionsCenteredAtQuad1EvaluatedAtQuad2(const dftfe::uInt quadId1,
+                                                    const dftfe::uInt quadId2);
 
       /**
        * @brief sets internal variables and optionally resizes internal temp storage for interpolation operations
@@ -1066,7 +1066,7 @@ namespace dftfe
       dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
         d_inverseStiffnessVectorCoeffType;
       dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>
-        d_shapeFnValTempDensityToDensityQuad;
+        d_shapeFnValIntermediateDensityToDensityQuad;
 
       mutable std::map<
         dftfe::uInt,
@@ -1225,13 +1225,11 @@ namespace dftfe
 
 
       void
-      interpolateQ1ToQ2(
-        const dftfe::utils::MemoryStorage<double, memorySpace> &Q1Field,
-        const dftfe::uInt                                       quadRule1,
-        const dftfe::uInt                                       quadRule2,
-        dftfe::utils::MemoryStorage<double, memorySpace> &quadratureValueData,
-        const dftfe::uInt                                 numComponents,
-        const dftfe::uInt numSpinComponents) const;
+      interpolateQ1ToQ2(const double     *Q1Field,
+                        const dftfe::uInt quadRule1,
+                        const dftfe::uInt quadRule2,
+                        double           *Q2Field,
+                        const dftfe::uInt numComponents) const;
 
       // FIXME Untested function
       /**

@@ -1484,7 +1484,7 @@ namespace dftfe
     dftfe::uInt d_kerkerAXQuadratureIdElectro;
     dftfe::uInt d_helmholtzDofHandlerIndexElectro;
     dftfe::uInt d_binsStartDofHandlerIndexElectro;
-    dftfe::uInt d_densityQuadratureId, d_tempDensityQuadratureId;
+    dftfe::uInt d_densityQuadratureId, d_intermediateDensityQuadratureId;
     dftfe::uInt d_densityQuadratureIdElectro;
     dftfe::uInt d_sparsityPatternQuadratureId;
     dftfe::uInt d_nOMPThreads;

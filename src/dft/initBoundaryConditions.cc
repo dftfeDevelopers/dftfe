@@ -233,14 +233,15 @@ namespace dftfe
     // SparsityPattern VEctor
     quadratureVector.push_back(dealii::QGauss<1>(8));
     quadratureVector.push_back(
-      dealii::QGauss<1>(d_dftParamsPtr->tempDensityQuadratureRule));
-    d_densityQuadratureId         = 0;
-    d_nlpspQuadratureId           = 1;
-    d_gllQuadratureId             = 2;
-    d_lpspQuadratureId            = 3;
-    d_feOrderPlusOneQuadratureId  = 4;
-    d_sparsityPatternQuadratureId = 5;
-    d_tempDensityQuadratureId     = 6;
+      dealii::QGauss<1>(d_dftParamsPtr->intermediateDensityQuadratureRule));
+
+    d_densityQuadratureId             = 0;
+    d_nlpspQuadratureId               = 1;
+    d_gllQuadratureId                 = 2;
+    d_lpspQuadratureId                = 3;
+    d_feOrderPlusOneQuadratureId      = 4;
+    d_sparsityPatternQuadratureId     = 5;
+    d_intermediateDensityQuadratureId = 6;
 
 
     double init_mf;
@@ -283,7 +284,7 @@ namespace dftfe
               d_lpspQuadratureId,
               d_feOrderPlusOneQuadratureId,
               d_sparsityPatternQuadratureId,
-              d_tempDensityQuadratureId};
+              d_intermediateDensityQuadratureId};
             std::vector<dftfe::basis::UpdateFlags> updateFlags{
               updateFlagsAll,
               updateFlagsAll,
@@ -291,7 +292,8 @@ namespace dftfe
               updateFlagsLPSP,
               updateFlagsfeOrderPlusOne,
               updateFlagssparsityPattern,
-              updateFlagsAll};
+              dftfe::basis::update_values |
+              dftfe::basis::update_gradients};
             d_basisOperationsPtrHost->init(matrix_free_data,
                                            d_constraintsVector,
                                            d_densityDofHandlerIndex,
@@ -307,6 +309,9 @@ namespace dftfe
                 true,
                 !d_dftParamsPtr->approxOverlapMatrix);
             d_basisOperationsPtrHost->computeInverseSqrtMassVector(true, false);
+            d_basisOperationsPtrHost
+              ->shapeFunctionsCenteredAtQuad1EvaluatedAtQuad2(
+                d_intermediateDensityQuadratureId, d_densityQuadratureId);
           }
       }
     if (!d_dftParamsPtr->useDevice && recomputeBasisData)
@@ -352,8 +357,6 @@ namespace dftfe
           {
             d_basisOperationsPtrDevice->clear();
             d_basisOperationsPtrDevice->init(*d_basisOperationsPtrHost);
-            d_basisOperationsPtrDevice->createShapeFnsTempDensityQuad(
-              d_tempDensityQuadratureId, d_densityQuadratureId);
             const dftfe::uInt BVec =
               std::min(d_dftParamsPtr->chebyWfcBlockSize, d_numEigenValues);
 
@@ -400,20 +403,16 @@ namespace dftfe
             std::vector<dftfe::uInt> quadratureIndices{
               d_nlpspQuadratureId,
               d_densityQuadratureId,
-              d_feOrderPlusOneQuadratureId,
-              d_tempDensityQuadratureId};
+              d_feOrderPlusOneQuadratureId};
             std::vector<dftfe::basis::UpdateFlags> updateFlags{
               updateFlagsAll,
               updateFlagsAll,
-              updateFlagsGradientsAndInvJacobians,
-              updateFlagsAll};
+              updateFlagsGradientsAndInvJacobians};
             d_basisOperationsPtrDevice->init(matrix_free_data,
                                              d_constraintsVector,
                                              d_densityDofHandlerIndex,
                                              quadratureIndices,
                                              updateFlags);
-            d_basisOperationsPtrDevice->createShapeFnsTempDensityQuad(
-              d_tempDensityQuadratureId, d_densityQuadratureId);
             if (d_dftParamsPtr->finiteElementPolynomialOrder ==
                 d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics)
               d_basisOperationsPtrDevice->computeCellStiffnessMatrix(

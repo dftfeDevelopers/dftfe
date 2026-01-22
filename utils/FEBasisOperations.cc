@@ -196,6 +196,10 @@ namespace dftfe
       d_nQuadsPerCell.resize(d_quadratureIDsVector.size());
       d_quadPoints    = basisOperationsSrc.d_quadPoints;
       d_cellCentroids = basisOperationsSrc.d_cellCentroids;
+      d_shapeFnValIntermediateDensityToDensityQuad.resize(
+        basisOperationsSrc.d_shapeFnValIntermediateDensityToDensityQuad.size());
+      d_shapeFnValIntermediateDensityToDensityQuad.copyFrom(
+        basisOperationsSrc.d_shapeFnValIntermediateDensityToDensityQuad);
       initializeConstraints();
       for (dftfe::uInt iQuadIndex = 0;
            iQuadIndex < d_quadratureIDsVector.size();
@@ -346,37 +350,39 @@ namespace dftfe
               dftfe::utils::MemorySpace memorySpace>
     void
     FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
-      createShapeFnsTempDensityQuad(const dftfe::uInt tempDensityquadId,
-                                    const dftfe::uInt densityquadId)
+      shapeFunctionsCenteredAtQuad1EvaluatedAtQuad2(const dftfe::uInt quadId1,
+                                                    const dftfe::uInt quadId2)
     {
       dealii::FE_DGQArbitraryNodes<3> fe_dgq(
-        d_matrixFreeDataPtr->get_shape_info(d_dofHandlerID, tempDensityquadId)
+        d_matrixFreeDataPtr->get_shape_info(d_dofHandlerID, quadId1)
           .get_shape_data()
           .quadrature);
 
-      dealii::FEValues<3> feCollocTempDensityToDensityQuad(
+      dealii::FEValues<3> feCollocIntermediateDensityToDensityQuad(
         fe_dgq,
-        d_matrixFreeDataPtr->get_quadrature(densityquadId),
+        d_matrixFreeDataPtr->get_quadrature(quadId2),
         dealii::update_values);
 
       const dftfe::uInt numQuads =
-        d_matrixFreeDataPtr->get_quadrature(densityquadId).size();
+        d_matrixFreeDataPtr->get_quadrature(quadId2).size();
       const dftfe::uInt dofsPerCell = fe_dgq.dofs_per_cell;
 
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         shapeFnValuesHost(numQuads * dofsPerCell);
 
-      d_shapeFnValTempDensityToDensityQuad.resize(numQuads * dofsPerCell);
+      d_shapeFnValIntermediateDensityToDensityQuad.resize(numQuads *
+                                                          dofsPerCell);
 
       for (dftfe::uInt iQuad = 0; iQuad < numQuads; iQuad++)
         {
           for (dftfe::uInt iNode = 0; iNode < dofsPerCell; iNode++)
             {
               shapeFnValuesHost[iNode * numQuads + iQuad] =
-                feCollocTempDensityToDensityQuad.shape_value(iNode, iQuad);
+                feCollocIntermediateDensityToDensityQuad.shape_value(iNode,
+                                                                     iQuad);
             }
         }
-      d_shapeFnValTempDensityToDensityQuad.copyFrom(shapeFnValuesHost);
+      d_shapeFnValIntermediateDensityToDensityQuad.copyFrom(shapeFnValuesHost);
     }
 
 
@@ -3836,13 +3842,11 @@ namespace dftfe
               dftfe::utils::MemorySpace memorySpace>
     void
     FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
-      interpolateQ1ToQ2(
-        const dftfe::utils::MemoryStorage<double, memorySpace> &Q1Field,
-        const dftfe::uInt                                       quadId1,
-        const dftfe::uInt                                       quadId2,
-        dftfe::utils::MemoryStorage<double, memorySpace> &quadratureValueData,
-        const dftfe::uInt                                 numComponents,
-        const dftfe::uInt numSpinComponents) const
+      interpolateQ1ToQ2(const double     *Q1Field,
+                        const dftfe::uInt quadId1,
+                        const dftfe::uInt quadId2,
+                        double           *Q2Field,
+                        const dftfe::uInt numComponents) const
     {
       AssertThrow(
         numComponents == 1 || numComponents == 3,
@@ -3851,76 +3855,65 @@ namespace dftfe
 
       auto itr = std::find(d_quadratureIDsVector.begin(),
                            d_quadratureIDsVector.end(),
-                           quadId2);
+                           quadId1);
       AssertThrow(
         itr != d_quadratureIDsVector.end(),
         dealii::ExcMessage(
           "DFT-FE Error: FEBasisOperations Class not initialized with this quadrature Index."));
 
-      const dftfe::uInt numQuads =
-        d_matrixFreeDataPtr->get_quadrature(quadId2).size();
-      const dftfe::uInt dofsPerCell =
-        d_matrixFreeDataPtr->get_quadrature(quadId1).size();
-      const dftfe::uInt nCells = this->nCells();
-      const std::size_t expectedQ1Size =
-        nCells * dofsPerCell * numComponents * numSpinComponents;
-
+      itr = std::find(d_quadratureIDsVector.begin(),
+                      d_quadratureIDsVector.end(),
+                      quadId2);
       AssertThrow(
-        Q1Field.size() == expectedQ1Size,
+        itr != d_quadratureIDsVector.end(),
         dealii::ExcMessage(
-          "interpolateQ1ToQ2: Q1Field size mismatch with nCells * dofsPerCell * numComponents * numSpinComponents."));
+          "DFT-FE Error: FEBasisOperations Class not initialized with this quadrature Index."));
 
-      quadratureValueData.resize(numComponents * numQuads * nCells *
-                                 numSpinComponents);
-
+      const dftfe::uInt numQuadsQ1 =
+        d_matrixFreeDataPtr->get_quadrature(quadId1).size();
+      const dftfe::uInt numQuadsQ2 =
+        d_matrixFreeDataPtr->get_quadrature(quadId2).size();
+      const dftfe::uInt nCells = this->nCells();
 
       const double scalarCoeffAlpha = 1.0, scalarCoeffBeta = 0.0;
 
-      for (int spinIndex = 0; spinIndex < numSpinComponents; spinIndex++)
+      if (numComponents == 1)
         {
-          dftfe::uInt cellIdx = 0;
-          // for (dftfe::uInt cellIdx = 0; cellIdx < 1; cellIdx++)
-          {
-            if (numComponents == 1)
-              {
-                d_BLASWrapperPtr->xgemm(
-                  'N',
-                  'N',
-                  numQuads,
-                  nCells,
-                  dofsPerCell,
-                  &scalarCoeffAlpha,
-                  d_shapeFnValTempDensityToDensityQuad.data(),
-                  numQuads,
-                  Q1Field.data() + spinIndex * nCells * dofsPerCell,
-                  dofsPerCell,
-                  &scalarCoeffBeta,
-                  quadratureValueData.data() + spinIndex * nCells * numQuads,
-                  numQuads);
-              }
-            else if (numComponents == 3)
-              {
-                d_BLASWrapperPtr->xgemmStridedBatched(
-                  'N',
-                  'T',
-                  3,
-                  numQuads,
-                  dofsPerCell,
-                  &scalarCoeffAlpha,
-                  Q1Field.data() + spinIndex * nCells * dofsPerCell * 3,
-                  3,
-                  3 * dofsPerCell,
-                  d_shapeFnValTempDensityToDensityQuad.data(),
-                  numQuads,
-                  0,
-                  &scalarCoeffBeta,
-                  quadratureValueData.data() +
-                    spinIndex * nCells * numQuads * 3,
-                  3,
-                  3 * numQuads,
-                  nCells);
-              }
-          }
+          d_BLASWrapperPtr->xgemm(
+            'N',
+            'N',
+            numQuadsQ2,
+            nCells,
+            numQuadsQ1,
+            &scalarCoeffAlpha,
+            d_shapeFnValIntermediateDensityToDensityQuad.data(),
+            numQuadsQ2,
+            Q1Field,
+            numQuadsQ1,
+            &scalarCoeffBeta,
+            Q2Field,
+            numQuadsQ2);
+        }
+      else if (numComponents == 3)
+        {
+          d_BLASWrapperPtr->xgemmStridedBatched(
+            'N',
+            'T',
+            3,
+            numQuadsQ2,
+            numQuadsQ1,
+            &scalarCoeffAlpha,
+            Q1Field,
+            3,
+            3 * numQuadsQ1,
+            d_shapeFnValIntermediateDensityToDensityQuad.data(),
+            numQuadsQ2,
+            0,
+            &scalarCoeffBeta,
+            Q2Field,
+            3,
+            3 * numQuadsQ2,
+            nCells);
         }
     }
 
