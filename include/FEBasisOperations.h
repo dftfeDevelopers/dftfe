@@ -43,6 +43,8 @@ namespace dftfe
       update_inversejacobians = 0x0010,
 
       update_jxw = 0x0020,
+
+      update_collocation_gradients = 0x0040,
     };
 
     inline UpdateFlags
@@ -385,6 +387,12 @@ namespace dftfe
       shapeFunctionGradientData(bool transpose = false) const;
 
       /**
+       * @brief Collocation shape function gradient values at quadrature points.
+       */
+      const dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace> &
+      collocationShapeFunctionGradientData() const;
+
+      /**
        * @brief Inverse Jacobian matrices, for cartesian cells returns the
        * diagonal elements of the inverse Jacobian matrices for each cell, for
        * affine cells returns the 3x3 inverse Jacobians for each cell otherwise
@@ -464,6 +472,26 @@ namespace dftfe
                        ->second :
                      d_shapeFunctionGradientBasisData.find(d_quadratureID)
                        ->second;
+          }
+      }
+
+      /**
+       * @brief Collocation shape function gradient values at quadrature points in ValueTypeBasisData.
+       */
+      const auto &
+      collocationShapeFunctionGradientBasisData() const
+      {
+        if constexpr (std::is_same<ValueTypeBasisCoeff,
+                                   ValueTypeBasisData>::value)
+          {
+            return d_collocationShapeFunctionGradientData.find(d_quadratureID)
+              ->second;
+          }
+        else
+          {
+            return d_collocationShapeFunctionGradientBasisData
+              .find(d_quadratureID)
+              ->second;
           }
       }
 
@@ -950,6 +978,9 @@ namespace dftfe
         d_shapeFunctionGradientDataInternalLayout;
       std::map<dftfe::uInt,
                dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>>
+        d_collocationShapeFunctionGradientData;
+      std::map<dftfe::uInt,
+               dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>>
         d_shapeFunctionGradientData;
       std::map<dftfe::uInt,
                dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>>
@@ -967,6 +998,9 @@ namespace dftfe
       std::map<dftfe::uInt,
                dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>>
         d_shapeFunctionBasisData;
+      std::map<dftfe::uInt,
+               dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>>
+        d_collocationShapeFunctionGradientBasisData;
       std::map<dftfe::uInt,
                dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>>
         d_shapeFunctionGradientBasisData;
