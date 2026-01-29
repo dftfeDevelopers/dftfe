@@ -115,8 +115,8 @@ namespace dftfe
         ->get_quadrature(tempQuadratureIndex)
         .size();
 
-    const bool useTempQuadrature =
-      (numQuadsQuadratureIndex > numQuadsTempQuadratureIndex);
+    const bool useTempQuadrature = true;
+      // (numQuadsQuadratureIndex > numQuadsTempQuadratureIndex);
     basisOperationsPtr->reinit(BVec * numWfnSpinors,
                                cellsBlockSize,
                                useTempQuadrature ? tempQuadratureIndex :
@@ -337,20 +337,20 @@ namespace dftfe
     if (useTempQuadrature)
       {
         rhoRefinedStorage.resize(totalLocallyOwnedCells *
-                                   numQuadsQuadratureIndex * numSpinComponents,
+                                   numQuadsQuadratureIndex * numRhoComponents,
                                  0.0);
         if (isEvaluateGradRho)
           {
             gradRhoRefinedStorage.resize(totalLocallyOwnedCells *
                                            numQuadsQuadratureIndex * 3 *
-                                           numSpinComponents,
+                                           numRhoComponents,
                                          0.0);
           }
         if (isEvaluateTau)
           {
             tauRefinedStorage.resize(totalLocallyOwnedCells *
                                        numQuadsQuadratureIndex *
-                                       numSpinComponents,
+                                       numRhoComponents,
                                      0.0);
           }
       }
@@ -361,7 +361,7 @@ namespace dftfe
     if (useTempQuadrature)
       {
         basisOperationsPtr->reinit(BVec, cellsBlockSize, quadratureIndex);
-        for (dftfe::uInt spinIndex = 0; spinIndex < numSpinComponents;
+        for (dftfe::uInt spinIndex = 0; spinIndex < numRhoComponents;
              ++spinIndex)
           {
             basisOperationsPtr->interpolateQ1ToQ2(

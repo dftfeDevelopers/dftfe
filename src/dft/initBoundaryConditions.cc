@@ -292,8 +292,7 @@ namespace dftfe
               updateFlagsLPSP,
               updateFlagsfeOrderPlusOne,
               updateFlagssparsityPattern,
-              dftfe::basis::update_values |
-              dftfe::basis::update_gradients};
+              dftfe::basis::update_values | dftfe::basis::update_gradients};
             d_basisOperationsPtrHost->init(matrix_free_data,
                                            d_constraintsVector,
                                            d_densityDofHandlerIndex,
