@@ -114,7 +114,7 @@ namespace dftfe
                     d_blockSize,
                   0.0);
 
-              d_compressBitsPerValue = 16;
+              d_compressBitsPerValue = 12;
 
               d_maxCompressedTargetBytes =
                 d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size() *
@@ -2145,7 +2145,7 @@ namespace dftfe
                       recvArrayStartPtr +=
                         d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()
                           .data()[i] *
-                        d_blockSize * bitsPerValue / 8;
+                        d_blockSize * d_compressBitsPerValue / 8;
                     }
                   NCCLCHECK(ncclGroupEnd());
                 }
@@ -2401,10 +2401,22 @@ namespace dftfe
                     zfp_stream_set_bit_stream(d_zfpDecompressStream,
                                               d_zfpDecompressBitstream);
                     zfp_stream_rewind(d_zfpDecompressStream);
+
+                    cudaEvent_t zfpDone;
+                    cudaEventCreateWithFlags(&zfpDone, cudaEventDisableTiming);
+
                     zfp_decompress(d_zfpDecompressStream, d_zfpDecompressField);
+
+                    cudaEventRecord(zfpDone, 0);
+                    cudaStreamWaitEvent(
+                      dftfe::utils::DeviceCCLWrapper::d_deviceCommStream,
+                      zfpDone,
+                      0);
+
                     stream_close(d_zfpDecompressBitstream);
                     zfp_field_free(d_zfpDecompressField);
                     zfp_stream_close(d_zfpDecompressStream);
+                    cudaEventDestroy(zfpDone);
                   }
                 // End Decompression
               }
