@@ -1872,7 +1872,11 @@ namespace dftfe
       dealii::ExcMessage(
         "DFT-FE Error: LOCAL DENSITY OF STATES is currently not implemented in the case of periodic and semi-periodic boundary conditions."));
 
-
+    if (!useLibXCForXCEvaluation)
+      AssertThrow(
+        !(XCType == "GGA-REVPBE" || XCType == "GGA-PBESOL"),
+        dealii::ExcMessage(
+          "DFT-FE Error: USE LIBXC FOR XC FUNCTIONAL EVALUATION has to be set to true for this XC functional"));
     if (floatingNuclearCharges)
       AssertThrow(
         smearedNuclearCharges,
