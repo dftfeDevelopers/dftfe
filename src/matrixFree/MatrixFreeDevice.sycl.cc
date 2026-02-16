@@ -283,6 +283,22 @@ LaplaceKernelSYCL(sycl::nd_item<3>           item,
                           nQuadPointsPerDim +
                         padding];
 
+  // constMem is stored at the tail of sharedMem (local memory)
+  constexpr std::uint32_t constMemElements =
+    2 * (qEven * pEven + qOdd * pOdd) + 4 * qEven * qOdd +
+    nQuadPointsPerDim * nDofsPerDim + nQuadPointsPerDim;
+  T *constMem = &sharedV[batchSize * nQuadPointsPerDim * nQuadPointsPerDim *
+                           nQuadPointsPerDim +
+                         padding];
+
+  // Cooperatively load constMem from global to local memory
+  for (std::uint32_t idx = threadIdxY * batchSize + threadIdxX;
+       idx < constMemElements;
+       idx += yThreads * batchSize)
+    constMem[idx] = constMem[idx];
+
+  item.barrier(sycl::access::fence_space::local_space);
+
   const T *constN      = constMem;
   const T *constD      = &constN[qEven * pEven + qOdd * pOdd];
   const T *constNT     = &constD[2 * qEven * qOdd];
@@ -1086,6 +1102,22 @@ HelmholtzKernelSYCL(sycl::nd_item<3>           item,
   T *sharedV = &sharedU[batchSize * nQuadPointsPerDim * nQuadPointsPerDim *
                           nQuadPointsPerDim +
                         padding];
+
+  // constMem is stored at the tail of sharedMem (local memory)
+  constexpr std::uint32_t constMemElements =
+    2 * (qEven * pEven + qOdd * pOdd) + 4 * qEven * qOdd +
+    nQuadPointsPerDim * nDofsPerDim + nQuadPointsPerDim;
+  T *constMem = &sharedV[batchSize * nQuadPointsPerDim * nQuadPointsPerDim *
+                           nQuadPointsPerDim +
+                         padding];
+
+  // Cooperatively load constMem from global to local memory
+  for (std::uint32_t idx = threadIdxY * batchSize + threadIdxX;
+       idx < constMemElements;
+       idx += yThreads * batchSize)
+    constMem[idx] = constMem[idx];
+
+  item.barrier(sycl::access::fence_space::local_space);
 
   const T *constN      = constMem;
   const T *constD      = &constN[qEven * pEven + qOdd * pOdd];

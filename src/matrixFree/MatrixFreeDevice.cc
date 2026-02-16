@@ -391,8 +391,18 @@ namespace dftfe
     sycl::queue &queue =
       dftfe::utils::queueRegistry.find(dftfe::utils::defaultStream)->second;
 
+    constexpr std::uint32_t pOddL  = nDofsPerDim / 2;
+    constexpr std::uint32_t pEvenL = nDofsPerDim % 2 == 1 ? pOddL + 1 : pOddL;
+    constexpr std::uint32_t qOddL  = nQuadPointsPerDim / 2;
+    constexpr std::uint32_t qEvenL =
+      nQuadPointsPerDim % 2 == 1 ? qOddL + 1 : qOddL;
+    constexpr std::size_t constMemElements =
+      2 * (qEvenL * pEvenL + qOddL * pOddL) + 4 * qEvenL * qOddL +
+      nQuadPointsPerDim * nDofsPerDim + nQuadPointsPerDim;
     constexpr std::size_t sharedMemElements =
-      2 * batchSize * nQuadPointsPerDim * nQuadPointsPerDim * nQuadPointsPerDim;
+      2 * batchSize * nQuadPointsPerDim * nQuadPointsPerDim *
+        nQuadPointsPerDim +
+      constMemElements;
 
     const T *constMemPtr = d_constMem;
 
@@ -465,8 +475,18 @@ namespace dftfe
     sycl::queue &queue =
       dftfe::utils::queueRegistry.find(dftfe::utils::defaultStream)->second;
 
+    constexpr std::uint32_t pOddH  = nDofsPerDim / 2;
+    constexpr std::uint32_t pEvenH = nDofsPerDim % 2 == 1 ? pOddH + 1 : pOddH;
+    constexpr std::uint32_t qOddH  = nQuadPointsPerDim / 2;
+    constexpr std::uint32_t qEvenH =
+      nQuadPointsPerDim % 2 == 1 ? qOddH + 1 : qOddH;
+    constexpr std::size_t constMemElements =
+      2 * (qEvenH * pEvenH + qOddH * pOddH) + 4 * qEvenH * qOddH +
+      nQuadPointsPerDim * nDofsPerDim + nQuadPointsPerDim;
     constexpr std::size_t sharedMemElements =
-      2 * batchSize * nQuadPointsPerDim * nQuadPointsPerDim * nQuadPointsPerDim;
+      2 * batchSize * nQuadPointsPerDim * nQuadPointsPerDim *
+        nQuadPointsPerDim +
+      constMemElements;
 
     const T *constMemPtr = d_constMem;
 
