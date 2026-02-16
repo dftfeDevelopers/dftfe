@@ -248,7 +248,7 @@ LaplaceKernelSYCL(sycl::nd_item<3>           item,
                   const T                   *src,
                   const T                   *J,
                   const std::uint32_t       *map,
-                  const T                   *constMem,
+                  const T                   *constMemDevice,
                   sycl::local_accessor<T, 1> sharedMem)
 {
   // dst = A.src
@@ -295,7 +295,7 @@ LaplaceKernelSYCL(sycl::nd_item<3>           item,
   for (std::uint32_t idx = threadIdxY * batchSize + threadIdxX;
        idx < constMemElements;
        idx += yThreads * batchSize)
-    constMem[idx] = constMem[idx];
+    constMem[idx] = constMemDevice[idx];
 
   item.barrier(sycl::access::fence_space::local_space);
 
@@ -1068,7 +1068,7 @@ HelmholtzKernelSYCL(sycl::nd_item<3>           item,
                     const T                   *J,
                     const std::uint32_t       *map,
                     const T                    coeffHelmholtz,
-                    const T                   *constMem,
+                    const T                   *constMemDevice,
                     sycl::local_accessor<T, 1> sharedMem)
 {
   // dst = A.src
@@ -1115,7 +1115,7 @@ HelmholtzKernelSYCL(sycl::nd_item<3>           item,
   for (std::uint32_t idx = threadIdxY * batchSize + threadIdxX;
        idx < constMemElements;
        idx += yThreads * batchSize)
-    constMem[idx] = constMem[idx];
+    constMem[idx] = constMemDevice[idx];
 
   item.barrier(sycl::access::fence_space::local_space);
 
