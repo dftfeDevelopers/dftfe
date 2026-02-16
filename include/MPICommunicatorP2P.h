@@ -200,7 +200,7 @@ namespace dftfe
         zfp_field  *d_zfpDecompressField     = nullptr;
         bitstream  *d_zfpCompressBitstream   = nullptr;
         bitstream  *d_zfpDecompressBitstream = nullptr;
-        dftfe::uInt d_compressBitsPerValue   = 16;
+        dftfe::uInt d_compressBitsPerValue   = 8;
 
         dftfe::uInt d_maxCompressedTargetBytes = 0;
         dftfe::uInt d_maxCompressedGhostBytes  = 0;

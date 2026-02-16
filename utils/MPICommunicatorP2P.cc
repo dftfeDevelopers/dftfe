@@ -114,7 +114,7 @@ namespace dftfe
                     d_blockSize,
                   0.0);
 
-              d_compressBitsPerValue = 12;
+              d_compressBitsPerValue = 8;
 
               d_maxCompressedTargetBytes =
                 d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size() *
@@ -1058,10 +1058,19 @@ namespace dftfe
                       zfp_stream_set_bit_stream(d_zfpCompressStream,
                                                 d_zfpCompressBitstream);
                       zfp_stream_rewind(d_zfpCompressStream);
+                      cudaEvent_t zfpDone;
+                      cudaEventCreateWithFlags(&zfpDone,
+                                               cudaEventDisableTiming);
                       zfp_compress(d_zfpCompressStream, d_zfpCompressField);
+                      cudaEventRecord(zfpDone, 0);
+                      cudaStreamWaitEvent(
+                        dftfe::utils::DeviceCCLWrapper::d_deviceCommStream,
+                        zfpDone,
+                        0);
                       stream_close(d_zfpCompressBitstream);
                       zfp_field_free(d_zfpCompressField);
                       zfp_stream_close(d_zfpCompressStream);
+                      cudaEventDestroy(zfpDone);
                     }
                   // End Compression
                 }
@@ -1329,7 +1338,7 @@ namespace dftfe
             if constexpr (memorySpace == MemorySpace::DEVICE)
               {
                 // Begin Decompression
-                if (d_ghostDataCopyCompressHostPinnedPtr->size() > 0)
+                if (d_maxCompressedGhostBytes > 0)
                   {
                     d_zfpDecompressStream = zfp_stream_open(nullptr);
                     if constexpr (std::is_same_v<ValueType, double>)
@@ -1377,10 +1386,18 @@ namespace dftfe
                     zfp_stream_set_bit_stream(d_zfpDecompressStream,
                                               d_zfpDecompressBitstream);
                     zfp_stream_rewind(d_zfpDecompressStream);
+                    cudaEvent_t zfpDone;
+                    cudaEventCreateWithFlags(&zfpDone, cudaEventDisableTiming);
                     zfp_decompress(d_zfpDecompressStream, d_zfpDecompressField);
+                    cudaEventRecord(zfpDone, 0);
+                    cudaStreamWaitEvent(
+                      dftfe::utils::DeviceCCLWrapper::d_deviceCommStream,
+                      zfpDone,
+                      0);
                     stream_close(d_zfpDecompressBitstream);
                     zfp_field_free(d_zfpDecompressField);
                     zfp_stream_close(d_zfpDecompressStream);
+                    cudaEventDestroy(zfpDone);
                   }
                 // End Decompression
               }
@@ -2050,10 +2067,19 @@ namespace dftfe
                     zfp_stream_set_bit_stream(d_zfpCompressStream,
                                               d_zfpCompressBitstream);
                     zfp_stream_rewind(d_zfpCompressStream);
+                    cudaEvent_t zfpDone;
+                    cudaEventCreateWithFlags(&zfpDone, cudaEventDisableTiming);
                     zfp_compress(d_zfpCompressStream, d_zfpCompressField);
+                    cudaEventRecord(zfpDone, 0);
+                    cudaStreamWaitEvent(
+                      dftfe::utils::DeviceCCLWrapper::d_deviceCommStream,
+                      zfpDone,
+                      0);
+
                     stream_close(d_zfpCompressBitstream);
                     zfp_field_free(d_zfpCompressField);
                     zfp_stream_close(d_zfpCompressStream);
+                    cudaEventDestroy(zfpDone);
                   }
                 // End Compression
               }
@@ -2351,7 +2377,7 @@ namespace dftfe
             if constexpr (memorySpace == MemorySpace::DEVICE)
               {
                 // Begin Decompression
-                if (d_sendRecvBufferCompressHostPinnedPtr->size() > 0)
+                if (d_maxCompressedTargetBytes > 0)
                   {
                     d_zfpDecompressStream = zfp_stream_open(nullptr);
                     if constexpr (std::is_same_v<ValueType, double>)
