@@ -47,6 +47,7 @@ namespace dftfe
                  dftfe::utils::MemorySpace::HOST>> basisOperationsPtrHost,
                std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
                                    BLASWrapperPtr,
+               const std::uint32_t dofHandlerID,
                const std::uint32_t quadratureID,
                const std::uint32_t nVectors)
     : mpi_communicator(mpi_comm)
@@ -56,6 +57,7 @@ namespace dftfe
             (dealii::Utilities::MPI::this_mpi_process(mpi_comm) == 0))
     , d_basisOperationsPtrHost(basisOperationsPtrHost)
     , d_BLASWrapperPtr(BLASWrapperPtr)
+    , d_dofHandlerID(dofHandlerID)
     , d_quadratureID(quadratureID)
     , d_nVectors(nVectors)
     , d_nBatch(nVectors / batchSize)
@@ -75,7 +77,7 @@ namespace dftfe
                 dealii::ExcMessage("Set nVectors as multiple of batchSize\n"));
 
     AssertThrow(
-      operatorID < 3,
+      operatorID < 2,
       dealii::ExcMessage(
         "Only Laplace and Helmholtz operators are implemented in Matrix-Free framework\n"));
   }
@@ -104,20 +106,15 @@ namespace dftfe
     d_matrixFreeDataPtr = &(d_basisOperationsPtrHost->matrixFreeData());
     d_nCells            = d_basisOperationsPtrHost->nCells();
 
-    auto dofInfo = d_matrixFreeDataPtr->get_dof_info(
-      d_basisOperationsPtrHost->d_dofHandlerID);
-
+    auto dofInfo = d_matrixFreeDataPtr->get_dof_info(d_dofHandlerID);
     auto shapeData =
-      d_matrixFreeDataPtr
-        ->get_shape_info(d_basisOperationsPtrHost->d_dofHandlerID,
-                         d_quadratureID)
+      d_matrixFreeDataPtr->get_shape_info(d_dofHandlerID, d_quadratureID)
         .get_shape_data();
     auto mappingData =
       d_matrixFreeDataPtr->get_mapping_info().cell_data[d_quadratureID];
 
     d_constraintMatrixPtr =
-      (*(d_basisOperationsPtrHost
-           ->d_constraintsVector))[d_basisOperationsPtrHost->d_dofHandlerID];
+      (*(d_basisOperationsPtrHost->d_constraintsVector))[d_dofHandlerID];
 
     // Initialize shape and gradient functions
     std::array<double, nDofsPerDim * nQuadPointsPerDim>
@@ -134,10 +131,10 @@ namespace dftfe
 
 #if (DEAL_II_VERSION_MAJOR >= 9 && DEAL_II_VERSION_MINOR >= 6)
           shapeData.shape_values[iQuad + iDoF * nQuadPointsPerDim] *
-          (operatorID < 4 ? std::sqrt(shapeData.quadrature.weight(iQuad)) : 1);
+          (operatorID < 3 ? std::sqrt(shapeData.quadrature.weight(iQuad)) : 1);
 #else
           shapeData.shape_values[iQuad + iDoF * nQuadPointsPerDim][0] *
-          (operatorID < 4 ? std::sqrt(shapeData.quadrature.weight(iQuad)) : 1);
+          (operatorID < 3 ? std::sqrt(shapeData.quadrature.weight(iQuad)) : 1);
 #endif
 
     for (std::uint32_t iQuad2 = 0; iQuad2 < nQuadPointsPerDim; iQuad2++)
@@ -147,13 +144,13 @@ namespace dftfe
 #if (DEAL_II_VERSION_MAJOR >= 9 && DEAL_II_VERSION_MINOR >= 6)
           shapeData
             .shape_gradients_collocation[iQuad1 + iQuad2 * nQuadPointsPerDim] *
-          (operatorID < 4 ? std::sqrt(shapeData.quadrature.weight(iQuad1)) /
+          (operatorID < 3 ? std::sqrt(shapeData.quadrature.weight(iQuad1)) /
                               std::sqrt(shapeData.quadrature.weight(iQuad2)) :
                             1);
 #else
           shapeData.shape_gradients_collocation[iQuad1 +
                                                 iQuad2 * nQuadPointsPerDim][0] *
-          (operatorID < 4 ? std::sqrt(shapeData.quadrature.weight(iQuad1)) /
+          (operatorID < 3 ? std::sqrt(shapeData.quadrature.weight(iQuad1)) /
                               std::sqrt(shapeData.quadrature.weight(iQuad2)) :
                             1);
 #endif
@@ -200,17 +197,14 @@ namespace dftfe
 
     // Construct cellIndexToMacroCellSubCellIndexMap
     auto d_nMacroCells = d_matrixFreeDataPtr->n_cell_batches();
-    auto cellPtr       = d_matrixFreeDataPtr
-                     ->get_dof_handler(d_basisOperationsPtrHost->d_dofHandlerID)
-                     .begin_active();
-    auto endcPtr = d_matrixFreeDataPtr
-                     ->get_dof_handler(d_basisOperationsPtrHost->d_dofHandlerID)
-                     .end();
+    auto cellPtr =
+      d_matrixFreeDataPtr->get_dof_handler(d_dofHandlerID).begin_active();
+    auto endcPtr = d_matrixFreeDataPtr->get_dof_handler(d_dofHandlerID).end();
 
-    std::map<dealii::CellId, std::uint32_t> cellIdToCellIndexMap;
-    std::vector<std::uint32_t> cellIndexToMacroCellSubCellIndexMap(d_nCells);
+    std::map<dealii::CellId, dftfe::uInt> cellIdToCellIndexMap;
+    std::vector<dftfe::uInt> cellIndexToMacroCellSubCellIndexMap(d_nCells);
 
-    std::uint32_t iCell = 0;
+    dftfe::uInt iCell = 0;
     for (; cellPtr != endcPtr; cellPtr++)
       if (cellPtr->is_locally_owned())
         {
@@ -219,17 +213,18 @@ namespace dftfe
         }
 
     iCell = 0;
-    for (std::uint32_t iMacroCell = 0; iMacroCell < d_nMacroCells; iMacroCell++)
+    for (dftfe::uInt iMacroCell = 0; iMacroCell < d_nMacroCells; iMacroCell++)
       {
-        const std::uint32_t numberSubCells =
+        const dftfe::uInt numberSubCells =
           d_matrixFreeDataPtr->n_active_entries_per_cell_batch(iMacroCell);
 
-        for (std::uint32_t iSubCell = 0; iSubCell < numberSubCells; iSubCell++)
+        for (dftfe::uInt iSubCell = 0; iSubCell < numberSubCells; iSubCell++)
           {
-            cellPtr = d_matrixFreeDataPtr->get_cell_iterator(
-              iMacroCell, iSubCell, d_basisOperationsPtrHost->d_dofHandlerID);
+            cellPtr = d_matrixFreeDataPtr->get_cell_iterator(iMacroCell,
+                                                             iSubCell,
+                                                             d_dofHandlerID);
 
-            std::uint32_t cellIndex = cellIdToCellIndexMap[cellPtr->id()];
+            dftfe::uInt cellIndex = cellIdToCellIndexMap[cellPtr->id()];
             cellIndexToMacroCellSubCellIndexMap[cellIndex] = iCell;
 
             iCell++;
@@ -245,30 +240,29 @@ namespace dftfe
       coeff = 1.0;
 
     // Initialize Jacobian matrix
-    constexpr std::uint32_t dim = 3;
+    constexpr dftfe::uInt dim = 3;
     dftfe::utils::MemoryStorage<T, dftfe::utils::MemorySpace::HOST>
       jacobianFactorTemp(dim * dim * d_nCells),
       jacobianFactor(dim * dim * d_nCells);
 
     auto cellOffsets = mappingData.data_index_offsets;
 
-    for (auto iCellBatch = 0, cellCount = 0;
+    for (dftfe::uInt iCellBatch = 0, cellCount = 0;
          iCellBatch < dofInfo.n_vectorization_lanes_filled[2].size();
          iCellBatch++)
-      for (auto iCell = 0;
+      for (dftfe::uInt iCell = 0;
            iCell < dofInfo.n_vectorization_lanes_filled[2][iCellBatch];
            iCell++, cellCount++)
-        for (auto d = 0; d < dim; d++)
-          for (auto e = 0; e < dim; e++)
-            for (auto f = 0; f < dim; f++)
-              jacobianFactorTemp[e + d * dim + cellCount * dim * dim] +=
-                coeff *
-                mappingData.jacobians[0][cellOffsets[iCellBatch]][d][f][iCell] *
-                mappingData.jacobians[0][cellOffsets[iCellBatch]][e][f][iCell] *
-                mappingData.JxW_values[cellOffsets[iCellBatch]][iCell];
+        for (dftfe::uInt k = 0; k < dim; k++)
+          for (dftfe::uInt j = 0; j < dim; j++)
+            for (dftfe::uInt i = 0; i < dim; i++)
+              jacobianFactorTemp[i + j * dim + cellCount * dim * dim] +=
+                coeff * mappingData.JxW_values[cellOffsets[iCellBatch]][iCell] *
+                mappingData.jacobians[0][cellOffsets[iCellBatch]][k][i][iCell] *
+                mappingData.jacobians[0][cellOffsets[iCellBatch]][k][j][iCell];
 
-    for (unsigned int iCell = 0; iCell < d_nCells; iCell++)
-      for (unsigned int iDim = 0; iDim < dim * dim; iDim++)
+    for (dftfe::uInt iCell = 0; iCell < d_nCells; iCell++)
+      for (dftfe::uInt iDim = 0; iDim < dim * dim; iDim++)
         jacobianFactor[iDim + iCell * dim * dim] =
           jacobianFactorTemp[iDim + cellIndexToMacroCellSubCellIndexMap[iCell] *
                                       dim * dim];
@@ -277,12 +271,12 @@ namespace dftfe
     d_jacobianFactor.copyFrom(jacobianFactor);
 
     // Create matrix-free maps
-    dftfe::utils::MemoryStorage<std::uint32_t, dftfe::utils::MemorySpace::HOST>
+    dftfe::utils::MemoryStorage<dftfe::uInt, dftfe::utils::MemorySpace::HOST>
       singleVectorGlobalToLocalMapTemp(d_nDofsPerCell * d_nCells),
       singleVectorGlobalToLocalMap(d_nDofsPerCell * d_nCells);
 
     // Construct singleVectorGlobalToLocalMap with matrix-free cell ordering
-    for (auto iCell = 0; iCell < d_nCells; iCell++)
+    for (dftfe::uInt iCell = 0; iCell < d_nCells; iCell++)
       {
         auto checkExpr = dofInfo.row_starts[iCell].second ==
                            dofInfo.row_starts[iCell + 1].second &&
@@ -300,12 +294,12 @@ namespace dftfe
                                    falseClause + d_nDofsPerCell,
                        singleVectorGlobalToLocalMapTemp.data() +
                          iCell * d_nDofsPerCell,
-                       [](std::uint32_t &v) { return v; });
+                       [](dftfe::uInt &v) { return v; });
       }
 
     // Reorder cell numbering to cell-matrix order
-    for (auto iCell = 0; iCell < d_nCells; iCell++)
-      for (auto iDof = 0; iDof < d_nDofsPerCell; iDof++)
+    for (dftfe::uInt iCell = 0; iCell < d_nCells; iCell++)
+      for (dftfe::uInt iDof = 0; iDof < d_nDofsPerCell; iDof++)
         singleVectorGlobalToLocalMap[iDof + iCell * d_nDofsPerCell] =
           singleVectorGlobalToLocalMapTemp
             [iDof +
@@ -412,15 +406,15 @@ namespace dftfe
                                      nQuadPointsPerDim * nDofsPerDim] =
             quadratureWeights[iQuad];
 
-        dftfe::utils::MemoryStorage<std::uint32_t,
+        dftfe::utils::MemoryStorage<dftfe::uInt,
                                     dftfe::utils::MemorySpace::HOST>
           constrainingNodeOffset(d_constrainingNodeBuckets.size() + 1),
           constrainedNodeOffset(d_constrainedNodeBuckets.size() + 1),
           weightMatrixOffset(d_weightMatrixList.size() + 1);
 
-        std::uint32_t k = 0;
+        dftfe::uInt k = 0;
 
-        for (std::uint32_t i = 0; i < d_constrainingNodeBuckets.size(); i++)
+        for (dftfe::uInt i = 0; i < d_constrainingNodeBuckets.size(); i++)
           {
             constrainingNodeOffset[i] = k;
             k += d_constrainingNodeBuckets[i].size();
@@ -429,7 +423,7 @@ namespace dftfe
         constrainingNodeOffset[d_constrainingNodeBuckets.size()] = k;
         d_constrainingNodeBucketsDevice.resize(k);
 
-        for (std::uint32_t i = 0; i < d_constrainingNodeBuckets.size(); i++)
+        for (dftfe::uInt i = 0; i < d_constrainingNodeBuckets.size(); i++)
           dftfe::utils::MemoryTransfer<dftfe::utils::MemorySpace::DEVICE,
                                        dftfe::utils::MemorySpace::HOST>::
             copy(d_constrainingNodeBuckets[i].size(),
@@ -439,7 +433,7 @@ namespace dftfe
 
         k = 0;
 
-        for (std::uint32_t i = 0; i < d_constrainedNodeBuckets.size(); i++)
+        for (dftfe::uInt i = 0; i < d_constrainedNodeBuckets.size(); i++)
           {
             constrainedNodeOffset[i] = k;
             k += d_constrainedNodeBuckets[i].size();
@@ -448,7 +442,7 @@ namespace dftfe
         constrainedNodeOffset[d_constrainedNodeBuckets.size()] = k;
         d_constrainedNodeBucketsDevice.resize(k);
 
-        for (std::uint32_t i = 0; i < d_constrainedNodeBuckets.size(); i++)
+        for (dftfe::uInt i = 0; i < d_constrainedNodeBuckets.size(); i++)
           dftfe::utils::MemoryTransfer<dftfe::utils::MemorySpace::DEVICE,
                                        dftfe::utils::MemorySpace::HOST>::
             copy(d_constrainedNodeBuckets[i].size(),
@@ -458,7 +452,7 @@ namespace dftfe
 
         k = 0;
 
-        for (std::uint32_t i = 0; i < d_weightMatrixList.size(); i++)
+        for (dftfe::uInt i = 0; i < d_weightMatrixList.size(); i++)
           {
             weightMatrixOffset[i] = k;
             k += d_weightMatrixList[i].size();
@@ -467,7 +461,7 @@ namespace dftfe
         weightMatrixOffset[d_weightMatrixList.size()] = k;
         d_weightMatrixListDevice.resize(k);
 
-        for (std::uint32_t i = 0; i < d_weightMatrixList.size(); i++)
+        for (dftfe::uInt i = 0; i < d_weightMatrixList.size(); i++)
           dftfe::utils::MemoryTransfer<dftfe::utils::MemorySpace::DEVICE,
                                        dftfe::utils::MemorySpace::HOST>::
             copy(d_weightMatrixList[i].size(),
@@ -539,15 +533,13 @@ namespace dftfe
   {
     // Initialize constraint data structures
     const dealii::IndexSet &locallyOwnedDofs =
-      d_matrixFreeDataPtr
-        ->get_vector_partitioner(d_basisOperationsPtrHost->d_dofHandlerID)
+      d_matrixFreeDataPtr->get_vector_partitioner(d_dofHandlerID)
         ->locally_owned_range();
 
     setupConstraints(locallyOwnedDofs);
 
     const dealii::IndexSet &ghostDofs =
-      d_matrixFreeDataPtr
-        ->get_vector_partitioner(d_basisOperationsPtrHost->d_dofHandlerID)
+      d_matrixFreeDataPtr->get_vector_partitioner(d_dofHandlerID)
         ->ghost_indices();
 
     setupConstraints(ghostDofs);
@@ -582,15 +574,11 @@ namespace dftfe
           const std::vector<std::pair<dealii::types::global_dof_index, double>>
             *rowData = d_constraintMatrixPtr->get_constraint_entries(lineDof);
 
-          for (std::uint32_t j = 0; j < rowData->size(); j++)
+          for (dftfe::uInt j = 0; j < rowData->size(); j++)
             {
-              if (!(d_matrixFreeDataPtr
-                      ->get_vector_partitioner(
-                        d_basisOperationsPtrHost->d_dofHandlerID)
+              if (!(d_matrixFreeDataPtr->get_vector_partitioner(d_dofHandlerID)
                       ->is_ghost_entry((*rowData)[j].first) ||
-                    d_matrixFreeDataPtr
-                      ->get_vector_partitioner(
-                        d_basisOperationsPtrHost->d_dofHandlerID)
+                    d_matrixFreeDataPtr->get_vector_partitioner(d_dofHandlerID)
                       ->in_local_range((*rowData)[j].first)))
                 {
                   isConstraintRhsExpandingOutOfIndexSet = true;
@@ -601,22 +589,20 @@ namespace dftfe
           if (isConstraintRhsExpandingOutOfIndexSet)
             continue;
 
-          std::vector<std::uint32_t> constrainingData(rowData->size());
-          std::vector<T>             weightData(rowData->size());
+          std::vector<dftfe::uInt> constrainingData(rowData->size());
+          std::vector<T>           weightData(rowData->size());
 
           for (auto i = 0; i < rowData->size(); i++)
             {
               constrainingData[i] =
-                d_matrixFreeDataPtr
-                  ->get_vector_partitioner(
-                    d_basisOperationsPtrHost->d_dofHandlerID)
+                d_matrixFreeDataPtr->get_vector_partitioner(d_dofHandlerID)
                   ->global_to_local((*rowData)[i].first);
 
               weightData[i] = (*rowData)[i].second;
             }
 
-          bool          constraintExists = false;
-          std::uint32_t constraintIndex  = 0;
+          bool        constraintExists = false;
+          dftfe::uInt constraintIndex  = 0;
           T inhomogenity = d_constraintMatrixPtr->get_inhomogeneity(lineDof);
 
           for (auto i = 0; i < d_constrainingNodeBuckets.size(); i++)
@@ -631,9 +617,7 @@ namespace dftfe
           if (constraintExists)
             {
               d_constrainedNodeBuckets[constraintIndex].push_back(
-                d_matrixFreeDataPtr
-                  ->get_vector_partitioner(
-                    d_basisOperationsPtrHost->d_dofHandlerID)
+                d_matrixFreeDataPtr->get_vector_partitioner(d_dofHandlerID)
                   ->global_to_local(lineDof));
 
               d_weightMatrixList[constraintIndex].insert(
@@ -643,11 +627,9 @@ namespace dftfe
             }
           else
             {
-              d_constrainedNodeBuckets.push_back(std::vector<std::uint32_t>(
+              d_constrainedNodeBuckets.push_back(std::vector<dftfe::uInt>(
                 1,
-                d_matrixFreeDataPtr
-                  ->get_vector_partitioner(
-                    d_basisOperationsPtrHost->d_dofHandlerID)
+                d_matrixFreeDataPtr->get_vector_partitioner(d_dofHandlerID)
                   ->global_to_local(lineDof)));
 
               d_weightMatrixList.push_back(weightData);

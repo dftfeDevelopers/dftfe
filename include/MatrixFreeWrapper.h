@@ -143,6 +143,7 @@ namespace dftfe
         basisOperationsPtrHost,
       std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
                         BLASWrapperPtr,
+      const dftfe::uInt dofHandlerID,
       const dftfe::uInt quadratureID,
       const dftfe::uInt nVectors)
       : d_MatrixFreeObject(
@@ -151,6 +152,7 @@ namespace dftfe
             mpi_comm,
             basisOperationsPtrHost,
             BLASWrapperPtr,
+            dofHandlerID,
             quadratureID,
             nVectors))
     {}

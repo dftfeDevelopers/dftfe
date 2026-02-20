@@ -21,14 +21,16 @@
  */
 
 constexpr std::uint32_t maxDofsPerDim = 17;
-__constant__ double constMem[maxDofsPerDim * maxDofsPerDim * 5 + maxDofsPerDim];
+__constant__ double
+  constMem[(maxDofsPerDim * maxDofsPerDim * 5 + maxDofsPerDim) *
+           static_cast<int>(operatorList::COUNT)];
 
-__device__ inline std::uint32_t
-getMultiVectorIndex(const std::uint32_t node,
-                    const std::uint32_t batch,
-                    const std::uint32_t nOwnedDofs,
-                    const std::uint32_t nGhostDofs,
-                    const std::uint32_t *__restrict__ ghostMap)
+__device__ inline dftfe::uInt
+getMultiVectorIndex(const dftfe::uInt node,
+                    const dftfe::uInt batch,
+                    const dftfe::uInt nOwnedDofs,
+                    const dftfe::uInt nGhostDofs,
+                    const dftfe::uInt *__restrict__ ghostMap)
 {
   return (node < nOwnedDofs ?
             (node + batch * nOwnedDofs) :
@@ -40,27 +42,27 @@ template <typename T, std::uint32_t nDofsPerDim, std::uint32_t batchSize>
 __global__ void
 constraintsDistributeKernel(
   T *__restrict__ x,
-  const std::uint32_t *__restrict__ constrainingNodeBuckets,
-  const std::uint32_t *__restrict__ constrainingNodeOffset,
-  const std::uint32_t *__restrict__ constrainedNodeBuckets,
-  const std::uint32_t *__restrict__ constrainedNodeOffset,
+  const dftfe::uInt *__restrict__ constrainingNodeBuckets,
+  const dftfe::uInt *__restrict__ constrainingNodeOffset,
+  const dftfe::uInt *__restrict__ constrainedNodeBuckets,
+  const dftfe::uInt *__restrict__ constrainedNodeOffset,
   const T *__restrict__ weightMatrixList,
-  const std::uint32_t *__restrict__ weightMatrixOffset,
+  const dftfe::uInt *__restrict__ weightMatrixOffset,
   const T *__restrict__ inhomogenityList,
-  const std::uint32_t *__restrict__ ghostMap,
-  const std::uint32_t nOwnedDofs,
-  const std::uint32_t nGhostDofs)
+  const dftfe::uInt *__restrict__ ghostMap,
+  const dftfe::uInt nOwnedDofs,
+  const dftfe::uInt nGhostDofs)
 {
   __shared__ T sharedConstrainingData[batchSize * nDofsPerDim * nDofsPerDim];
 
   constexpr int yThreads                = 64;
-  std::uint32_t constrainingBucketStart = constrainingNodeOffset[blockIdx.x];
-  std::uint32_t constrainingBucketSize =
+  dftfe::uInt   constrainingBucketStart = constrainingNodeOffset[blockIdx.x];
+  dftfe::uInt   constrainingBucketSize =
     constrainingNodeOffset[blockIdx.x + 1] - constrainingNodeOffset[blockIdx.x];
 
-  for (std::uint32_t k = threadIdx.y; k < constrainingBucketSize; k += yThreads)
+  for (dftfe::uInt k = threadIdx.y; k < constrainingBucketSize; k += yThreads)
     {
-      std::uint32_t idx;
+      dftfe::uInt idx;
 
       if constexpr (batchSize == 1)
         idx = constrainingNodeBuckets[k + constrainingBucketStart];
@@ -78,23 +80,23 @@ constraintsDistributeKernel(
 
   __syncthreads();
 
-  std::uint32_t constrainedBucketStart = constrainedNodeOffset[blockIdx.x];
-  std::uint32_t constrainedBucketSize =
+  dftfe::uInt constrainedBucketStart = constrainedNodeOffset[blockIdx.x];
+  dftfe::uInt constrainedBucketSize =
     constrainedNodeOffset[blockIdx.x + 1] - constrainedNodeOffset[blockIdx.x];
-  std::uint32_t weightMatrixStart = weightMatrixOffset[blockIdx.x];
+  dftfe::uInt weightMatrixStart = weightMatrixOffset[blockIdx.x];
 
   T inhomogenity = inhomogenityList[blockIdx.x];
 
-  for (std::uint32_t j = threadIdx.y; j < constrainedBucketSize; j += yThreads)
+  for (dftfe::uInt j = threadIdx.y; j < constrainedBucketSize; j += yThreads)
     {
       T tmp = inhomogenity;
 
-      for (std::uint32_t k = 0; k < constrainingBucketSize; k++)
+      for (dftfe::uInt k = 0; k < constrainingBucketSize; k++)
         tmp +=
           weightMatrixList[k + j * constrainingBucketSize + weightMatrixStart] *
           sharedConstrainingData[threadIdx.x + k * batchSize];
 
-      std::uint32_t idx;
+      dftfe::uInt idx;
 
       if constexpr (batchSize == 1)
         idx = constrainedNodeBuckets[j + constrainedBucketStart];
@@ -116,33 +118,33 @@ __global__ void
 constraintsDistributeTransposeKernel(
   T *__restrict__ Ax,
   T *__restrict__ x,
-  const std::uint32_t *__restrict__ constrainingNodeBuckets,
-  const std::uint32_t *__restrict__ constrainingNodeOffset,
-  const std::uint32_t *__restrict__ constrainedNodeBuckets,
-  const std::uint32_t *__restrict__ constrainedNodeOffset,
+  const dftfe::uInt *__restrict__ constrainingNodeBuckets,
+  const dftfe::uInt *__restrict__ constrainingNodeOffset,
+  const dftfe::uInt *__restrict__ constrainedNodeBuckets,
+  const dftfe::uInt *__restrict__ constrainedNodeOffset,
   const T *__restrict__ weightMatrixList,
-  const std::uint32_t *__restrict__ weightMatrixOffset,
-  const std::uint32_t *__restrict__ ghostMap,
-  const std::uint32_t nOwnedDofs,
-  const std::uint32_t nGhostDofs)
+  const dftfe::uInt *__restrict__ weightMatrixOffset,
+  const dftfe::uInt *__restrict__ ghostMap,
+  const dftfe::uInt nOwnedDofs,
+  const dftfe::uInt nGhostDofs)
 {
   __shared__ T sharedConstrainedData[batchSize * nDofsPerDim * nDofsPerDim * 4];
 
   constexpr int yThreads                = 64;
-  std::uint32_t constrainingBucketStart = constrainingNodeOffset[blockIdx.x];
-  std::uint32_t constrainingBucketSize =
+  dftfe::uInt   constrainingBucketStart = constrainingNodeOffset[blockIdx.x];
+  dftfe::uInt   constrainingBucketSize =
     constrainingNodeOffset[blockIdx.x + 1] - constrainingNodeOffset[blockIdx.x];
 
-  std::uint32_t constrainedBucketStart = constrainedNodeOffset[blockIdx.x];
-  std::uint32_t constrainedBucketSize =
+  dftfe::uInt constrainedBucketStart = constrainedNodeOffset[blockIdx.x];
+  dftfe::uInt constrainedBucketSize =
     constrainedNodeOffset[blockIdx.x + 1] - constrainedNodeOffset[blockIdx.x];
 
   if (constrainingBucketSize > 0)
     {
-      for (std::uint32_t k = threadIdx.y; k < constrainedBucketSize;
+      for (dftfe::uInt k = threadIdx.y; k < constrainedBucketSize;
            k += yThreads)
         {
-          std::uint32_t idx;
+          dftfe::uInt idx;
 
           if constexpr (batchSize == 1)
             idx = constrainedNodeBuckets[k + constrainedBucketStart];
@@ -163,19 +165,19 @@ constraintsDistributeTransposeKernel(
 
       __syncthreads();
 
-      std::uint32_t weightMatrixStart = weightMatrixOffset[blockIdx.x];
+      dftfe::uInt weightMatrixStart = weightMatrixOffset[blockIdx.x];
 
-      for (std::uint32_t j = threadIdx.y; j < constrainingBucketSize;
+      for (dftfe::uInt j = threadIdx.y; j < constrainingBucketSize;
            j += yThreads)
         {
           T tmp = 0.;
 
-          for (std::uint32_t k = 0; k < constrainedBucketSize; k++)
+          for (dftfe::uInt k = 0; k < constrainedBucketSize; k++)
             tmp += weightMatrixList[j + k * constrainingBucketSize +
                                     weightMatrixStart] *
                    sharedConstrainedData[threadIdx.x + k * batchSize];
 
-          std::uint32_t idx;
+          dftfe::uInt idx;
 
           if constexpr (batchSize == 1)
             idx = constrainingNodeBuckets[j + constrainingBucketStart];
@@ -192,10 +194,10 @@ constraintsDistributeTransposeKernel(
     }
   else
     {
-      for (std::uint32_t k = threadIdx.y; k < constrainedBucketSize;
+      for (dftfe::uInt k = threadIdx.y; k < constrainedBucketSize;
            k += yThreads)
         {
-          std::uint32_t idx;
+          dftfe::uInt idx;
 
           if constexpr (batchSize == 1)
             idx = constrainedNodeBuckets[k + constrainedBucketStart];
@@ -223,7 +225,7 @@ __global__ void
 LaplaceKernel(T *__restrict__ dst,
               const T *__restrict__ src,
               const T *__restrict__ J,
-              const std::uint32_t *__restrict__ map)
+              const dftfe::uInt *__restrict__ map)
 {
   // dst = A.src
   // gridDim.x = cells;
@@ -263,8 +265,8 @@ LaplaceKernel(T *__restrict__ dst,
   T regP[qEven + qOdd], regQ[qEven + qOdd], regR[qEven + qOdd],
     regT[qEven + qOdd];
 
-  const std::uint32_t mapOffset = (blockIdx.x + blockIdx.y * gridDim.x) *
-                                  nDofsPerDim * nDofsPerDim * nDofsPerDim;
+  const dftfe::uInt mapOffset = (blockIdx.x + blockIdx.y * gridDim.x) *
+                                nDofsPerDim * nDofsPerDim * nDofsPerDim;
 
   //////////////////////////////////////////////////////////////////
   // Interpolation combined with Extraction
@@ -280,7 +282,7 @@ LaplaceKernel(T *__restrict__ dst,
 
       for (std::uint32_t k = 0; k < nDofsPerDim; k++)
         {
-          std::uint32_t dof =
+          dftfe::uInt dof =
             __ldg(&map[i + k * nDofsPerDim * nDofsPerDim + mapOffset]);
           regP[k] = src[threadIdx.x + dof];
 
@@ -622,7 +624,7 @@ LaplaceKernel(T *__restrict__ dst,
     {
       T t[dim];
 
-      std::uint32_t jOffset = blockIdx.x * dim * dim;
+      dftfe::uInt jOffset = blockIdx.x * dim * dim;
 
       // #pragma unroll
       for (std::uint32_t j = 0; j < nQuadPointsPerDim; j++)
@@ -1017,17 +1019,17 @@ LaplaceKernel(T *__restrict__ dst,
 #pragma unroll
       for (std::uint32_t j = 0; j < pOdd; j++)
         {
-          std::uint32_t dof1 = __ldg(&map[j + i * nDofsPerDim + mapOffset]);
+          dftfe::uInt dof1 = __ldg(&map[j + i * nDofsPerDim + mapOffset]);
           atomicAdd(&dst[threadIdx.x + dof1], regT[j] + regT[j + pEven]);
 
-          std::uint32_t dof2 =
+          dftfe::uInt dof2 =
             __ldg(&map[(nDofsPerDim - 1 - j) + i * nDofsPerDim + mapOffset]);
           atomicAdd(&dst[threadIdx.x + dof2], regT[j] - regT[j + pEven]);
         }
 
       if constexpr (nDofsPerDim % 2 == 1)
         {
-          std::uint32_t dof = __ldg(&map[pOdd + i * nDofsPerDim + mapOffset]);
+          dftfe::uInt dof = __ldg(&map[pOdd + i * nDofsPerDim + mapOffset]);
           atomicAdd(&dst[threadIdx.x + dof], regT[pOdd]);
         }
     }
@@ -1043,7 +1045,7 @@ __global__ void
 HelmholtzKernel(T *__restrict__ dst,
                 const T *__restrict__ src,
                 const T *__restrict__ J,
-                const std::uint32_t *__restrict__ map,
+                const dftfe::uInt *__restrict__ map,
                 const T coeffHelmholtz)
 {
   // dst = A.src
@@ -1084,8 +1086,8 @@ HelmholtzKernel(T *__restrict__ dst,
   T regP[qEven + qOdd], regQ[qEven + qOdd], regR[qEven + qOdd],
     regT[qEven + qOdd];
 
-  const std::uint32_t mapOffset = (blockIdx.x + blockIdx.y * gridDim.x) *
-                                  nDofsPerDim * nDofsPerDim * nDofsPerDim;
+  const dftfe::uInt mapOffset = (blockIdx.x + blockIdx.y * gridDim.x) *
+                                nDofsPerDim * nDofsPerDim * nDofsPerDim;
 
   //////////////////////////////////////////////////////////////////
   // Interpolation combined with Extraction
@@ -1101,7 +1103,7 @@ HelmholtzKernel(T *__restrict__ dst,
 
       for (std::uint32_t k = 0; k < nDofsPerDim; k++)
         {
-          std::uint32_t dof =
+          dftfe::uInt dof =
             __ldg(&map[i + k * nDofsPerDim * nDofsPerDim + mapOffset]);
           regP[k] = src[threadIdx.x + dof];
 
@@ -1183,10 +1185,17 @@ HelmholtzKernel(T *__restrict__ dst,
 
   __syncthreads();
 
+  for (std::uint32_t i = threadIdx.y; i < nDofsPerDim * nDofsPerDim;
+       i += yThreads)
+    for (std::uint32_t k = 0; k < nDofsPerDim; k++)
+      atomicAdd(&dst[map[i + k * nDofsPerDim * nDofsPerDim + mapOffset]],
+                sharedV[threadIdx.x + i * batchSize +
+                        k * batchSize * nDofsPerDim * nDofsPerDim]);
+
   // 3rd GEMM of N
   // X Direction
-  for (std::uint32_t i = threadIdx.y; i < nQuadPointsPerDim * nQuadPointsPerDim;
-       i += yThreads)
+  /*for (std::uint32_t i = threadIdx.y; i < nQuadPointsPerDim *
+nQuadPointsPerDim; i += yThreads)
     {
       T tempE, tempO, temp1, temp2;
 
@@ -1446,7 +1455,7 @@ HelmholtzKernel(T *__restrict__ dst,
     {
       T t[dim];
 
-      std::uint32_t jOffset = blockIdx.x * dim * dim;
+      dftfe::uInt jOffset = blockIdx.x * dim * dim;
 
       // #pragma unroll
       for (std::uint32_t j = 0; j < nQuadPointsPerDim; j++)
@@ -1850,18 +1859,18 @@ HelmholtzKernel(T *__restrict__ dst,
 #pragma unroll
       for (std::uint32_t j = 0; j < pOdd; j++)
         {
-          std::uint32_t dof1 = __ldg(&map[j + i * nDofsPerDim + mapOffset]);
+         dftfe::uInt dof1 = __ldg(&map[j + i * nDofsPerDim + mapOffset]);
           atomicAdd(&dst[threadIdx.x + dof1], regT[j] + regT[j + pEven]);
 
-          std::uint32_t dof2 =
+         dftfe::uInt dof2 =
             __ldg(&map[(nDofsPerDim - 1 - j) + i * nDofsPerDim + mapOffset]);
           atomicAdd(&dst[threadIdx.x + dof2], regT[j] - regT[j + pEven]);
         }
 
       if constexpr (nDofsPerDim % 2 == 1)
         {
-          std::uint32_t dof = __ldg(&map[pOdd + i * nDofsPerDim + mapOffset]);
+         dftfe::uInt dof = __ldg(&map[pOdd + i * nDofsPerDim + mapOffset]);
           atomicAdd(&dst[threadIdx.x + dof], regT[pOdd]);
         }
-    }
+    } //*/
 }

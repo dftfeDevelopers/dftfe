@@ -170,6 +170,7 @@ namespace dftfe
           mpi_communicator,
           d_basisOperationsPtr,
           d_BLASWrapperPtr,
+          d_matrixFreeVectorComponent,
           d_matrixFreeQuadratureComponentAX,
           nVectors);
 

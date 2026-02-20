@@ -26,16 +26,17 @@
 #include <stdexcept>
 #include <DeviceTypeConfig.h>
 #include <DeviceExceptions.h>
-
+#include <TypeConfig.h>
 namespace dftfe
 {
   // List of operators
   enum operatorList
   {
-    Laplace   = 1,
-    Helmholtz = 2,
-    LDA       = 3,
-    GGA       = 4
+    Laplace   = 0,
+    Helmholtz = 1,
+    LDA       = 2,
+    GGA       = 3,
+    COUNT     = 4
   };
 
   /**
@@ -57,51 +58,51 @@ namespace dftfe
     init(T *constMemDataHost, std::size_t constMemDataSize);
 
     static inline void
-    computeLaplaceX(T             *dst,
-                    T             *src,
-                    T             *jacobianFactor,
-                    std::uint32_t *map,
-                    std::uint32_t  nCells,
-                    std::uint32_t  nBatch);
+    computeLaplaceX(T           *dst,
+                    T           *src,
+                    T           *jacobianFactor,
+                    dftfe::uInt *map,
+                    dftfe::uInt  nCells,
+                    dftfe::uInt  nBatch);
 
     static inline void
-    computeHelmholtzX(T             *dst,
-                      T             *src,
-                      T             *jacobianFactor,
-                      std::uint32_t *map,
-                      T              coeffHelmholtz,
-                      std::uint32_t  nCells,
-                      std::uint32_t  nBatch);
+    computeHelmholtzX(T           *dst,
+                      T           *src,
+                      T           *jacobianFactor,
+                      dftfe::uInt *map,
+                      T            coeffHelmholtz,
+                      dftfe::uInt  nCells,
+                      dftfe::uInt  nBatch);
 
     static inline void
-    constraintsDistribute(T                   *src,
-                          const std::uint32_t *constrainingNodeBuckets,
-                          const std::uint32_t *constrainingNodeOffset,
-                          const std::uint32_t *constrainedNodeBuckets,
-                          const std::uint32_t *constrainedNodeOffset,
-                          const T             *weightMatrixList,
-                          const std::uint32_t *weightMatrixOffset,
-                          const T             *inhomogenityList,
-                          const std::uint32_t *ghostMap,
-                          const std::uint32_t  inhomogenityListSize,
-                          const std::uint32_t  nBatch,
-                          const std::uint32_t  nOwnedDofs,
-                          const std::uint32_t  nGhostDofs);
+    constraintsDistribute(T                 *src,
+                          const dftfe::uInt *constrainingNodeBuckets,
+                          const dftfe::uInt *constrainingNodeOffset,
+                          const dftfe::uInt *constrainedNodeBuckets,
+                          const dftfe::uInt *constrainedNodeOffset,
+                          const T           *weightMatrixList,
+                          const dftfe::uInt *weightMatrixOffset,
+                          const T           *inhomogenityList,
+                          const dftfe::uInt *ghostMap,
+                          const dftfe::uInt  inhomogenityListSize,
+                          const dftfe::uInt  nBatch,
+                          const dftfe::uInt  nOwnedDofs,
+                          const dftfe::uInt  nGhostDofs);
 
     static inline void
-    constraintsDistributeTranspose(T                   *dst,
-                                   T                   *src,
-                                   const std::uint32_t *constrainingNodeBuckets,
-                                   const std::uint32_t *constrainingNodeOffset,
-                                   const std::uint32_t *constrainedNodeBuckets,
-                                   const std::uint32_t *constrainedNodeOffset,
-                                   const T             *weightMatrixList,
-                                   const std::uint32_t *weightMatrixOffset,
-                                   const std::uint32_t *ghostMap,
-                                   const std::uint32_t  inhomogenityListSize,
-                                   const std::uint32_t  nBatch,
-                                   const std::uint32_t  nOwnedDofs,
-                                   const std::uint32_t  nGhostDofs);
+    constraintsDistributeTranspose(T                 *dst,
+                                   T                 *src,
+                                   const dftfe::uInt *constrainingNodeBuckets,
+                                   const dftfe::uInt *constrainingNodeOffset,
+                                   const dftfe::uInt *constrainedNodeBuckets,
+                                   const dftfe::uInt *constrainedNodeOffset,
+                                   const T           *weightMatrixList,
+                                   const dftfe::uInt *weightMatrixOffset,
+                                   const dftfe::uInt *ghostMap,
+                                   const dftfe::uInt  inhomogenityListSize,
+                                   const dftfe::uInt  nBatch,
+                                   const dftfe::uInt  nOwnedDofs,
+                                   const dftfe::uInt  nGhostDofs);
   };
 
 } // namespace dftfe

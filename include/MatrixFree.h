@@ -63,6 +63,7 @@ namespace dftfe
                  dftfe::utils::MemorySpace::HOST>> basisOperationsPtrHost,
                std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
                                    BLASWrapperPtr,
+               const std::uint32_t dofHandlerID,
                const std::uint32_t quadratureID,
                const std::uint32_t nVectors);
 
@@ -116,10 +117,12 @@ namespace dftfe
       std::is_same_v<TypeFEBasis, std::complex<double>>;
     typedef std::conditional_t<d_isComplex, std::complex<T>, T> DataType;
 
-    const std::uint32_t d_quadratureID, d_nVectors, d_nBatch, d_nDofsPerCell,
+    const std::uint32_t d_dofHandlerID, d_quadratureID, d_nDofsPerCell,
       d_nQuadsPerCell;
 
-    std::uint32_t d_nOwnedDofs, d_nRelaventDofs, d_nGhostDofs, d_nCells,
+    const dftfe::uInt d_nVectors, d_nBatch;
+
+    dftfe::uInt d_nOwnedDofs, d_nRelaventDofs, d_nGhostDofs, d_nCells,
       d_localBlockSize, d_localSize, d_ghostBlockSize, d_ghostSize,
       d_nOMPThreads;
 
@@ -138,11 +141,11 @@ namespace dftfe
                                      quadShapeFunctionGradientsAtQuadPointsEO;
     std::array<T, nQuadPointsPerDim> quadratureWeights;
 
-    dftfe::utils::MemoryStorage<T, memorySpace>             d_jacobianFactor;
-    dftfe::utils::MemoryStorage<std::uint32_t, memorySpace> d_map;
+    dftfe::utils::MemoryStorage<T, memorySpace>           d_jacobianFactor;
+    dftfe::utils::MemoryStorage<dftfe::uInt, memorySpace> d_map;
 
     // HOST only Data Structures
-    std::vector<std::vector<std::uint32_t>> d_constrainingNodeBuckets,
+    std::vector<std::vector<dftfe::uInt>> d_constrainingNodeBuckets,
       d_constrainedNodeBuckets;
     std::vector<std::vector<T>> d_weightMatrixList;
     std::vector<T>              d_inhomogenityList;
@@ -151,8 +154,7 @@ namespace dftfe
     dftfe::utils::MemoryStorage<T, dftfe::utils::MemorySpace::DEVICE>
       d_weightMatrixListDevice, d_inhomogenityListDevice;
 
-    dftfe::utils::MemoryStorage<std::uint32_t,
-                                dftfe::utils::MemorySpace::DEVICE>
+    dftfe::utils::MemoryStorage<dftfe::uInt, dftfe::utils::MemorySpace::DEVICE>
       d_constrainingNodeBucketsDevice, d_constrainedNodeBucketsDevice,
       d_constrainingNodeOffsetDevice, d_constrainedNodeOffsetDevice,
       d_weightMatrixOffsetDevice;

@@ -22,19 +22,17 @@
 
 #include <sycl/sycl.hpp>
 
-constexpr std::uint32_t maxDofsPerDim = 17;
-
 // Global constant memory buffer for SYCL - stored in device memory
 // This will be allocated and managed by the MatrixFreeDevice class
 static double     *d_constMem     = nullptr;
 static std::size_t d_constMemSize = 0;
 
-inline std::uint32_t
-getMultiVectorIndex(const std::uint32_t  node,
-                    const std::uint32_t  batch,
-                    const std::uint32_t  nOwnedDofs,
-                    const std::uint32_t  nGhostDofs,
-                    const std::uint32_t *ghostMap)
+inline dftfe::uInt
+getMultiVectorIndex(const dftfe::uInt  node,
+                    const dftfe::uInt  batch,
+                    const dftfe::uInt  nOwnedDofs,
+                    const dftfe::uInt  nGhostDofs,
+                    const dftfe::uInt *ghostMap)
 {
   return (node < nOwnedDofs ?
             (node + batch * nOwnedDofs) :
@@ -44,35 +42,35 @@ getMultiVectorIndex(const std::uint32_t  node,
 
 template <typename T, std::uint32_t nDofsPerDim, std::uint32_t batchSize>
 void
-constraintsDistributeKernelSYCL(
+constraintsDistributeKernel(
   sycl::nd_item<3>           item,
   T                         *x,
-  const std::uint32_t       *constrainingNodeBuckets,
-  const std::uint32_t       *constrainingNodeOffset,
-  const std::uint32_t       *constrainedNodeBuckets,
-  const std::uint32_t       *constrainedNodeOffset,
+  const dftfe::uInt         *constrainingNodeBuckets,
+  const dftfe::uInt         *constrainingNodeOffset,
+  const dftfe::uInt         *constrainedNodeBuckets,
+  const dftfe::uInt         *constrainedNodeOffset,
   const T                   *weightMatrixList,
-  const std::uint32_t       *weightMatrixOffset,
+  const dftfe::uInt         *weightMatrixOffset,
   const T                   *inhomogenityList,
-  const std::uint32_t       *ghostMap,
-  const std::uint32_t        nOwnedDofs,
-  const std::uint32_t        nGhostDofs,
+  const dftfe::uInt         *ghostMap,
+  const dftfe::uInt          nOwnedDofs,
+  const dftfe::uInt          nGhostDofs,
   sycl::local_accessor<T, 1> sharedConstrainingData)
 {
   constexpr int yThreads = 64;
 
-  const std::uint32_t blockIdxX  = item.get_group(2);
-  const std::uint32_t blockIdxY  = item.get_group(1);
-  const std::uint32_t threadIdxX = item.get_local_id(2);
-  const std::uint32_t threadIdxY = item.get_local_id(1);
+  const dftfe::uInt blockIdxX  = item.get_group(2);
+  const dftfe::uInt blockIdxY  = item.get_group(1);
+  const dftfe::uInt threadIdxX = item.get_local_id(2);
+  const dftfe::uInt threadIdxY = item.get_local_id(1);
 
-  std::uint32_t constrainingBucketStart = constrainingNodeOffset[blockIdxX];
-  std::uint32_t constrainingBucketSize =
+  dftfe::uInt constrainingBucketStart = constrainingNodeOffset[blockIdxX];
+  dftfe::uInt constrainingBucketSize =
     constrainingNodeOffset[blockIdxX + 1] - constrainingNodeOffset[blockIdxX];
 
-  for (std::uint32_t k = threadIdxY; k < constrainingBucketSize; k += yThreads)
+  for (dftfe::uInt k = threadIdxY; k < constrainingBucketSize; k += yThreads)
     {
-      std::uint32_t idx;
+      dftfe::uInt idx;
 
       if constexpr (batchSize == 1)
         idx = constrainingNodeBuckets[k + constrainingBucketStart];
@@ -90,23 +88,23 @@ constraintsDistributeKernelSYCL(
 
   item.barrier(sycl::access::fence_space::local_space);
 
-  std::uint32_t constrainedBucketStart = constrainedNodeOffset[blockIdxX];
-  std::uint32_t constrainedBucketSize =
+  dftfe::uInt constrainedBucketStart = constrainedNodeOffset[blockIdxX];
+  dftfe::uInt constrainedBucketSize =
     constrainedNodeOffset[blockIdxX + 1] - constrainedNodeOffset[blockIdxX];
-  std::uint32_t weightMatrixStart = weightMatrixOffset[blockIdxX];
+  dftfe::uInt weightMatrixStart = weightMatrixOffset[blockIdxX];
 
   T inhomogenity = inhomogenityList[blockIdxX];
 
-  for (std::uint32_t j = threadIdxY; j < constrainedBucketSize; j += yThreads)
+  for (dftfe::uInt j = threadIdxY; j < constrainedBucketSize; j += yThreads)
     {
       T tmp = inhomogenity;
 
-      for (std::uint32_t k = 0; k < constrainingBucketSize; k++)
+      for (dftfe::uInt k = 0; k < constrainingBucketSize; k++)
         tmp +=
           weightMatrixList[k + j * constrainingBucketSize + weightMatrixStart] *
           sharedConstrainingData[threadIdxX + k * batchSize];
 
-      std::uint32_t idx;
+      dftfe::uInt idx;
 
       if constexpr (batchSize == 1)
         idx = constrainedNodeBuckets[j + constrainedBucketStart];
@@ -125,42 +123,41 @@ constraintsDistributeKernelSYCL(
 
 template <typename T, std::uint32_t nDofsPerDim, std::uint32_t batchSize>
 void
-constraintsDistributeTransposeKernelSYCL(
+constraintsDistributeTransposeKernel(
   sycl::nd_item<3>           item,
   T                         *Ax,
   T                         *x,
-  const std::uint32_t       *constrainingNodeBuckets,
-  const std::uint32_t       *constrainingNodeOffset,
-  const std::uint32_t       *constrainedNodeBuckets,
-  const std::uint32_t       *constrainedNodeOffset,
+  const dftfe::uInt         *constrainingNodeBuckets,
+  const dftfe::uInt         *constrainingNodeOffset,
+  const dftfe::uInt         *constrainedNodeBuckets,
+  const dftfe::uInt         *constrainedNodeOffset,
   const T                   *weightMatrixList,
-  const std::uint32_t       *weightMatrixOffset,
-  const std::uint32_t       *ghostMap,
-  const std::uint32_t        nOwnedDofs,
-  const std::uint32_t        nGhostDofs,
+  const dftfe::uInt         *weightMatrixOffset,
+  const dftfe::uInt         *ghostMap,
+  const dftfe::uInt          nOwnedDofs,
+  const dftfe::uInt          nGhostDofs,
   sycl::local_accessor<T, 1> sharedConstrainedData)
 {
   constexpr int yThreads = 64;
 
-  const std::uint32_t blockIdxX  = item.get_group(2);
-  const std::uint32_t blockIdxY  = item.get_group(1);
-  const std::uint32_t threadIdxX = item.get_local_id(2);
-  const std::uint32_t threadIdxY = item.get_local_id(1);
+  const dftfe::uInt blockIdxX  = item.get_group(2);
+  const dftfe::uInt blockIdxY  = item.get_group(1);
+  const dftfe::uInt threadIdxX = item.get_local_id(2);
+  const dftfe::uInt threadIdxY = item.get_local_id(1);
 
-  std::uint32_t constrainingBucketStart = constrainingNodeOffset[blockIdxX];
-  std::uint32_t constrainingBucketSize =
+  dftfe::uInt constrainingBucketStart = constrainingNodeOffset[blockIdxX];
+  dftfe::uInt constrainingBucketSize =
     constrainingNodeOffset[blockIdxX + 1] - constrainingNodeOffset[blockIdxX];
 
-  std::uint32_t constrainedBucketStart = constrainedNodeOffset[blockIdxX];
-  std::uint32_t constrainedBucketSize =
+  dftfe::uInt constrainedBucketStart = constrainedNodeOffset[blockIdxX];
+  dftfe::uInt constrainedBucketSize =
     constrainedNodeOffset[blockIdxX + 1] - constrainedNodeOffset[blockIdxX];
 
   if (constrainingBucketSize > 0)
     {
-      for (std::uint32_t k = threadIdxY; k < constrainedBucketSize;
-           k += yThreads)
+      for (dftfe::uInt k = threadIdxY; k < constrainedBucketSize; k += yThreads)
         {
-          std::uint32_t idx;
+          dftfe::uInt idx;
 
           if constexpr (batchSize == 1)
             idx = constrainedNodeBuckets[k + constrainedBucketStart];
@@ -181,19 +178,19 @@ constraintsDistributeTransposeKernelSYCL(
 
       item.barrier(sycl::access::fence_space::local_space);
 
-      std::uint32_t weightMatrixStart = weightMatrixOffset[blockIdxX];
+      dftfe::uInt weightMatrixStart = weightMatrixOffset[blockIdxX];
 
-      for (std::uint32_t j = threadIdxY; j < constrainingBucketSize;
+      for (dftfe::uInt j = threadIdxY; j < constrainingBucketSize;
            j += yThreads)
         {
           T tmp = T(0);
 
-          for (std::uint32_t k = 0; k < constrainedBucketSize; k++)
+          for (dftfe::uInt k = 0; k < constrainedBucketSize; k++)
             tmp += weightMatrixList[j + k * constrainingBucketSize +
                                     weightMatrixStart] *
                    sharedConstrainedData[threadIdxX + k * batchSize];
 
-          std::uint32_t idx;
+          dftfe::uInt idx;
 
           if constexpr (batchSize == 1)
             idx = constrainingNodeBuckets[j + constrainingBucketStart];
@@ -215,10 +212,9 @@ constraintsDistributeTransposeKernelSYCL(
     }
   else
     {
-      for (std::uint32_t k = threadIdxY; k < constrainedBucketSize;
-           k += yThreads)
+      for (dftfe::uInt k = threadIdxY; k < constrainedBucketSize; k += yThreads)
         {
-          std::uint32_t idx;
+          dftfe::uInt idx;
 
           if constexpr (batchSize == 1)
             idx = constrainedNodeBuckets[k + constrainedBucketStart];
@@ -243,11 +239,11 @@ template <typename T,
           std::uint32_t batchSize,
           std::uint32_t dim>
 void
-LaplaceKernelSYCL(sycl::nd_item<3>           item,
+LaplaceKernel(sycl::nd_item<3>           item,
                   T                         *dst,
                   const T                   *src,
                   const T                   *J,
-                  const std::uint32_t       *map,
+                  const dftfe::uInt         *map,
                   const T                   *constMemDevice,
                   sycl::local_accessor<T, 1> sharedMem)
 {
@@ -272,11 +268,11 @@ LaplaceKernelSYCL(sycl::nd_item<3>           item,
                                        dftfe::utils::DEVICE_WARP_SIZE - 1) /
                                       dftfe::utils::DEVICE_WARP_SIZE);
 
-  const std::uint32_t blockIdxX  = item.get_group(2);
-  const std::uint32_t blockIdxY  = item.get_group(1);
-  const std::uint32_t gridDimX   = item.get_group_range(2);
-  const std::uint32_t threadIdxX = item.get_local_id(2);
-  const std::uint32_t threadIdxY = item.get_local_id(1);
+  const dftfe::uInt blockIdxX  = item.get_group(2);
+  const dftfe::uInt blockIdxY  = item.get_group(1);
+  const dftfe::uInt gridDimX   = item.get_group_range(2);
+  const dftfe::uInt threadIdxX = item.get_local_id(2);
+  const dftfe::uInt threadIdxY = item.get_local_id(1);
 
   T *sharedU = sharedMem.get_pointer();
   T *sharedV = &sharedU[batchSize * nQuadPointsPerDim * nQuadPointsPerDim *
@@ -309,8 +305,8 @@ LaplaceKernelSYCL(sycl::nd_item<3>           item,
   T regP[qEven + qOdd], regQ[qEven + qOdd], regR[qEven + qOdd],
     regT[qEven + qOdd];
 
-  const std::uint32_t mapOffset = (blockIdxX + blockIdxY * gridDimX) *
-                                  nDofsPerDim * nDofsPerDim * nDofsPerDim;
+  const dftfe::uInt mapOffset = (blockIdxX + blockIdxY * gridDimX) *
+                                nDofsPerDim * nDofsPerDim * nDofsPerDim;
 
   //////////////////////////////////////////////////////////////////
   // Interpolation combined with Extraction
@@ -327,9 +323,8 @@ LaplaceKernelSYCL(sycl::nd_item<3>           item,
 
       for (std::uint32_t k = 0; k < nDofsPerDim; k++)
         {
-          std::uint32_t dof =
-            map[i + k * nDofsPerDim * nDofsPerDim + mapOffset];
-          regP[k] = src[threadIdxX + dof];
+          dftfe::uInt dof = map[i + k * nDofsPerDim * nDofsPerDim + mapOffset];
+          regP[k]         = src[threadIdxX + dof];
 
           for (std::uint32_t j = 0; j < nQuadPointsPerDim; j++)
             regT[j] += constNprime[j + k * nQuadPointsPerDim] * regP[k];
@@ -651,7 +646,7 @@ LaplaceKernelSYCL(sycl::nd_item<3>           item,
     {
       T t[dim];
 
-      std::uint32_t jOffset = blockIdxX * dim * dim;
+      dftfe::uInt jOffset = blockIdxX * dim * dim;
 
       for (std::uint32_t j = 0; j < nQuadPointsPerDim; j++)
         {
@@ -1021,7 +1016,7 @@ LaplaceKernelSYCL(sycl::nd_item<3>           item,
 
       for (std::uint32_t j = 0; j < pOdd; j++)
         {
-          std::uint32_t dof1 = map[j + i * nDofsPerDim + mapOffset];
+          dftfe::uInt dof1 = map[j + i * nDofsPerDim + mapOffset];
 
           sycl::atomic_ref<T,
                            sycl::memory_order::relaxed,
@@ -1030,7 +1025,7 @@ LaplaceKernelSYCL(sycl::nd_item<3>           item,
             atomicRef1(dst[threadIdxX + dof1]);
           atomicRef1 += regT[j] + regT[j + pEven];
 
-          std::uint32_t dof2 =
+          dftfe::uInt dof2 =
             map[(nDofsPerDim - 1 - j) + i * nDofsPerDim + mapOffset];
 
           sycl::atomic_ref<T,
@@ -1043,7 +1038,7 @@ LaplaceKernelSYCL(sycl::nd_item<3>           item,
 
       if constexpr (nDofsPerDim % 2 == 1)
         {
-          std::uint32_t dof = map[pOdd + i * nDofsPerDim + mapOffset];
+          dftfe::uInt dof = map[pOdd + i * nDofsPerDim + mapOffset];
 
           sycl::atomic_ref<T,
                            sycl::memory_order::relaxed,
@@ -1062,11 +1057,11 @@ template <typename T,
           std::uint32_t batchSize,
           std::uint32_t dim>
 void
-HelmholtzKernelSYCL(sycl::nd_item<3>           item,
+HelmholtzKernel(sycl::nd_item<3>           item,
                     T                         *dst,
                     const T                   *src,
                     const T                   *J,
-                    const std::uint32_t       *map,
+                    const dftfe::uInt         *map,
                     const T                    coeffHelmholtz,
                     const T                   *constMemDevice,
                     sycl::local_accessor<T, 1> sharedMem)
@@ -1092,11 +1087,11 @@ HelmholtzKernelSYCL(sycl::nd_item<3>           item,
                                        dftfe::utils::DEVICE_WARP_SIZE - 1) /
                                       dftfe::utils::DEVICE_WARP_SIZE);
 
-  const std::uint32_t blockIdxX  = item.get_group(2);
-  const std::uint32_t blockIdxY  = item.get_group(1);
-  const std::uint32_t gridDimX   = item.get_group_range(2);
-  const std::uint32_t threadIdxX = item.get_local_id(2);
-  const std::uint32_t threadIdxY = item.get_local_id(1);
+  const dftfe::uInt blockIdxX  = item.get_group(2);
+  const dftfe::uInt blockIdxY  = item.get_group(1);
+  const dftfe::uInt gridDimX   = item.get_group_range(2);
+  const dftfe::uInt threadIdxX = item.get_local_id(2);
+  const dftfe::uInt threadIdxY = item.get_local_id(1);
 
   T *sharedU = sharedMem.get_pointer();
   T *sharedV = &sharedU[batchSize * nQuadPointsPerDim * nQuadPointsPerDim *
@@ -1129,8 +1124,8 @@ HelmholtzKernelSYCL(sycl::nd_item<3>           item,
   T regP[qEven + qOdd], regQ[qEven + qOdd], regR[qEven + qOdd],
     regT[qEven + qOdd];
 
-  const std::uint32_t mapOffset = (blockIdxX + blockIdxY * gridDimX) *
-                                  nDofsPerDim * nDofsPerDim * nDofsPerDim;
+  const dftfe::uInt mapOffset = (blockIdxX + blockIdxY * gridDimX) *
+                                nDofsPerDim * nDofsPerDim * nDofsPerDim;
 
   //////////////////////////////////////////////////////////////////
   // Interpolation combined with Extraction
@@ -1147,9 +1142,8 @@ HelmholtzKernelSYCL(sycl::nd_item<3>           item,
 
       for (std::uint32_t k = 0; k < nDofsPerDim; k++)
         {
-          std::uint32_t dof =
-            map[i + k * nDofsPerDim * nDofsPerDim + mapOffset];
-          regP[k] = src[threadIdxX + dof];
+          dftfe::uInt dof = map[i + k * nDofsPerDim * nDofsPerDim + mapOffset];
+          regP[k]         = src[threadIdxX + dof];
 
           for (std::uint32_t j = 0; j < nQuadPointsPerDim; j++)
             regT[j] += constNprime[j + k * nQuadPointsPerDim] * regP[k];
@@ -1474,7 +1468,7 @@ HelmholtzKernelSYCL(sycl::nd_item<3>           item,
     {
       T t[dim];
 
-      std::uint32_t jOffset = blockIdxX * dim * dim;
+      dftfe::uInt jOffset = blockIdxX * dim * dim;
 
       for (std::uint32_t j = 0; j < nQuadPointsPerDim; j++)
         {
@@ -1853,7 +1847,7 @@ HelmholtzKernelSYCL(sycl::nd_item<3>           item,
 
       for (std::uint32_t j = 0; j < pOdd; j++)
         {
-          std::uint32_t dof1 = map[j + i * nDofsPerDim + mapOffset];
+          dftfe::uInt dof1 = map[j + i * nDofsPerDim + mapOffset];
 
           sycl::atomic_ref<T,
                            sycl::memory_order::relaxed,
@@ -1862,7 +1856,7 @@ HelmholtzKernelSYCL(sycl::nd_item<3>           item,
             atomicRef1(dst[threadIdxX + dof1]);
           atomicRef1 += regT[j] + regT[j + pEven];
 
-          std::uint32_t dof2 =
+          dftfe::uInt dof2 =
             map[(nDofsPerDim - 1 - j) + i * nDofsPerDim + mapOffset];
 
           sycl::atomic_ref<T,
@@ -1875,7 +1869,7 @@ HelmholtzKernelSYCL(sycl::nd_item<3>           item,
 
       if constexpr (nDofsPerDim % 2 == 1)
         {
-          std::uint32_t dof = map[pOdd + i * nDofsPerDim + mapOffset];
+          dftfe::uInt dof = map[pOdd + i * nDofsPerDim + mapOffset];
 
           sycl::atomic_ref<T,
                            sycl::memory_order::relaxed,

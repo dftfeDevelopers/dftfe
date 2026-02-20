@@ -146,19 +146,19 @@ namespace dftfe
             std::uint32_t       batchSize>
   inline void
   MatrixFreeDevice<T, operatorID, nDofsPerDim, nQuadPointsPerDim, batchSize>::
-    constraintsDistribute(T                   *src,
-                          const std::uint32_t *constrainingNodeBuckets,
-                          const std::uint32_t *constrainingNodeOffset,
-                          const std::uint32_t *constrainedNodeBuckets,
-                          const std::uint32_t *constrainedNodeOffset,
-                          const T             *weightMatrixList,
-                          const std::uint32_t *weightMatrixOffset,
-                          const T             *inhomogenityList,
-                          const std::uint32_t *ghostMap,
-                          const std::uint32_t  inhomogenityListSize,
-                          const std::uint32_t  nBatch,
-                          const std::uint32_t  nOwnedDofs,
-                          const std::uint32_t  nGhostDofs)
+    constraintsDistribute(T                 *src,
+                          const dftfe::uInt *constrainingNodeBuckets,
+                          const dftfe::uInt *constrainingNodeOffset,
+                          const dftfe::uInt *constrainedNodeBuckets,
+                          const dftfe::uInt *constrainedNodeOffset,
+                          const T           *weightMatrixList,
+                          const dftfe::uInt *weightMatrixOffset,
+                          const T           *inhomogenityList,
+                          const dftfe::uInt *ghostMap,
+                          const dftfe::uInt  inhomogenityListSize,
+                          const dftfe::uInt  nBatch,
+                          const dftfe::uInt  nOwnedDofs,
+                          const dftfe::uInt  nGhostDofs)
   {
     constexpr int yThreads = 64;
 
@@ -246,19 +246,19 @@ namespace dftfe
             std::uint32_t       batchSize>
   inline void
   MatrixFreeDevice<T, operatorID, nDofsPerDim, nQuadPointsPerDim, batchSize>::
-    constraintsDistributeTranspose(T                   *dst,
-                                   T                   *src,
-                                   const std::uint32_t *constrainingNodeBuckets,
-                                   const std::uint32_t *constrainingNodeOffset,
-                                   const std::uint32_t *constrainedNodeBuckets,
-                                   const std::uint32_t *constrainedNodeOffset,
-                                   const T             *weightMatrixList,
-                                   const std::uint32_t *weightMatrixOffset,
-                                   const std::uint32_t *ghostMap,
-                                   const std::uint32_t  inhomogenityListSize,
-                                   const std::uint32_t  nBatch,
-                                   const std::uint32_t  nOwnedDofs,
-                                   const std::uint32_t  nGhostDofs)
+    constraintsDistributeTranspose(T                 *dst,
+                                   T                 *src,
+                                   const dftfe::uInt *constrainingNodeBuckets,
+                                   const dftfe::uInt *constrainingNodeOffset,
+                                   const dftfe::uInt *constrainedNodeBuckets,
+                                   const dftfe::uInt *constrainedNodeOffset,
+                                   const T           *weightMatrixList,
+                                   const dftfe::uInt *weightMatrixOffset,
+                                   const dftfe::uInt *ghostMap,
+                                   const dftfe::uInt  inhomogenityListSize,
+                                   const dftfe::uInt  nBatch,
+                                   const dftfe::uInt  nOwnedDofs,
+                                   const dftfe::uInt  nGhostDofs)
   {
     constexpr int yThreads = 64;
 
@@ -346,12 +346,12 @@ namespace dftfe
             std::uint32_t       batchSize>
   inline void
   MatrixFreeDevice<T, operatorID, nDofsPerDim, nQuadPointsPerDim, batchSize>::
-    computeLaplaceX(T             *dst,
-                    T             *src,
-                    T             *jacobianFactor,
-                    std::uint32_t *map,
-                    std::uint32_t  nCells,
-                    std::uint32_t  nBatch)
+    computeLaplaceX(T           *dst,
+                    T           *src,
+                    T           *jacobianFactor,
+                    dftfe::uInt *map,
+                    dftfe::uInt  nCells,
+                    dftfe::uInt  nBatch)
   {
     constexpr std::uint32_t dim = 3;
     constexpr std::uint32_t yThreads =
@@ -427,13 +427,13 @@ namespace dftfe
             std::uint32_t       batchSize>
   inline void
   MatrixFreeDevice<T, operatorID, nDofsPerDim, nQuadPointsPerDim, batchSize>::
-    computeHelmholtzX(T             *dst,
-                      T             *src,
-                      T             *jacobianFactor,
-                      std::uint32_t *map,
-                      T              coeffHelmholtz,
-                      std::uint32_t  nCells,
-                      std::uint32_t  nBatch)
+    computeHelmholtzX(T           *dst,
+                      T           *src,
+                      T           *jacobianFactor,
+                      dftfe::uInt *map,
+                      T            coeffHelmholtz,
+                      dftfe::uInt  nCells,
+                      dftfe::uInt  nBatch)
   {
     constexpr std::uint32_t dim = 3;
     constexpr std::uint32_t yThreads =
