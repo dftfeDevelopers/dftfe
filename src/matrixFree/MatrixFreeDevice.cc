@@ -50,11 +50,13 @@ namespace dftfe
 
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
     // Copy shape functions and gradients to constant memory on device
-    DEVICE_API_CHECK(cudaMemcpyToSymbol(constMem,
-                                        constMemHost,
-                                        constMemSize * sizeof(T),
-                                        0,
-                                        cudaMemcpyHostToDevice));
+    DEVICE_API_CHECK(cudaMemcpyToSymbol(
+      constMem,
+      constMemHost,
+      constMemSize * sizeof(T),
+      (operatorID * (maxDofsPerDim * maxDofsPerDim * 5 + maxDofsPerDim)) *
+        sizeof(T),
+      cudaMemcpyHostToDevice));
 
     int deviceId = 0;
     DEVICE_API_CHECK(cudaGetDevice(&deviceId));
@@ -98,11 +100,13 @@ namespace dftfe
 
 #elif DFTFE_WITH_DEVICE_LANG_HIP
     // Copy shape functions and gradients to constant memory on device
-    DEVICE_API_CHECK(hipMemcpyToSymbol(constMem,
-                                       constMemHost,
-                                       constMemSize * sizeof(T),
-                                       0,
-                                       hipMemcpyHostToDevice));
+    DEVICE_API_CHECK(hipMemcpyToSymbol(
+      constMem,
+      constMemHost,
+      constMemSize * sizeof(T),
+      (operatorID * (maxDofsPerDim * maxDofsPerDim * 5 + maxDofsPerDim)) *
+        sizeof(T),
+      hipMemcpyHostToDevice));
 
     int deviceId = 0;
     DEVICE_API_CHECK(hipGetDevice(&deviceId));
@@ -118,23 +122,18 @@ namespace dftfe
         "Requested dynamic shared memory exceeds max limit");
 
 #elif DFTFE_WITH_DEVICE_LANG_SYCL
-    // Allocate device memory for constant data and copy from host
+    // Get the SYCL queue for the default stream
     sycl::queue &queue =
       dftfe::utils::queueRegistry.find(dftfe::utils::defaultStream)->second;
 
-    // Free previous allocation if any
-    if (d_constMem != nullptr)
-      {
-        sycl::free(d_constMem, queue);
-        d_constMem = nullptr;
-      }
-
-    // Allocate new device memory
-    d_constMem     = sycl::malloc_device<double>(constMemSize, queue);
-    d_constMemSize = constMemSize;
-
     // Copy data from host to device
-    queue.memcpy(d_constMem, constMemHost, constMemSize * sizeof(T)).wait();
+    queue
+      .memcpy(shapeFnGradBuffer.getPointer() +
+                operatorID *
+                  (maxDofsPerDim * maxDofsPerDim * 5 + maxDofsPerDim),
+              constMemHost,
+              constMemSize * sizeof(T))
+      .wait();
 #endif
   }
 
@@ -396,15 +395,17 @@ namespace dftfe
     constexpr std::uint32_t qOddL  = nQuadPointsPerDim / 2;
     constexpr std::uint32_t qEvenL =
       nQuadPointsPerDim % 2 == 1 ? qOddL + 1 : qOddL;
-    constexpr std::size_t constMemElements =
+    constexpr std::size_t shapeBufferElements =
       2 * (qEvenL * pEvenL + qOddL * pOddL) + 4 * qEvenL * qOddL +
       nQuadPointsPerDim * nDofsPerDim + nQuadPointsPerDim;
     constexpr std::size_t sharedMemElements =
       2 * batchSize * nQuadPointsPerDim * nQuadPointsPerDim *
         nQuadPointsPerDim +
-      constMemElements;
+      shapeBufferElements;
 
-    const T *constMemPtr = d_constMem;
+    const T *shapeBufferPtr =
+      shapeBuffer.getPointer() +
+      operatorID * (maxDofsPerDim * maxDofsPerDim * 5 + maxDofsPerDim);
 
     queue.submit([&](sycl::handler &cgh) {
       sycl::local_accessor<T, 1> sharedMem(sharedMemElements, cgh);
@@ -414,7 +415,7 @@ namespace dftfe
                           sycl::range<3>(1, yThreads, batchSize)),
         [=](sycl::nd_item<3> item) {
           LaplaceKernelSYCL<T, nDofsPerDim, nQuadPointsPerDim, batchSize, dim>(
-            item, dst, src, jacobianFactor, map, constMemPtr, sharedMem);
+            item, dst, src, jacobianFactor, map, shapeBufferPtr, sharedMem);
         });
     });
 #endif
@@ -480,15 +481,17 @@ namespace dftfe
     constexpr std::uint32_t qOddH  = nQuadPointsPerDim / 2;
     constexpr std::uint32_t qEvenH =
       nQuadPointsPerDim % 2 == 1 ? qOddH + 1 : qOddH;
-    constexpr std::size_t constMemElements =
+    constexpr std::size_t shapeBufferElements =
       2 * (qEvenH * pEvenH + qOddH * pOddH) + 4 * qEvenH * qOddH +
       nQuadPointsPerDim * nDofsPerDim + nQuadPointsPerDim;
     constexpr std::size_t sharedMemElements =
       2 * batchSize * nQuadPointsPerDim * nQuadPointsPerDim *
         nQuadPointsPerDim +
-      constMemElements;
+      shapeBufferElements;
 
-    const T *constMemPtr = d_constMem;
+    const T *shapeBufferPtr =
+      shapeBuffer.getPointer() +
+      operatorID * (maxDofsPerDim * maxDofsPerDim * 5 + maxDofsPerDim);
 
     queue.submit([&](sycl::handler &cgh) {
       sycl::local_accessor<T, 1> sharedMem(sharedMemElements, cgh);
@@ -507,7 +510,7 @@ namespace dftfe
                                    jacobianFactor,
                                    map,
                                    coeffHelmholtz,
-                                   constMemPtr,
+                                   shapeBufferPtr,
                                    sharedMem);
         });
     });

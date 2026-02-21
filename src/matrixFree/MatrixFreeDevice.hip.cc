@@ -21,9 +21,10 @@
  */
 
 constexpr std::uint32_t maxDofsPerDim = 17;
+
 __constant__ double
   constMem[(maxDofsPerDim * maxDofsPerDim * 5 + maxDofsPerDim) *
-           static_cast<int>(operatorList::COUNT)];
+           static_cast<std::uint32_t>(operatorList::COUNT)];
 
 __device__ inline dftfe::uInt
 getMultiVectorIndex(const dftfe::uInt node,
@@ -159,8 +160,8 @@ constraintsDistributeTransposeKernel(
           sharedConstrainedData[threadIdx.x + k * batchSize] =
             Ax[threadIdx.x + idx * batchSize];
 
-          Ax[threadIdx.x + idx * batchSize] = 0.;
-          x[threadIdx.x + idx * batchSize]  = 0.;
+          Ax[threadIdx.x + idx * batchSize] = T(0);
+          x[threadIdx.x + idx * batchSize]  = T(0);
         }
 
       __syncthreads();
@@ -170,7 +171,7 @@ constraintsDistributeTransposeKernel(
       for (dftfe::uInt j = threadIdx.y; j < constrainingBucketSize;
            j += yThreads)
         {
-          T tmp = 0.;
+          T tmp = T(0);
 
           for (dftfe::uInt k = 0; k < constrainedBucketSize; k++)
             tmp += weightMatrixList[j + k * constrainingBucketSize +
@@ -209,8 +210,8 @@ constraintsDistributeTransposeKernel(
               nGhostDofs,
               ghostMap);
 
-          Ax[threadIdx.x + idx * batchSize] = 0.;
-          x[threadIdx.x + idx * batchSize]  = 0.;
+          Ax[threadIdx.x + idx * batchSize] = T(0);
+          x[threadIdx.x + idx * batchSize]  = T(0);
         }
     }
 }
@@ -255,7 +256,8 @@ LaplaceKernel(T *__restrict__ dst,
                                        nQuadPointsPerDim * nQuadPointsPerDim +
                                      padding];
 
-  T *__restrict__ constN      = reinterpret_cast<T *>(constMem);
+  T *__restrict__ constN = reinterpret_cast<T *>(
+    constMem + 0 * (maxDofsPerDim * maxDofsPerDim * 5 + maxDofsPerDim));
   T *__restrict__ constD      = &constN[qEven * pEven + qOdd * pOdd];
   T *__restrict__ constNT     = &constD[2 * qEven * qOdd];
   T *__restrict__ constDT     = &constNT[pEven * qEven + pOdd * qOdd];
@@ -1076,7 +1078,8 @@ HelmholtzKernel(T *__restrict__ dst,
                                        nQuadPointsPerDim * nQuadPointsPerDim +
                                      padding];
 
-  T *__restrict__ constN      = reinterpret_cast<T *>(constMem);
+  T *__restrict__ constN = reinterpret_cast<T *>(
+    constMem + 1 * (maxDofsPerDim * maxDofsPerDim * 5 + maxDofsPerDim));
   T *__restrict__ constD      = &constN[qEven * pEven + qOdd * pOdd];
   T *__restrict__ constNT     = &constD[2 * qEven * qOdd];
   T *__restrict__ constDT     = &constNT[pEven * qEven + pOdd * qOdd];

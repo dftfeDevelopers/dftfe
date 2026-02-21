@@ -22,10 +22,11 @@
 
 #include <sycl/sycl.hpp>
 
-// Global constant memory buffer for SYCL - stored in device memory
-// This will be allocated and managed by the MatrixFreeDevice class
-static double     *d_constMem     = nullptr;
-static std::size_t d_constMemSize = 0;
+constexpr std::uint32_t maxDofsPerDim = 17;
+
+static dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+  shapeBuffer((maxDofsPerDim * maxDofsPerDim * 5 + maxDofsPerDim) *
+              static_cast<std::uint32_t>(dftfe::operatorList::COUNT));
 
 inline dftfe::uInt
 getMultiVectorIndex(const dftfe::uInt  node,
@@ -42,20 +43,19 @@ getMultiVectorIndex(const dftfe::uInt  node,
 
 template <typename T, std::uint32_t nDofsPerDim, std::uint32_t batchSize>
 void
-constraintsDistributeKernel(
-  sycl::nd_item<3>           item,
-  T                         *x,
-  const dftfe::uInt         *constrainingNodeBuckets,
-  const dftfe::uInt         *constrainingNodeOffset,
-  const dftfe::uInt         *constrainedNodeBuckets,
-  const dftfe::uInt         *constrainedNodeOffset,
-  const T                   *weightMatrixList,
-  const dftfe::uInt         *weightMatrixOffset,
-  const T                   *inhomogenityList,
-  const dftfe::uInt         *ghostMap,
-  const dftfe::uInt          nOwnedDofs,
-  const dftfe::uInt          nGhostDofs,
-  sycl::local_accessor<T, 1> sharedConstrainingData)
+constraintsDistributeKernel(sycl::nd_item<3>           item,
+                            T                         *x,
+                            const dftfe::uInt         *constrainingNodeBuckets,
+                            const dftfe::uInt         *constrainingNodeOffset,
+                            const dftfe::uInt         *constrainedNodeBuckets,
+                            const dftfe::uInt         *constrainedNodeOffset,
+                            const T                   *weightMatrixList,
+                            const dftfe::uInt         *weightMatrixOffset,
+                            const T                   *inhomogenityList,
+                            const dftfe::uInt         *ghostMap,
+                            const dftfe::uInt          nOwnedDofs,
+                            const dftfe::uInt          nGhostDofs,
+                            sycl::local_accessor<T, 1> sharedConstrainingData)
 {
   constexpr int yThreads = 64;
 
@@ -240,12 +240,12 @@ template <typename T,
           std::uint32_t dim>
 void
 LaplaceKernel(sycl::nd_item<3>           item,
-                  T                         *dst,
-                  const T                   *src,
-                  const T                   *J,
-                  const dftfe::uInt         *map,
-                  const T                   *constMemDevice,
-                  sycl::local_accessor<T, 1> sharedMem)
+              T                         *dst,
+              const T                   *src,
+              const T                   *J,
+              const dftfe::uInt         *map,
+              const T                   *shapeBufferDevice,
+              sycl::local_accessor<T, 1> sharedMem)
 {
   // dst = A.src
   // gridDim.x = cells;
@@ -279,23 +279,23 @@ LaplaceKernel(sycl::nd_item<3>           item,
                           nQuadPointsPerDim +
                         padding];
 
-  // constMem is stored at the tail of sharedMem (local memory)
-  constexpr std::uint32_t constMemElements =
+  // sharedShape is stored at the tail of sharedMem (local memory)
+  constexpr std::uint32_t shapeBufferElements =
     2 * (qEven * pEven + qOdd * pOdd) + 4 * qEven * qOdd +
     nQuadPointsPerDim * nDofsPerDim + nQuadPointsPerDim;
-  T *constMem = &sharedV[batchSize * nQuadPointsPerDim * nQuadPointsPerDim *
-                           nQuadPointsPerDim +
-                         padding];
+  T *sharedShape = &sharedV[batchSize * nQuadPointsPerDim * nQuadPointsPerDim *
+                              nQuadPointsPerDim +
+                            padding];
 
-  // Cooperatively load constMem from global to local memory
+  // Cooperatively load shapeBuffer from global to local memory
   for (std::uint32_t idx = threadIdxY * batchSize + threadIdxX;
-       idx < constMemElements;
+       idx < shapeBufferElements;
        idx += yThreads * batchSize)
-    constMem[idx] = constMemDevice[idx];
+    sharedShape[idx] = shapeBufferDevice[idx];
 
   item.barrier(sycl::access::fence_space::local_space);
 
-  const T *constN      = constMem;
+  const T *constN      = sharedShape;
   const T *constD      = &constN[qEven * pEven + qOdd * pOdd];
   const T *constNT     = &constD[2 * qEven * qOdd];
   const T *constDT     = &constNT[pEven * qEven + pOdd * qOdd];
@@ -318,8 +318,7 @@ LaplaceKernel(sycl::nd_item<3>           item,
   for (std::uint32_t i = threadIdxY; i < nDofsPerDim * nDofsPerDim;
        i += yThreads)
     {
-      for (std::uint32_t idx = 0; idx < nQuadPointsPerDim; idx++)
-        regT[idx] = T(0);
+      memset(regT, 0, nQuadPointsPerDim * sizeof(T));
 
       for (std::uint32_t k = 0; k < nDofsPerDim; k++)
         {
@@ -347,8 +346,7 @@ LaplaceKernel(sycl::nd_item<3>           item,
 
       T tempE, tempO, temp1, temp2;
 
-      for (std::uint32_t idx = 0; idx < nQuadPointsPerDim; idx++)
-        regT[idx] = T(0);
+      memset(regT, 0, nQuadPointsPerDim * sizeof(T));
 
       for (std::uint32_t k = 0; k < pOdd; k++)
         {
@@ -406,8 +404,7 @@ LaplaceKernel(sycl::nd_item<3>           item,
     {
       T tempE, tempO, temp1, temp2;
 
-      for (std::uint32_t idx = 0; idx < nQuadPointsPerDim; idx++)
-        regT[idx] = T(0);
+      memset(regT, 0, nQuadPointsPerDim * sizeof(T));
 
       for (std::uint32_t k = 0; k < pOdd; k++)
         {
@@ -468,8 +465,7 @@ LaplaceKernel(sycl::nd_item<3>           item,
     {
       T tempE, tempO, temp1, temp2;
 
-      for (std::uint32_t idx = 0; idx < nQuadPointsPerDim; idx++)
-        regT[idx] = T(0);
+      memset(regT, 0, nQuadPointsPerDim * sizeof(T));
 
       for (std::uint32_t k = 0; k < qOdd; k++)
         {
@@ -521,8 +517,7 @@ LaplaceKernel(sycl::nd_item<3>           item,
 
       T tempE, tempO, temp1, temp2;
 
-      for (std::uint32_t idx = 0; idx < nQuadPointsPerDim; idx++)
-        regT[idx] = T(0);
+      memset(regT, 0, nQuadPointsPerDim * sizeof(T));
 
       for (std::uint32_t k = 0; k < qOdd; k++)
         {
@@ -585,8 +580,7 @@ LaplaceKernel(sycl::nd_item<3>           item,
     {
       T tempE, tempO, temp1, temp2;
 
-      for (std::uint32_t idx = 0; idx < nQuadPointsPerDim; idx++)
-        regT[idx] = T(0);
+      memset(regT, 0, nQuadPointsPerDim * sizeof(T));
 
       for (std::uint32_t k = 0; k < qOdd; k++)
         {
@@ -687,8 +681,7 @@ LaplaceKernel(sycl::nd_item<3>           item,
     {
       T tempE, tempO;
 
-      for (std::uint32_t idx = 0; idx < nQuadPointsPerDim; idx++)
-        regT[idx] = T(0);
+      memset(regT, 0, nQuadPointsPerDim * sizeof(T));
 
       for (std::uint32_t k = 0; k < qOdd; k++)
         {
@@ -728,8 +721,7 @@ LaplaceKernel(sycl::nd_item<3>           item,
 
       T tempE, tempO, temp1, temp2;
 
-      for (std::uint32_t idx = 0; idx < nQuadPointsPerDim; idx++)
-        regT[idx] = T(0);
+      memset(regT, 0, nQuadPointsPerDim * sizeof(T));
 
       for (std::uint32_t k = 0; k < qOdd; k++)
         {
@@ -782,8 +774,7 @@ LaplaceKernel(sycl::nd_item<3>           item,
     {
       T tempE, tempO, temp1, temp2;
 
-      for (std::uint32_t idx = 0; idx < nQuadPointsPerDim; idx++)
-        regT[idx] = T(0);
+      memset(regT, 0, nQuadPointsPerDim * sizeof(T));
 
       for (std::uint32_t k = 0; k < qOdd; k++)
         {
@@ -869,8 +860,7 @@ LaplaceKernel(sycl::nd_item<3>           item,
     {
       T tempE, tempO;
 
-      for (std::uint32_t idx = 0; idx < nQuadPointsPerDim; idx++)
-        regT[idx] = T(0);
+      memset(regT, 0, nQuadPointsPerDim * sizeof(T));
 
       for (std::uint32_t k = 0; k < qOdd; k++)
         {
@@ -919,8 +909,7 @@ LaplaceKernel(sycl::nd_item<3>           item,
 
       T tempE, tempO, temp1, temp2;
 
-      for (std::uint32_t idx = 0; idx < nQuadPointsPerDim; idx++)
-        regT[idx] = T(0);
+      memset(regT, 0, nQuadPointsPerDim * sizeof(T));
 
       for (std::uint32_t k = 0; k < qOdd; k++)
         {
@@ -984,8 +973,7 @@ LaplaceKernel(sycl::nd_item<3>           item,
     {
       T tempE, tempO, temp1, temp2;
 
-      for (std::uint32_t idx = 0; idx < nQuadPointsPerDim; idx++)
-        regT[idx] = T(0);
+      memset(regT, 0, nQuadPointsPerDim * sizeof(T));
 
       for (std::uint32_t k = 0; k < qOdd; k++)
         {
@@ -1058,13 +1046,13 @@ template <typename T,
           std::uint32_t dim>
 void
 HelmholtzKernel(sycl::nd_item<3>           item,
-                    T                         *dst,
-                    const T                   *src,
-                    const T                   *J,
-                    const dftfe::uInt         *map,
-                    const T                    coeffHelmholtz,
-                    const T                   *constMemDevice,
-                    sycl::local_accessor<T, 1> sharedMem)
+                T                         *dst,
+                const T                   *src,
+                const T                   *J,
+                const dftfe::uInt         *map,
+                const T                    coeffHelmholtz,
+                const T                   *shapeBufferDevice,
+                sycl::local_accessor<T, 1> sharedMem)
 {
   // dst = A.src
   // gridDim.x = cells;
@@ -1098,23 +1086,23 @@ HelmholtzKernel(sycl::nd_item<3>           item,
                           nQuadPointsPerDim +
                         padding];
 
-  // constMem is stored at the tail of sharedMem (local memory)
-  constexpr std::uint32_t constMemElements =
+  // sharedShape is stored at the tail of sharedMem (local memory)
+  constexpr std::uint32_t shapeBufferElements =
     2 * (qEven * pEven + qOdd * pOdd) + 4 * qEven * qOdd +
     nQuadPointsPerDim * nDofsPerDim + nQuadPointsPerDim;
-  T *constMem = &sharedV[batchSize * nQuadPointsPerDim * nQuadPointsPerDim *
-                           nQuadPointsPerDim +
-                         padding];
+  T *sharedShape = &sharedV[batchSize * nQuadPointsPerDim * nQuadPointsPerDim *
+                              nQuadPointsPerDim +
+                            padding];
 
-  // Cooperatively load constMem from global to local memory
+  // Cooperatively load shapeBuffer from global to local memory
   for (std::uint32_t idx = threadIdxY * batchSize + threadIdxX;
-       idx < constMemElements;
+       idx < shapeBufferElements;
        idx += yThreads * batchSize)
-    constMem[idx] = constMemDevice[idx];
+    sharedShape[idx] = shapeBufferDevice[idx];
 
   item.barrier(sycl::access::fence_space::local_space);
 
-  const T *constN      = constMem;
+  const T *constN      = sharedShape;
   const T *constD      = &constN[qEven * pEven + qOdd * pOdd];
   const T *constNT     = &constD[2 * qEven * qOdd];
   const T *constDT     = &constNT[pEven * qEven + pOdd * qOdd];
@@ -1137,8 +1125,7 @@ HelmholtzKernel(sycl::nd_item<3>           item,
   for (std::uint32_t i = threadIdxY; i < nDofsPerDim * nDofsPerDim;
        i += yThreads)
     {
-      for (std::uint32_t idx = 0; idx < nQuadPointsPerDim; idx++)
-        regT[idx] = T(0);
+      memset(regT, 0, nQuadPointsPerDim * sizeof(T));
 
       for (std::uint32_t k = 0; k < nDofsPerDim; k++)
         {
@@ -1166,8 +1153,7 @@ HelmholtzKernel(sycl::nd_item<3>           item,
 
       T tempE, tempO, temp1, temp2;
 
-      for (std::uint32_t idx = 0; idx < nQuadPointsPerDim; idx++)
-        regT[idx] = T(0);
+      memset(regT, 0, nQuadPointsPerDim * sizeof(T));
 
       for (std::uint32_t k = 0; k < pOdd; k++)
         {
@@ -1225,8 +1211,7 @@ HelmholtzKernel(sycl::nd_item<3>           item,
     {
       T tempE, tempO, temp1, temp2;
 
-      for (std::uint32_t idx = 0; idx < nQuadPointsPerDim; idx++)
-        regT[idx] = T(0);
+      memset(regT, 0, nQuadPointsPerDim * sizeof(T));
 
       for (std::uint32_t k = 0; k < pOdd; k++)
         {
@@ -1287,8 +1272,7 @@ HelmholtzKernel(sycl::nd_item<3>           item,
     {
       T tempE, tempO, temp1, temp2;
 
-      for (std::uint32_t idx = 0; idx < nQuadPointsPerDim; idx++)
-        regT[idx] = T(0);
+      memset(regT, 0, nQuadPointsPerDim * sizeof(T));
 
       for (std::uint32_t k = 0; k < qOdd; k++)
         {
@@ -1341,8 +1325,7 @@ HelmholtzKernel(sycl::nd_item<3>           item,
 
       T tempE, tempO, temp1, temp2;
 
-      for (std::uint32_t idx = 0; idx < nQuadPointsPerDim; idx++)
-        regT[idx] = T(0);
+      memset(regT, 0, nQuadPointsPerDim * sizeof(T));
 
       for (std::uint32_t k = 0; k < qOdd; k++)
         {
@@ -1405,8 +1388,7 @@ HelmholtzKernel(sycl::nd_item<3>           item,
     {
       T tempE, tempO, temp1, temp2;
 
-      for (std::uint32_t idx = 0; idx < nQuadPointsPerDim; idx++)
-        regT[idx] = T(0);
+      memset(regT, 0, nQuadPointsPerDim * sizeof(T));
 
       for (std::uint32_t k = 0; k < qOdd; k++)
         {
@@ -1516,8 +1498,7 @@ HelmholtzKernel(sycl::nd_item<3>           item,
     {
       T tempE, tempO;
 
-      for (std::uint32_t idx = 0; idx < nQuadPointsPerDim; idx++)
-        regT[idx] = T(0);
+      memset(regT, 0, nQuadPointsPerDim * sizeof(T));
 
       for (std::uint32_t k = 0; k < qOdd; k++)
         {
@@ -1559,8 +1540,7 @@ HelmholtzKernel(sycl::nd_item<3>           item,
 
       T tempE, tempO, temp1, temp2;
 
-      for (std::uint32_t idx = 0; idx < nQuadPointsPerDim; idx++)
-        regT[idx] = T(0);
+      memset(regT, 0, nQuadPointsPerDim * sizeof(T));
 
       for (std::uint32_t k = 0; k < qOdd; k++)
         {
@@ -1613,8 +1593,7 @@ HelmholtzKernel(sycl::nd_item<3>           item,
     {
       T tempE, tempO, temp1, temp2;
 
-      for (std::uint32_t idx = 0; idx < nQuadPointsPerDim; idx++)
-        regT[idx] = T(0);
+      memset(regT, 0, nQuadPointsPerDim * sizeof(T));
 
       for (std::uint32_t k = 0; k < qOdd; k++)
         {
@@ -1700,8 +1679,7 @@ HelmholtzKernel(sycl::nd_item<3>           item,
     {
       T tempE, tempO;
 
-      for (std::uint32_t idx = 0; idx < nQuadPointsPerDim; idx++)
-        regT[idx] = T(0);
+      memset(regT, 0, nQuadPointsPerDim * sizeof(T));
 
       for (std::uint32_t k = 0; k < qOdd; k++)
         {
@@ -1750,8 +1728,7 @@ HelmholtzKernel(sycl::nd_item<3>           item,
 
       T tempE, tempO, temp1, temp2;
 
-      for (std::uint32_t idx = 0; idx < nQuadPointsPerDim; idx++)
-        regT[idx] = T(0);
+      memset(regT, 0, nQuadPointsPerDim * sizeof(T));
 
       for (std::uint32_t k = 0; k < qOdd; k++)
         {
@@ -1815,8 +1792,7 @@ HelmholtzKernel(sycl::nd_item<3>           item,
     {
       T tempE, tempO, temp1, temp2;
 
-      for (std::uint32_t idx = 0; idx < nQuadPointsPerDim; idx++)
-        regT[idx] = T(0);
+      memset(regT, 0, nQuadPointsPerDim * sizeof(T));
 
       for (std::uint32_t k = 0; k < qOdd; k++)
         {

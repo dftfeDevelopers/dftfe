@@ -21,9 +21,10 @@
  */
 
 constexpr std::uint32_t maxDofsPerDim = 17;
+
 __constant__ double
   constMem[(maxDofsPerDim * maxDofsPerDim * 5 + maxDofsPerDim) *
-           static_cast<int>(operatorList::COUNT)];
+           static_cast<std::uint32_t>(operatorList::COUNT)];
 
 __device__ inline dftfe::uInt
 getMultiVectorIndex(const dftfe::uInt node,
@@ -159,8 +160,8 @@ constraintsDistributeTransposeKernel(
           sharedConstrainedData[threadIdx.x + k * batchSize] =
             Ax[threadIdx.x + idx * batchSize];
 
-          Ax[threadIdx.x + idx * batchSize] = 0.;
-          x[threadIdx.x + idx * batchSize]  = 0.;
+          Ax[threadIdx.x + idx * batchSize] = T(0);
+          x[threadIdx.x + idx * batchSize]  = T(0);
         }
 
       __syncthreads();
@@ -170,7 +171,7 @@ constraintsDistributeTransposeKernel(
       for (dftfe::uInt j = threadIdx.y; j < constrainingBucketSize;
            j += yThreads)
         {
-          T tmp = 0.;
+          T tmp = T(0);
 
           for (dftfe::uInt k = 0; k < constrainedBucketSize; k++)
             tmp += weightMatrixList[j + k * constrainingBucketSize +
@@ -209,8 +210,8 @@ constraintsDistributeTransposeKernel(
               nGhostDofs,
               ghostMap);
 
-          Ax[threadIdx.x + idx * batchSize] = 0.;
-          x[threadIdx.x + idx * batchSize]  = 0.;
+          Ax[threadIdx.x + idx * batchSize] = T(0);
+          x[threadIdx.x + idx * batchSize]  = T(0);
         }
     }
 }
@@ -255,7 +256,8 @@ LaplaceKernel(T *__restrict__ dst,
                                        nQuadPointsPerDim * nQuadPointsPerDim +
                                      padding];
 
-  T *__restrict__ constN      = reinterpret_cast<T *>(constMem);
+  T *__restrict__ constN = reinterpret_cast<T *>(
+    constMem + 0 * (maxDofsPerDim * maxDofsPerDim * 5 + maxDofsPerDim));
   T *__restrict__ constD      = &constN[qEven * pEven + qOdd * pOdd];
   T *__restrict__ constNT     = &constD[2 * qEven * qOdd];
   T *__restrict__ constDT     = &constNT[pEven * qEven + pOdd * qOdd];
@@ -1076,7 +1078,8 @@ HelmholtzKernel(T *__restrict__ dst,
                                        nQuadPointsPerDim * nQuadPointsPerDim +
                                      padding];
 
-  T *__restrict__ constN      = reinterpret_cast<T *>(constMem);
+  T *__restrict__ constN = reinterpret_cast<T *>(
+    constMem + 1 * (maxDofsPerDim * maxDofsPerDim * 5 + maxDofsPerDim));
   T *__restrict__ constD      = &constN[qEven * pEven + qOdd * pOdd];
   T *__restrict__ constNT     = &constD[2 * qEven * qOdd];
   T *__restrict__ constDT     = &constNT[pEven * qEven + pOdd * qOdd];
@@ -1185,17 +1188,10 @@ HelmholtzKernel(T *__restrict__ dst,
 
   __syncthreads();
 
-  for (std::uint32_t i = threadIdx.y; i < nDofsPerDim * nDofsPerDim;
-       i += yThreads)
-    for (std::uint32_t k = 0; k < nDofsPerDim; k++)
-      atomicAdd(&dst[map[i + k * nDofsPerDim * nDofsPerDim + mapOffset]],
-                sharedV[threadIdx.x + i * batchSize +
-                        k * batchSize * nDofsPerDim * nDofsPerDim]);
-
   // 3rd GEMM of N
   // X Direction
-  /*for (std::uint32_t i = threadIdx.y; i < nQuadPointsPerDim *
-nQuadPointsPerDim; i += yThreads)
+  for (std::uint32_t i = threadIdx.y; i < nQuadPointsPerDim * nQuadPointsPerDim;
+       i += yThreads)
     {
       T tempE, tempO, temp1, temp2;
 
@@ -1859,18 +1855,18 @@ nQuadPointsPerDim; i += yThreads)
 #pragma unroll
       for (std::uint32_t j = 0; j < pOdd; j++)
         {
-         dftfe::uInt dof1 = __ldg(&map[j + i * nDofsPerDim + mapOffset]);
+          dftfe::uInt dof1 = __ldg(&map[j + i * nDofsPerDim + mapOffset]);
           atomicAdd(&dst[threadIdx.x + dof1], regT[j] + regT[j + pEven]);
 
-         dftfe::uInt dof2 =
+          dftfe::uInt dof2 =
             __ldg(&map[(nDofsPerDim - 1 - j) + i * nDofsPerDim + mapOffset]);
           atomicAdd(&dst[threadIdx.x + dof2], regT[j] - regT[j + pEven]);
         }
 
       if constexpr (nDofsPerDim % 2 == 1)
         {
-         dftfe::uInt dof = __ldg(&map[pOdd + i * nDofsPerDim + mapOffset]);
+          dftfe::uInt dof = __ldg(&map[pOdd + i * nDofsPerDim + mapOffset]);
           atomicAdd(&dst[threadIdx.x + dof], regT[pOdd]);
         }
-    } //*/
+    }
 }
