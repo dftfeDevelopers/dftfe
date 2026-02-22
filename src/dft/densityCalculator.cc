@@ -115,8 +115,8 @@ namespace dftfe
         ->get_quadrature(tempQuadratureIndex)
         .size();
 
-    const bool useTempQuadrature = true;
-    // (numQuadsQuadratureIndex > numQuadsTempQuadratureIndex);
+    const bool useTempQuadrature =
+      numQuadsQuadratureIndex > numQuadsTempQuadratureIndex;
     basisOperationsPtr->reinit(BVec * numWfnSpinors,
                                cellsBlockSize,
                                useTempQuadrature ? tempQuadratureIndex :
