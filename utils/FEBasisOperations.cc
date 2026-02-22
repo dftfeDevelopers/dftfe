@@ -196,10 +196,11 @@ namespace dftfe
       d_nQuadsPerCell.resize(d_quadratureIDsVector.size());
       d_quadPoints    = basisOperationsSrc.d_quadPoints;
       d_cellCentroids = basisOperationsSrc.d_cellCentroids;
-      d_shapeFnValIntermediateDensityToDensityQuad.resize(
-        basisOperationsSrc.d_shapeFnValIntermediateDensityToDensityQuad.size());
-      d_shapeFnValIntermediateDensityToDensityQuad.copyFrom(
-        basisOperationsSrc.d_shapeFnValIntermediateDensityToDensityQuad);
+      for (const auto &pair : basisOperationsSrc.d_shapeFnValQuad1ToQuad2)
+        {
+          d_shapeFnValQuad1ToQuad2[pair.first].resize(pair.second.size());
+          d_shapeFnValQuad1ToQuad2[pair.first].copyFrom(pair.second);
+        }
       initializeConstraints();
       for (dftfe::uInt iQuadIndex = 0;
            iQuadIndex < d_quadratureIDsVector.size();
@@ -392,8 +393,8 @@ namespace dftfe
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         shapeFnValuesHost(numQuads * dofsPerCell);
 
-      d_shapeFnValIntermediateDensityToDensityQuad.resize(numQuads *
-                                                          dofsPerCell);
+      auto key = std::make_pair(quadId1, quadId2);
+      d_shapeFnValQuad1ToQuad2[key].resize(numQuads * dofsPerCell);
 
       for (dftfe::uInt iQuad = 0; iQuad < numQuads; iQuad++)
         {
@@ -404,7 +405,7 @@ namespace dftfe
                                                                      iQuad);
             }
         }
-      d_shapeFnValIntermediateDensityToDensityQuad.copyFrom(shapeFnValuesHost);
+      d_shapeFnValQuad1ToQuad2[key].copyFrom(shapeFnValuesHost);
     }
 
 
@@ -3994,43 +3995,47 @@ namespace dftfe
 
       const double scalarCoeffAlpha = 1.0, scalarCoeffBeta = 0.0;
 
+      auto key = std::make_pair(quadId1, quadId2);
+      auto it  = d_shapeFnValQuad1ToQuad2.find(key);
+      AssertThrow(it != d_shapeFnValQuad1ToQuad2.end(),
+                  dealii::ExcMessage(
+                    "Shape function data for quadrature pair not found."));
+
       if (numComponents == 1)
         {
-          d_BLASWrapperPtr->xgemm(
-            'N',
-            'N',
-            numQuadsQ2,
-            nCells,
-            numQuadsQ1,
-            &scalarCoeffAlpha,
-            d_shapeFnValIntermediateDensityToDensityQuad.data(),
-            numQuadsQ2,
-            Q1Field,
-            numQuadsQ1,
-            &scalarCoeffBeta,
-            Q2Field,
-            numQuadsQ2);
+          d_BLASWrapperPtr->xgemm('N',
+                                  'N',
+                                  numQuadsQ2,
+                                  nCells,
+                                  numQuadsQ1,
+                                  &scalarCoeffAlpha,
+                                  it->second.data(),
+                                  numQuadsQ2,
+                                  Q1Field,
+                                  numQuadsQ1,
+                                  &scalarCoeffBeta,
+                                  Q2Field,
+                                  numQuadsQ2);
         }
       else if (numComponents == 3)
         {
-          d_BLASWrapperPtr->xgemmStridedBatched(
-            'N',
-            'T',
-            3,
-            numQuadsQ2,
-            numQuadsQ1,
-            &scalarCoeffAlpha,
-            Q1Field,
-            3,
-            3 * numQuadsQ1,
-            d_shapeFnValIntermediateDensityToDensityQuad.data(),
-            numQuadsQ2,
-            0,
-            &scalarCoeffBeta,
-            Q2Field,
-            3,
-            3 * numQuadsQ2,
-            nCells);
+          d_BLASWrapperPtr->xgemmStridedBatched('N',
+                                                'T',
+                                                3,
+                                                numQuadsQ2,
+                                                numQuadsQ1,
+                                                &scalarCoeffAlpha,
+                                                Q1Field,
+                                                3,
+                                                3 * numQuadsQ1,
+                                                it->second.data(),
+                                                numQuadsQ2,
+                                                0,
+                                                &scalarCoeffBeta,
+                                                Q2Field,
+                                                3,
+                                                3 * numQuadsQ2,
+                                                nCells);
         }
     }
 

@@ -1099,9 +1099,9 @@ namespace dftfe
         d_stiffnessVectorCoeffType;
       dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
         d_inverseStiffnessVectorCoeffType;
-      dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>
-        d_shapeFnValIntermediateDensityToDensityQuad;
-
+      std::map<std::pair<dftfe::uInt, dftfe::uInt>,
+               dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>>
+        d_shapeFnValQuad1ToQuad2;
       mutable std::map<
         dftfe::uInt,
         std::vector<dftfe::linearAlgebra::MultiVector<

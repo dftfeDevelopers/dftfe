@@ -292,7 +292,8 @@ namespace dftfe
               updateFlagsLPSP,
               updateFlagsfeOrderPlusOne,
               updateFlagssparsityPattern,
-              dftfe::basis::update_values | dftfe::basis::update_gradients};
+              dftfe::basis::update_values | dftfe::basis::update_gradients |
+                dftfe::basis::update_inversejacobians};
             d_basisOperationsPtrHost->init(matrix_free_data,
                                            d_constraintsVector,
                                            d_densityDofHandlerIndex,
@@ -311,6 +312,9 @@ namespace dftfe
             d_basisOperationsPtrHost
               ->shapeFunctionsCenteredAtQuad1EvaluatedAtQuad2(
                 d_intermediateDensityQuadratureId, d_densityQuadratureId);
+            d_basisOperationsPtrHost
+              ->shapeFunctionsCenteredAtQuad1EvaluatedAtQuad2(
+                d_intermediateDensityQuadratureId, d_gllQuadratureId);
           }
       }
     if (!d_dftParamsPtr->useDevice && recomputeBasisData)
