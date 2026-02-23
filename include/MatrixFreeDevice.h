@@ -36,7 +36,7 @@ namespace dftfe
     Helmholtz = 1,
     LDA       = 2,
     GGA       = 3,
-    COUNT     = 4
+    Count     = 4
   };
 
   /**

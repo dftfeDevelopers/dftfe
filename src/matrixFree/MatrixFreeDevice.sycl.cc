@@ -26,7 +26,7 @@ constexpr std::uint32_t maxDofsPerDim = 17;
 
 static dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
   shapeBuffer((maxDofsPerDim * maxDofsPerDim * 5 + maxDofsPerDim) *
-              static_cast<std::uint32_t>(dftfe::operatorList::COUNT));
+              static_cast<std::uint32_t>(dftfe::operatorList::Count));
 
 inline dftfe::uInt
 getMultiVectorIndex(const dftfe::uInt  node,

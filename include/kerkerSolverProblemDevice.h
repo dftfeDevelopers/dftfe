@@ -183,9 +183,9 @@ namespace dftfe
     // Matrix free wrapper object
     std::unique_ptr<
       dftfe::MatrixFreeWrapperClass<double,
-                                    double,
                                     dftfe::operatorList::Helmholtz,
-                                    dftfe::utils::MemorySpace::DEVICE>>
+                                    dftfe::utils::MemorySpace::DEVICE,
+                                    false>>
       d_matrixFreeWrapperDevice;
 
     // constraints

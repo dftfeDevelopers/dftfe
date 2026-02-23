@@ -84,18 +84,21 @@ namespace dftfe
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
       BLASWrapperPtr;
 
+    auto matrixFreeDataPtr = std::make_shared<dealii::MatrixFree<3, double>>(
+      *d_matrixFreeDataPRefinedPtr);
+
     d_matrixFreeWrapperDevice = std::make_unique<
       dftfe::MatrixFreeWrapperClass<double,
-                                    double,
                                     dftfe::operatorList::Helmholtz,
-                                    dftfe::utils::MemorySpace::DEVICE>>(
-      FEOrderElectro + 1,
-      mpi_communicator,
-      d_basisOperationsPtr,
-      BLASWrapperPtr,
-      d_matrixFreeVectorComponent,
-      d_matrixFreeAxQuadratureComponent,
-      nVectors);
+                                    dftfe::utils::MemorySpace::DEVICE,
+                                    false>>(FEOrderElectro + 1,
+                                            mpi_communicator,
+                                            matrixFreeDataPtr,
+                                            constraintMatrixPRefined,
+                                            BLASWrapperPtr,
+                                            d_matrixFreeVectorComponent,
+                                            d_matrixFreeAxQuadratureComponent,
+                                            nVectors);
 
     // Init MatrixFree
     d_matrixFreeWrapperDevice->init();

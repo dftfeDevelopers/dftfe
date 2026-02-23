@@ -24,7 +24,7 @@ constexpr std::uint32_t maxDofsPerDim = 17;
 
 __constant__ double
   constMem[(maxDofsPerDim * maxDofsPerDim * 5 + maxDofsPerDim) *
-           static_cast<std::uint32_t>(operatorList::COUNT)];
+           static_cast<std::uint32_t>(operatorList::Count)];
 
 __device__ inline dftfe::uInt
 getMultiVectorIndex(const dftfe::uInt node,

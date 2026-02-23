@@ -25,7 +25,6 @@
 #include <variant>
 #include <memory>
 #include <headers.h>
-#include <FEBasisOperations.h>
 #include <linearAlgebraOperations.h>
 #include <MatrixFree.h>
 
@@ -40,34 +39,34 @@ namespace dftfe
   using MatrixFreeObject = std::variant<
 #define MatrixFreeWrapperTemplates(NDOFSPERDIM)                          \
   std::shared_ptr<dftfe::MatrixFree<double,                              \
-                                    double,                              \
                                     dftfe::operatorList::Laplace,        \
                                     dftfe::utils::MemorySpace::DEVICE,   \
+                                    false,                               \
                                     NDOFSPERDIM,                         \
                                     NDOFSPERDIM,                         \
                                     1,                                   \
                                     1>>,                                 \
     std::shared_ptr<dftfe::MatrixFree<double,                            \
-                                      double,                            \
                                       dftfe::operatorList::Helmholtz,    \
                                       dftfe::utils::MemorySpace::DEVICE, \
+                                      false,                             \
                                       NDOFSPERDIM,                       \
                                       NDOFSPERDIM,                       \
                                       1,                                 \
                                       1>>,
 #define MatrixFreeWrapperTemplatesL(NDOFSPERDIM)                         \
   std::shared_ptr<dftfe::MatrixFree<double,                              \
-                                    double,                              \
                                     dftfe::operatorList::Laplace,        \
                                     dftfe::utils::MemorySpace::DEVICE,   \
+                                    false,                               \
                                     NDOFSPERDIM,                         \
                                     NDOFSPERDIM,                         \
                                     1,                                   \
                                     1>>,                                 \
     std::shared_ptr<dftfe::MatrixFree<double,                            \
-                                      double,                            \
                                       dftfe::operatorList::Helmholtz,    \
                                       dftfe::utils::MemorySpace::DEVICE, \
+                                      false,                             \
                                       NDOFSPERDIM,                       \
                                       NDOFSPERDIM,                       \
                                       1,                                 \
@@ -82,12 +81,12 @@ namespace dftfe
    *
    */
   template <typename T,
-            typename TypeFEBasis,
             dftfe::operatorList       operatorID,
             dftfe::utils::MemorySpace memorySpace,
+            bool                      isComplex,
             class... Args>
   inline MatrixFreeObject
-  createMatrixFreeObject(dftfe::uInt nDofsPerDim, Args &&...args)
+  createMatrixFreeObject(std::uint32_t nDofsPerDim, Args &&...args)
   {
     switch (nDofsPerDim)
       {
@@ -95,9 +94,9 @@ namespace dftfe
   case NDOFSPERDIM:                                   \
     return MatrixFreeObject(                          \
       std::make_shared<dftfe::MatrixFree<T,           \
-                                         TypeFEBasis, \
                                          operatorID,  \
                                          memorySpace, \
+                                         isComplex,   \
                                          NDOFSPERDIM, \
                                          NDOFSPERDIM, \
                                          1,           \
@@ -106,9 +105,9 @@ namespace dftfe
   case NDOFSPERDIM:                                   \
     return MatrixFreeObject(                          \
       std::make_shared<dftfe::MatrixFree<T,           \
-                                         TypeFEBasis, \
                                          operatorID,  \
                                          memorySpace, \
+                                         isComplex,   \
                                          NDOFSPERDIM, \
                                          NDOFSPERDIM, \
                                          1,           \
@@ -126,31 +125,29 @@ namespace dftfe
    *
    */
   template <typename T,
-            typename TypeFEBasis,
             dftfe::operatorList       operatorID,
-            dftfe::utils::MemorySpace memorySpace>
+            dftfe::utils::MemorySpace memorySpace,
+            bool                      isComplex>
   class MatrixFreeWrapperClass
   {
   public:
     /// Constructor
     MatrixFreeWrapperClass(
-      dftfe::uInt     nDofsPerDim,
-      const MPI_Comm &mpi_comm,
-      std::shared_ptr<
-        dftfe::basis::FEBasisOperations<TypeFEBasis,
-                                        double,
-                                        dftfe::utils::MemorySpace::HOST>>
-        basisOperationsPtrHost,
-      std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
-                        BLASWrapperPtr,
-      const dftfe::uInt dofHandlerID,
-      const dftfe::uInt quadratureID,
-      const dftfe::uInt nVectors)
+      std::uint32_t                                        nDofsPerDim,
+      const MPI_Comm                                      &mpi_comm,
+      const std::shared_ptr<dealii::MatrixFree<3, double>> matrixFreeDataPtr,
+      const dealii::AffineConstraints<double>             &constraintMatrix,
+      const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
+                          BLASWrapperPtr,
+      const std::uint32_t dofHandlerID,
+      const std::uint32_t quadratureID,
+      const dftfe::uInt   nVectors)
       : d_MatrixFreeObject(
-          createMatrixFreeObject<T, TypeFEBasis, operatorID, memorySpace>(
+          createMatrixFreeObject<T, operatorID, memorySpace, isComplex>(
             nDofsPerDim,
             mpi_comm,
-            basisOperationsPtrHost,
+            matrixFreeDataPtr,
+            constraintMatrix,
             BLASWrapperPtr,
             dofHandlerID,
             quadratureID,

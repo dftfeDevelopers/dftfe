@@ -25,37 +25,37 @@
 namespace dftfe
 {
   template <typename T,
-            typename TypeFEBasis,
             dftfe::operatorList       operatorID,
             dftfe::utils::MemorySpace memorySpace,
+            bool                      isComplex,
             std::uint32_t             nDofsPerDim,
             std::uint32_t             nQuadPointsPerDim,
             std::uint32_t             batchSize,
             std::uint32_t             subBatchSize>
   MatrixFree<T,
-             TypeFEBasis,
              operatorID,
              memorySpace,
+             isComplex,
              nDofsPerDim,
              nQuadPointsPerDim,
              batchSize,
              subBatchSize>::
-    MatrixFree(const MPI_Comm                     &mpi_comm,
-               std::shared_ptr<dftfe::basis::FEBasisOperations<
-                 TypeFEBasis,
-                 double,
-                 dftfe::utils::MemorySpace::HOST>> basisOperationsPtrHost,
-               std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
-                                   BLASWrapperPtr,
-               const std::uint32_t dofHandlerID,
-               const std::uint32_t quadratureID,
-               const std::uint32_t nVectors)
+    MatrixFree(
+      const MPI_Comm                                      &mpi_comm,
+      const std::shared_ptr<dealii::MatrixFree<3, double>> matrixFreeDataPtr,
+      const dealii::AffineConstraints<double>             &constraintMatrix,
+      std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
+                          BLASWrapperPtr,
+      const std::uint32_t dofHandlerID,
+      const std::uint32_t quadratureID,
+      const std::uint32_t nVectors)
     : mpi_communicator(mpi_comm)
     , n_mpi_processes(dealii::Utilities::MPI::n_mpi_processes(mpi_comm))
     , this_mpi_process(dealii::Utilities::MPI::this_mpi_process(mpi_comm))
     , pcout(std::cout,
             (dealii::Utilities::MPI::this_mpi_process(mpi_comm) == 0))
-    , d_basisOperationsPtrHost(basisOperationsPtrHost)
+    , d_matrixFreeDataPtr(matrixFreeDataPtr)
+    , d_constraintMatrixPtr(&constraintMatrix)
     , d_BLASWrapperPtr(BLASWrapperPtr)
     , d_dofHandlerID(dofHandlerID)
     , d_quadratureID(quadratureID)
@@ -84,27 +84,29 @@ namespace dftfe
 
 
   template <typename T,
-            typename TypeFEBasis,
             dftfe::operatorList       operatorID,
             dftfe::utils::MemorySpace memorySpace,
+            bool                      isComplex,
             std::uint32_t             nDofsPerDim,
             std::uint32_t             nQuadPointsPerDim,
             std::uint32_t             batchSize,
             std::uint32_t             subBatchSize>
   void
   MatrixFree<T,
-             TypeFEBasis,
              operatorID,
              memorySpace,
+             isComplex,
              nDofsPerDim,
              nQuadPointsPerDim,
              batchSize,
              subBatchSize>::init()
   {
-    d_basisOperationsPtrHost->reinit(0, 0, d_quadratureID);
-
-    d_matrixFreeDataPtr = &(d_basisOperationsPtrHost->matrixFreeData());
-    d_nCells            = d_basisOperationsPtrHost->nCells();
+    d_nCells     = d_matrixFreeDataPtr->n_physical_cells();
+    d_nOwnedDofs = d_matrixFreeDataPtr->get_vector_partitioner(d_dofHandlerID)
+                     ->locally_owned_size();
+    d_nGhostDofs = d_matrixFreeDataPtr->get_vector_partitioner(d_dofHandlerID)
+                     ->n_ghost_indices();
+    d_nRelaventDofs = d_nOwnedDofs + d_nGhostDofs;
 
     auto dofInfo = d_matrixFreeDataPtr->get_dof_info(d_dofHandlerID);
     auto shapeData =
@@ -112,9 +114,6 @@ namespace dftfe
         .get_shape_data();
     auto mappingData =
       d_matrixFreeDataPtr->get_mapping_info().cell_data[d_quadratureID];
-
-    d_constraintMatrixPtr =
-      (*(d_basisOperationsPtrHost->d_constraintsVector))[d_dofHandlerID];
 
     // Initialize shape and gradient functions
     std::array<double, nDofsPerDim * nQuadPointsPerDim>
@@ -294,7 +293,9 @@ namespace dftfe
                                    falseClause + d_nDofsPerCell,
                        singleVectorGlobalToLocalMapTemp.data() +
                          iCell * d_nDofsPerCell,
-                       [](dftfe::uInt &v) { return v; });
+                       [](unsigned int &v) {
+                         return static_cast<dftfe::uInt>(v);
+                       });
       }
 
     // Reorder cell numbering to cell-matrix order
@@ -310,10 +311,6 @@ namespace dftfe
 
     // Initialize constraints
     initConstraints();
-
-    d_nOwnedDofs    = d_basisOperationsPtrHost->nOwnedDofs();
-    d_nRelaventDofs = d_basisOperationsPtrHost->nRelaventDofs();
-    d_nGhostDofs    = d_nRelaventDofs - d_nOwnedDofs;
 
     if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
       {
@@ -492,18 +489,18 @@ namespace dftfe
 
 
   template <typename T,
-            typename TypeFEBasis,
             dftfe::operatorList       operatorID,
             dftfe::utils::MemorySpace memorySpace,
+            bool                      isComplex,
             std::uint32_t             nDofsPerDim,
             std::uint32_t             nQuadPointsPerDim,
             std::uint32_t             batchSize,
             std::uint32_t             subBatchSize>
   void
   MatrixFree<T,
-             TypeFEBasis,
              operatorID,
              memorySpace,
+             isComplex,
              nDofsPerDim,
              nQuadPointsPerDim,
              batchSize,
@@ -514,18 +511,18 @@ namespace dftfe
 
 
   template <typename T,
-            typename TypeFEBasis,
             dftfe::operatorList       operatorID,
             dftfe::utils::MemorySpace memorySpace,
+            bool                      isComplex,
             std::uint32_t             nDofsPerDim,
             std::uint32_t             nQuadPointsPerDim,
             std::uint32_t             batchSize,
             std::uint32_t             subBatchSize>
   void
   MatrixFree<T,
-             TypeFEBasis,
              operatorID,
              memorySpace,
+             isComplex,
              nDofsPerDim,
              nQuadPointsPerDim,
              batchSize,
@@ -547,18 +544,18 @@ namespace dftfe
 
 
   template <typename T,
-            typename TypeFEBasis,
             dftfe::operatorList       operatorID,
             dftfe::utils::MemorySpace memorySpace,
+            bool                      isComplex,
             std::uint32_t             nDofsPerDim,
             std::uint32_t             nQuadPointsPerDim,
             std::uint32_t             batchSize,
             std::uint32_t             subBatchSize>
   void
   MatrixFree<T,
-             TypeFEBasis,
              operatorID,
              memorySpace,
+             isComplex,
              nDofsPerDim,
              nQuadPointsPerDim,
              batchSize,
@@ -641,18 +638,18 @@ namespace dftfe
 
 
   template <typename T,
-            typename TypeFEBasis,
             dftfe::operatorList       operatorID,
             dftfe::utils::MemorySpace memorySpace,
+            bool                      isComplex,
             std::uint32_t             nDofsPerDim,
             std::uint32_t             nQuadPointsPerDim,
             std::uint32_t             batchSize,
             std::uint32_t             subBatchSize>
   inline void
   MatrixFree<T,
-             TypeFEBasis,
              operatorID,
              memorySpace,
+             isComplex,
              nDofsPerDim,
              nQuadPointsPerDim,
              batchSize,
@@ -686,18 +683,18 @@ namespace dftfe
 
 
   template <typename T,
-            typename TypeFEBasis,
             dftfe::operatorList       operatorID,
             dftfe::utils::MemorySpace memorySpace,
+            bool                      isComplex,
             std::uint32_t             nDofsPerDim,
             std::uint32_t             nQuadPointsPerDim,
             std::uint32_t             batchSize,
             std::uint32_t             subBatchSize>
   inline void
   MatrixFree<T,
-             TypeFEBasis,
              operatorID,
              memorySpace,
+             isComplex,
              nDofsPerDim,
              nQuadPointsPerDim,
              batchSize,
@@ -731,18 +728,18 @@ namespace dftfe
 
 
   template <typename T,
-            typename TypeFEBasis,
             dftfe::operatorList       operatorID,
             dftfe::utils::MemorySpace memorySpace,
+            bool                      isComplex,
             std::uint32_t             nDofsPerDim,
             std::uint32_t             nQuadPointsPerDim,
             std::uint32_t             batchSize,
             std::uint32_t             subBatchSize>
   inline void
   MatrixFree<T,
-             TypeFEBasis,
              operatorID,
              memorySpace,
+             isComplex,
              nDofsPerDim,
              nQuadPointsPerDim,
              batchSize,

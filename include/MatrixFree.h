@@ -45,9 +45,9 @@ namespace dftfe
    *
    */
   template <typename T,
-            typename TypeFEBasis,
             dftfe::operatorList       operatorID,
             dftfe::utils::MemorySpace memorySpace,
+            bool                      isComplex,
             std::uint32_t             nDofsPerDim,
             std::uint32_t             nQuadPointsPerDim,
             std::uint32_t             batchSize,
@@ -56,16 +56,15 @@ namespace dftfe
   {
   public:
     /// Constructor
-    MatrixFree(const MPI_Comm                     &mpi_comm,
-               std::shared_ptr<dftfe::basis::FEBasisOperations<
-                 TypeFEBasis,
-                 double,
-                 dftfe::utils::MemorySpace::HOST>> basisOperationsPtrHost,
-               std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
-                                   BLASWrapperPtr,
-               const std::uint32_t dofHandlerID,
-               const std::uint32_t quadratureID,
-               const std::uint32_t nVectors);
+    MatrixFree(
+      const MPI_Comm                                      &mpi_comm,
+      const std::shared_ptr<dealii::MatrixFree<3, double>> matrixFreeDataPtr,
+      const dealii::AffineConstraints<double>             &constraintMatrix,
+      const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
+                          BLASWrapperPtr,
+      const std::uint32_t dofHandlerID,
+      const std::uint32_t quadratureID,
+      const std::uint32_t nVectors);
 
     /**
      * @brief Initialize data structures for MatrixFree class
@@ -113,9 +112,7 @@ namespace dftfe
     void
     setupConstraints(const dealii::IndexSet &indexSet);
 
-    static constexpr bool d_isComplex =
-      std::is_same_v<TypeFEBasis, std::complex<double>>;
-    typedef std::conditional_t<d_isComplex, std::complex<T>, T> DataType;
+    typedef std::conditional_t<isComplex, std::complex<T>, T> DataType;
 
     const std::uint32_t d_dofHandlerID, d_quadratureID, d_nDofsPerCell,
       d_nQuadsPerCell;
@@ -159,19 +156,15 @@ namespace dftfe
       d_constrainingNodeOffsetDevice, d_constrainedNodeOffsetDevice,
       d_weightMatrixOffsetDevice;
 
-    std::shared_ptr<
-      dftfe::basis::
-        FEBasisOperations<TypeFEBasis, double, dftfe::utils::MemorySpace::HOST>>
-      d_basisOperationsPtrHost;
+    // pointer to dealii MatrixFree object
+    const std::shared_ptr<dealii::MatrixFree<3, double>> d_matrixFreeDataPtr;
 
-    std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
-      d_BLASWrapperPtr;
-
-    /// pointer to dealii MatrixFree object
-    const dealii::MatrixFree<3, double> *d_matrixFreeDataPtr;
-
-    /// pointer to dealii dealii::AffineConstraints<double> object
+    // pointer to dealii AffineConstraints object
     const dealii::AffineConstraints<double> *d_constraintMatrixPtr;
+
+    // pointer to BLAS wrapper object
+    const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
+      d_BLASWrapperPtr;
 
     std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
       d_singleVectorPartitioner, d_singleBatchPartitioner;

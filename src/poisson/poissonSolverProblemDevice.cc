@@ -161,14 +161,18 @@ namespace dftfe
         // Setup MatrixFree
         unsigned int nVectors = 1;
 
+        auto matrixFreeDataPtr =
+          std::make_shared<dealii::MatrixFree<3, double>>(*d_matrixFreeDataPtr);
+
         d_matrixFreeWrapperDevice = std::make_unique<
           dftfe::MatrixFreeWrapperClass<double,
-                                        double,
                                         dftfe::operatorList::Laplace,
-                                        dftfe::utils::MemorySpace::DEVICE>>(
+                                        dftfe::utils::MemorySpace::DEVICE,
+                                        false>>(
           FEOrderElectro + 1,
           mpi_communicator,
-          d_basisOperationsPtr,
+          matrixFreeDataPtr,
+          constraintMatrix,
           d_BLASWrapperPtr,
           d_matrixFreeVectorComponent,
           d_matrixFreeQuadratureComponentAX,
