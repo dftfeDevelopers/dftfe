@@ -476,18 +476,19 @@ namespace dftfe
         d_inhomogenityListDevice.resize(d_inhomogenityList.size());
         d_inhomogenityListDevice.copyFrom(d_inhomogenityList);
 
+#ifdef DFTFE_WITH_DEVICE_LANG_SYCL
+
+        constexpr std::uint32_t d_maxDofsPerDim = 17;
+
         shapeBufferDevice.resize(
-          (d_maxDofsPerDim * d_maxDofsPerDim * 5 + d_maxDofsPerDim) *
-          static_cast<std::uint32_t>(dftfe::operatorList::Count));
+          (d_maxDofsPerDim * d_maxDofsPerDim * 5 + d_maxDofsPerDim));
 
         dftfe::utils::MemoryTransfer<dftfe::utils::MemorySpace::DEVICE,
                                      dftfe::utils::MemorySpace::HOST>::
           copy(shapeFunctionValueGradient.size(),
-               shapeBufferDevice.data() +
-                 (d_maxDofsPerDim * d_maxDofsPerDim * 5 + d_maxDofsPerDim) *
-                   static_cast<std::uint32_t>(operatorID),
+               shapeBufferDevice.data(),
                shapeFunctionValueGradient.data());
-
+#else
         dftfe::MatrixFreeDevice<
           T,
           operatorID,
@@ -495,6 +496,7 @@ namespace dftfe
           nQuadPointsPerDim,
           batchSize>::init(shapeFunctionValueGradient.data(),
                            shapeFunctionValueGradient.size());
+#endif
       }
   }
 
@@ -768,10 +770,7 @@ namespace dftfe
                                         src,
                                         d_jacobianFactor.data(),
                                         d_map.data(),
-                                        shapeBufferDevice.data() +
-                                          0 * (d_maxDofsPerDim *
-                                                 d_maxDofsPerDim * 5 +
-                                               d_maxDofsPerDim),
+                                        shapeBufferDevice.data(),
                                         d_nCells,
                                         d_nBatch);
 
@@ -785,10 +784,7 @@ namespace dftfe
                                           src,
                                           d_jacobianFactor.data(),
                                           d_map.data(),
-                                          shapeBufferDevice.data() +
-                                            1 * (d_maxDofsPerDim *
-                                                   d_maxDofsPerDim * 5 +
-                                                 d_maxDofsPerDim),
+                                          shapeBufferDevice.data(),
                                           d_coeffHelmholtz,
                                           d_nCells,
                                           d_nBatch);

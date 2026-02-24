@@ -156,8 +156,9 @@ namespace dftfe
       d_constrainingNodeOffsetDevice, d_constrainedNodeOffsetDevice,
       d_weightMatrixOffsetDevice;
 
-    static constexpr std::uint32_t d_maxDofsPerDim = 17;
-
+    // Buffer for shape function values and gradients at quadrature points for
+    // SYCL. For CUDA/HIP, these are stored in constant memory in
+    // MatrixFreeDevice.
     dftfe::utils::MemoryStorage<T, dftfe::utils::MemorySpace::DEVICE>
       shapeBufferDevice;
 
