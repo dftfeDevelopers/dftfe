@@ -69,7 +69,6 @@ namespace dftfe
     dftfe::linearAlgebra::createMultiVectorFromDealiiPartitioner(
       x.get_partitioner(), 1, d_xDevice);
 
-
     d_xPtr      = &x;
     d_xLocalDof = d_xDevice.locallyOwnedSize() * d_xDevice.numVectors();
     d_xLen      = d_xDevice.localSize() * d_xDevice.numVectors();
@@ -80,20 +79,19 @@ namespace dftfe
     // Setup MatrixFree
     unsigned int nVectors = 1;
 
+    // Create BLASWrapper object pointer
     std::shared_ptr<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
       BLASWrapperPtr;
 
-    auto matrixFreeDataPtr = std::make_shared<dealii::MatrixFree<3, double>>(
-      *d_matrixFreeDataPRefinedPtr);
-
+    // Create matrixFreeWrapperDevice
     d_matrixFreeWrapperDevice = std::make_unique<
       dftfe::MatrixFreeWrapperClass<double,
                                     dftfe::operatorList::Helmholtz,
                                     dftfe::utils::MemorySpace::DEVICE,
                                     false>>(FEOrderElectro + 1,
                                             mpi_communicator,
-                                            matrixFreeDataPtr,
+                                            d_matrixFreeDataPRefinedPtr,
                                             constraintMatrixPRefined,
                                             BLASWrapperPtr,
                                             d_matrixFreeVectorComponent,

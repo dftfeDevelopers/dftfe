@@ -24,9 +24,12 @@
 #define matrixFreeDevice_H_
 #include <cstdint>
 #include <stdexcept>
+#include <TypeConfig.h>
+#include <MemoryStorage.h>
 #include <DeviceTypeConfig.h>
 #include <DeviceExceptions.h>
-#include <TypeConfig.h>
+#include <DeviceKernelLauncherHelpers.h>
+
 namespace dftfe
 {
   // List of operators
@@ -62,6 +65,7 @@ namespace dftfe
                     T           *src,
                     T           *jacobianFactor,
                     dftfe::uInt *map,
+                    T           *shapeBuffer,
                     dftfe::uInt  nCells,
                     dftfe::uInt  nBatch);
 
@@ -70,6 +74,7 @@ namespace dftfe
                       T           *src,
                       T           *jacobianFactor,
                       dftfe::uInt *map,
+                      T           *shapeBuffer,
                       T            coeffHelmholtz,
                       dftfe::uInt  nCells,
                       dftfe::uInt  nBatch);

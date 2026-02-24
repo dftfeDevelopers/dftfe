@@ -47,6 +47,7 @@ namespace dftfe
     constexpr std::size_t   sharedMemSize = 2 * batchSize * nQuadPointsPerDim *
                                           nQuadPointsPerDim *
                                           nQuadPointsPerDim * sizeof(T);
+    constexpr std::uint32_t maxDofsPerDim = 17;
 
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
     // Copy shape functions and gradients to constant memory on device
@@ -120,20 +121,6 @@ namespace dftfe
     if (sharedMemSize > static_cast<std::size_t>(maxDynSharedDefault))
       throw std::runtime_error(
         "Requested dynamic shared memory exceeds max limit");
-
-#elif DFTFE_WITH_DEVICE_LANG_SYCL
-    // Get the SYCL queue for the default stream
-    sycl::queue &queue =
-      dftfe::utils::queueRegistry.find(dftfe::utils::defaultStream)->second;
-
-    // Copy data from host to device
-    queue
-      .memcpy(shapeFnGradBuffer.getPointer() +
-                operatorID *
-                  (maxDofsPerDim * maxDofsPerDim * 5 + maxDofsPerDim),
-              constMemHost,
-              constMemSize * sizeof(T))
-      .wait();
 #endif
   }
 
@@ -218,7 +205,7 @@ namespace dftfe
                             sycl::range<3>(1, yThreads, batchSize),
                           sycl::range<3>(1, yThreads, batchSize)),
         [=](sycl::nd_item<3> item) {
-          constraintsDistributeKernelSYCL<T, nDofsPerDim, batchSize>(
+          constraintsDistributeKernel<T, nDofsPerDim, batchSize>(
             item,
             src,
             constrainingNodeBuckets,
@@ -318,7 +305,7 @@ namespace dftfe
                             sycl::range<3>(1, yThreads, batchSize),
                           sycl::range<3>(1, yThreads, batchSize)),
         [=](sycl::nd_item<3> item) {
-          constraintsDistributeTransposeKernelSYCL<T, nDofsPerDim, batchSize>(
+          constraintsDistributeTransposeKernel<T, nDofsPerDim, batchSize>(
             item,
             dst,
             src,
@@ -349,6 +336,7 @@ namespace dftfe
                     T           *src,
                     T           *jacobianFactor,
                     dftfe::uInt *map,
+                    T           *shapeBuffer,
                     dftfe::uInt  nCells,
                     dftfe::uInt  nBatch)
   {
@@ -403,10 +391,6 @@ namespace dftfe
         nQuadPointsPerDim +
       shapeBufferElements;
 
-    const T *shapeBufferPtr =
-      shapeBuffer.getPointer() +
-      operatorID * (maxDofsPerDim * maxDofsPerDim * 5 + maxDofsPerDim);
-
     queue.submit([&](sycl::handler &cgh) {
       sycl::local_accessor<T, 1> sharedMem(sharedMemElements, cgh);
       cgh.parallel_for(
@@ -414,8 +398,8 @@ namespace dftfe
                             sycl::range<3>(1, yThreads, batchSize),
                           sycl::range<3>(1, yThreads, batchSize)),
         [=](sycl::nd_item<3> item) {
-          LaplaceKernelSYCL<T, nDofsPerDim, nQuadPointsPerDim, batchSize, dim>(
-            item, dst, src, jacobianFactor, map, shapeBufferPtr, sharedMem);
+          LaplaceKernel<T, nDofsPerDim, nQuadPointsPerDim, batchSize, dim>(
+            item, dst, src, jacobianFactor, map, shapeBuffer, sharedMem);
         });
     });
 #endif
@@ -432,6 +416,7 @@ namespace dftfe
                       T           *src,
                       T           *jacobianFactor,
                       dftfe::uInt *map,
+                      T           *shapeBuffer,
                       T            coeffHelmholtz,
                       dftfe::uInt  nCells,
                       dftfe::uInt  nBatch)
@@ -489,10 +474,6 @@ namespace dftfe
         nQuadPointsPerDim +
       shapeBufferElements;
 
-    const T *shapeBufferPtr =
-      shapeBuffer.getPointer() +
-      operatorID * (maxDofsPerDim * maxDofsPerDim * 5 + maxDofsPerDim);
-
     queue.submit([&](sycl::handler &cgh) {
       sycl::local_accessor<T, 1> sharedMem(sharedMemElements, cgh);
       cgh.parallel_for(
@@ -500,18 +481,15 @@ namespace dftfe
                             sycl::range<3>(1, yThreads, batchSize),
                           sycl::range<3>(1, yThreads, batchSize)),
         [=](sycl::nd_item<3> item) {
-          HelmholtzKernelSYCL<T,
-                              nDofsPerDim,
-                              nQuadPointsPerDim,
-                              batchSize,
-                              dim>(item,
-                                   dst,
-                                   src,
-                                   jacobianFactor,
-                                   map,
-                                   coeffHelmholtz,
-                                   shapeBufferPtr,
-                                   sharedMem);
+          HelmholtzKernel<T, nDofsPerDim, nQuadPointsPerDim, batchSize, dim>(
+            item,
+            dst,
+            src,
+            jacobianFactor,
+            map,
+            coeffHelmholtz,
+            shapeBuffer,
+            sharedMem);
         });
     });
 #endif

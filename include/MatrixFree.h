@@ -23,9 +23,9 @@
 #ifndef MatrixFree_H_
 #define MatrixFree_H_
 #include <type_traits>
-#include <dftfeDataTypes.h>
-#include <MemorySpaceType.h>
-#include <FEBasisOperations.h>
+#include <headers.h>
+#include <MemoryStorage.h>
+#include <BLASWrapper.h>
 #include <MatrixFreeDevice.h>
 
 #ifdef _OPENMP
@@ -57,9 +57,9 @@ namespace dftfe
   public:
     /// Constructor
     MatrixFree(
-      const MPI_Comm                                      &mpi_comm,
-      const std::shared_ptr<dealii::MatrixFree<3, double>> matrixFreeDataPtr,
-      const dealii::AffineConstraints<double>             &constraintMatrix,
+      const MPI_Comm                          &mpi_comm,
+      const dealii::MatrixFree<3, double>     *matrixFreeDataPtr,
+      const dealii::AffineConstraints<double> &constraintMatrix,
       const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
                           BLASWrapperPtr,
       const std::uint32_t dofHandlerID,
@@ -156,8 +156,13 @@ namespace dftfe
       d_constrainingNodeOffsetDevice, d_constrainedNodeOffsetDevice,
       d_weightMatrixOffsetDevice;
 
+    static constexpr std::uint32_t d_maxDofsPerDim = 17;
+
+    dftfe::utils::MemoryStorage<T, dftfe::utils::MemorySpace::DEVICE>
+      shapeBufferDevice;
+
     // pointer to dealii MatrixFree object
-    const std::shared_ptr<dealii::MatrixFree<3, double>> d_matrixFreeDataPtr;
+    const dealii::MatrixFree<3, double> *d_matrixFreeDataPtr;
 
     // pointer to dealii AffineConstraints object
     const dealii::AffineConstraints<double> *d_constraintMatrixPtr;

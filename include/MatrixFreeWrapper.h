@@ -133,10 +133,10 @@ namespace dftfe
   public:
     /// Constructor
     MatrixFreeWrapperClass(
-      std::uint32_t                                        nDofsPerDim,
-      const MPI_Comm                                      &mpi_comm,
-      const std::shared_ptr<dealii::MatrixFree<3, double>> matrixFreeDataPtr,
-      const dealii::AffineConstraints<double>             &constraintMatrix,
+      std::uint32_t                            nDofsPerDim,
+      const MPI_Comm                          &mpi_comm,
+      const dealii::MatrixFree<3, double>     *matrixFreeDataPtr,
+      const dealii::AffineConstraints<double> &constraintMatrix,
       const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
                           BLASWrapperPtr,
       const std::uint32_t dofHandlerID,

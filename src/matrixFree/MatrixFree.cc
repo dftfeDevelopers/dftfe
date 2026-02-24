@@ -40,15 +40,14 @@ namespace dftfe
              nQuadPointsPerDim,
              batchSize,
              subBatchSize>::
-    MatrixFree(
-      const MPI_Comm                                      &mpi_comm,
-      const std::shared_ptr<dealii::MatrixFree<3, double>> matrixFreeDataPtr,
-      const dealii::AffineConstraints<double>             &constraintMatrix,
-      std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
-                          BLASWrapperPtr,
-      const std::uint32_t dofHandlerID,
-      const std::uint32_t quadratureID,
-      const std::uint32_t nVectors)
+    MatrixFree(const MPI_Comm                          &mpi_comm,
+               const dealii::MatrixFree<3, double>     *matrixFreeDataPtr,
+               const dealii::AffineConstraints<double> &constraintMatrix,
+               std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
+                                   BLASWrapperPtr,
+               const std::uint32_t dofHandlerID,
+               const std::uint32_t quadratureID,
+               const std::uint32_t nVectors)
     : mpi_communicator(mpi_comm)
     , n_mpi_processes(dealii::Utilities::MPI::n_mpi_processes(mpi_comm))
     , this_mpi_process(dealii::Utilities::MPI::this_mpi_process(mpi_comm))
@@ -477,6 +476,18 @@ namespace dftfe
         d_inhomogenityListDevice.resize(d_inhomogenityList.size());
         d_inhomogenityListDevice.copyFrom(d_inhomogenityList);
 
+        shapeBufferDevice.resize(
+          (d_maxDofsPerDim * d_maxDofsPerDim * 5 + d_maxDofsPerDim) *
+          static_cast<std::uint32_t>(dftfe::operatorList::Count));
+
+        dftfe::utils::MemoryTransfer<dftfe::utils::MemorySpace::DEVICE,
+                                     dftfe::utils::MemorySpace::HOST>::
+          copy(shapeFunctionValueGradient.size(),
+               shapeBufferDevice.data() +
+                 (d_maxDofsPerDim * d_maxDofsPerDim * 5 + d_maxDofsPerDim) *
+                   static_cast<std::uint32_t>(operatorID),
+               shapeFunctionValueGradient.data());
+
         dftfe::MatrixFreeDevice<
           T,
           operatorID,
@@ -748,17 +759,21 @@ namespace dftfe
     if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
       {
         if constexpr (operatorID == dftfe::operatorList::Laplace)
-          dftfe::MatrixFreeDevice<T,
-                                  operatorID,
-                                  nDofsPerDim,
-                                  nQuadPointsPerDim,
-                                  batchSize>::computeLaplaceX(dst,
-                                                              src,
-                                                              d_jacobianFactor
-                                                                .data(),
-                                                              d_map.data(),
-                                                              d_nCells,
-                                                              d_nBatch);
+          dftfe::MatrixFreeDevice<
+            T,
+            operatorID,
+            nDofsPerDim,
+            nQuadPointsPerDim,
+            batchSize>::computeLaplaceX(dst,
+                                        src,
+                                        d_jacobianFactor.data(),
+                                        d_map.data(),
+                                        shapeBufferDevice.data() +
+                                          0 * (d_maxDofsPerDim *
+                                                 d_maxDofsPerDim * 5 +
+                                               d_maxDofsPerDim),
+                                        d_nCells,
+                                        d_nBatch);
 
         if constexpr (operatorID == dftfe::operatorList::Helmholtz)
           dftfe::MatrixFreeDevice<
@@ -770,6 +785,10 @@ namespace dftfe
                                           src,
                                           d_jacobianFactor.data(),
                                           d_map.data(),
+                                          shapeBufferDevice.data() +
+                                            1 * (d_maxDofsPerDim *
+                                                   d_maxDofsPerDim * 5 +
+                                                 d_maxDofsPerDim),
                                           d_coeffHelmholtz,
                                           d_nCells,
                                           d_nBatch);
