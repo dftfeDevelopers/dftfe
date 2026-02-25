@@ -570,7 +570,7 @@ namespace dftfe
       const dftfe::uInt  dimension)
     {
       DFTFE_LAUNCH_KERNEL(copyToDealiiParallelNonLocalVecKernel,
-                          (numWfcs * totalEntries * dimension +
+                          (numWfcs * dimension +
                            (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                             dftfe::utils::DEVICE_BLOCK_SIZE * totalEntries,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
