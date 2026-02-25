@@ -112,6 +112,30 @@ namespace dftfe
                                                                      useLibxc,
                                                                      XCType);
         }
+      else if (XCType == "GGA-REVPBE")
+        {
+          exceptParamX =
+            xc_func_init(funcXPtr.get(), XC_GGA_X_PBE_R, XC_POLARIZED);
+          exceptParamC =
+            xc_func_init(funcCPtr.get(), XC_GGA_C_PBE, XC_POLARIZED);
+
+          excObj = std::make_shared<excDensityGGAClass<memorySpace>>(funcXPtr,
+                                                                     funcCPtr,
+                                                                     useLibxc,
+                                                                     XCType);
+        }
+      else if (XCType == "GGA-PBESOL")
+        {
+          exceptParamX =
+            xc_func_init(funcXPtr.get(), XC_GGA_X_PBE_SOL, XC_POLARIZED);
+          exceptParamC =
+            xc_func_init(funcCPtr.get(), XC_GGA_C_PBE_SOL, XC_POLARIZED);
+
+          excObj = std::make_shared<excDensityGGAClass<memorySpace>>(funcXPtr,
+                                                                     funcCPtr,
+                                                                     useLibxc,
+                                                                     XCType);
+        }
       else if (XCType == "GGA-LBxPBEc")
         {
           exceptParamX =
