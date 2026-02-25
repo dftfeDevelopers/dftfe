@@ -47,7 +47,7 @@ namespace dftfe
                                    BLASWrapperPtr,
                const std::uint32_t dofHandlerID,
                const std::uint32_t quadratureID,
-               const std::uint32_t nVectors)
+               const dftfe::uInt   nVectors)
     : mpi_communicator(mpi_comm)
     , n_mpi_processes(dealii::Utilities::MPI::n_mpi_processes(mpi_comm))
     , this_mpi_process(dealii::Utilities::MPI::this_mpi_process(mpi_comm))

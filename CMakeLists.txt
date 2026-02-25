@@ -20,11 +20,6 @@ SET(TARGET_VERSION "1.0-pre") # used in docs/Doxyfile.in
 
 add_definitions(-w)
 
-#FIXME: find a better way to replace O3 with O2 in CMAKE_CXX_FLAGS_RELEASE
-IF("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-  add_compile_options("-O3")
-ENDIF()
-
 IF (USE_64BIT_INT)
   IF ("${GPU_VENDOR}" STREQUAL "intel")
     add_compile_options("-fno-sycl-id-queries-fit-in-int")

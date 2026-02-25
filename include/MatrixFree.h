@@ -64,7 +64,7 @@ namespace dftfe
                           BLASWrapperPtr,
       const std::uint32_t dofHandlerID,
       const std::uint32_t quadratureID,
-      const std::uint32_t nVectors);
+      const dftfe::uInt   nVectors);
 
     /**
      * @brief Initialize data structures for MatrixFree class
