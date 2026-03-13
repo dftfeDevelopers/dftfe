@@ -4514,7 +4514,7 @@ namespace dftfe
       d_basisOperationsPtrElectroHost->getDofHandler();
     const dealii::AffineConstraints<double> &onlyHangingNodeConstraints =
       d_basisOperationsPtrElectroHost->matrixFreeData().get_affine_constraints(
-        phiExtDofHandlerIndexElectro);
+        d_basisOperationsPtrElectroHost->d_dofHandlerID);
 
     const dftfe::uInt faces_per_cell = dealii::GeometryInfo<3>::faces_per_cell;
     const dftfe::uInt dofs_per_cell  = dofHandler.get_fe().dofs_per_cell;

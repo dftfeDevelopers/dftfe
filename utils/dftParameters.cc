@@ -2296,6 +2296,8 @@ namespace dftfe
           chebyshevTolerance = 1.0e-2;
         else if (solverMode != "NSCF" && solverMode != "BANDS")
           chebyshevTolerance = 5.0e-2;
+        else
+          chebyshevTolerance = 1.0e-8;
       }
 
     if (std::fabs(mixingParameter - 0.0) < 1.0e-12)

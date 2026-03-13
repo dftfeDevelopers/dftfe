@@ -565,8 +565,10 @@ namespace dftfe
         std::abs(d_dftParamsPtr->netCharge) > 1e-12)
       pcout << "Setting netcharge " << d_dftParamsPtr->netCharge << std::endl;
     if (d_dftParamsPtr->highestStateOfInterestForChebFiltering == 0)
-      d_dftParamsPtr->highestStateOfInterestForChebFiltering =
-        std::floor(numElectrons * 1.05 / 2.0);
+      d_dftParamsPtr->highestStateOfInterestForChebFiltering = std::floor(
+        numElectrons /
+        ((d_dftParamsPtr->noncolin || d_dftParamsPtr->hasSOC) ? 1.0 : 2.0) *
+        1.05);
     if (d_dftParamsPtr->solverMode == "NSCF" ||
         d_dftParamsPtr->solverMode == "BANDS")
       {
@@ -2635,6 +2637,8 @@ namespace dftfe
     while (!scfConverged && (scfIter < d_dftParamsPtr->numSCFIterations))
       {
         dealii::Timer local_timer(d_mpiCommParent, true);
+        if (d_dftParamsPtr->verbosity > 0 && d_dftParamsPtr->noncolin)
+          localNonCollinearMagnetizationDensity(d_densityInQuadValues);
         if (d_dftParamsPtr->verbosity >= 1)
           pcout
             << "************************Begin Self-Consistent-Field Iteration: "
