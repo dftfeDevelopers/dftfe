@@ -28,7 +28,7 @@
 #include <MemoryStorage.h>
 #include <DataTypeOverloads.h>
 #include <dftfeDataTypes.h>
-#include <zfp.h>
+#include <compressionWrapper.h>
 #ifdef DFTFE_WITH_DEVICE
 #  include <DeviceTypeConfig.h>
 #  if defined(DFTFE_WITH_CUDA_NCCL)
@@ -194,13 +194,7 @@ namespace dftfe
           MemorySpace::HOST_PINNED>>
           d_sendRecvBufferCompressHostPinnedPtr;
 
-        zfp_stream *d_zfpCompressStream      = nullptr;
-        zfp_stream *d_zfpDecompressStream    = nullptr;
-        zfp_field  *d_zfpCompressField       = nullptr;
-        zfp_field  *d_zfpDecompressField     = nullptr;
-        bitstream  *d_zfpCompressBitstream   = nullptr;
-        bitstream  *d_zfpDecompressBitstream = nullptr;
-        dftfe::uInt d_compressBitsPerValue   = 8;
+        dftfe::uInt d_compressBitsPerValue = 8;
 
         dftfe::uInt d_maxCompressedTargetBytes = 0;
         dftfe::uInt d_maxCompressedGhostBytes  = 0;
