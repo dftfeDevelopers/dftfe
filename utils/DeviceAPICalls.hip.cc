@@ -158,6 +158,14 @@ namespace dftfe
                    std::size_t           size);
 
     template void
+    deviceSetValue(uint8_t *devPtr, uint8_t value, std::size_t size);
+
+    template void
+    deviceSetValue(std::complex<uint8_t> *devPtr,
+                   std::complex<uint8_t>  value,
+                   std::size_t            size);
+
+    template void
     deviceSetValue(uint16_t *devPtr, uint16_t value, std::size_t size);
 
     template void
