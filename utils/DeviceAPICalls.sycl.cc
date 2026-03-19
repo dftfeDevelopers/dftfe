@@ -450,6 +450,22 @@ namespace dftfe
     }
 
     deviceError_t
+    deviceEventElapsedTime(float         &milliseconds,
+                           deviceEvent_t &startEvent,
+                           deviceEvent_t &stopEvent)
+    {
+      stopEvent.wait_and_throw();
+      auto start_time =
+        startEvent
+          .get_profiling_info<sycl::info::event_profiling::command_end>();
+      auto end_time =
+        stopEvent
+          .get_profiling_info<sycl::info::event_profiling::command_end>();
+      milliseconds = (end_time - start_time) / 1e6f;
+      return dftfe::utils::deviceSuccess;
+    }
+
+    deviceError_t
     deviceStreamWaitEvent(deviceStream_t &stream,
                           deviceEvent_t  &event,
                           unsigned int    flags)

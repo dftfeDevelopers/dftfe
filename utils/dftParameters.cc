@@ -1089,10 +1089,34 @@ namespace dftfe
             "[Advanced] Sets communication precision for residual based Chebyshev filtering. Default setting is STANDARD. FP32, BF16 and COMPRESSED are ignored if USE SINGLE PREC CHEBY and USE GPU are false.");
 
           prm.declare_entry(
-            "COMPRESSION BIT RATE",
-            "16",
-            dealii::Patterns::Integer(0, 64),
-            "[Advanced] Sets compressed bits per value (ZFP fixed rate mode) for residual based Chebyshev filtering. Default setting is 16. This parameter is only used if COMMUN PREC CHEBY is set to COMPRESSED.");
+            "COMPRESS ALGO EARLY",
+            "BFP",
+            dealii::Patterns::Selection("BFP|ZFP"),
+            "[Advanced] Compression algorithm for early SCF iterations (before COMPRESS START SCF). BFP = block floating point, ZFP = zfp fixed-rate. Default BFP.");
+
+          prm.declare_entry(
+            "COMPRESS ALGO LATE",
+            "BFP",
+            dealii::Patterns::Selection("BFP|ZFP"),
+            "[Advanced] Compression algorithm for late SCF iterations (at or after COMPRESS START SCF). BFP = block floating point, ZFP = zfp fixed-rate. Default BFP.");
+
+          prm.declare_entry(
+            "COMPRESS BITS EARLY",
+            "12",
+            dealii::Patterns::Integer(4, 16),
+            "[Advanced] Bits per value for early SCF compression. Default 12.");
+
+          prm.declare_entry(
+            "COMPRESS BITS LATE",
+            "8",
+            dealii::Patterns::Integer(4, 16),
+            "[Advanced] Bits per value for late SCF compression. Default 8.");
+
+          prm.declare_entry(
+            "COMPRESS START SCF",
+            "5",
+            dealii::Patterns::Integer(0, 100),
+            "[Advanced] SCF iteration at which to switch from early to late compression settings. Default 5.");
 
           prm.declare_entry(
             "USE MIXED PREC COMMUN ONLY XTOX XTHX",
@@ -1787,7 +1811,11 @@ namespace dftfe
           prm.get_bool("USE MIXED PREC COMMUN ONLY XTOX XTHX");
         communPrecCheby    = prm.get("COMMUN PREC CHEBY");
         useSinglePrecCheby = prm.get_bool("USE SINGLE PREC CHEBY");
-        compressionBitRate = prm.get_integer("COMPRESSION BIT RATE");
+        compressAlgoEarly         = prm.get("COMPRESS ALGO EARLY");
+        compressAlgoLate          = prm.get("COMPRESS ALGO LATE");
+        compressBitsPerValueEarly = prm.get_integer("COMPRESS BITS EARLY");
+        compressBitsPerValueLate  = prm.get_integer("COMPRESS BITS LATE");
+        compressStartSCF          = prm.get_integer("COMPRESS START SCF");
         tensorOpType       = prm.get("TENSOR OP TYPE SINGLE PREC CHEBY");
         overlapComputeCommunCheby =
           prm.get_bool("OVERLAP COMPUTE COMMUN CHEBY");

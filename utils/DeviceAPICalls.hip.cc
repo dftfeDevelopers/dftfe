@@ -370,6 +370,16 @@ namespace dftfe
     }
 
     deviceError_t
+    deviceEventElapsedTime(float         &milliseconds,
+                           deviceEvent_t &startEvent,
+                           deviceEvent_t &stopEvent)
+    {
+      deviceError_t err = hipEventElapsedTime(&milliseconds, startEvent, stopEvent);
+      DEVICE_API_CHECK(err);
+      return err;
+    }
+
+    deviceError_t
     deviceStreamWaitEvent(deviceStream_t &stream,
                           deviceEvent_t  &event,
                           unsigned int    flags)

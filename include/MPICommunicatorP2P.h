@@ -120,6 +120,12 @@ namespace dftfe
         void
         setCommunicationPrecision(communicationPrecision precision);
 
+        void
+        setCompressBitsPerValue(dftfe::uInt bpv);
+
+        void
+        setCompressUseZfp(bool useZfp);
+
       private:
         std::shared_ptr<const MPIPatternP2P<memorySpace>> d_mpiPatternP2P;
 
@@ -194,7 +200,8 @@ namespace dftfe
           MemorySpace::HOST_PINNED>>
           d_sendRecvBufferCompressHostPinnedPtr;
 
-        dftfe::uInt d_compressBitsPerValue = 8;
+        dftfe::uInt d_compressBitsPerValue = 12;
+        bool        d_useZfpCompression = false;
 
         dftfe::uInt d_maxCompressedTargetBytes = 0;
         dftfe::uInt d_maxCompressedGhostBytes  = 0;

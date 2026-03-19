@@ -483,6 +483,11 @@ namespace dftfe
       setCommunicationPrecision(
         utils::mpi::communicationPrecision commPrecision);
 
+      void
+      setCompressBitsPerValue(dftfe::uInt bpv);
+
+      void
+      setCompressUseZfp(bool useZfp);
 
       dftfe::uInt
       globalSize() const;

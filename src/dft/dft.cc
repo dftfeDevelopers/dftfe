@@ -2592,6 +2592,7 @@ namespace dftfe
     while (!scfConverged && (scfIter < d_dftParamsPtr->numSCFIterations))
       {
         dealii::Timer local_timer(d_mpiCommParent, true);
+        d_dftParamsPtr->scfIterCount = scfIter;
         if (d_dftParamsPtr->verbosity >= 1)
           pcout
             << "************************Begin Self-Consistent-Field Iteration: "

@@ -810,6 +810,21 @@ namespace dftfe
     }
 
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+    void
+    MultiVector<ValueType, memorySpace>::setCompressBitsPerValue(
+      dftfe::uInt bpv)
+    {
+      d_mpiCommunicatorP2P->setCompressBitsPerValue(bpv);
+    }
+
+    template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+    void
+    MultiVector<ValueType, memorySpace>::setCompressUseZfp(bool useZfp)
+    {
+      d_mpiCommunicatorP2P->setCompressUseZfp(useZfp);
+    }
+
+    template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
     const dftfe::utils::MemoryStorage<ValueType, memorySpace> &
     MultiVector<ValueType, memorySpace>::getData() const
     {

@@ -1209,9 +1209,24 @@ namespace dftfe
               dftfe::utils::mpi::communicationPrecision::half);
 
         else if (d_dftParamsPtr->communPrecCheby == "COMPRESSED")
-          d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec
-            .setCommunicationPrecision(
-              dftfe::utils::mpi::communicationPrecision::compress);
+          {
+            const bool isLate =
+              d_dftParamsPtr->scfIterCount >=
+              d_dftParamsPtr->compressStartSCF;
+            const dftfe::uInt bpv =
+              isLate ? d_dftParamsPtr->compressBitsPerValueLate
+                     : d_dftParamsPtr->compressBitsPerValueEarly;
+            const bool useZfp =
+              (isLate ? d_dftParamsPtr->compressAlgoLate
+                      : d_dftParamsPtr->compressAlgoEarly) == "ZFP";
+            d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec
+              .setCompressBitsPerValue(bpv);
+            d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec
+              .setCompressUseZfp(useZfp);
+            d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec
+              .setCommunicationPrecision(
+                dftfe::utils::mpi::communicationPrecision::compress);
+          }
       }
 
     d_basisOperationsPtr->reinit(numWaveFunctions,

@@ -10,10 +10,10 @@
 **   - Portable across CUDA, HIP, and SYCL backends
 **
 ** Performance:
-**   - Compress kernel uses multi-block-per-thread direct writes:
-**     no atomicAdd, no memset. Each thread encodes a "super-block"
-**     of K blocks whose total bits fill complete 64-bit Words,
-**     enabling coalesced direct stores.
+**   - For 8 and 12 bpv: 1 thread per block (bpt=1), no atomicAdd,
+**     no memset. Stores as uint32_t (8bpv) or 3×uint16_t (12bpv).
+**   - For other bpv: multi-block-per-thread super-block writes,
+**     filling complete 64-bit Words for coalesced stores.
 **
 ** Usage:
 **   #include "compression.h"
@@ -228,6 +228,39 @@ namespace compression
     return sycl::min(a, b);
 #else
     return min(a, b);
+#endif
+  }
+
+  /* =========================================================================
+     Portable atomic helpers (for fused decompress+scatter kernels)
+     =========================================================================
+   */
+
+  COMPRESSION_DEVICE_INLINE void
+  portable_atomicAdd(double *addr, double val)
+  {
+#if defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    sycl::atomic_ref<double, sycl::memory_order::relaxed,
+                     sycl::memory_scope::device,
+                     sycl::access::address_space::global_space>
+      ref(*addr);
+    ref.fetch_add(val);
+#else
+    atomicAdd(addr, val);
+#endif
+  }
+
+  COMPRESSION_DEVICE_INLINE void
+  portable_atomicAdd(float *addr, float val)
+  {
+#if defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    sycl::atomic_ref<float, sycl::memory_order::relaxed,
+                     sycl::memory_scope::device,
+                     sycl::access::address_space::global_space>
+      ref(*addr);
+    ref.fetch_add(val);
+#else
+    atomicAdd(addr, val);
 #endif
   }
 
@@ -611,6 +644,84 @@ namespace compression
   };
 
   /* =========================================================================
+     Device: InlineBlockWriter -- accumulate bits into a single uint64
+
+     For bpt=1 specialized kernels: no Word array, no cross-word writes.
+     The caller encodes one block, then stores the packed uint64 as
+     uint32_t (8 bpv) or 3×uint16_t (12 bpv).
+     =========================================================================
+   */
+
+  struct InlineBlockWriter
+  {
+    unsigned int m_current_bit;
+    uint64       m_packed;
+
+    COMPRESSION_DEVICE_INLINE
+    InlineBlockWriter()
+      : m_current_bit(0)
+      , m_packed(0)
+    {}
+
+    COMPRESSION_DEVICE_INLINE
+    uint64
+    write_bits(uint64 bits, unsigned int n_bits)
+    {
+      if (n_bits == 0)
+        return bits;
+      uint64 b = n_bits < 64u ? (bits & (((uint64)1 << n_bits) - 1u)) : bits;
+      m_packed |= (b << m_current_bit);
+      m_current_bit += n_bits;
+      return bits >> (uint64)n_bits;
+    }
+
+    COMPRESSION_DEVICE_INLINE
+    unsigned int
+    write_bit(unsigned int bit)
+    {
+      m_packed |= ((uint64)bit << m_current_bit);
+      m_current_bit += 1;
+      return bit;
+    }
+  };
+
+  /* =========================================================================
+     Device: InlineBlockReader -- read bits from a single uint64
+
+     For bpt=1 specialized decompress kernels. No word-boundary crossing.
+     =========================================================================
+   */
+
+  struct InlineBlockReader
+  {
+    uint64 m_buffer;
+
+    COMPRESSION_DEVICE_INLINE
+    InlineBlockReader(uint64 packed)
+      : m_buffer(packed)
+    {}
+
+    COMPRESSION_DEVICE_INLINE
+    unsigned int
+    read_bit()
+    {
+      unsigned int bit = (unsigned int)(m_buffer & 1u);
+      m_buffer >>= 1;
+      return bit;
+    }
+
+    COMPRESSION_DEVICE_INLINE
+    uint64
+    read_bits(unsigned int n_bits)
+    {
+      uint64 mask = n_bits < 64u ? (((uint64)1 << n_bits) - 1u) : ~(uint64)0;
+      uint64 bits = m_buffer & mask;
+      m_buffer >>= n_bits;
+      return bits;
+    }
+  };
+
+  /* =========================================================================
      Device: BlockReader -- read bits from compressed stream (fixed-rate)
 
      Uses read-only load where available (CUDA __ldg).
@@ -855,12 +966,15 @@ namespace compression
   }
 
   /* =========================================================================
-     GPU kernels (portable across CUDA, HIP, SYCL)
+     GPU kernels: ZFP super-block (fallback for bpv other than 8 and 12)
 
-     Super-block compress: each thread processes 'bpt' blocks whose combined
-     output fills exactly 'wpt' complete 64-bit Words. Bits are accumulated
-     in a thread-local buffer (LocalBlockWriter with |=), then flushed to
-     global memory with direct stores. No atomics, no memset.
+     Each thread processes 'bpt' blocks whose combined output fills exactly
+     'wpt' complete 64-bit Words. Bits are accumulated in a thread-local
+     buffer (LocalBlockWriter with |=), then flushed to global memory with
+     direct stores. No atomics, no memset.
+
+     For 8 bpv and 12 bpv, specialized bpt=1 kernels (compress_zfp_32_kernel,
+     compress_zfp_48_kernel, etc.) are used instead — see below.
 
      Parameters computed on host:
        g   = gcd(maxbits, 64)
@@ -868,9 +982,7 @@ namespace compression
        wpt = maxbits / g     (words per thread)
      Guarantee: bpt * maxbits = wpt * 64 (word-aligned)
 
-     Examples:
-       8 bpv:  maxbits=32,  bpt=2,  wpt=1  (2 blocks → 1 word)
-       12 bpv: maxbits=48,  bpt=4,  wpt=3  (4 blocks → 3 words)
+     Example:
        16 bpv: maxbits=64,  bpt=1,  wpt=1  (1 block  → 1 word)
      =========================================================================
    */
@@ -991,6 +1103,138 @@ namespace compression
             for (unsigned int i = 0; i < nx; i++)
               data[block_start + i] = fblock[i];
           }
+      }
+  }
+
+  /* -----------------------------------------------------------------------
+     Fused gather+compress kernel (CUDA/HIP)
+
+     Reads scattered data via indirection and compresses directly to the
+     output stream. Eliminates the intermediate full-precision send buffer.
+
+     Assumes gatherBlockSize is a multiple of 4 (true when blockSize =
+     numWaveFunctions, which is always a multiple of 4). This means each
+     ZFP block of 4 values falls entirely within one index entry, allowing
+     a single index lookup per block and contiguous 4-element reads.
+     ----------------------------------------------------------------------- */
+  template <typename Scalar, typename IndexType>
+  COMPRESSION_GLOBAL void
+  compress_gather_kernel(const Scalar     *COMPRESSION_RESTRICT dataArray,
+                         const IndexType  *COMPRESSION_RESTRICT indices,
+                         unsigned int                           gatherBlockSize,
+                         Word *COMPRESSION_RESTRICT               stream,
+                         unsigned int                             maxbits,
+                         unsigned int                             tot_blocks,
+                         unsigned int                             bpt,
+                         unsigned int                             wpt,
+                         unsigned int                             num_words)
+  {
+    const unsigned int super_idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+    /* blocks_per_entry = gatherBlockSize / 4 (exact since gatherBlockSize
+       is a multiple of 4). This lets us convert ZFP block_idx directly to
+       (index entry, offset within entry) with one division. */
+    const unsigned int blocks_per_entry = gatherBlockSize >> 2;
+
+    Word local_words[MAX_WORDS_PER_SUPERBLOCK];
+    for (unsigned int w = 0; w < wpt; w++)
+      local_words[w] = 0;
+
+    const unsigned int block_base = super_idx * bpt;
+    for (unsigned int b = 0; b < bpt; b++)
+      {
+        unsigned int block_idx = block_base + b;
+        if (block_idx >= tot_blocks)
+          break;
+
+        /* Single index lookup: which index entry does this ZFP block belong
+           to, and what is the offset (in units of 4 values) within that
+           entry? */
+        unsigned int gatherIdx = block_idx / blocks_per_entry;
+        unsigned int localBlock = block_idx - gatherIdx * blocks_per_entry;
+        unsigned int intraIdx = localBlock * 4u;
+
+        /* Base address in dataArray for this ZFP block — contiguous read.
+           blockSize is always a multiple of 4, so every block is full. */
+        size_t base =
+          (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
+
+        Scalar fblock[4];
+        fblock[0] = dataArray[base];
+        fblock[1] = dataArray[base + 1];
+        fblock[2] = dataArray[base + 2];
+        fblock[3] = dataArray[base + 3];
+
+        LocalBlockWriter writer(local_words, maxbits, b);
+        encode_block(writer, fblock, maxbits);
+      }
+
+    size_t global_word_base = (size_t)super_idx * wpt;
+    for (unsigned int w = 0; w < wpt; w++)
+      {
+        size_t gw = global_word_base + w;
+        if (gw < num_words)
+          stream[gw] = local_words[w];
+      }
+  }
+
+  /* -----------------------------------------------------------------------
+     Fused decompress+scatter_add kernel (CUDA/HIP)
+
+     Decompresses and atomicAdds directly to scattered positions in dataArray.
+     Eliminates the intermediate full-precision recv buffer.
+
+     Assumes gatherBlockSize is a multiple of 4, so every ZFP block is full
+     (no partial blocks).
+     ----------------------------------------------------------------------- */
+  template <typename Scalar, typename IndexType>
+  COMPRESSION_GLOBAL void
+  decompress_scatter_add_kernel(
+    const Word      *COMPRESSION_RESTRICT stream,
+    const IndexType *COMPRESSION_RESTRICT indices,
+    unsigned int                          gatherBlockSize,
+    Scalar *COMPRESSION_RESTRICT             dataArray,
+    unsigned int                             maxbits,
+    unsigned int                             tot_blocks,
+    unsigned int                             bpt,
+    unsigned int                             wpt,
+    unsigned int                             num_words)
+  {
+    const unsigned int super_idx  = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int block_base = super_idx * bpt;
+    if (block_base >= tot_blocks)
+      return;
+
+    const unsigned int blocks_per_entry = gatherBlockSize >> 2;
+
+    Word   local_words[MAX_WORDS_PER_SUPERBLOCK];
+    size_t global_word_base = (size_t)super_idx * wpt;
+    for (unsigned int w = 0; w < wpt; w++)
+      {
+        size_t gw      = global_word_base + w;
+        local_words[w] = (gw < num_words) ? portable_ldg(stream + gw) : (Word)0;
+      }
+
+    for (unsigned int b = 0; b < bpt; b++)
+      {
+        unsigned int block_idx = block_base + b;
+        if (block_idx >= tot_blocks)
+          break;
+
+        LocalBlockReader reader(local_words, maxbits, b);
+        Scalar           fblock[4];
+        decode_block<LocalBlockReader, Scalar>(reader, fblock, maxbits);
+
+        unsigned int gatherIdx  = block_idx / blocks_per_entry;
+        unsigned int localBlock = block_idx - gatherIdx * blocks_per_entry;
+        unsigned int intraIdx   = localBlock * 4u;
+        size_t base =
+          (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
+
+        portable_atomicAdd(&dataArray[base],     fblock[0]);
+        portable_atomicAdd(&dataArray[base + 1], fblock[1]);
+        portable_atomicAdd(&dataArray[base + 2], fblock[2]);
+        portable_atomicAdd(&dataArray[base + 3], fblock[3]);
       }
   }
 
@@ -1137,7 +1381,696 @@ namespace compression
       }
   }
 
+  /* -----------------------------------------------------------------------
+     Fused gather+compress kernel (SYCL)
+     ----------------------------------------------------------------------- */
+  template <typename Scalar, typename IndexType>
+  void
+  compress_gather_kernel(sycl::nd_item<1>   item,
+                         const Scalar      *dataArray,
+                         const IndexType   *indices,
+                         unsigned int        gatherBlockSize,
+                         Word               *stream,
+                         unsigned int        maxbits,
+                         unsigned int        tot_blocks,
+                         unsigned int        bpt,
+                         unsigned int        wpt,
+                         unsigned int        num_words)
+  {
+    const unsigned int super_idx = item.get_global_id(0);
+
+    /* blocks_per_entry = gatherBlockSize / 4 (exact since gatherBlockSize
+       is a multiple of 4). One division per ZFP block instead of per element. */
+    const unsigned int blocks_per_entry = gatherBlockSize >> 2;
+
+    Word local_words[MAX_WORDS_PER_SUPERBLOCK];
+    for (unsigned int w = 0; w < wpt; w++)
+      local_words[w] = 0;
+
+    const unsigned int block_base = super_idx * bpt;
+    for (unsigned int b = 0; b < bpt; b++)
+      {
+        unsigned int block_idx = block_base + b;
+        if (block_idx >= tot_blocks)
+          break;
+
+        /* Single index lookup per ZFP block — contiguous read.
+           blockSize is always a multiple of 4, so every block is full. */
+        unsigned int gatherIdx  = block_idx / blocks_per_entry;
+        unsigned int localBlock = block_idx - gatherIdx * blocks_per_entry;
+        unsigned int intraIdx   = localBlock * 4u;
+        size_t base =
+          (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
+
+        Scalar fblock[4];
+        fblock[0] = dataArray[base];
+        fblock[1] = dataArray[base + 1];
+        fblock[2] = dataArray[base + 2];
+        fblock[3] = dataArray[base + 3];
+
+        LocalBlockWriter writer(local_words, maxbits, b);
+        encode_block(writer, fblock, maxbits);
+      }
+
+    size_t global_word_base = (size_t)super_idx * wpt;
+    for (unsigned int w = 0; w < wpt; w++)
+      {
+        size_t gw = global_word_base + w;
+        if (gw < num_words)
+          stream[gw] = local_words[w];
+      }
+  }
+
+  /* -----------------------------------------------------------------------
+     Fused decompress+scatter_add kernel (SYCL)
+
+     Assumes gatherBlockSize is a multiple of 4, so every ZFP block is full.
+     ----------------------------------------------------------------------- */
+  template <typename Scalar, typename IndexType>
+  void
+  decompress_scatter_add_kernel(sycl::nd_item<1>   item,
+                                const Word        *stream,
+                                const IndexType   *indices,
+                                unsigned int        gatherBlockSize,
+                                Scalar             *dataArray,
+                                unsigned int        maxbits,
+                                unsigned int        tot_blocks,
+                                unsigned int        bpt,
+                                unsigned int        wpt,
+                                unsigned int        num_words)
+  {
+    const unsigned int super_idx  = item.get_global_id(0);
+    const unsigned int block_base = super_idx * bpt;
+    if (block_base >= tot_blocks)
+      return;
+
+    const unsigned int blocks_per_entry = gatherBlockSize >> 2;
+
+    Word   local_words[MAX_WORDS_PER_SUPERBLOCK];
+    size_t global_word_base = (size_t)super_idx * wpt;
+    for (unsigned int w = 0; w < wpt; w++)
+      {
+        size_t gw      = global_word_base + w;
+        local_words[w] = (gw < num_words) ? stream[gw] : (Word)0;
+      }
+
+    for (unsigned int b = 0; b < bpt; b++)
+      {
+        unsigned int block_idx = block_base + b;
+        if (block_idx >= tot_blocks)
+          break;
+
+        LocalBlockReader reader(local_words, maxbits, b);
+        Scalar           fblock[4];
+        decode_block<LocalBlockReader, Scalar>(reader, fblock, maxbits);
+
+        unsigned int gatherIdx  = block_idx / blocks_per_entry;
+        unsigned int localBlock = block_idx - gatherIdx * blocks_per_entry;
+        unsigned int intraIdx   = localBlock * 4u;
+        size_t base =
+          (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
+
+        portable_atomicAdd(&dataArray[base],     fblock[0]);
+        portable_atomicAdd(&dataArray[base + 1], fblock[1]);
+        portable_atomicAdd(&dataArray[base + 2], fblock[2]);
+        portable_atomicAdd(&dataArray[base + 3], fblock[3]);
+      }
+  }
+
 #endif /* DFTFE_WITH_DEVICE_LANG_SYCL */
+
+  /* =========================================================================
+     Specialized ZFP 8-bpv (32-bit) and 12-bpv (48-bit) kernels
+
+     1 thread per block, eliminates the super-block mechanism for 8 and 12 bpv.
+     Uses InlineBlockWriter/Reader instead of LocalBlockWriter/Reader + Word
+     arrays. Maximizes GPU thread count for small problem sizes.
+
+       8 bpv (maxbits=32): each block → 1 × uint32_t   (bpt=1)
+      12 bpv (maxbits=48): each block → 3 × uint16_t   (bpt=1)
+
+     Memory layout is compatible with compressed_size() allocation.
+     On little-endian GPUs, the 8bpv uint32_t layout is byte-identical to
+     the super-block Word layout. The 12bpv uint16_t layout differs from
+     the super-block Word layout but compress/decompress are always paired.
+     =========================================================================
+   */
+
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
+
+  /* --- ZFP 8bpv: 1 thread/block, 1 × uint32_t --- */
+
+  template <typename Scalar>
+  COMPRESSION_GLOBAL void
+  compress_zfp_32_kernel(const Scalar *COMPRESSION_RESTRICT data,
+                         unsigned int *COMPRESSION_RESTRICT stream,
+                         unsigned int                       dim,
+                         unsigned int                       tot_blocks)
+  {
+    const unsigned int block_idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (block_idx >= tot_blocks)
+      return;
+
+    unsigned int block_start = block_idx * 4u;
+    Scalar       fblock[4];
+
+    if (block_start + 4u <= dim)
+      {
+        fblock[0] = data[block_start];
+        fblock[1] = data[block_start + 1];
+        fblock[2] = data[block_start + 2];
+        fblock[3] = data[block_start + 3];
+      }
+    else
+      {
+        unsigned int nx = dim - block_start;
+        for (unsigned int j = 0; j < nx; j++)
+          fblock[j] = data[block_start + j];
+        pad_block(fblock, nx);
+      }
+
+    InlineBlockWriter writer;
+    encode_block(writer, fblock, 32u);
+    stream[block_idx] = (unsigned int)writer.m_packed;
+  }
+
+  template <typename Scalar>
+  COMPRESSION_GLOBAL void
+  decompress_zfp_32_kernel(const unsigned int *COMPRESSION_RESTRICT stream,
+                           Scalar *COMPRESSION_RESTRICT             data,
+                           unsigned int                             dim,
+                           unsigned int                             tot_blocks)
+  {
+    const unsigned int block_idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (block_idx >= tot_blocks)
+      return;
+
+    InlineBlockReader reader((uint64)stream[block_idx]);
+    Scalar            fblock[4];
+    decode_block<InlineBlockReader, Scalar>(reader, fblock, 32u);
+
+    unsigned int block_start = block_idx * 4u;
+    if (block_start + 4u <= dim)
+      {
+        data[block_start]     = fblock[0];
+        data[block_start + 1] = fblock[1];
+        data[block_start + 2] = fblock[2];
+        data[block_start + 3] = fblock[3];
+      }
+    else
+      {
+        unsigned int nx = dim - block_start;
+        for (unsigned int j = 0; j < nx; j++)
+          data[block_start + j] = fblock[j];
+      }
+  }
+
+  template <typename Scalar, typename IndexType>
+  COMPRESSION_GLOBAL void
+  compress_gather_zfp_32_kernel(
+    const Scalar    *COMPRESSION_RESTRICT dataArray,
+    const IndexType *COMPRESSION_RESTRICT indices,
+    unsigned int                          gatherBlockSize,
+    unsigned int *COMPRESSION_RESTRICT    stream,
+    unsigned int                          tot_blocks)
+  {
+    const unsigned int block_idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (block_idx >= tot_blocks)
+      return;
+
+    const unsigned int blocks_per_entry = gatherBlockSize >> 2;
+    unsigned int       gatherIdx  = block_idx / blocks_per_entry;
+    unsigned int       localBlock = block_idx - gatherIdx * blocks_per_entry;
+    unsigned int       intraIdx   = localBlock * 4u;
+    size_t base =
+      (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
+
+    Scalar fblock[4];
+    fblock[0] = dataArray[base];
+    fblock[1] = dataArray[base + 1];
+    fblock[2] = dataArray[base + 2];
+    fblock[3] = dataArray[base + 3];
+
+    InlineBlockWriter writer;
+    encode_block(writer, fblock, 32u);
+    stream[block_idx] = (unsigned int)writer.m_packed;
+  }
+
+  template <typename Scalar, typename IndexType>
+  COMPRESSION_GLOBAL void
+  decompress_scatter_add_zfp_32_kernel(
+    const unsigned int *COMPRESSION_RESTRICT stream,
+    const IndexType    *COMPRESSION_RESTRICT indices,
+    unsigned int                             gatherBlockSize,
+    Scalar *COMPRESSION_RESTRICT             dataArray,
+    unsigned int                             tot_blocks)
+  {
+    const unsigned int block_idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (block_idx >= tot_blocks)
+      return;
+
+    InlineBlockReader reader((uint64)stream[block_idx]);
+    Scalar            fblock[4];
+    decode_block<InlineBlockReader, Scalar>(reader, fblock, 32u);
+
+    const unsigned int blocks_per_entry = gatherBlockSize >> 2;
+    unsigned int       gatherIdx  = block_idx / blocks_per_entry;
+    unsigned int       localBlock = block_idx - gatherIdx * blocks_per_entry;
+    unsigned int       intraIdx   = localBlock * 4u;
+    size_t base =
+      (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
+
+    portable_atomicAdd(&dataArray[base],     fblock[0]);
+    portable_atomicAdd(&dataArray[base + 1], fblock[1]);
+    portable_atomicAdd(&dataArray[base + 2], fblock[2]);
+    portable_atomicAdd(&dataArray[base + 3], fblock[3]);
+  }
+
+  /* --- ZFP 12bpv: 1 thread/block, 3 × uint16_t --- */
+
+  template <typename Scalar>
+  COMPRESSION_GLOBAL void
+  compress_zfp_48_kernel(const Scalar *COMPRESSION_RESTRICT data,
+                         uint16_t *COMPRESSION_RESTRICT     stream,
+                         unsigned int                       dim,
+                         unsigned int                       tot_blocks)
+  {
+    const unsigned int block_idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (block_idx >= tot_blocks)
+      return;
+
+    unsigned int block_start = block_idx * 4u;
+    Scalar       fblock[4];
+
+    if (block_start + 4u <= dim)
+      {
+        fblock[0] = data[block_start];
+        fblock[1] = data[block_start + 1];
+        fblock[2] = data[block_start + 2];
+        fblock[3] = data[block_start + 3];
+      }
+    else
+      {
+        unsigned int nx = dim - block_start;
+        for (unsigned int j = 0; j < nx; j++)
+          fblock[j] = data[block_start + j];
+        pad_block(fblock, nx);
+      }
+
+    InlineBlockWriter writer;
+    encode_block(writer, fblock, 48u);
+    size_t out    = (size_t)block_idx * 3u;
+    stream[out]     = (uint16_t)(writer.m_packed);
+    stream[out + 1] = (uint16_t)(writer.m_packed >> 16);
+    stream[out + 2] = (uint16_t)(writer.m_packed >> 32);
+  }
+
+  template <typename Scalar>
+  COMPRESSION_GLOBAL void
+  decompress_zfp_48_kernel(const uint16_t *COMPRESSION_RESTRICT stream,
+                           Scalar *COMPRESSION_RESTRICT         data,
+                           unsigned int                         dim,
+                           unsigned int                         tot_blocks)
+  {
+    const unsigned int block_idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (block_idx >= tot_blocks)
+      return;
+
+    size_t out    = (size_t)block_idx * 3u;
+    uint64 packed = (uint64)stream[out] |
+                    ((uint64)stream[out + 1] << 16) |
+                    ((uint64)stream[out + 2] << 32);
+
+    InlineBlockReader reader(packed);
+    Scalar            fblock[4];
+    decode_block<InlineBlockReader, Scalar>(reader, fblock, 48u);
+
+    unsigned int block_start = block_idx * 4u;
+    if (block_start + 4u <= dim)
+      {
+        data[block_start]     = fblock[0];
+        data[block_start + 1] = fblock[1];
+        data[block_start + 2] = fblock[2];
+        data[block_start + 3] = fblock[3];
+      }
+    else
+      {
+        unsigned int nx = dim - block_start;
+        for (unsigned int j = 0; j < nx; j++)
+          data[block_start + j] = fblock[j];
+      }
+  }
+
+  template <typename Scalar, typename IndexType>
+  COMPRESSION_GLOBAL void
+  compress_gather_zfp_48_kernel(
+    const Scalar    *COMPRESSION_RESTRICT dataArray,
+    const IndexType *COMPRESSION_RESTRICT indices,
+    unsigned int                          gatherBlockSize,
+    uint16_t *COMPRESSION_RESTRICT        stream,
+    unsigned int                          tot_blocks)
+  {
+    const unsigned int block_idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (block_idx >= tot_blocks)
+      return;
+
+    const unsigned int blocks_per_entry = gatherBlockSize >> 2;
+    unsigned int       gatherIdx  = block_idx / blocks_per_entry;
+    unsigned int       localBlock = block_idx - gatherIdx * blocks_per_entry;
+    unsigned int       intraIdx   = localBlock * 4u;
+    size_t base =
+      (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
+
+    Scalar fblock[4];
+    fblock[0] = dataArray[base];
+    fblock[1] = dataArray[base + 1];
+    fblock[2] = dataArray[base + 2];
+    fblock[3] = dataArray[base + 3];
+
+    InlineBlockWriter writer;
+    encode_block(writer, fblock, 48u);
+    size_t out    = (size_t)block_idx * 3u;
+    stream[out]     = (uint16_t)(writer.m_packed);
+    stream[out + 1] = (uint16_t)(writer.m_packed >> 16);
+    stream[out + 2] = (uint16_t)(writer.m_packed >> 32);
+  }
+
+  template <typename Scalar, typename IndexType>
+  COMPRESSION_GLOBAL void
+  decompress_scatter_add_zfp_48_kernel(
+    const uint16_t  *COMPRESSION_RESTRICT stream,
+    const IndexType *COMPRESSION_RESTRICT indices,
+    unsigned int                          gatherBlockSize,
+    Scalar *COMPRESSION_RESTRICT          dataArray,
+    unsigned int                          tot_blocks)
+  {
+    const unsigned int block_idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (block_idx >= tot_blocks)
+      return;
+
+    size_t out    = (size_t)block_idx * 3u;
+    uint64 packed = (uint64)stream[out] |
+                    ((uint64)stream[out + 1] << 16) |
+                    ((uint64)stream[out + 2] << 32);
+
+    InlineBlockReader reader(packed);
+    Scalar            fblock[4];
+    decode_block<InlineBlockReader, Scalar>(reader, fblock, 48u);
+
+    const unsigned int blocks_per_entry = gatherBlockSize >> 2;
+    unsigned int       gatherIdx  = block_idx / blocks_per_entry;
+    unsigned int       localBlock = block_idx - gatherIdx * blocks_per_entry;
+    unsigned int       intraIdx   = localBlock * 4u;
+    size_t base =
+      (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
+
+    portable_atomicAdd(&dataArray[base],     fblock[0]);
+    portable_atomicAdd(&dataArray[base + 1], fblock[1]);
+    portable_atomicAdd(&dataArray[base + 2], fblock[2]);
+    portable_atomicAdd(&dataArray[base + 3], fblock[3]);
+  }
+
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+
+  /* --- ZFP 8bpv SYCL: 1 thread/block, 1 × uint32_t --- */
+
+  template <typename Scalar>
+  void
+  compress_zfp_32_kernel(sycl::nd_item<1> item,
+                         const Scalar    *data,
+                         unsigned int    *stream,
+                         unsigned int     dim,
+                         unsigned int     tot_blocks)
+  {
+    const unsigned int block_idx = item.get_global_id(0);
+    if (block_idx >= tot_blocks)
+      return;
+
+    unsigned int block_start = block_idx * 4u;
+    Scalar       fblock[4];
+
+    if (block_start + 4u <= dim)
+      {
+        fblock[0] = data[block_start];
+        fblock[1] = data[block_start + 1];
+        fblock[2] = data[block_start + 2];
+        fblock[3] = data[block_start + 3];
+      }
+    else
+      {
+        unsigned int nx = dim - block_start;
+        for (unsigned int j = 0; j < nx; j++)
+          fblock[j] = data[block_start + j];
+        pad_block(fblock, nx);
+      }
+
+    InlineBlockWriter writer;
+    encode_block(writer, fblock, 32u);
+    stream[block_idx] = (unsigned int)writer.m_packed;
+  }
+
+  template <typename Scalar>
+  void
+  decompress_zfp_32_kernel(sycl::nd_item<1>    item,
+                           const unsigned int *stream,
+                           Scalar             *data,
+                           unsigned int        dim,
+                           unsigned int        tot_blocks)
+  {
+    const unsigned int block_idx = item.get_global_id(0);
+    if (block_idx >= tot_blocks)
+      return;
+
+    InlineBlockReader reader((uint64)stream[block_idx]);
+    Scalar            fblock[4];
+    decode_block<InlineBlockReader, Scalar>(reader, fblock, 32u);
+
+    unsigned int block_start = block_idx * 4u;
+    if (block_start + 4u <= dim)
+      {
+        data[block_start]     = fblock[0];
+        data[block_start + 1] = fblock[1];
+        data[block_start + 2] = fblock[2];
+        data[block_start + 3] = fblock[3];
+      }
+    else
+      {
+        unsigned int nx = dim - block_start;
+        for (unsigned int j = 0; j < nx; j++)
+          data[block_start + j] = fblock[j];
+      }
+  }
+
+  template <typename Scalar, typename IndexType>
+  void
+  compress_gather_zfp_32_kernel(sycl::nd_item<1>   item,
+                                const Scalar      *dataArray,
+                                const IndexType   *indices,
+                                unsigned int        gatherBlockSize,
+                                unsigned int       *stream,
+                                unsigned int        tot_blocks)
+  {
+    const unsigned int block_idx = item.get_global_id(0);
+    if (block_idx >= tot_blocks)
+      return;
+
+    const unsigned int blocks_per_entry = gatherBlockSize >> 2;
+    unsigned int       gatherIdx  = block_idx / blocks_per_entry;
+    unsigned int       localBlock = block_idx - gatherIdx * blocks_per_entry;
+    unsigned int       intraIdx   = localBlock * 4u;
+    size_t base =
+      (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
+
+    Scalar fblock[4];
+    fblock[0] = dataArray[base];
+    fblock[1] = dataArray[base + 1];
+    fblock[2] = dataArray[base + 2];
+    fblock[3] = dataArray[base + 3];
+
+    InlineBlockWriter writer;
+    encode_block(writer, fblock, 32u);
+    stream[block_idx] = (unsigned int)writer.m_packed;
+  }
+
+  template <typename Scalar, typename IndexType>
+  void
+  decompress_scatter_add_zfp_32_kernel(
+    sycl::nd_item<1>    item,
+    const unsigned int *stream,
+    const IndexType    *indices,
+    unsigned int        gatherBlockSize,
+    Scalar             *dataArray,
+    unsigned int        tot_blocks)
+  {
+    const unsigned int block_idx = item.get_global_id(0);
+    if (block_idx >= tot_blocks)
+      return;
+
+    InlineBlockReader reader((uint64)stream[block_idx]);
+    Scalar            fblock[4];
+    decode_block<InlineBlockReader, Scalar>(reader, fblock, 32u);
+
+    const unsigned int blocks_per_entry = gatherBlockSize >> 2;
+    unsigned int       gatherIdx  = block_idx / blocks_per_entry;
+    unsigned int       localBlock = block_idx - gatherIdx * blocks_per_entry;
+    unsigned int       intraIdx   = localBlock * 4u;
+    size_t base =
+      (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
+
+    portable_atomicAdd(&dataArray[base],     fblock[0]);
+    portable_atomicAdd(&dataArray[base + 1], fblock[1]);
+    portable_atomicAdd(&dataArray[base + 2], fblock[2]);
+    portable_atomicAdd(&dataArray[base + 3], fblock[3]);
+  }
+
+  /* --- ZFP 12bpv SYCL: 1 thread/block, 3 × uint16_t --- */
+
+  template <typename Scalar>
+  void
+  compress_zfp_48_kernel(sycl::nd_item<1> item,
+                         const Scalar    *data,
+                         uint16_t        *stream,
+                         unsigned int     dim,
+                         unsigned int     tot_blocks)
+  {
+    const unsigned int block_idx = item.get_global_id(0);
+    if (block_idx >= tot_blocks)
+      return;
+
+    unsigned int block_start = block_idx * 4u;
+    Scalar       fblock[4];
+
+    if (block_start + 4u <= dim)
+      {
+        fblock[0] = data[block_start];
+        fblock[1] = data[block_start + 1];
+        fblock[2] = data[block_start + 2];
+        fblock[3] = data[block_start + 3];
+      }
+    else
+      {
+        unsigned int nx = dim - block_start;
+        for (unsigned int j = 0; j < nx; j++)
+          fblock[j] = data[block_start + j];
+        pad_block(fblock, nx);
+      }
+
+    InlineBlockWriter writer;
+    encode_block(writer, fblock, 48u);
+    size_t out    = (size_t)block_idx * 3u;
+    stream[out]     = (uint16_t)(writer.m_packed);
+    stream[out + 1] = (uint16_t)(writer.m_packed >> 16);
+    stream[out + 2] = (uint16_t)(writer.m_packed >> 32);
+  }
+
+  template <typename Scalar>
+  void
+  decompress_zfp_48_kernel(sycl::nd_item<1>  item,
+                           const uint16_t   *stream,
+                           Scalar           *data,
+                           unsigned int      dim,
+                           unsigned int      tot_blocks)
+  {
+    const unsigned int block_idx = item.get_global_id(0);
+    if (block_idx >= tot_blocks)
+      return;
+
+    size_t out    = (size_t)block_idx * 3u;
+    uint64 packed = (uint64)stream[out] |
+                    ((uint64)stream[out + 1] << 16) |
+                    ((uint64)stream[out + 2] << 32);
+
+    InlineBlockReader reader(packed);
+    Scalar            fblock[4];
+    decode_block<InlineBlockReader, Scalar>(reader, fblock, 48u);
+
+    unsigned int block_start = block_idx * 4u;
+    if (block_start + 4u <= dim)
+      {
+        data[block_start]     = fblock[0];
+        data[block_start + 1] = fblock[1];
+        data[block_start + 2] = fblock[2];
+        data[block_start + 3] = fblock[3];
+      }
+    else
+      {
+        unsigned int nx = dim - block_start;
+        for (unsigned int j = 0; j < nx; j++)
+          data[block_start + j] = fblock[j];
+      }
+  }
+
+  template <typename Scalar, typename IndexType>
+  void
+  compress_gather_zfp_48_kernel(sycl::nd_item<1>  item,
+                                const Scalar     *dataArray,
+                                const IndexType  *indices,
+                                unsigned int      gatherBlockSize,
+                                uint16_t         *stream,
+                                unsigned int      tot_blocks)
+  {
+    const unsigned int block_idx = item.get_global_id(0);
+    if (block_idx >= tot_blocks)
+      return;
+
+    const unsigned int blocks_per_entry = gatherBlockSize >> 2;
+    unsigned int       gatherIdx  = block_idx / blocks_per_entry;
+    unsigned int       localBlock = block_idx - gatherIdx * blocks_per_entry;
+    unsigned int       intraIdx   = localBlock * 4u;
+    size_t base =
+      (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
+
+    Scalar fblock[4];
+    fblock[0] = dataArray[base];
+    fblock[1] = dataArray[base + 1];
+    fblock[2] = dataArray[base + 2];
+    fblock[3] = dataArray[base + 3];
+
+    InlineBlockWriter writer;
+    encode_block(writer, fblock, 48u);
+    size_t out    = (size_t)block_idx * 3u;
+    stream[out]     = (uint16_t)(writer.m_packed);
+    stream[out + 1] = (uint16_t)(writer.m_packed >> 16);
+    stream[out + 2] = (uint16_t)(writer.m_packed >> 32);
+  }
+
+  template <typename Scalar, typename IndexType>
+  void
+  decompress_scatter_add_zfp_48_kernel(
+    sycl::nd_item<1>  item,
+    const uint16_t   *stream,
+    const IndexType  *indices,
+    unsigned int      gatherBlockSize,
+    Scalar           *dataArray,
+    unsigned int      tot_blocks)
+  {
+    const unsigned int block_idx = item.get_global_id(0);
+    if (block_idx >= tot_blocks)
+      return;
+
+    size_t out    = (size_t)block_idx * 3u;
+    uint64 packed = (uint64)stream[out] |
+                    ((uint64)stream[out + 1] << 16) |
+                    ((uint64)stream[out + 2] << 32);
+
+    InlineBlockReader reader(packed);
+    Scalar            fblock[4];
+    decode_block<InlineBlockReader, Scalar>(reader, fblock, 48u);
+
+    const unsigned int blocks_per_entry = gatherBlockSize >> 2;
+    unsigned int       gatherIdx  = block_idx / blocks_per_entry;
+    unsigned int       localBlock = block_idx - gatherIdx * blocks_per_entry;
+    unsigned int       intraIdx   = localBlock * 4u;
+    size_t base =
+      (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
+
+    portable_atomicAdd(&dataArray[base],     fblock[0]);
+    portable_atomicAdd(&dataArray[base + 1], fblock[1]);
+    portable_atomicAdd(&dataArray[base + 2], fblock[2]);
+    portable_atomicAdd(&dataArray[base + 3], fblock[3]);
+  }
+
+#endif /* ZFP specialized bpt=1 kernels */
 
   /* =========================================================================
      Block Floating Point (BFP) compression
@@ -1235,6 +2168,88 @@ namespace compression
         int q = (int)raw;
         if (q >= sign_threshold)
           q -= (1 << vbits); /* sign-extend */
+        fblock[i] = scale * (Scalar)q;
+      }
+  }
+
+  /* =========================================================================
+     Specialized BFP 12-bpv (48-bit) encode/decode and packing helpers
+
+     Eliminates LocalBlockWriter/Reader abstraction for 12 bpv. Each block
+     encodes to exactly 48 bits stored in the lower bits of a uint64.
+     4 blocks (192 bits) pack into exactly 3 × 64-bit Words via direct
+     shift/OR — zero branches, zero division/modulo, zero conditional
+     cross-word writes.
+
+     Layout per block (48 bits, LSB first):
+       float:  [0] cont + [1:8] exp(8) + [9:17] v0(9) + [18:26] v1(9)
+               + [27:35] v2(9) + [36:44] v3(9) + [45:47] pad(3)
+       double: [0] cont + [1:11] exp(11) + [12:20] v0(9) + [21:29] v1(9)
+               + [30:38] v2(9) + [39:47] v3(9)
+
+     Packing 4 × 48-bit blocks into 3 × 64-bit Words:
+       word0 = b0[47:0]  | b1[15:0]<<48
+       word1 = b1[47:16] | b2[31:0]<<32
+       word2 = b2[47:32] | b3[47:0]<<16
+     =========================================================================
+   */
+
+  template <typename Scalar>
+  COMPRESSION_DEVICE_INLINE uint64
+  bfp_encode_block_48(Scalar *fblock)
+  {
+    constexpr unsigned int ebits = (unsigned int)traits<Scalar>::EBITS + 1u;
+    constexpr unsigned int vbits = (48u - ebits) / 4u;
+    constexpr unsigned int vmask = (1u << vbits) - 1u;
+
+    int emax = max_exponent<Scalar>(fblock);
+    int maxprec =
+      calc_precision(emax, traits<Scalar>::PREC, traits<Scalar>::MINEXP);
+    unsigned int e =
+      maxprec ? (unsigned int)(emax + traits<Scalar>::EBIAS) : 0u;
+
+    if (!e)
+      return (uint64)0;
+
+    uint64 packed = (uint64)(2u * e + 1u);
+    Scalar s      = portable_ldexp((Scalar)1.0, (int)vbits - 1 - emax);
+
+    for (int i = 0; i < 4; i++)
+      {
+        int q = (int)(s * fblock[i]);
+        packed |= ((uint64)((unsigned int)q & vmask))
+                  << (ebits + (unsigned int)i * vbits);
+      }
+    return packed;
+  }
+
+  template <typename Scalar>
+  COMPRESSION_DEVICE_INLINE void
+  bfp_decode_block_48(uint64 packed, Scalar *fblock)
+  {
+    constexpr unsigned int ebits          = (unsigned int)traits<Scalar>::EBITS + 1u;
+    constexpr unsigned int vbits          = (48u - ebits) / 4u;
+    constexpr unsigned int vmask          = (1u << vbits) - 1u;
+    constexpr int          sign_threshold = 1 << (vbits - 1);
+
+    if (!(packed & 1ULL))
+      {
+        fblock[0] = fblock[1] = fblock[2] = fblock[3] = (Scalar)0;
+        return;
+      }
+
+    unsigned int e_raw =
+      (unsigned int)((packed >> 1) & ((1u << (ebits - 1u)) - 1u));
+    int    emax  = (int)e_raw - traits<Scalar>::EBIAS;
+    Scalar scale = portable_ldexp((Scalar)1.0, emax - (int)vbits + 1);
+
+    for (int i = 0; i < 4; i++)
+      {
+        unsigned int raw = (unsigned int)(
+          (packed >> (ebits + (unsigned int)i * vbits)) & vmask);
+        int q = (int)raw;
+        if (q >= sign_threshold)
+          q -= (1 << vbits);
         fblock[i] = scale * (Scalar)q;
       }
   }
@@ -1435,6 +2450,433 @@ namespace compression
 
 #endif /* BFP uint32_t SYCL */
 
+  /* --- Fused BFP gather+compress / decompress+scatter_add (uint32_t path) -- */
+
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
+
+  template <typename Scalar, typename IndexType>
+  COMPRESSION_GLOBAL void
+  compress_gather_bfp_kernel(const Scalar     *COMPRESSION_RESTRICT dataArray,
+                             const IndexType  *COMPRESSION_RESTRICT indices,
+                             unsigned int                           gatherBlockSize,
+                             unsigned int *COMPRESSION_RESTRICT     stream,
+                             unsigned int                           maxbits,
+                             unsigned int                           tot_blocks)
+  {
+    const unsigned int block_idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (block_idx >= tot_blocks)
+      return;
+
+    const unsigned int blocks_per_entry = gatherBlockSize >> 2;
+    unsigned int       gatherIdx  = block_idx / blocks_per_entry;
+    unsigned int       localBlock = block_idx - gatherIdx * blocks_per_entry;
+    unsigned int       intraIdx   = localBlock * 4u;
+    size_t base =
+      (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
+
+    Scalar fblock[4];
+    fblock[0] = dataArray[base];
+    fblock[1] = dataArray[base + 1];
+    fblock[2] = dataArray[base + 2];
+    fblock[3] = dataArray[base + 3];
+
+    stream[block_idx] = bfp_encode_block(fblock, maxbits);
+  }
+
+  /* --- Fused BFP decompress+scatter_add kernel (uint32_t path) ------------ */
+
+  template <typename Scalar, typename IndexType>
+  COMPRESSION_GLOBAL void
+  decompress_scatter_add_bfp_kernel(
+    const unsigned int *COMPRESSION_RESTRICT stream,
+    const IndexType    *COMPRESSION_RESTRICT indices,
+    unsigned int                             gatherBlockSize,
+    Scalar *COMPRESSION_RESTRICT             dataArray,
+    unsigned int                             maxbits,
+    unsigned int                             tot_blocks)
+  {
+    const unsigned int block_idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (block_idx >= tot_blocks)
+      return;
+
+    Scalar fblock[4];
+    bfp_decode_block(stream[block_idx], fblock, maxbits);
+
+    const unsigned int blocks_per_entry = gatherBlockSize >> 2;
+    unsigned int       gatherIdx  = block_idx / blocks_per_entry;
+    unsigned int       localBlock = block_idx - gatherIdx * blocks_per_entry;
+    unsigned int       intraIdx   = localBlock * 4u;
+    size_t base =
+      (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
+
+    portable_atomicAdd(&dataArray[base],     fblock[0]);
+    portable_atomicAdd(&dataArray[base + 1], fblock[1]);
+    portable_atomicAdd(&dataArray[base + 2], fblock[2]);
+    portable_atomicAdd(&dataArray[base + 3], fblock[3]);
+  }
+
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+
+  template <typename Scalar, typename IndexType>
+  void
+  compress_gather_bfp_kernel(sycl::nd_item<1>   item,
+                             const Scalar      *dataArray,
+                             const IndexType   *indices,
+                             unsigned int        gatherBlockSize,
+                             unsigned int       *stream,
+                             unsigned int        maxbits,
+                             unsigned int        tot_blocks)
+  {
+    const unsigned int block_idx = item.get_global_id(0);
+    if (block_idx >= tot_blocks)
+      return;
+
+    const unsigned int blocks_per_entry = gatherBlockSize >> 2;
+    unsigned int       gatherIdx  = block_idx / blocks_per_entry;
+    unsigned int       localBlock = block_idx - gatherIdx * blocks_per_entry;
+    unsigned int       intraIdx   = localBlock * 4u;
+    size_t base =
+      (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
+
+    Scalar fblock[4];
+    fblock[0] = dataArray[base];
+    fblock[1] = dataArray[base + 1];
+    fblock[2] = dataArray[base + 2];
+    fblock[3] = dataArray[base + 3];
+
+    stream[block_idx] = bfp_encode_block(fblock, maxbits);
+  }
+
+  template <typename Scalar, typename IndexType>
+  void
+  decompress_scatter_add_bfp_kernel(
+    sycl::nd_item<1>    item,
+    const unsigned int *stream,
+    const IndexType    *indices,
+    unsigned int        gatherBlockSize,
+    Scalar             *dataArray,
+    unsigned int        maxbits,
+    unsigned int        tot_blocks)
+  {
+    const unsigned int block_idx = item.get_global_id(0);
+    if (block_idx >= tot_blocks)
+      return;
+
+    Scalar fblock[4];
+    bfp_decode_block(stream[block_idx], fblock, maxbits);
+
+    const unsigned int blocks_per_entry = gatherBlockSize >> 2;
+    unsigned int       gatherIdx  = block_idx / blocks_per_entry;
+    unsigned int       localBlock = block_idx - gatherIdx * blocks_per_entry;
+    unsigned int       intraIdx   = localBlock * 4u;
+    size_t base =
+      (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
+
+    portable_atomicAdd(&dataArray[base],     fblock[0]);
+    portable_atomicAdd(&dataArray[base + 1], fblock[1]);
+    portable_atomicAdd(&dataArray[base + 2], fblock[2]);
+    portable_atomicAdd(&dataArray[base + 3], fblock[3]);
+  }
+
+#endif /* BFP uint32_t fused SYCL */
+
+  /* =========================================================================
+     Specialized BFP 12-bpv kernels (48-bit → 3 × uint16_t per block)
+
+     1 thread per block, 3 × uint16_t stores. Mirrors the 8-bpv uint32_t
+     design: each thread independently encodes one block, no cross-block
+     packing. 4× more threads than the previous 4-block super-block design,
+     better GPU saturation for small problem sizes (10^3-10^5 elements).
+
+     Zero warp divergence. No atomics on compress path. Simple layout:
+       block i → stream16[i*3], stream16[i*3+1], stream16[i*3+2]
+     =========================================================================
+   */
+
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
+
+  template <typename Scalar>
+  COMPRESSION_GLOBAL void
+  compress_bfp_12_kernel(const Scalar *COMPRESSION_RESTRICT data,
+                         uint16_t *COMPRESSION_RESTRICT     stream,
+                         unsigned int                       dim,
+                         unsigned int                       tot_blocks)
+  {
+    const unsigned int block_idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (block_idx >= tot_blocks)
+      return;
+
+    unsigned int block_start = block_idx * 4u;
+    Scalar       fblock[4];
+
+    if (block_start + 4u <= dim)
+      {
+        fblock[0] = data[block_start];
+        fblock[1] = data[block_start + 1];
+        fblock[2] = data[block_start + 2];
+        fblock[3] = data[block_start + 3];
+      }
+    else
+      {
+        unsigned int nx = dim - block_start;
+        for (unsigned int j = 0; j < nx; j++)
+          fblock[j] = data[block_start + j];
+        pad_block(fblock, nx);
+      }
+
+    uint64   packed = bfp_encode_block_48(fblock);
+    size_t   out    = (size_t)block_idx * 3u;
+    stream[out]     = (uint16_t)(packed);
+    stream[out + 1] = (uint16_t)(packed >> 16);
+    stream[out + 2] = (uint16_t)(packed >> 32);
+  }
+
+  template <typename Scalar>
+  COMPRESSION_GLOBAL void
+  decompress_bfp_12_kernel(const uint16_t *COMPRESSION_RESTRICT stream,
+                           Scalar *COMPRESSION_RESTRICT         data,
+                           unsigned int                         dim,
+                           unsigned int                         tot_blocks)
+  {
+    const unsigned int block_idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (block_idx >= tot_blocks)
+      return;
+
+    size_t out    = (size_t)block_idx * 3u;
+    uint64 packed = (uint64)stream[out] |
+                    ((uint64)stream[out + 1] << 16) |
+                    ((uint64)stream[out + 2] << 32);
+
+    Scalar fblock[4];
+    bfp_decode_block_48(packed, fblock);
+
+    unsigned int block_start = block_idx * 4u;
+    if (block_start + 4u <= dim)
+      {
+        data[block_start]     = fblock[0];
+        data[block_start + 1] = fblock[1];
+        data[block_start + 2] = fblock[2];
+        data[block_start + 3] = fblock[3];
+      }
+    else
+      {
+        unsigned int nx = dim - block_start;
+        for (unsigned int j = 0; j < nx; j++)
+          data[block_start + j] = fblock[j];
+      }
+  }
+
+  template <typename Scalar, typename IndexType>
+  COMPRESSION_GLOBAL void
+  compress_gather_bfp_12_kernel(
+    const Scalar    *COMPRESSION_RESTRICT dataArray,
+    const IndexType *COMPRESSION_RESTRICT indices,
+    unsigned int                          gatherBlockSize,
+    uint16_t *COMPRESSION_RESTRICT        stream,
+    unsigned int                          tot_blocks)
+  {
+    const unsigned int block_idx        = blockIdx.x * blockDim.x + threadIdx.x;
+    if (block_idx >= tot_blocks)
+      return;
+
+    const unsigned int blocks_per_entry = gatherBlockSize >> 2;
+    unsigned int       gatherIdx        = block_idx / blocks_per_entry;
+    unsigned int       localBlock       = block_idx - gatherIdx * blocks_per_entry;
+    unsigned int       intraIdx         = localBlock * 4u;
+    size_t             base =
+      (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
+
+    Scalar fblock[4];
+    fblock[0] = dataArray[base];
+    fblock[1] = dataArray[base + 1];
+    fblock[2] = dataArray[base + 2];
+    fblock[3] = dataArray[base + 3];
+
+    uint64   packed = bfp_encode_block_48(fblock);
+    size_t   out    = (size_t)block_idx * 3u;
+    stream[out]     = (uint16_t)(packed);
+    stream[out + 1] = (uint16_t)(packed >> 16);
+    stream[out + 2] = (uint16_t)(packed >> 32);
+  }
+
+  template <typename Scalar, typename IndexType>
+  COMPRESSION_GLOBAL void
+  decompress_scatter_add_bfp_12_kernel(
+    const uint16_t  *COMPRESSION_RESTRICT stream,
+    const IndexType *COMPRESSION_RESTRICT indices,
+    unsigned int                          gatherBlockSize,
+    Scalar *COMPRESSION_RESTRICT          dataArray,
+    unsigned int                          tot_blocks)
+  {
+    const unsigned int block_idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (block_idx >= tot_blocks)
+      return;
+
+    size_t out    = (size_t)block_idx * 3u;
+    uint64 packed = (uint64)stream[out] |
+                    ((uint64)stream[out + 1] << 16) |
+                    ((uint64)stream[out + 2] << 32);
+
+    Scalar fblock[4];
+    bfp_decode_block_48(packed, fblock);
+
+    const unsigned int blocks_per_entry = gatherBlockSize >> 2;
+    unsigned int       gatherIdx        = block_idx / blocks_per_entry;
+    unsigned int       localBlock       = block_idx - gatherIdx * blocks_per_entry;
+    unsigned int       intraIdx         = localBlock * 4u;
+    size_t             base =
+      (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
+
+    portable_atomicAdd(&dataArray[base], fblock[0]);
+    portable_atomicAdd(&dataArray[base + 1], fblock[1]);
+    portable_atomicAdd(&dataArray[base + 2], fblock[2]);
+    portable_atomicAdd(&dataArray[base + 3], fblock[3]);
+  }
+
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+
+  template <typename Scalar>
+  void
+  compress_bfp_12_kernel(sycl::nd_item<1> item,
+                         const Scalar    *data,
+                         uint16_t        *stream,
+                         unsigned int     dim,
+                         unsigned int     tot_blocks)
+  {
+    const unsigned int block_idx = item.get_global_id(0);
+    if (block_idx >= tot_blocks)
+      return;
+
+    unsigned int block_start = block_idx * 4u;
+    Scalar       fblock[4];
+
+    if (block_start + 4u <= dim)
+      {
+        fblock[0] = data[block_start];
+        fblock[1] = data[block_start + 1];
+        fblock[2] = data[block_start + 2];
+        fblock[3] = data[block_start + 3];
+      }
+    else
+      {
+        unsigned int nx = dim - block_start;
+        for (unsigned int j = 0; j < nx; j++)
+          fblock[j] = data[block_start + j];
+        pad_block(fblock, nx);
+      }
+
+    uint64   packed = bfp_encode_block_48(fblock);
+    size_t   out    = (size_t)block_idx * 3u;
+    stream[out]     = (uint16_t)(packed);
+    stream[out + 1] = (uint16_t)(packed >> 16);
+    stream[out + 2] = (uint16_t)(packed >> 32);
+  }
+
+  template <typename Scalar>
+  void
+  decompress_bfp_12_kernel(sycl::nd_item<1>  item,
+                           const uint16_t   *stream,
+                           Scalar           *data,
+                           unsigned int      dim,
+                           unsigned int      tot_blocks)
+  {
+    const unsigned int block_idx = item.get_global_id(0);
+    if (block_idx >= tot_blocks)
+      return;
+
+    size_t out    = (size_t)block_idx * 3u;
+    uint64 packed = (uint64)stream[out] |
+                    ((uint64)stream[out + 1] << 16) |
+                    ((uint64)stream[out + 2] << 32);
+
+    Scalar fblock[4];
+    bfp_decode_block_48(packed, fblock);
+
+    unsigned int block_start = block_idx * 4u;
+    if (block_start + 4u <= dim)
+      {
+        data[block_start]     = fblock[0];
+        data[block_start + 1] = fblock[1];
+        data[block_start + 2] = fblock[2];
+        data[block_start + 3] = fblock[3];
+      }
+    else
+      {
+        unsigned int nx = dim - block_start;
+        for (unsigned int j = 0; j < nx; j++)
+          data[block_start + j] = fblock[j];
+      }
+  }
+
+  template <typename Scalar, typename IndexType>
+  void
+  compress_gather_bfp_12_kernel(sycl::nd_item<1>  item,
+                                const Scalar     *dataArray,
+                                const IndexType  *indices,
+                                unsigned int      gatherBlockSize,
+                                uint16_t         *stream,
+                                unsigned int      tot_blocks)
+  {
+    const unsigned int block_idx = item.get_global_id(0);
+    if (block_idx >= tot_blocks)
+      return;
+
+    const unsigned int blocks_per_entry = gatherBlockSize >> 2;
+    unsigned int       gatherIdx        = block_idx / blocks_per_entry;
+    unsigned int       localBlock       = block_idx - gatherIdx * blocks_per_entry;
+    unsigned int       intraIdx         = localBlock * 4u;
+    size_t             base =
+      (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
+
+    Scalar fblock[4];
+    fblock[0] = dataArray[base];
+    fblock[1] = dataArray[base + 1];
+    fblock[2] = dataArray[base + 2];
+    fblock[3] = dataArray[base + 3];
+
+    uint64   packed = bfp_encode_block_48(fblock);
+    size_t   out    = (size_t)block_idx * 3u;
+    stream[out]     = (uint16_t)(packed);
+    stream[out + 1] = (uint16_t)(packed >> 16);
+    stream[out + 2] = (uint16_t)(packed >> 32);
+  }
+
+  template <typename Scalar, typename IndexType>
+  void
+  decompress_scatter_add_bfp_12_kernel(sycl::nd_item<1>  item,
+                                       const uint16_t   *stream,
+                                       const IndexType  *indices,
+                                       unsigned int      gatherBlockSize,
+                                       Scalar           *dataArray,
+                                       unsigned int      tot_blocks)
+  {
+    const unsigned int block_idx = item.get_global_id(0);
+    if (block_idx >= tot_blocks)
+      return;
+
+    size_t out    = (size_t)block_idx * 3u;
+    uint64 packed = (uint64)stream[out] |
+                    ((uint64)stream[out + 1] << 16) |
+                    ((uint64)stream[out + 2] << 32);
+
+    Scalar fblock[4];
+    bfp_decode_block_48(packed, fblock);
+
+    const unsigned int blocks_per_entry = gatherBlockSize >> 2;
+    unsigned int       gatherIdx        = block_idx / blocks_per_entry;
+    unsigned int       localBlock       = block_idx - gatherIdx * blocks_per_entry;
+    unsigned int       intraIdx         = localBlock * 4u;
+    size_t             base =
+      (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
+
+    portable_atomicAdd(&dataArray[base], fblock[0]);
+    portable_atomicAdd(&dataArray[base + 1], fblock[1]);
+    portable_atomicAdd(&dataArray[base + 2], fblock[2]);
+    portable_atomicAdd(&dataArray[base + 3], fblock[3]);
+  }
+
+#endif /* BFP 12bpv specialized SYCL */
+
   /* --- BFP super-block kernels (bpv > 8, tightly packed via Word stream) ---
    */
 
@@ -1551,6 +2993,115 @@ namespace compression
       }
   }
 
+  /* --- Fused BFP gather+compress super-block kernel (CUDA/HIP, bpv > 8) --- */
+
+  template <typename Scalar, typename IndexType>
+  COMPRESSION_GLOBAL void
+  compress_gather_bfp_sb_kernel(
+    const Scalar     *COMPRESSION_RESTRICT dataArray,
+    const IndexType  *COMPRESSION_RESTRICT indices,
+    unsigned int                           gatherBlockSize,
+    Word *COMPRESSION_RESTRICT             stream,
+    unsigned int                           maxbits,
+    unsigned int                           tot_blocks,
+    unsigned int                           bpt,
+    unsigned int                           wpt,
+    unsigned int                           num_words)
+  {
+    const unsigned int super_idx = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int blocks_per_entry = gatherBlockSize >> 2;
+
+    Word local_words[MAX_WORDS_PER_SUPERBLOCK];
+    for (unsigned int w = 0; w < wpt; w++)
+      local_words[w] = 0;
+
+    const unsigned int block_base = super_idx * bpt;
+    for (unsigned int b = 0; b < bpt; b++)
+      {
+        unsigned int block_idx = block_base + b;
+        if (block_idx >= tot_blocks)
+          break;
+
+        unsigned int gatherIdx  = block_idx / blocks_per_entry;
+        unsigned int localBlock = block_idx - gatherIdx * blocks_per_entry;
+        unsigned int intraIdx   = localBlock * 4u;
+        size_t base =
+          (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
+
+        Scalar fblock[4];
+        fblock[0] = dataArray[base];
+        fblock[1] = dataArray[base + 1];
+        fblock[2] = dataArray[base + 2];
+        fblock[3] = dataArray[base + 3];
+
+        LocalBlockWriter writer(local_words, maxbits, b);
+        bfp_encode_block_writer(writer, fblock, maxbits);
+      }
+
+    size_t global_word_base = (size_t)super_idx * wpt;
+    for (unsigned int w = 0; w < wpt; w++)
+      {
+        size_t gw = global_word_base + w;
+        if (gw < num_words)
+          stream[gw] = local_words[w];
+      }
+  }
+
+  /* --- Fused BFP decompress+scatter_add super-block kernel (CUDA/HIP) ----- */
+
+  template <typename Scalar, typename IndexType>
+  COMPRESSION_GLOBAL void
+  decompress_scatter_add_bfp_sb_kernel(
+    const Word      *COMPRESSION_RESTRICT stream,
+    const IndexType *COMPRESSION_RESTRICT indices,
+    unsigned int                          gatherBlockSize,
+    Scalar *COMPRESSION_RESTRICT          dataArray,
+    unsigned int                          maxbits,
+    unsigned int                          tot_blocks,
+    unsigned int                          bpt,
+    unsigned int                          wpt,
+    unsigned int                          num_words)
+  {
+    const unsigned int super_idx  = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int block_base = super_idx * bpt;
+    if (block_base >= tot_blocks)
+      return;
+
+    const unsigned int blocks_per_entry = gatherBlockSize >> 2;
+
+    Word   local_words[MAX_WORDS_PER_SUPERBLOCK];
+    size_t global_word_base = (size_t)super_idx * wpt;
+    for (unsigned int w = 0; w < wpt; w++)
+      {
+        size_t gw      = global_word_base + w;
+        local_words[w] = (gw < num_words) ? portable_ldg(stream + gw) : (Word)0;
+      }
+
+    for (unsigned int b = 0; b < bpt; b++)
+      {
+        unsigned int block_idx = block_base + b;
+        if (block_idx >= tot_blocks)
+          break;
+
+        LocalBlockReader reader(local_words, maxbits, b);
+        Scalar           fblock[4];
+        bfp_decode_block_reader<LocalBlockReader, Scalar>(reader,
+                                                          fblock,
+                                                          maxbits);
+
+        unsigned int gatherIdx  = block_idx / blocks_per_entry;
+        unsigned int localBlock = block_idx - gatherIdx * blocks_per_entry;
+        unsigned int intraIdx   = localBlock * 4u;
+        size_t base =
+          (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
+
+        portable_atomicAdd(&dataArray[base],     fblock[0]);
+        portable_atomicAdd(&dataArray[base + 1], fblock[1]);
+        portable_atomicAdd(&dataArray[base + 2], fblock[2]);
+        portable_atomicAdd(&dataArray[base + 3], fblock[3]);
+      }
+  }
+
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
 
   template <typename Scalar>
@@ -1663,6 +3214,117 @@ namespace compression
       }
   }
 
+  /* --- Fused BFP gather+compress super-block kernel (SYCL, bpv > 8) ------- */
+
+  template <typename Scalar, typename IndexType>
+  void
+  compress_gather_bfp_sb_kernel(
+    sycl::nd_item<1>   item,
+    const Scalar      *dataArray,
+    const IndexType   *indices,
+    unsigned int        gatherBlockSize,
+    Word               *stream,
+    unsigned int        maxbits,
+    unsigned int        tot_blocks,
+    unsigned int        bpt,
+    unsigned int        wpt,
+    unsigned int        num_words)
+  {
+    const unsigned int super_idx = item.get_global_id(0);
+    const unsigned int blocks_per_entry = gatherBlockSize >> 2;
+
+    Word local_words[MAX_WORDS_PER_SUPERBLOCK];
+    for (unsigned int w = 0; w < wpt; w++)
+      local_words[w] = 0;
+
+    const unsigned int block_base = super_idx * bpt;
+    for (unsigned int b = 0; b < bpt; b++)
+      {
+        unsigned int block_idx = block_base + b;
+        if (block_idx >= tot_blocks)
+          break;
+
+        unsigned int gatherIdx  = block_idx / blocks_per_entry;
+        unsigned int localBlock = block_idx - gatherIdx * blocks_per_entry;
+        unsigned int intraIdx   = localBlock * 4u;
+        size_t base =
+          (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
+
+        Scalar fblock[4];
+        fblock[0] = dataArray[base];
+        fblock[1] = dataArray[base + 1];
+        fblock[2] = dataArray[base + 2];
+        fblock[3] = dataArray[base + 3];
+
+        LocalBlockWriter writer(local_words, maxbits, b);
+        bfp_encode_block_writer(writer, fblock, maxbits);
+      }
+
+    size_t global_word_base = (size_t)super_idx * wpt;
+    for (unsigned int w = 0; w < wpt; w++)
+      {
+        size_t gw = global_word_base + w;
+        if (gw < num_words)
+          stream[gw] = local_words[w];
+      }
+  }
+
+  /* --- Fused BFP decompress+scatter_add super-block kernel (SYCL) --------- */
+
+  template <typename Scalar, typename IndexType>
+  void
+  decompress_scatter_add_bfp_sb_kernel(
+    sycl::nd_item<1>    item,
+    const Word         *stream,
+    const IndexType    *indices,
+    unsigned int        gatherBlockSize,
+    Scalar             *dataArray,
+    unsigned int        maxbits,
+    unsigned int        tot_blocks,
+    unsigned int        bpt,
+    unsigned int        wpt,
+    unsigned int        num_words)
+  {
+    const unsigned int super_idx  = item.get_global_id(0);
+    const unsigned int block_base = super_idx * bpt;
+    if (block_base >= tot_blocks)
+      return;
+
+    const unsigned int blocks_per_entry = gatherBlockSize >> 2;
+
+    Word   local_words[MAX_WORDS_PER_SUPERBLOCK];
+    size_t global_word_base = (size_t)super_idx * wpt;
+    for (unsigned int w = 0; w < wpt; w++)
+      {
+        size_t gw      = global_word_base + w;
+        local_words[w] = (gw < num_words) ? stream[gw] : (Word)0;
+      }
+
+    for (unsigned int b = 0; b < bpt; b++)
+      {
+        unsigned int block_idx = block_base + b;
+        if (block_idx >= tot_blocks)
+          break;
+
+        LocalBlockReader reader(local_words, maxbits, b);
+        Scalar           fblock[4];
+        bfp_decode_block_reader<LocalBlockReader, Scalar>(reader,
+                                                          fblock,
+                                                          maxbits);
+
+        unsigned int gatherIdx  = block_idx / blocks_per_entry;
+        unsigned int localBlock = block_idx - gatherIdx * blocks_per_entry;
+        unsigned int intraIdx   = localBlock * 4u;
+        size_t base =
+          (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
+
+        portable_atomicAdd(&dataArray[base],     fblock[0]);
+        portable_atomicAdd(&dataArray[base + 1], fblock[1]);
+        portable_atomicAdd(&dataArray[base + 2], fblock[2]);
+        portable_atomicAdd(&dataArray[base + 3], fblock[3]);
+      }
+  }
+
 #endif /* BFP super-block SYCL */
 
   /* =========================================================================
@@ -1694,66 +3356,139 @@ namespace compression
     const unsigned int num_blocks = (dim + 3u) / 4u;
     const unsigned int maxbits    = (unsigned int)bits_per_value * 4u;
 
-    /* super-block parameters */
-    unsigned int g   = compression_gcd(maxbits, (unsigned int)WSIZE);
-    unsigned int bpt = (unsigned int)WSIZE / g; /* blocks per thread */
-    unsigned int wpt = maxbits / g;             /* words per thread  */
+    if (maxbits == 32u)
+      {
+        /* --- bpt=1 fast path (8 bpv): 1 thread/block, 1 × uint32_t --- */
+        const unsigned int grid =
+          (num_blocks + COMPRESSION_BLOCK_SIZE - 1) / COMPRESSION_BLOCK_SIZE;
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA)
+        compress_zfp_32_kernel<Scalar>
+          <<<grid, COMPRESSION_BLOCK_SIZE, 0, stream>>>(
+            d_data,
+            reinterpret_cast<unsigned int *>(d_stream),
+            dim,
+            num_blocks);
+#elif defined(DFTFE_WITH_DEVICE_LANG_HIP)
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compress_zfp_32_kernel<Scalar>),
+                           grid,
+                           COMPRESSION_BLOCK_SIZE,
+                           0,
+                           stream,
+                           d_data,
+                           reinterpret_cast<unsigned int *>(d_stream),
+                           dim,
+                           num_blocks);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+        auto         &queue = dftfe::utils::queueRegistry.find(stream)->second;
+        unsigned int *d_stream_u32 = reinterpret_cast<unsigned int *>(d_stream);
+        queue.parallel_for(sycl::nd_range<1>(grid * COMPRESSION_BLOCK_SIZE,
+                                             COMPRESSION_BLOCK_SIZE),
+                           [=](sycl::nd_item<1> item) {
+                             compress_zfp_32_kernel<Scalar>(item,
+                                                            d_data,
+                                                            d_stream_u32,
+                                                            dim,
+                                                            num_blocks);
+                           });
+#endif
+      }
+    else if (maxbits == 48u)
+      {
+        /* --- bpt=1 fast path (12 bpv): 1 thread/block, 3 × uint16_t --- */
+        const unsigned int grid =
+          (num_blocks + COMPRESSION_BLOCK_SIZE - 1) / COMPRESSION_BLOCK_SIZE;
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA)
+        compress_zfp_48_kernel<Scalar>
+          <<<grid, COMPRESSION_BLOCK_SIZE, 0, stream>>>(
+            d_data,
+            reinterpret_cast<uint16_t *>(d_stream),
+            dim,
+            num_blocks);
+#elif defined(DFTFE_WITH_DEVICE_LANG_HIP)
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compress_zfp_48_kernel<Scalar>),
+                           grid,
+                           COMPRESSION_BLOCK_SIZE,
+                           0,
+                           stream,
+                           d_data,
+                           reinterpret_cast<uint16_t *>(d_stream),
+                           dim,
+                           num_blocks);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+        auto     &queue      = dftfe::utils::queueRegistry.find(stream)->second;
+        uint16_t *d_stream16 = reinterpret_cast<uint16_t *>(d_stream);
+        queue.parallel_for(sycl::nd_range<1>(grid * COMPRESSION_BLOCK_SIZE,
+                                             COMPRESSION_BLOCK_SIZE),
+                           [=](sycl::nd_item<1> item) {
+                             compress_zfp_48_kernel<Scalar>(item,
+                                                            d_data,
+                                                            d_stream16,
+                                                            dim,
+                                                            num_blocks);
+                           });
+#endif
+      }
+    else
+      {
+        /* --- generic super-block path for other bpv --- */
+        unsigned int g   = compression_gcd(maxbits, (unsigned int)WSIZE);
+        unsigned int bpt = (unsigned int)WSIZE / g;
+        unsigned int wpt = maxbits / g;
 
-    assert(wpt <= (unsigned int)MAX_WORDS_PER_SUPERBLOCK &&
-           "bits_per_value requires too many words per super-block");
+        assert(wpt <= (unsigned int)MAX_WORDS_PER_SUPERBLOCK &&
+               "bits_per_value requires too many words per super-block");
 
-    unsigned int num_supers = (num_blocks + bpt - 1) / bpt;
-    unsigned int num_words =
-      (unsigned int)(compressed_size(num_values, bits_per_value) /
-                     sizeof(Word));
+        unsigned int num_supers = (num_blocks + bpt - 1) / bpt;
+        unsigned int num_words =
+          (unsigned int)(compressed_size(num_values, bits_per_value) /
+                         sizeof(Word));
 
-    const unsigned int grid =
-      (num_supers + COMPRESSION_BLOCK_SIZE - 1) / COMPRESSION_BLOCK_SIZE;
-
-    /* NO memset — local buffers are zero-initialized per thread */
+        const unsigned int grid =
+          (num_supers + COMPRESSION_BLOCK_SIZE - 1) / COMPRESSION_BLOCK_SIZE;
 
 #if defined(DFTFE_WITH_DEVICE_LANG_CUDA)
-    compress_kernel<Scalar>
-      <<<grid, COMPRESSION_BLOCK_SIZE, 0, stream>>>(d_data,
-                                                    reinterpret_cast<Word *>(
-                                                      d_stream),
-                                                    maxbits,
-                                                    dim,
-                                                    num_blocks,
-                                                    bpt,
-                                                    wpt,
-                                                    num_words);
+        compress_kernel<Scalar>
+          <<<grid, COMPRESSION_BLOCK_SIZE, 0, stream>>>(
+            d_data,
+            reinterpret_cast<Word *>(d_stream),
+            maxbits,
+            dim,
+            num_blocks,
+            bpt,
+            wpt,
+            num_words);
 #elif defined(DFTFE_WITH_DEVICE_LANG_HIP)
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(compress_kernel<Scalar>),
-                       grid,
-                       COMPRESSION_BLOCK_SIZE,
-                       0,
-                       stream,
-                       d_data,
-                       reinterpret_cast<Word *>(d_stream),
-                       maxbits,
-                       dim,
-                       num_blocks,
-                       bpt,
-                       wpt,
-                       num_words);
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compress_kernel<Scalar>),
+                           grid,
+                           COMPRESSION_BLOCK_SIZE,
+                           0,
+                           stream,
+                           d_data,
+                           reinterpret_cast<Word *>(d_stream),
+                           maxbits,
+                           dim,
+                           num_blocks,
+                           bpt,
+                           wpt,
+                           num_words);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-    auto &queue          = dftfe::utils::queueRegistry.find(stream)->second;
-    Word *d_stream_words = reinterpret_cast<Word *>(d_stream);
-    queue.parallel_for(sycl::nd_range<1>(grid * COMPRESSION_BLOCK_SIZE,
-                                         COMPRESSION_BLOCK_SIZE),
-                       [=](sycl::nd_item<1> item) {
-                         compress_kernel<Scalar>(item,
-                                                 d_data,
-                                                 d_stream_words,
-                                                 maxbits,
-                                                 dim,
-                                                 num_blocks,
-                                                 bpt,
-                                                 wpt,
-                                                 num_words);
-                       });
+        auto &queue          = dftfe::utils::queueRegistry.find(stream)->second;
+        Word *d_stream_words = reinterpret_cast<Word *>(d_stream);
+        queue.parallel_for(sycl::nd_range<1>(grid * COMPRESSION_BLOCK_SIZE,
+                                             COMPRESSION_BLOCK_SIZE),
+                           [=](sycl::nd_item<1> item) {
+                             compress_kernel<Scalar>(item,
+                                                     d_data,
+                                                     d_stream_words,
+                                                     maxbits,
+                                                     dim,
+                                                     num_blocks,
+                                                     bpt,
+                                                     wpt,
+                                                     num_words);
+                           });
 #endif
+      }
   }
 
   /*
@@ -1781,54 +3516,492 @@ namespace compression
     const unsigned int num_blocks = (dim + 3u) / 4u;
     const unsigned int maxbits    = (unsigned int)bits_per_value * 4u;
 
-    /* super-block parameters (same as compress) */
-    unsigned int g   = compression_gcd(maxbits, (unsigned int)WSIZE);
-    unsigned int bpt = (unsigned int)WSIZE / g;
-    unsigned int wpt = maxbits / g;
-    assert(wpt <= (unsigned int)MAX_WORDS_PER_SUPERBLOCK &&
-           "bits_per_value requires too many words per super-block");
+    if (maxbits == 32u)
+      {
+        const unsigned int grid =
+          (num_blocks + COMPRESSION_BLOCK_SIZE - 1) / COMPRESSION_BLOCK_SIZE;
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA)
+        decompress_zfp_32_kernel<Scalar>
+          <<<grid, COMPRESSION_BLOCK_SIZE, 0, stream>>>(
+            reinterpret_cast<const unsigned int *>(d_stream),
+            d_data,
+            dim,
+            num_blocks);
+#elif defined(DFTFE_WITH_DEVICE_LANG_HIP)
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(decompress_zfp_32_kernel<Scalar>),
+                           grid,
+                           COMPRESSION_BLOCK_SIZE,
+                           0,
+                           stream,
+                           reinterpret_cast<const unsigned int *>(d_stream),
+                           d_data,
+                           dim,
+                           num_blocks);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+        auto &queue = dftfe::utils::queueRegistry.find(stream)->second;
+        const unsigned int *d_stream_u32 =
+          reinterpret_cast<const unsigned int *>(d_stream);
+        queue.parallel_for(sycl::nd_range<1>(grid * COMPRESSION_BLOCK_SIZE,
+                                             COMPRESSION_BLOCK_SIZE),
+                           [=](sycl::nd_item<1> item) {
+                             decompress_zfp_32_kernel<Scalar>(item,
+                                                               d_stream_u32,
+                                                               d_data,
+                                                               dim,
+                                                               num_blocks);
+                           });
+#endif
+      }
+    else if (maxbits == 48u)
+      {
+        const unsigned int grid =
+          (num_blocks + COMPRESSION_BLOCK_SIZE - 1) / COMPRESSION_BLOCK_SIZE;
+        const uint16_t *d_stream16 =
+          reinterpret_cast<const uint16_t *>(d_stream);
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA)
+        decompress_zfp_48_kernel<Scalar>
+          <<<grid, COMPRESSION_BLOCK_SIZE, 0, stream>>>(
+            d_stream16, d_data, dim, num_blocks);
+#elif defined(DFTFE_WITH_DEVICE_LANG_HIP)
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(decompress_zfp_48_kernel<Scalar>),
+                           grid,
+                           COMPRESSION_BLOCK_SIZE,
+                           0,
+                           stream,
+                           d_stream16,
+                           d_data,
+                           dim,
+                           num_blocks);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+        auto &queue = dftfe::utils::queueRegistry.find(stream)->second;
+        queue.parallel_for(sycl::nd_range<1>(grid * COMPRESSION_BLOCK_SIZE,
+                                             COMPRESSION_BLOCK_SIZE),
+                           [=](sycl::nd_item<1> item) {
+                             decompress_zfp_48_kernel<Scalar>(item,
+                                                               d_stream16,
+                                                               d_data,
+                                                               dim,
+                                                               num_blocks);
+                           });
+#endif
+      }
+    else
+      {
+        unsigned int g   = compression_gcd(maxbits, (unsigned int)WSIZE);
+        unsigned int bpt = (unsigned int)WSIZE / g;
+        unsigned int wpt = maxbits / g;
+        assert(wpt <= (unsigned int)MAX_WORDS_PER_SUPERBLOCK &&
+               "bits_per_value requires too many words per super-block");
 
-    unsigned int num_supers = (num_blocks + bpt - 1) / bpt;
-    unsigned int num_words =
-      (unsigned int)(compressed_size(num_values, bits_per_value) /
-                     sizeof(Word));
-    const unsigned int grid =
-      (num_supers + COMPRESSION_BLOCK_SIZE - 1) / COMPRESSION_BLOCK_SIZE;
-    const Word *d_stream_words = reinterpret_cast<const Word *>(d_stream);
+        unsigned int num_supers = (num_blocks + bpt - 1) / bpt;
+        unsigned int num_words =
+          (unsigned int)(compressed_size(num_values, bits_per_value) /
+                         sizeof(Word));
+        const unsigned int grid =
+          (num_supers + COMPRESSION_BLOCK_SIZE - 1) / COMPRESSION_BLOCK_SIZE;
+        const Word *d_stream_words = reinterpret_cast<const Word *>(d_stream);
 
 #if defined(DFTFE_WITH_DEVICE_LANG_CUDA)
-    decompress_kernel_sb<Scalar><<<grid, COMPRESSION_BLOCK_SIZE, 0, stream>>>(
-      d_stream_words, d_data, maxbits, dim, num_blocks, bpt, wpt, num_words);
+        decompress_kernel_sb<Scalar>
+          <<<grid, COMPRESSION_BLOCK_SIZE, 0, stream>>>(
+            d_stream_words, d_data, maxbits, dim, num_blocks,
+            bpt, wpt, num_words);
 #elif defined(DFTFE_WITH_DEVICE_LANG_HIP)
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(decompress_kernel_sb<Scalar>),
-                       grid,
-                       COMPRESSION_BLOCK_SIZE,
-                       0,
-                       stream,
-                       d_stream_words,
-                       d_data,
-                       maxbits,
-                       dim,
-                       num_blocks,
-                       bpt,
-                       wpt,
-                       num_words);
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(decompress_kernel_sb<Scalar>),
+                           grid,
+                           COMPRESSION_BLOCK_SIZE,
+                           0,
+                           stream,
+                           d_stream_words,
+                           d_data,
+                           maxbits,
+                           dim,
+                           num_blocks,
+                           bpt,
+                           wpt,
+                           num_words);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-    auto &queue = dftfe::utils::queueRegistry.find(stream)->second;
-    queue.parallel_for(sycl::nd_range<1>(grid * COMPRESSION_BLOCK_SIZE,
-                                         COMPRESSION_BLOCK_SIZE),
-                       [=](sycl::nd_item<1> item) {
-                         decompress_kernel_sb<Scalar>(item,
-                                                      d_stream_words,
-                                                      d_data,
-                                                      maxbits,
-                                                      dim,
-                                                      num_blocks,
-                                                      bpt,
-                                                      wpt,
-                                                      num_words);
-                       });
+        auto &queue = dftfe::utils::queueRegistry.find(stream)->second;
+        queue.parallel_for(sycl::nd_range<1>(grid * COMPRESSION_BLOCK_SIZE,
+                                             COMPRESSION_BLOCK_SIZE),
+                           [=](sycl::nd_item<1> item) {
+                             decompress_kernel_sb<Scalar>(item,
+                                                          d_stream_words,
+                                                          d_data,
+                                                          maxbits,
+                                                          dim,
+                                                          num_blocks,
+                                                          bpt,
+                                                          wpt,
+                                                          num_words);
+                           });
 #endif
+      }
+  }
+
+  /*
+   * Fused gather+compress: reads scattered data via indirection and compresses
+   * directly to the output stream. Eliminates the intermediate send buffer.
+   *
+   * @param dataArray       Full data array on device (scattered layout)
+   * @param indices         Gather index array on device
+   * @param num_indices     Number of index entries
+   * @param gather_block_size Number of Scalar elements per index entry
+   * @param d_stream        Output compressed buffer
+   * @param bits_per_value  Compression rate
+   * @param stream          Device stream
+   */
+  template <typename Scalar, typename IndexType>
+  inline void
+  compress_gather(
+    const Scalar                *dataArray,
+    const IndexType             *indices,
+    size_t                       num_indices,
+    unsigned int                 gather_block_size,
+    void                        *d_stream,
+    int                          bits_per_value,
+    dftfe::utils::deviceStream_t stream = dftfe::utils::defaultStream)
+  {
+    const size_t num_values = num_indices * gather_block_size;
+    if (num_values == 0)
+      return;
+    assert(num_values <= (size_t)UINT_MAX && "num_values exceeds 32-bit limit");
+    assert(bits_per_value > 0 && "bits_per_value must be positive");
+
+    const unsigned int dim        = (unsigned int)num_values;
+    const unsigned int num_blocks = (dim + 3u) / 4u;
+    const unsigned int maxbits    = (unsigned int)bits_per_value * 4u;
+
+    if (maxbits == 32u)
+      {
+        const unsigned int grid =
+          (num_blocks + COMPRESSION_BLOCK_SIZE - 1) / COMPRESSION_BLOCK_SIZE;
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA)
+        compress_gather_zfp_32_kernel<Scalar, IndexType>
+          <<<grid, COMPRESSION_BLOCK_SIZE, 0, stream>>>(
+            dataArray,
+            indices,
+            gather_block_size,
+            reinterpret_cast<unsigned int *>(d_stream),
+            num_blocks);
+#elif defined(DFTFE_WITH_DEVICE_LANG_HIP)
+        hipLaunchKernelGGL(
+          HIP_KERNEL_NAME(compress_gather_zfp_32_kernel<Scalar, IndexType>),
+          grid,
+          COMPRESSION_BLOCK_SIZE,
+          0,
+          stream,
+          dataArray,
+          indices,
+          gather_block_size,
+          reinterpret_cast<unsigned int *>(d_stream),
+          num_blocks);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+        auto         &queue = dftfe::utils::queueRegistry.find(stream)->second;
+        unsigned int *d_stream_u32 = reinterpret_cast<unsigned int *>(d_stream);
+        queue.parallel_for(sycl::nd_range<1>(grid * COMPRESSION_BLOCK_SIZE,
+                                             COMPRESSION_BLOCK_SIZE),
+                           [=](sycl::nd_item<1> item) {
+                             compress_gather_zfp_32_kernel<Scalar, IndexType>(
+                               item,
+                               dataArray,
+                               indices,
+                               gather_block_size,
+                               d_stream_u32,
+                               num_blocks);
+                           });
+#endif
+      }
+    else if (maxbits == 48u)
+      {
+        const unsigned int grid =
+          (num_blocks + COMPRESSION_BLOCK_SIZE - 1) / COMPRESSION_BLOCK_SIZE;
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA)
+        compress_gather_zfp_48_kernel<Scalar, IndexType>
+          <<<grid, COMPRESSION_BLOCK_SIZE, 0, stream>>>(
+            dataArray,
+            indices,
+            gather_block_size,
+            reinterpret_cast<uint16_t *>(d_stream),
+            num_blocks);
+#elif defined(DFTFE_WITH_DEVICE_LANG_HIP)
+        hipLaunchKernelGGL(
+          HIP_KERNEL_NAME(compress_gather_zfp_48_kernel<Scalar, IndexType>),
+          grid,
+          COMPRESSION_BLOCK_SIZE,
+          0,
+          stream,
+          dataArray,
+          indices,
+          gather_block_size,
+          reinterpret_cast<uint16_t *>(d_stream),
+          num_blocks);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+        auto     &queue      = dftfe::utils::queueRegistry.find(stream)->second;
+        uint16_t *d_stream16 = reinterpret_cast<uint16_t *>(d_stream);
+        queue.parallel_for(sycl::nd_range<1>(grid * COMPRESSION_BLOCK_SIZE,
+                                             COMPRESSION_BLOCK_SIZE),
+                           [=](sycl::nd_item<1> item) {
+                             compress_gather_zfp_48_kernel<Scalar, IndexType>(
+                               item,
+                               dataArray,
+                               indices,
+                               gather_block_size,
+                               d_stream16,
+                               num_blocks);
+                           });
+#endif
+      }
+    else
+      {
+        unsigned int g   = compression_gcd(maxbits, (unsigned int)WSIZE);
+        unsigned int bpt = (unsigned int)WSIZE / g;
+        unsigned int wpt = maxbits / g;
+
+        assert(wpt <= (unsigned int)MAX_WORDS_PER_SUPERBLOCK &&
+               "bits_per_value requires too many words per super-block");
+
+        unsigned int num_supers = (num_blocks + bpt - 1) / bpt;
+        unsigned int num_words =
+          (unsigned int)(compressed_size(num_values, bits_per_value) /
+                         sizeof(Word));
+
+        const unsigned int grid =
+          (num_supers + COMPRESSION_BLOCK_SIZE - 1) / COMPRESSION_BLOCK_SIZE;
+
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA)
+        compress_gather_kernel<Scalar, IndexType>
+          <<<grid, COMPRESSION_BLOCK_SIZE, 0, stream>>>(
+            dataArray,
+            indices,
+            gather_block_size,
+            reinterpret_cast<Word *>(d_stream),
+            maxbits,
+            num_blocks,
+            bpt,
+            wpt,
+            num_words);
+#elif defined(DFTFE_WITH_DEVICE_LANG_HIP)
+        hipLaunchKernelGGL(
+          HIP_KERNEL_NAME(compress_gather_kernel<Scalar, IndexType>),
+          grid,
+          COMPRESSION_BLOCK_SIZE,
+          0,
+          stream,
+          dataArray,
+          indices,
+          gather_block_size,
+          reinterpret_cast<Word *>(d_stream),
+          maxbits,
+          num_blocks,
+          bpt,
+          wpt,
+          num_words);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+        auto &queue          = dftfe::utils::queueRegistry.find(stream)->second;
+        Word *d_stream_words = reinterpret_cast<Word *>(d_stream);
+        queue.parallel_for(sycl::nd_range<1>(grid * COMPRESSION_BLOCK_SIZE,
+                                             COMPRESSION_BLOCK_SIZE),
+                           [=](sycl::nd_item<1> item) {
+                             compress_gather_kernel<Scalar, IndexType>(
+                               item,
+                               dataArray,
+                               indices,
+                               gather_block_size,
+                               d_stream_words,
+                               maxbits,
+                               num_blocks,
+                               bpt,
+                               wpt,
+                               num_words);
+                           });
+#endif
+      }
+  }
+
+  /*
+   * Fused decompress+scatter_add: decompresses and atomicAdds directly
+   * to scattered positions in dataArray. Eliminates the intermediate buffer.
+   *
+   * @param d_stream        Input compressed buffer
+   * @param indices         Scatter index array on device
+   * @param num_indices     Number of index entries
+   * @param gather_block_size Number of Scalar elements per index entry
+   * @param dataArray       Full data array on device (accumulate target)
+   * @param bits_per_value  Compression rate
+   * @param stream          Device stream
+   */
+  template <typename Scalar, typename IndexType>
+  inline void
+  decompress_scatter_add(
+    const void                  *d_stream,
+    const IndexType             *indices,
+    size_t                       num_indices,
+    unsigned int                 gather_block_size,
+    Scalar                      *dataArray,
+    int                          bits_per_value,
+    dftfe::utils::deviceStream_t stream = dftfe::utils::defaultStream)
+  {
+    const size_t num_values = num_indices * gather_block_size;
+    if (num_values == 0)
+      return;
+    assert(num_values <= (size_t)UINT_MAX && "num_values exceeds 32-bit limit");
+    assert(bits_per_value > 0 && "bits_per_value must be positive");
+
+    const unsigned int dim        = (unsigned int)num_values;
+    const unsigned int num_blocks = (dim + 3u) / 4u;
+    const unsigned int maxbits    = (unsigned int)bits_per_value * 4u;
+
+    if (maxbits == 32u)
+      {
+        const unsigned int grid =
+          (num_blocks + COMPRESSION_BLOCK_SIZE - 1) / COMPRESSION_BLOCK_SIZE;
+        const unsigned int *d_stream_u32 =
+          reinterpret_cast<const unsigned int *>(d_stream);
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA)
+        decompress_scatter_add_zfp_32_kernel<Scalar, IndexType>
+          <<<grid, COMPRESSION_BLOCK_SIZE, 0, stream>>>(
+            d_stream_u32,
+            indices,
+            gather_block_size,
+            dataArray,
+            num_blocks);
+#elif defined(DFTFE_WITH_DEVICE_LANG_HIP)
+        hipLaunchKernelGGL(
+          HIP_KERNEL_NAME(
+            decompress_scatter_add_zfp_32_kernel<Scalar, IndexType>),
+          grid,
+          COMPRESSION_BLOCK_SIZE,
+          0,
+          stream,
+          d_stream_u32,
+          indices,
+          gather_block_size,
+          dataArray,
+          num_blocks);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+        auto &queue = dftfe::utils::queueRegistry.find(stream)->second;
+        queue.parallel_for(sycl::nd_range<1>(grid * COMPRESSION_BLOCK_SIZE,
+                                             COMPRESSION_BLOCK_SIZE),
+                           [=](sycl::nd_item<1> item) {
+                             decompress_scatter_add_zfp_32_kernel<Scalar,
+                                                                  IndexType>(
+                               item,
+                               d_stream_u32,
+                               indices,
+                               gather_block_size,
+                               dataArray,
+                               num_blocks);
+                           });
+#endif
+      }
+    else if (maxbits == 48u)
+      {
+        const unsigned int grid =
+          (num_blocks + COMPRESSION_BLOCK_SIZE - 1) / COMPRESSION_BLOCK_SIZE;
+        const uint16_t *d_stream16 =
+          reinterpret_cast<const uint16_t *>(d_stream);
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA)
+        decompress_scatter_add_zfp_48_kernel<Scalar, IndexType>
+          <<<grid, COMPRESSION_BLOCK_SIZE, 0, stream>>>(
+            d_stream16,
+            indices,
+            gather_block_size,
+            dataArray,
+            num_blocks);
+#elif defined(DFTFE_WITH_DEVICE_LANG_HIP)
+        hipLaunchKernelGGL(
+          HIP_KERNEL_NAME(
+            decompress_scatter_add_zfp_48_kernel<Scalar, IndexType>),
+          grid,
+          COMPRESSION_BLOCK_SIZE,
+          0,
+          stream,
+          d_stream16,
+          indices,
+          gather_block_size,
+          dataArray,
+          num_blocks);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+        auto &queue = dftfe::utils::queueRegistry.find(stream)->second;
+        queue.parallel_for(sycl::nd_range<1>(grid * COMPRESSION_BLOCK_SIZE,
+                                             COMPRESSION_BLOCK_SIZE),
+                           [=](sycl::nd_item<1> item) {
+                             decompress_scatter_add_zfp_48_kernel<Scalar,
+                                                                  IndexType>(
+                               item,
+                               d_stream16,
+                               indices,
+                               gather_block_size,
+                               dataArray,
+                               num_blocks);
+                           });
+#endif
+      }
+    else
+      {
+        unsigned int g   = compression_gcd(maxbits, (unsigned int)WSIZE);
+        unsigned int bpt = (unsigned int)WSIZE / g;
+        unsigned int wpt = maxbits / g;
+        assert(wpt <= (unsigned int)MAX_WORDS_PER_SUPERBLOCK &&
+               "bits_per_value requires too many words per super-block");
+
+        unsigned int num_supers = (num_blocks + bpt - 1) / bpt;
+        unsigned int num_words =
+          (unsigned int)(compressed_size(num_values, bits_per_value) /
+                         sizeof(Word));
+        const unsigned int grid =
+          (num_supers + COMPRESSION_BLOCK_SIZE - 1) / COMPRESSION_BLOCK_SIZE;
+        const Word *d_stream_words = reinterpret_cast<const Word *>(d_stream);
+
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA)
+        decompress_scatter_add_kernel<Scalar, IndexType>
+          <<<grid, COMPRESSION_BLOCK_SIZE, 0, stream>>>(
+            d_stream_words,
+            indices,
+            gather_block_size,
+            dataArray,
+            maxbits,
+            num_blocks,
+            bpt,
+            wpt,
+            num_words);
+#elif defined(DFTFE_WITH_DEVICE_LANG_HIP)
+        hipLaunchKernelGGL(
+          HIP_KERNEL_NAME(
+            decompress_scatter_add_kernel<Scalar, IndexType>),
+          grid,
+          COMPRESSION_BLOCK_SIZE,
+          0,
+          stream,
+          d_stream_words,
+          indices,
+          gather_block_size,
+          dataArray,
+          maxbits,
+          num_blocks,
+          bpt,
+          wpt,
+          num_words);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+        auto &queue = dftfe::utils::queueRegistry.find(stream)->second;
+        queue.parallel_for(sycl::nd_range<1>(grid * COMPRESSION_BLOCK_SIZE,
+                                             COMPRESSION_BLOCK_SIZE),
+                           [=](sycl::nd_item<1> item) {
+                             decompress_scatter_add_kernel<Scalar, IndexType>(
+                               item,
+                               d_stream_words,
+                               indices,
+                               gather_block_size,
+                               dataArray,
+                               maxbits,
+                               num_blocks,
+                               bpt,
+                               wpt,
+                               num_words);
+                           });
+#endif
+      }
   }
 
   /*
@@ -1863,7 +4036,7 @@ namespace compression
 
     if (maxbits == 32u)
       {
-        /* --- fast uint32_t path: 1 thread per block, 1 store (bpv == 8) --- */
+        /* --- fast uint32_t path: 1 thread/block, 1 store (bpv == 8) --- */
         const unsigned int grid =
           (num_blocks + COMPRESSION_BLOCK_SIZE - 1) / COMPRESSION_BLOCK_SIZE;
 #if defined(DFTFE_WITH_DEVICE_LANG_CUDA)
@@ -1900,9 +4073,45 @@ namespace compression
                            });
 #endif
       }
+    else if (maxbits == 48u)
+      {
+        /* --- specialized 48-bit path (bpv == 12): 1 thread/block, 3×uint16 --- */
+        const unsigned int grid =
+          (num_blocks + COMPRESSION_BLOCK_SIZE - 1) / COMPRESSION_BLOCK_SIZE;
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA)
+        compress_bfp_12_kernel<Scalar>
+          <<<grid, COMPRESSION_BLOCK_SIZE, 0, stream>>>(
+            d_data,
+            reinterpret_cast<uint16_t *>(d_stream),
+            dim,
+            num_blocks);
+#elif defined(DFTFE_WITH_DEVICE_LANG_HIP)
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compress_bfp_12_kernel<Scalar>),
+                           grid,
+                           COMPRESSION_BLOCK_SIZE,
+                           0,
+                           stream,
+                           d_data,
+                           reinterpret_cast<uint16_t *>(d_stream),
+                           dim,
+                           num_blocks);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+        auto     &queue      = dftfe::utils::queueRegistry.find(stream)->second;
+        uint16_t *d_stream16 = reinterpret_cast<uint16_t *>(d_stream);
+        queue.parallel_for(sycl::nd_range<1>(grid * COMPRESSION_BLOCK_SIZE,
+                                             COMPRESSION_BLOCK_SIZE),
+                           [=](sycl::nd_item<1> item) {
+                             compress_bfp_12_kernel<Scalar>(item,
+                                                            d_data,
+                                                            d_stream16,
+                                                            dim,
+                                                            num_blocks);
+                           });
+#endif
+      }
     else
       {
-        /* --- super-block path for bpv > 8: tightly packed Word stream --- */
+        /* --- generic super-block path for other bpv --- */
         unsigned int g   = compression_gcd(maxbits, (unsigned int)WSIZE);
         unsigned int bpt = (unsigned int)WSIZE / g;
         unsigned int wpt = maxbits / g;
@@ -2027,10 +4236,43 @@ namespace compression
                            });
 #endif
       }
+    else if (maxbits == 48u)
+      {
+        /* --- specialized 48-bit path (bpv == 12): 1 thread/block, 3×uint16 --- */
+        const unsigned int grid =
+          (num_blocks + COMPRESSION_BLOCK_SIZE - 1) / COMPRESSION_BLOCK_SIZE;
+        const uint16_t *d_stream16 =
+          reinterpret_cast<const uint16_t *>(d_stream);
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA)
+        decompress_bfp_12_kernel<Scalar>
+          <<<grid, COMPRESSION_BLOCK_SIZE, 0, stream>>>(
+            d_stream16, d_data, dim, num_blocks);
+#elif defined(DFTFE_WITH_DEVICE_LANG_HIP)
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(decompress_bfp_12_kernel<Scalar>),
+                           grid,
+                           COMPRESSION_BLOCK_SIZE,
+                           0,
+                           stream,
+                           d_stream16,
+                           d_data,
+                           dim,
+                           num_blocks);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+        auto &queue = dftfe::utils::queueRegistry.find(stream)->second;
+        queue.parallel_for(sycl::nd_range<1>(grid * COMPRESSION_BLOCK_SIZE,
+                                             COMPRESSION_BLOCK_SIZE),
+                           [=](sycl::nd_item<1> item) {
+                             decompress_bfp_12_kernel<Scalar>(item,
+                                                              d_stream16,
+                                                              d_data,
+                                                              dim,
+                                                              num_blocks);
+                           });
+#endif
+      }
     else
       {
-        /* --- super-block path for bpv > 8 (mirrors compress_bfp_sb_kernel) ---
-         */
+        /* --- generic super-block path for other bpv --- */
         unsigned int g   = compression_gcd(maxbits, (unsigned int)WSIZE);
         unsigned int bpt = (unsigned int)WSIZE / g;
         unsigned int wpt = maxbits / g;
@@ -2082,6 +4324,359 @@ namespace compression
                                                               bpt,
                                                               wpt,
                                                               num_words);
+                           });
+#endif
+      }
+  }
+
+  /*
+   * Fused BFP gather+compress: reads scattered data via indices and compresses
+   * directly. Supports both uint32_t fast path (bpv == 8) and super-block path.
+   * Assumes gather_block_size is a multiple of 4.
+   */
+  template <typename Scalar, typename IndexType>
+  inline void
+  compress_gather_bfp(
+    const Scalar                *dataArray,
+    const IndexType             *indices,
+    size_t                       num_indices,
+    unsigned int                 gather_block_size,
+    void                        *d_stream,
+    int                          bits_per_value,
+    dftfe::utils::deviceStream_t stream = dftfe::utils::defaultStream)
+  {
+    const size_t num_values = num_indices * gather_block_size;
+    if (num_values == 0)
+      return;
+    assert(num_values <= (size_t)UINT_MAX && "num_values exceeds 32-bit limit");
+    assert(bits_per_value >= 4 && "BFP requires bits_per_value >= 4");
+
+    const unsigned int dim        = (unsigned int)num_values;
+    const unsigned int num_blocks = (dim + 3u) / 4u;
+    const unsigned int maxbits    = (unsigned int)bits_per_value * 4u;
+
+    if (maxbits == 32u)
+      {
+        const unsigned int grid =
+          (num_blocks + COMPRESSION_BLOCK_SIZE - 1) / COMPRESSION_BLOCK_SIZE;
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA)
+        compress_gather_bfp_kernel<Scalar, IndexType>
+          <<<grid, COMPRESSION_BLOCK_SIZE, 0, stream>>>(
+            dataArray,
+            indices,
+            gather_block_size,
+            reinterpret_cast<unsigned int *>(d_stream),
+            maxbits,
+            num_blocks);
+#elif defined(DFTFE_WITH_DEVICE_LANG_HIP)
+        hipLaunchKernelGGL(
+          HIP_KERNEL_NAME(compress_gather_bfp_kernel<Scalar, IndexType>),
+          grid,
+          COMPRESSION_BLOCK_SIZE,
+          0,
+          stream,
+          dataArray,
+          indices,
+          gather_block_size,
+          reinterpret_cast<unsigned int *>(d_stream),
+          maxbits,
+          num_blocks);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+        auto         &queue = dftfe::utils::queueRegistry.find(stream)->second;
+        unsigned int *d_stream_u32 = reinterpret_cast<unsigned int *>(d_stream);
+        queue.parallel_for(sycl::nd_range<1>(grid * COMPRESSION_BLOCK_SIZE,
+                                             COMPRESSION_BLOCK_SIZE),
+                           [=](sycl::nd_item<1> item) {
+                             compress_gather_bfp_kernel<Scalar, IndexType>(
+                               item,
+                               dataArray,
+                               indices,
+                               gather_block_size,
+                               d_stream_u32,
+                               maxbits,
+                               num_blocks);
+                           });
+#endif
+      }
+    else if (maxbits == 48u)
+      {
+        /* --- specialized 48-bit path (bpv == 12): 1 thread/block, 3×uint16 --- */
+        const unsigned int grid =
+          (num_blocks + COMPRESSION_BLOCK_SIZE - 1) / COMPRESSION_BLOCK_SIZE;
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA)
+        compress_gather_bfp_12_kernel<Scalar, IndexType>
+          <<<grid, COMPRESSION_BLOCK_SIZE, 0, stream>>>(
+            dataArray,
+            indices,
+            gather_block_size,
+            reinterpret_cast<uint16_t *>(d_stream),
+            num_blocks);
+#elif defined(DFTFE_WITH_DEVICE_LANG_HIP)
+        hipLaunchKernelGGL(
+          HIP_KERNEL_NAME(compress_gather_bfp_12_kernel<Scalar, IndexType>),
+          grid,
+          COMPRESSION_BLOCK_SIZE,
+          0,
+          stream,
+          dataArray,
+          indices,
+          gather_block_size,
+          reinterpret_cast<uint16_t *>(d_stream),
+          num_blocks);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+        auto     &queue      = dftfe::utils::queueRegistry.find(stream)->second;
+        uint16_t *d_stream16 = reinterpret_cast<uint16_t *>(d_stream);
+        queue.parallel_for(sycl::nd_range<1>(grid * COMPRESSION_BLOCK_SIZE,
+                                             COMPRESSION_BLOCK_SIZE),
+                           [=](sycl::nd_item<1> item) {
+                             compress_gather_bfp_12_kernel<Scalar, IndexType>(
+                               item,
+                               dataArray,
+                               indices,
+                               gather_block_size,
+                               d_stream16,
+                               num_blocks);
+                           });
+#endif
+      }
+    else
+      {
+        unsigned int g   = compression_gcd(maxbits, (unsigned int)WSIZE);
+        unsigned int bpt = (unsigned int)WSIZE / g;
+        unsigned int wpt = maxbits / g;
+        assert(wpt <= (unsigned int)MAX_WORDS_PER_SUPERBLOCK);
+
+        unsigned int num_supers = (num_blocks + bpt - 1) / bpt;
+        unsigned int num_words =
+          (unsigned int)(compressed_size(num_values, bits_per_value) /
+                         sizeof(Word));
+        const unsigned int grid =
+          (num_supers + COMPRESSION_BLOCK_SIZE - 1) / COMPRESSION_BLOCK_SIZE;
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA)
+        compress_gather_bfp_sb_kernel<Scalar, IndexType>
+          <<<grid, COMPRESSION_BLOCK_SIZE, 0, stream>>>(
+            dataArray,
+            indices,
+            gather_block_size,
+            reinterpret_cast<Word *>(d_stream),
+            maxbits,
+            num_blocks,
+            bpt,
+            wpt,
+            num_words);
+#elif defined(DFTFE_WITH_DEVICE_LANG_HIP)
+        hipLaunchKernelGGL(
+          HIP_KERNEL_NAME(compress_gather_bfp_sb_kernel<Scalar, IndexType>),
+          grid,
+          COMPRESSION_BLOCK_SIZE,
+          0,
+          stream,
+          dataArray,
+          indices,
+          gather_block_size,
+          reinterpret_cast<Word *>(d_stream),
+          maxbits,
+          num_blocks,
+          bpt,
+          wpt,
+          num_words);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+        auto &queue          = dftfe::utils::queueRegistry.find(stream)->second;
+        Word *d_stream_words = reinterpret_cast<Word *>(d_stream);
+        queue.parallel_for(sycl::nd_range<1>(grid * COMPRESSION_BLOCK_SIZE,
+                                             COMPRESSION_BLOCK_SIZE),
+                           [=](sycl::nd_item<1> item) {
+                             compress_gather_bfp_sb_kernel<Scalar, IndexType>(
+                               item,
+                               dataArray,
+                               indices,
+                               gather_block_size,
+                               d_stream_words,
+                               maxbits,
+                               num_blocks,
+                               bpt,
+                               wpt,
+                               num_words);
+                           });
+#endif
+      }
+  }
+
+  /*
+   * Fused BFP decompress+scatter_add: decompresses and atomicAdds directly
+   * to scattered positions in dataArray.
+   * Assumes gather_block_size is a multiple of 4.
+   */
+  template <typename Scalar, typename IndexType>
+  inline void
+  decompress_scatter_add_bfp(
+    const void                  *d_stream,
+    const IndexType             *indices,
+    size_t                       num_indices,
+    unsigned int                 gather_block_size,
+    Scalar                      *dataArray,
+    int                          bits_per_value,
+    dftfe::utils::deviceStream_t stream = dftfe::utils::defaultStream)
+  {
+    const size_t num_values = num_indices * gather_block_size;
+    if (num_values == 0)
+      return;
+    assert(num_values <= (size_t)UINT_MAX && "num_values exceeds 32-bit limit");
+    assert(bits_per_value >= 4 && "BFP requires bits_per_value >= 4");
+
+    const unsigned int dim        = (unsigned int)num_values;
+    const unsigned int num_blocks = (dim + 3u) / 4u;
+    const unsigned int maxbits    = (unsigned int)bits_per_value * 4u;
+
+    if (maxbits == 32u)
+      {
+        const unsigned int grid =
+          (num_blocks + COMPRESSION_BLOCK_SIZE - 1) / COMPRESSION_BLOCK_SIZE;
+        const unsigned int *d_stream_u32 =
+          reinterpret_cast<const unsigned int *>(d_stream);
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA)
+        decompress_scatter_add_bfp_kernel<Scalar, IndexType>
+          <<<grid, COMPRESSION_BLOCK_SIZE, 0, stream>>>(
+            d_stream_u32,
+            indices,
+            gather_block_size,
+            dataArray,
+            maxbits,
+            num_blocks);
+#elif defined(DFTFE_WITH_DEVICE_LANG_HIP)
+        hipLaunchKernelGGL(
+          HIP_KERNEL_NAME(decompress_scatter_add_bfp_kernel<Scalar, IndexType>),
+          grid,
+          COMPRESSION_BLOCK_SIZE,
+          0,
+          stream,
+          d_stream_u32,
+          indices,
+          gather_block_size,
+          dataArray,
+          maxbits,
+          num_blocks);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+        auto &queue = dftfe::utils::queueRegistry.find(stream)->second;
+        queue.parallel_for(sycl::nd_range<1>(grid * COMPRESSION_BLOCK_SIZE,
+                                             COMPRESSION_BLOCK_SIZE),
+                           [=](sycl::nd_item<1> item) {
+                             decompress_scatter_add_bfp_kernel<Scalar,
+                                                               IndexType>(
+                               item,
+                               d_stream_u32,
+                               indices,
+                               gather_block_size,
+                               dataArray,
+                               maxbits,
+                               num_blocks);
+                           });
+#endif
+      }
+    else if (maxbits == 48u)
+      {
+        /* --- specialized 48-bit path (bpv == 12): 1 thread/block, 3×uint16 --- */
+        const unsigned int grid =
+          (num_blocks + COMPRESSION_BLOCK_SIZE - 1) / COMPRESSION_BLOCK_SIZE;
+        const uint16_t *d_stream16 =
+          reinterpret_cast<const uint16_t *>(d_stream);
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA)
+        decompress_scatter_add_bfp_12_kernel<Scalar, IndexType>
+          <<<grid, COMPRESSION_BLOCK_SIZE, 0, stream>>>(
+            d_stream16,
+            indices,
+            gather_block_size,
+            dataArray,
+            num_blocks);
+#elif defined(DFTFE_WITH_DEVICE_LANG_HIP)
+        hipLaunchKernelGGL(
+          HIP_KERNEL_NAME(
+            decompress_scatter_add_bfp_12_kernel<Scalar, IndexType>),
+          grid,
+          COMPRESSION_BLOCK_SIZE,
+          0,
+          stream,
+          d_stream16,
+          indices,
+          gather_block_size,
+          dataArray,
+          num_blocks);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+        auto &queue = dftfe::utils::queueRegistry.find(stream)->second;
+        queue.parallel_for(sycl::nd_range<1>(grid * COMPRESSION_BLOCK_SIZE,
+                                             COMPRESSION_BLOCK_SIZE),
+                           [=](sycl::nd_item<1> item) {
+                             decompress_scatter_add_bfp_12_kernel<Scalar,
+                                                                  IndexType>(
+                               item,
+                               d_stream16,
+                               indices,
+                               gather_block_size,
+                               dataArray,
+                               num_blocks);
+                           });
+#endif
+      }
+    else
+      {
+        unsigned int g   = compression_gcd(maxbits, (unsigned int)WSIZE);
+        unsigned int bpt = (unsigned int)WSIZE / g;
+        unsigned int wpt = maxbits / g;
+        assert(wpt <= (unsigned int)MAX_WORDS_PER_SUPERBLOCK);
+
+        unsigned int num_supers = (num_blocks + bpt - 1) / bpt;
+        unsigned int num_words =
+          (unsigned int)(compressed_size(num_values, bits_per_value) /
+                         sizeof(Word));
+        const unsigned int grid =
+          (num_supers + COMPRESSION_BLOCK_SIZE - 1) / COMPRESSION_BLOCK_SIZE;
+        const Word *d_stream_words = reinterpret_cast<const Word *>(d_stream);
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA)
+        decompress_scatter_add_bfp_sb_kernel<Scalar, IndexType>
+          <<<grid, COMPRESSION_BLOCK_SIZE, 0, stream>>>(
+            d_stream_words,
+            indices,
+            gather_block_size,
+            dataArray,
+            maxbits,
+            num_blocks,
+            bpt,
+            wpt,
+            num_words);
+#elif defined(DFTFE_WITH_DEVICE_LANG_HIP)
+        hipLaunchKernelGGL(
+          HIP_KERNEL_NAME(
+            decompress_scatter_add_bfp_sb_kernel<Scalar, IndexType>),
+          grid,
+          COMPRESSION_BLOCK_SIZE,
+          0,
+          stream,
+          d_stream_words,
+          indices,
+          gather_block_size,
+          dataArray,
+          maxbits,
+          num_blocks,
+          bpt,
+          wpt,
+          num_words);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+        auto &queue = dftfe::utils::queueRegistry.find(stream)->second;
+        queue.parallel_for(sycl::nd_range<1>(grid * COMPRESSION_BLOCK_SIZE,
+                                             COMPRESSION_BLOCK_SIZE),
+                           [=](sycl::nd_item<1> item) {
+                             decompress_scatter_add_bfp_sb_kernel<Scalar,
+                                                                  IndexType>(
+                               item,
+                               d_stream_words,
+                               indices,
+                               gather_block_size,
+                               dataArray,
+                               maxbits,
+                               num_blocks,
+                               bpt,
+                               wpt,
+                               num_words);
                            });
 #endif
       }
