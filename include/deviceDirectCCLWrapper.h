@@ -31,7 +31,6 @@
 #    elif defined(DFTFE_WITH_SYCL_ONECCL)
 #      include <oneapi/ccl.hpp>
 #      include <DeviceTypeConfig.h>
-#      include <optional>
 #    endif
 
 namespace dftfe
@@ -144,7 +143,7 @@ namespace dftfe
 #    if defined(DFTFE_WITH_SYCL_ONECCL)
       inline static std::shared_ptr<ccl::kvs>          onecclIdPtr;
       inline static std::shared_ptr<ccl::communicator> onecclCommPtr;
-      inline static std::optional<ccl::stream> d_deviceCCLCommStream;
+      inline static std::shared_ptr<ccl::stream> d_deviceCCLCommStream;
 #    endif
 
       inline static bool                         dcclCommInit;

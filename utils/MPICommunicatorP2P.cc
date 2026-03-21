@@ -466,8 +466,8 @@ namespace dftfe
                           ccl::datatype::float32,
                           d_mpiPatternP2P->getTargetProcIds().data()[i],
                           *dftfe::utils::DeviceCCLWrapper::onecclCommPtr,
-                          dftfe::utils::DeviceCCLWrapper::
-                            *d_deviceCCLCommStream));
+                          *dftfe::utils::DeviceCCLWrapper::
+                            d_deviceCCLCommStream));
 
                       sendArrayStartPtr +=
                         d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()
@@ -492,8 +492,8 @@ namespace dftfe
                           ccl::datatype::float32,
                           d_mpiPatternP2P->getGhostProcIds().data()[i],
                           *dftfe::utils::DeviceCCLWrapper::onecclCommPtr,
-                          dftfe::utils::DeviceCCLWrapper::
-                            *d_deviceCCLCommStream));
+                          *dftfe::utils::DeviceCCLWrapper::
+                            d_deviceCCLCommStream));
 
                       recvArrayStartPtr +=
                         (d_mpiPatternP2P->getGhostLocalIndicesRanges()
@@ -717,8 +717,8 @@ namespace dftfe
                           ccl::datatype::float32,
                           d_mpiPatternP2P->getTargetProcIds().data()[i],
                           *dftfe::utils::DeviceCCLWrapper::onecclCommPtr,
-                          dftfe::utils::DeviceCCLWrapper::
-                            *d_deviceCCLCommStream));
+                          *dftfe::utils::DeviceCCLWrapper::
+                            d_deviceCCLCommStream));
 
                       sendArrayStartPtr +=
                         d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()
@@ -746,8 +746,8 @@ namespace dftfe
                           ccl::datatype::float32,
                           d_mpiPatternP2P->getGhostProcIds().data()[i],
                           *dftfe::utils::DeviceCCLWrapper::onecclCommPtr,
-                          dftfe::utils::DeviceCCLWrapper::
-                            *d_deviceCCLCommStream));
+                          *dftfe::utils::DeviceCCLWrapper::
+                            d_deviceCCLCommStream));
 
                       recvArrayStartPtr +=
                         (d_mpiPatternP2P->getGhostLocalIndicesRanges()
@@ -967,8 +967,8 @@ namespace dftfe
                           ccl::datatype::int8,
                           d_mpiPatternP2P->getTargetProcIds().data()[i],
                           *dftfe::utils::DeviceCCLWrapper::onecclCommPtr,
-                          dftfe::utils::DeviceCCLWrapper::
-                            *d_deviceCCLCommStream));
+                          *dftfe::utils::DeviceCCLWrapper::
+                            d_deviceCCLCommStream));
 
                       sendArrayStartPtr +=
                         d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()
@@ -995,8 +995,8 @@ namespace dftfe
                                  ccl::datatype::int8,
                                  d_mpiPatternP2P->getGhostProcIds().data()[i],
                                  *dftfe::utils::DeviceCCLWrapper::onecclCommPtr,
-                                 dftfe::utils::DeviceCCLWrapper::
-                                   *d_deviceCCLCommStream));
+                                 *dftfe::utils::DeviceCCLWrapper::
+                                   d_deviceCCLCommStream));
 
                       recvArrayStartPtr +=
                         (d_mpiPatternP2P->getGhostLocalIndicesRanges()
@@ -1322,8 +1322,8 @@ namespace dftfe
                           ccl::datatype::float32,
                           d_mpiPatternP2P->getGhostProcIds().data()[i],
                           *dftfe::utils::DeviceCCLWrapper::onecclCommPtr,
-                          dftfe::utils::DeviceCCLWrapper::
-                            *d_deviceCCLCommStream));
+                          *dftfe::utils::DeviceCCLWrapper::
+                            d_deviceCCLCommStream));
 
                       sendArrayStartPtr +=
                         (d_mpiPatternP2P->getGhostLocalIndicesRanges()
@@ -1346,8 +1346,8 @@ namespace dftfe
                           ccl::datatype::float32,
                           d_mpiPatternP2P->getTargetProcIds().data()[i],
                           *dftfe::utils::DeviceCCLWrapper::onecclCommPtr,
-                          dftfe::utils::DeviceCCLWrapper::
-                            *d_deviceCCLCommStream));
+                          *dftfe::utils::DeviceCCLWrapper::
+                            d_deviceCCLCommStream));
 
                       recvArrayStartPtr +=
                         d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()
@@ -1570,8 +1570,8 @@ namespace dftfe
                           ccl::datatype::float32,
                           d_mpiPatternP2P->getGhostProcIds().data()[i],
                           *dftfe::utils::DeviceCCLWrapper::onecclCommPtr,
-                          dftfe::utils::DeviceCCLWrapper::
-                            *d_deviceCCLCommStream));
+                          *dftfe::utils::DeviceCCLWrapper::
+                            d_deviceCCLCommStream));
 
                       sendArrayStartPtr +=
                         (d_mpiPatternP2P->getGhostLocalIndicesRanges()
@@ -1597,8 +1597,8 @@ namespace dftfe
                           ccl::datatype::float32,
                           d_mpiPatternP2P->getTargetProcIds().data()[i],
                           *dftfe::utils::DeviceCCLWrapper::onecclCommPtr,
-                          dftfe::utils::DeviceCCLWrapper::
-                            *d_deviceCCLCommStream));
+                          *dftfe::utils::DeviceCCLWrapper::
+                            d_deviceCCLCommStream));
 
                       recvArrayStartPtr +=
                         d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()
@@ -1820,8 +1820,8 @@ namespace dftfe
                           ccl::datatype::int8,
                           d_mpiPatternP2P->getGhostProcIds().data()[i],
                           *dftfe::utils::DeviceCCLWrapper::onecclCommPtr,
-                          dftfe::utils::DeviceCCLWrapper::
-                            *d_deviceCCLCommStream));
+                          *dftfe::utils::DeviceCCLWrapper::
+                            d_deviceCCLCommStream));
 
                       sendArrayStartPtr +=
                         (d_mpiPatternP2P->getGhostLocalIndicesRanges()
@@ -1846,8 +1846,8 @@ namespace dftfe
                           ccl::datatype::int8,
                           d_mpiPatternP2P->getTargetProcIds().data()[i],
                           *dftfe::utils::DeviceCCLWrapper::onecclCommPtr,
-                          dftfe::utils::DeviceCCLWrapper::
-                            *d_deviceCCLCommStream));
+                          *dftfe::utils::DeviceCCLWrapper::
+                            d_deviceCCLCommStream));
 
                       recvArrayStartPtr +=
                         d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()
@@ -2212,8 +2212,8 @@ namespace dftfe
                           ccl::datatype::float32,
                           d_mpiPatternP2P->getGhostProcIds().data()[i],
                           *dftfe::utils::DeviceCCLWrapper::onecclCommPtr,
-                          dftfe::utils::DeviceCCLWrapper::
-                            *d_deviceCCLCommStream));
+                          *dftfe::utils::DeviceCCLWrapper::
+                            d_deviceCCLCommStream));
 
                       sendArrayStartPtr +=
                         (d_mpiPatternP2P->getGhostLocalIndicesRanges()
@@ -2236,8 +2236,8 @@ namespace dftfe
                           ccl::datatype::float32,
                           d_mpiPatternP2P->getTargetProcIds().data()[i],
                           *dftfe::utils::DeviceCCLWrapper::onecclCommPtr,
-                          dftfe::utils::DeviceCCLWrapper::
-                            *d_deviceCCLCommStream));
+                          *dftfe::utils::DeviceCCLWrapper::
+                            d_deviceCCLCommStream));
 
                       recvArrayStartPtr +=
                         d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()
@@ -2461,8 +2461,8 @@ namespace dftfe
                           ccl::datatype::float32,
                           d_mpiPatternP2P->getGhostProcIds().data()[i],
                           *dftfe::utils::DeviceCCLWrapper::onecclCommPtr,
-                          dftfe::utils::DeviceCCLWrapper::
-                            *d_deviceCCLCommStream));
+                          *dftfe::utils::DeviceCCLWrapper::
+                            d_deviceCCLCommStream));
 
                       sendArrayStartPtr +=
                         (d_mpiPatternP2P->getGhostLocalIndicesRanges()
@@ -2488,8 +2488,8 @@ namespace dftfe
                           ccl::datatype::float32,
                           d_mpiPatternP2P->getTargetProcIds().data()[i],
                           *dftfe::utils::DeviceCCLWrapper::onecclCommPtr,
-                          dftfe::utils::DeviceCCLWrapper::
-                            *d_deviceCCLCommStream));
+                          *dftfe::utils::DeviceCCLWrapper::
+                            d_deviceCCLCommStream));
 
                       recvArrayStartPtr +=
                         d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()

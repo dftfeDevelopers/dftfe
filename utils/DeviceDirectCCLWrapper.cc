@@ -89,8 +89,9 @@ namespace dftfe
             }
           onecclCommPtr = std::make_shared<ccl::communicator>(
             ccl::create_communicator(totalRanks, myRank, onecclIdPtr));
-          d_deviceCCLCommStream.emplace(ccl::create_stream(
-            dftfe::utils::queueRegistry.at(d_deviceCommStream)));
+          d_deviceCCLCommStream = std::make_shared<ccl::stream>(
+            ccl::create_stream(
+              dftfe::utils::queueRegistry.at(d_deviceCommStream)));
           dcclCommInit = true;
         }
 #  endif
