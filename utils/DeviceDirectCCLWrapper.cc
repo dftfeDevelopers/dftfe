@@ -43,6 +43,12 @@ namespace dftfe
       MPICHECK(MPI_Comm_dup(mpiComm, &d_mpiComm));
       MPICHECK(MPI_Comm_size(mpiComm, &totalRanks));
       MPICHECK(MPI_Comm_rank(mpiComm, &myRank));
+      if (!commStreamCreated)
+        {
+          dftfe::utils::deviceStreamCreate(d_deviceCommStream, true);
+          commStreamCreated = true;
+        }
+
 #  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
       if (!dcclCommInit && useDCCL)
         {
@@ -83,17 +89,11 @@ namespace dftfe
             }
           onecclCommPtr = std::make_shared<ccl::communicator>(
             ccl::create_communicator(totalRanks, myRank, onecclIdPtr));
-          d_deviceCCLCommStream = ccl::create_stream(
-            dftfe::utils::queueRegistry.at(d_deviceCommStream));
+          d_deviceCCLCommStream.emplace(ccl::create_stream(
+            dftfe::utils::queueRegistry.at(d_deviceCommStream)));
           dcclCommInit = true;
         }
 #  endif
-
-      if (!commStreamCreated)
-        {
-          dftfe::utils::deviceStreamCreate(d_deviceCommStream, true);
-          commStreamCreated = true;
-        }
     }
 
     DeviceCCLWrapper::~DeviceCCLWrapper()
@@ -112,6 +112,7 @@ namespace dftfe
 #  if defined(DFTFE_WITH_SYCL_ONECCL)
       if (dcclCommInit)
         {
+          d_deviceCCLCommStream.reset();
           onecclCommPtr.reset();
           onecclIdPtr.reset();
         }
