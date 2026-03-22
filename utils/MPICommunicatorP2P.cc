@@ -451,6 +451,7 @@ namespace dftfe
             if constexpr (memorySpace == MemorySpace::DEVICE)
               if (d_commProtocol == communicationProtocol::nccl)
                 {
+                  d_onecclEventsUpdateGhostValues.clear();
                   ONECCLCHECK(ccl::group_start());
                   for (dftfe::uInt i = 0;
                        i < (d_mpiPatternP2P->getTargetProcIds()).size();
@@ -458,7 +459,7 @@ namespace dftfe
                     {
                       if (d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()
                             .data()[i] > 0)
-                        ONECCLCHECK(ccl::send(
+                        d_onecclEventsUpdateGhostValues.push_back(ccl::send(
                           reinterpret_cast<float *>(sendArrayStartPtr),
                           d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()
                               .data()[i] *
@@ -482,7 +483,7 @@ namespace dftfe
                              .data()[2 * i + 1] -
                            d_mpiPatternP2P->getGhostLocalIndicesRanges()
                              .data()[2 * i]) > 0)
-                        ONECCLCHECK(ccl::recv(
+                        d_onecclEventsUpdateGhostValues.push_back(ccl::recv(
                           reinterpret_cast<float *>(recvArrayStartPtr),
                           (d_mpiPatternP2P->getGhostLocalIndicesRanges()
                              .data()[2 * i + 1] -
@@ -699,6 +700,7 @@ namespace dftfe
             if constexpr (memorySpace == MemorySpace::DEVICE)
               if (d_commProtocol == communicationProtocol::nccl)
                 {
+                  d_onecclEventsUpdateGhostValues.clear();
                   ONECCLCHECK(ccl::group_start());
                   for (dftfe::uInt i = 0;
                        i < (d_mpiPatternP2P->getTargetProcIds()).size();
@@ -706,7 +708,7 @@ namespace dftfe
                     {
                       if (d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()
                             .data()[i] > 0)
-                        ONECCLCHECK(ccl::send(
+                        d_onecclEventsUpdateGhostValues.push_back(ccl::send(
                           reinterpret_cast<float *>(sendArrayStartPtr),
                           d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()
                               .data()[i] *
@@ -733,7 +735,7 @@ namespace dftfe
                              .data()[2 * i + 1] -
                            d_mpiPatternP2P->getGhostLocalIndicesRanges()
                              .data()[2 * i]) > 0)
-                        ONECCLCHECK(ccl::recv(
+                        d_onecclEventsUpdateGhostValues.push_back(ccl::recv(
                           reinterpret_cast<float *>(recvArrayStartPtr),
                           (d_mpiPatternP2P->getGhostLocalIndicesRanges()
                              .data()[2 * i + 1] -
@@ -950,6 +952,7 @@ namespace dftfe
             if constexpr (memorySpace == MemorySpace::DEVICE)
               if (d_commProtocol == communicationProtocol::nccl)
                 {
+                  d_onecclEventsUpdateGhostValues.clear();
                   ONECCLCHECK(ccl::group_start());
                   for (dftfe::uInt i = 0;
                        i < (d_mpiPatternP2P->getTargetProcIds()).size();
@@ -957,7 +960,7 @@ namespace dftfe
                     {
                       if (d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()
                             .data()[i] > 0)
-                        ONECCLCHECK(ccl::send(
+                        d_onecclEventsUpdateGhostValues.push_back(ccl::send(
                           reinterpret_cast<char *>(sendArrayStartPtr),
                           d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()
                               .data()[i] *
@@ -983,7 +986,7 @@ namespace dftfe
                              .data()[2 * i + 1] -
                            d_mpiPatternP2P->getGhostLocalIndicesRanges()
                              .data()[2 * i]) > 0)
-                        ONECCLCHECK(ccl::recv(reinterpret_cast<char *>(recvArrayStartPtr),
+                        d_onecclEventsUpdateGhostValues.push_back(ccl::recv(reinterpret_cast<char *>(recvArrayStartPtr),
                                  (d_mpiPatternP2P->getGhostLocalIndicesRanges()
                                     .data()[2 * i + 1] -
                                   d_mpiPatternP2P->getGhostLocalIndicesRanges()
@@ -1051,12 +1054,19 @@ namespace dftfe
         MemoryStorage<ValueType, memorySpace> &dataArray)
       {
         // wait for all send and recv requests to be completed
-#if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL) || \
-  defined(DFTFE_WITH_SYCL_ONECCL)
+#if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
         if constexpr (memorySpace == MemorySpace::DEVICE)
           if (d_commProtocol == communicationProtocol::nccl)
             dftfe::utils::deviceStreamSynchronize(
               dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
+#elif defined(DFTFE_WITH_SYCL_ONECCL)
+        if constexpr (memorySpace == MemorySpace::DEVICE)
+          if (d_commProtocol == communicationProtocol::nccl)
+            {
+              for (auto &ev : d_onecclEventsUpdateGhostValues)
+                ev.wait();
+              d_onecclEventsUpdateGhostValues.clear();
+            }
 #endif
         if (d_requestsUpdateGhostValues.size() > 0)
           {
@@ -1303,6 +1313,7 @@ namespace dftfe
             if constexpr (memorySpace == MemorySpace::DEVICE)
               if (d_commProtocol == communicationProtocol::nccl)
                 {
+                  d_onecclEventsAccumulateAdd.clear();
                   ONECCLCHECK(ccl::group_start());
                   for (dftfe::uInt i = 0;
                        i < (d_mpiPatternP2P->getGhostProcIds()).size();
@@ -1312,7 +1323,7 @@ namespace dftfe
                              .data()[2 * i + 1] -
                            d_mpiPatternP2P->getGhostLocalIndicesRanges()
                              .data()[2 * i]) > 0)
-                        ONECCLCHECK(ccl::send(
+                        d_onecclEventsAccumulateAdd.push_back(ccl::send(
                           reinterpret_cast<float *>(sendArrayStartPtr),
                           (d_mpiPatternP2P->getGhostLocalIndicesRanges()
                              .data()[2 * i + 1] -
@@ -1338,7 +1349,7 @@ namespace dftfe
                     {
                       if (d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()
                             .data()[i] > 0)
-                        ONECCLCHECK(ccl::recv(
+                        d_onecclEventsAccumulateAdd.push_back(ccl::recv(
                           reinterpret_cast<float *>(recvArrayStartPtr),
                           d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()
                               .data()[i] *
@@ -1549,6 +1560,7 @@ namespace dftfe
               if (d_commProtocol == communicationProtocol::nccl)
                 {
                   ONECCLCHECK(ccl::group_start());
+                  d_onecclEventsAccumulateAdd.clear();
                   for (dftfe::uInt i = 0;
                        i < (d_mpiPatternP2P->getGhostProcIds()).size();
                        ++i)
@@ -1557,7 +1569,7 @@ namespace dftfe
                              .data()[2 * i + 1] -
                            d_mpiPatternP2P->getGhostLocalIndicesRanges()
                              .data()[2 * i]) > 0)
-                        ONECCLCHECK(ccl::send(
+                        d_onecclEventsAccumulateAdd.push_back(ccl::send(
                           reinterpret_cast<float *>(sendArrayStartPtr),
                           (d_mpiPatternP2P->getGhostLocalIndicesRanges()
                              .data()[2 * i + 1] -
@@ -1586,7 +1598,7 @@ namespace dftfe
                     {
                       if (d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()
                             .data()[i] > 0)
-                        ONECCLCHECK(ccl::recv(
+                        d_onecclEventsAccumulateAdd.push_back(ccl::recv(
                           reinterpret_cast<float *>(recvArrayStartPtr),
                           d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()
                               .data()[i] *
@@ -1800,6 +1812,7 @@ namespace dftfe
               if (d_commProtocol == communicationProtocol::nccl)
                 {
                   ONECCLCHECK(ccl::group_start());
+                  d_onecclEventsAccumulateAdd.clear();
                   for (dftfe::uInt i = 0;
                        i < (d_mpiPatternP2P->getGhostProcIds()).size();
                        ++i)
@@ -1808,7 +1821,7 @@ namespace dftfe
                              .data()[2 * i + 1] -
                            d_mpiPatternP2P->getGhostLocalIndicesRanges()
                              .data()[2 * i]) > 0)
-                        ONECCLCHECK(ccl::send(
+                        d_onecclEventsAccumulateAdd.push_back(ccl::send(
                           reinterpret_cast<char *>(sendArrayStartPtr),
                           (d_mpiPatternP2P->getGhostLocalIndicesRanges()
                              .data()[2 * i + 1] -
@@ -1836,7 +1849,7 @@ namespace dftfe
                     {
                       if (d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()
                             .data()[i] > 0)
-                        ONECCLCHECK(ccl::recv(
+                        d_onecclEventsAccumulateAdd.push_back(ccl::recv(
                           reinterpret_cast<char *>(recvArrayStartPtr),
                           d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()
                               .data()[i] *
@@ -1903,12 +1916,19 @@ namespace dftfe
         MemoryStorage<ValueType, memorySpace> &dataArray)
       {
         // wait for all send and recv requests to be completed
-#if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL) || \
-  defined(DFTFE_WITH_SYCL_ONECCL)
+#if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
         if constexpr (memorySpace == MemorySpace::DEVICE)
           if (d_commProtocol == communicationProtocol::nccl)
             dftfe::utils::deviceStreamSynchronize(
               dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
+#elif defined(DFTFE_WITH_SYCL_ONECCL)
+        if constexpr (memorySpace == MemorySpace::DEVICE)
+          if (d_commProtocol == communicationProtocol::nccl)
+            {
+              for (auto &ev : d_onecclEventsAccumulateAdd)
+                ev.wait();
+              d_onecclEventsAccumulateAdd.clear();
+            }
 #endif
         if (d_requestsAccumulateAddLocallyOwned.size() > 0)
           {
@@ -2193,6 +2213,7 @@ namespace dftfe
             if constexpr (memorySpace == MemorySpace::DEVICE)
               if (d_commProtocol == communicationProtocol::nccl)
                 {
+                  d_onecclEventsAccumulateInsert.clear();
                   ONECCLCHECK(ccl::group_start());
                   for (dftfe::uInt i = 0;
                        i < (d_mpiPatternP2P->getGhostProcIds()).size();
@@ -2202,7 +2223,7 @@ namespace dftfe
                              .data()[2 * i + 1] -
                            d_mpiPatternP2P->getGhostLocalIndicesRanges()
                              .data()[2 * i]) > 0)
-                        ONECCLCHECK(ccl::send(
+                        d_onecclEventsAccumulateInsert.push_back(ccl::send(
                           reinterpret_cast<float *>(sendArrayStartPtr),
                           (d_mpiPatternP2P->getGhostLocalIndicesRanges()
                              .data()[2 * i + 1] -
@@ -2228,7 +2249,7 @@ namespace dftfe
                     {
                       if (d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()
                             .data()[i] > 0)
-                        ONECCLCHECK(ccl::recv(
+                        d_onecclEventsAccumulateInsert.push_back(ccl::recv(
                           reinterpret_cast<float *>(recvArrayStartPtr),
                           d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()
                               .data()[i] *
@@ -2440,6 +2461,7 @@ namespace dftfe
               if (d_commProtocol == communicationProtocol::nccl)
                 {
                   ONECCLCHECK(ccl::group_start());
+                  d_onecclEventsAccumulateInsert.clear();
                   for (dftfe::uInt i = 0;
                        i < (d_mpiPatternP2P->getGhostProcIds()).size();
                        ++i)
@@ -2448,7 +2470,7 @@ namespace dftfe
                              .data()[2 * i + 1] -
                            d_mpiPatternP2P->getGhostLocalIndicesRanges()
                              .data()[2 * i]) > 0)
-                        ONECCLCHECK(ccl::send(
+                        d_onecclEventsAccumulateInsert.push_back(ccl::send(
                           reinterpret_cast<float *>(sendArrayStartPtr),
                           (d_mpiPatternP2P->getGhostLocalIndicesRanges()
                              .data()[2 * i + 1] -
@@ -2477,7 +2499,7 @@ namespace dftfe
                     {
                       if (d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()
                             .data()[i] > 0)
-                        ONECCLCHECK(ccl::recv(
+                        d_onecclEventsAccumulateInsert.push_back(ccl::recv(
                           reinterpret_cast<float *>(recvArrayStartPtr),
                           d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()
                               .data()[i] *
@@ -2547,12 +2569,19 @@ namespace dftfe
           MemoryStorage<ValueType, memorySpace> &dataArray)
       {
         // wait for all send and recv requests to be completed
-#if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL) || \
-  defined(DFTFE_WITH_SYCL_ONECCL)
+#if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
         if constexpr (memorySpace == MemorySpace::DEVICE)
           if (d_commProtocol == communicationProtocol::nccl)
             dftfe::utils::deviceStreamSynchronize(
               dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
+#elif defined(DFTFE_WITH_SYCL_ONECCL)
+        if constexpr (memorySpace == MemorySpace::DEVICE)
+          if (d_commProtocol == communicationProtocol::nccl)
+            {
+              for (auto &ev : d_onecclEventsAccumulateInsert)
+                ev.wait();
+              d_onecclEventsAccumulateInsert.clear();
+            }
 #endif
 
         // wait for all send and recv requests to be completed

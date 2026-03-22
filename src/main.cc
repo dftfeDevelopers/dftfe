@@ -49,7 +49,18 @@ int
 main(int argc, char *argv[])
 {
   //
+#ifdef DFTFE_WITH_SYCL_ONECCL
+  int provided;
+  MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
+  if (provided < MPI_THREAD_MULTIPLE)
+    {
+      std::cerr
+        << "Warning: MPI_THREAD_MULTIPLE not supported (provided level: "
+        << provided << "). OneCCL may not function correctly." << std::endl;
+    }
+#else
   MPI_Init(&argc, &argv);
+#endif
 
 #if defined(DFTFE_WITH_MDI)
   MPI_Comm   mpi_world_comm;

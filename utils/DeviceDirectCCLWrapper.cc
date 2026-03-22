@@ -87,8 +87,20 @@ namespace dftfe
                                  d_mpiComm));
               onecclIdPtr = ccl::create_kvs(onecclIdAddr);
             }
-          onecclCommPtr = std::make_shared<ccl::communicator>(
-            ccl::create_communicator(totalRanks, myRank, onecclIdPtr));
+          // Build rank-device vector explicitly and use create_communicators
+          // (plural) to work around oneCCL header initializer-list compiler
+          // bug in create_communicator (singular) with GCC 13.4
+          ccl::vector_class<ccl::pair_class<int, ccl::device>> rankDeviceMap;
+          rankDeviceMap.push_back(
+            {myRank, ccl::create_device(dftfe::utils::syclDevice)});
+          auto onecclContext =
+            ccl::create_context(dftfe::utils::syclContext);
+          auto comms = ccl::create_communicators(totalRanks,
+                                                 rankDeviceMap,
+                                                 onecclContext,
+                                                 onecclIdPtr);
+          onecclCommPtr =
+            std::make_shared<ccl::communicator>(std::move(comms[0]));
           d_deviceCCLCommStream = std::make_shared<ccl::stream>(
             ccl::create_stream(
               dftfe::utils::queueRegistry.at(d_deviceCommStream)));

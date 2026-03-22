@@ -185,6 +185,12 @@ namespace dftfe
 
         communicationProtocol  d_commProtocol;
         communicationPrecision d_commPrecision;
+
+#if defined(DFTFE_WITH_SYCL_ONECCL)
+        std::vector<ccl::event> d_onecclEventsUpdateGhostValues;
+        std::vector<ccl::event> d_onecclEventsAccumulateAdd;
+        std::vector<ccl::event> d_onecclEventsAccumulateInsert;
+#endif
       };
     } // namespace mpi
   }   // namespace utils
