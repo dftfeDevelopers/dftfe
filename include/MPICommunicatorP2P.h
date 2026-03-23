@@ -34,8 +34,6 @@
 #    include <nccl.h>
 #  elif defined(DFTFE_WITH_HIP_RCCL)
 #    include <rccl.h>
-#  elif defined(DFTFE_WITH_SYCL_ONECCL)
-#    include <oneapi/ccl.hpp>
 #  endif
 #endif
 
@@ -185,12 +183,6 @@ namespace dftfe
 
         communicationProtocol  d_commProtocol;
         communicationPrecision d_commPrecision;
-
-#if defined(DFTFE_WITH_SYCL_ONECCL)
-        std::vector<ccl::event> d_onecclEventsUpdateGhostValues;
-        std::vector<ccl::event> d_onecclEventsAccumulateAdd;
-        std::vector<ccl::event> d_onecclEventsAccumulateInsert;
-#endif
       };
     } // namespace mpi
   }   // namespace utils

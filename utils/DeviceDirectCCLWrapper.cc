@@ -93,16 +93,15 @@ namespace dftfe
           ccl::vector_class<ccl::pair_class<int, ccl::device>> rankDeviceMap;
           rankDeviceMap.push_back(
             {myRank, ccl::create_device(dftfe::utils::syclDevice)});
-          auto onecclContext =
-            ccl::create_context(dftfe::utils::syclContext);
-          auto comms = ccl::create_communicators(totalRanks,
+          auto onecclContext = ccl::create_context(dftfe::utils::syclContext);
+          auto comms         = ccl::create_communicators(totalRanks,
                                                  rankDeviceMap,
                                                  onecclContext,
                                                  onecclIdPtr);
           onecclCommPtr =
             std::make_shared<ccl::communicator>(std::move(comms[0]));
-          d_deviceCCLCommStream = std::make_shared<ccl::stream>(
-            ccl::create_stream(
+          d_deviceCCLCommStream =
+            std::make_shared<ccl::stream>(ccl::create_stream(
               dftfe::utils::queueRegistry.at(d_deviceCommStream)));
           dcclCommInit = true;
         }
