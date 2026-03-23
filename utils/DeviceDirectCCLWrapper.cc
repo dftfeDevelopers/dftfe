@@ -87,9 +87,8 @@ namespace dftfe
                                  d_mpiComm));
               onecclIdPtr = ccl::create_kvs(onecclIdAddr);
             }
-          // Build rank-device vector explicitly and use create_communicators
-          // (plural) to work around oneCCL header initializer-list compiler
-          // bug in create_communicator (singular) with GCC 13.4
+          // Use create_communicators (plural) with explicit rank-device
+          // vector to pass sycl device and context for Level Zero support
           ccl::vector_class<ccl::pair_class<int, ccl::device>> rankDeviceMap;
           rankDeviceMap.push_back(
             {myRank, ccl::create_device(dftfe::utils::syclDevice)});
