@@ -507,12 +507,6 @@ namespace dftfe
             "[Advanced] Mesh size of the finite elements in the immediate vicinity of the atom. For the default value of 0.0, a heuristically determined MESH SIZE AT ATOM is used for all-electron calculations. For pseudopotential calculations, the default value of 0.0, sets the MESH SIZE AT ATOM to be the same value as MESH SIZE AROUND ATOM. Standard users do not need to tune this parameter. Units: a.u.");
 
           prm.declare_entry(
-            "MESH ADAPTION",
-            "false",
-            dealii::Patterns::Bool(),
-            "[Developer] Generates adaptive mesh based on a-posteriori mesh adaption strategy using single atom wavefunctions before computing the ground-state. Default: false.");
-
-          prm.declare_entry(
             "AUTO ADAPT BASE MESH SIZE",
             "true",
             dealii::Patterns::Bool(),
@@ -529,18 +523,6 @@ namespace dftfe
                             "10",
                             dealii::Patterns::Integer(0, 30),
                             "[Developer] Number of times to be refined.");
-
-          prm.declare_entry(
-            "TOLERANCE FOR MESH ADAPTION",
-            "1",
-            dealii::Patterns::Double(0.0, 1),
-            "[Developer] Tolerance criteria used for stopping the multi-level mesh adaption done apriori using single atom wavefunctions. This is used as Kinetic energy change between two successive iterations");
-
-          prm.declare_entry(
-            "ERROR ESTIMATE WAVEFUNCTIONS",
-            "5",
-            dealii::Patterns::Integer(0),
-            "[Developer] Number of wavefunctions to be used for error estimation.");
 
           prm.declare_entry(
             "GAUSSIAN CONSTANT FORCE GENERATOR",
@@ -703,7 +685,7 @@ namespace dftfe
           R"([Standard] Pseudopotential file. This file contains the list of pseudopotential file names in UPF format corresponding to the atoms involved in the calculations. UPF version 2.0 or greater and norm-conserving pseudopotentials(ONCV and Troullier Martins) in UPF format are only accepted. File format (example for two atoms Mg(z=12), Al(z=13)): 12 filename1.upf(row1), 13 filename2.upf (row2). Important Note: ONCV pseudopotentials data base in UPF format can be downloaded from http://www.quantum-simulation.org/potentials/sg15\_oncv or http://www.pseudo-dojo.org/.  Troullier-Martins pseudopotentials in UPF format can be downloaded from http://www.quantum-espresso.org/pseudopotentials/fhi-pp-from-abinit-web-site.)");
 
         prm.declare_entry(
-          "EXCHANGE CORRELATION TYPE", "GGA-PBE", dealii::Patterns::Selection("LDA-PZ|LDA-PW|LDA-VWN|GGA-PBE|GGA-RPBE|GGA-LBxPBEc|MLXC-NNLDA|MLXC-NNGGA|MLXC-NNLLMGGA|LDA-PZ+U|LDA-PW+U|LDA-VWN+U|GGA-PBE+U|GGA-RPBE+U|GGA-LBxPBEc+U|MLXC-NNLDA+U|MLXC-NNGGA+U|MLXC-NNLLMGGA+U|MGGA-SCAN|MGGA-R2SCAN"), R"([Standard] Parameter specifying the type of exchange-correlation to be used: LDA-PZ (Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)]), LDA-PW (Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)]), LDA-VWN (Vosko, Wilk \& Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)]), GGA-PBE (Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)]), GGA-RPBE (RPBE: B. Hammer, L. B. Hansen, and J. K. N�rskov, Phys. Rev. B 59, 7413 (1999)), GGA-LBxPBEc van Leeuwen \& Baerends exchange [Phys. Rev. A 49, 2421 (1994)] with  PBE correlation [Phys. Rev. Lett. 77, 3865 (1996)], MLXC-NNLDA (LDA-PW + NN-LDA), MLXC-NNGGA (GGA-PBE + NN-GGA), MLXC-NNLLMGGA (GGA-PBE + NN Laplacian level MGGA), MGGA-SCAN (Strongly Constrained and Appropriately Normed functional [Phys. Rev. Lett. 115, 03640 (2015)]), MGGA-R2SCAN (regularized-restored SCAN [J. Phys. Chem. Lett. 19, 8208-8215 (2020)]). Caution: MLXC options are experimental. Add +U to use hubbard correction)");
+          "EXCHANGE CORRELATION TYPE", "GGA-PBE", dealii::Patterns::Selection("LDA-PZ|LDA-PW|LDA-VWN|GGA-PBE|GGA-RPBE|GGA-LBxPBEc|MLXC-NNLDA|MLXC-NNGGA|MLXC-NNLLMGGA|LDA-PZ+U|LDA-PW+U|LDA-VWN+U|GGA-PBE+U|GGA-RPBE+U|GGA-PBESOL|GGA-REVPBE|GGA-LBxPBEc+U|MLXC-NNLDA+U|MLXC-NNGGA+U|MLXC-NNLLMGGA+U|MGGA-SCAN|MGGA-R2SCAN"), R"([Standard] Parameter specifying the type of exchange-correlation to be used: LDA-PZ (Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)]), LDA-PW (Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)]), LDA-VWN (Vosko, Wilk \& Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)]), GGA-PBE (Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)]), GGA-RPBE (RPBE: B. Hammer, L. B. Hansen, and J. K. N�rskov, Phys. Rev. B 59, 7413 (1999)), GGA-LBxPBEc van Leeuwen \& Baerends exchange [Phys. Rev. A 49, 2421 (1994)] with  PBE correlation [Phys. Rev. Lett. 77, 3865 (1996)], MLXC-NNLDA (LDA-PW + NN-LDA), MLXC-NNGGA (GGA-PBE + NN-GGA), MLXC-NNLLMGGA (GGA-PBE + NN Laplacian level MGGA), MGGA-SCAN (Strongly Constrained and Appropriately Normed functional [Phys. Rev. Lett. 115, 03640 (2015)]), MGGA-R2SCAN (regularized-restored SCAN [J. Phys. Chem. Lett. 19, 8208-8215 (2020)]). Caution: MLXC options are experimental. Add +U to use hubbard correction)");
 
         prm.declare_entry(
           "MODEL XC INPUT FILE",
@@ -864,7 +846,7 @@ namespace dftfe
           "SPIN MIXING ENHANCEMENT FACTOR",
           "1.0",
           dealii::Patterns::Double(-1e-12, 100.0),
-          "[Standard] Scales the mixing parameter for the spin densities as SPIN MIXING ENHANCEMENT FACTOR times MIXING PARAMETER. This parameter is not used for LOW\_RANK\_DIELECM\_PRECOND mixing method.");
+          R"([Standard] Scales the mixing parameter for the spin densities as SPIN MIXING ENHANCEMENT FACTOR times MIXING PARAMETER. This parameter is not used for LOW\_RANK\_DIELECM\_PRECOND mixing method.)");
 
         prm.declare_entry(
           "ADAPT ANDERSON MIXING PARAMETER",
@@ -1351,15 +1333,14 @@ namespace dftfe
 
     std::string coordinatesGaussianDispFile = "";
 
-    outerAtomBallRadius            = 2.5;
-    innerAtomBallRadius            = 0.0;
-    meshSizeOuterDomain            = 10.0;
-    meshSizeInnerBall              = 1.0;
-    meshSizeOuterBall              = 1.0;
-    numLevels                      = 1;
-    numberWaveFunctionsForEstimate = 5;
-    topfrac                        = 0.1;
-    kerkerParameter                = 0.05;
+    outerAtomBallRadius = 2.5;
+    innerAtomBallRadius = 0.0;
+    meshSizeOuterDomain = 10.0;
+    meshSizeInnerBall   = 1.0;
+    meshSizeOuterBall   = 1.0;
+    numLevels           = 1;
+    topfrac             = 0.1;
+    kerkerParameter     = 0.05;
 
     isIonForce             = false;
     isCellStress           = false;
@@ -1367,8 +1348,7 @@ namespace dftfe
     nonSelfConsistentForce = false;
     forceRelaxTol          = 1e-4; // Hartree/Bohr
     stressRelaxTol         = 1e-6; // Hartree/Bohr^3
-    toleranceKinetic       = 1e-03;
-    cellConstraintType     = 12; // all cell components to be relaxed
+    cellConstraintType     = 12;   // all cell components to be relaxed
 
     verbosity                                      = 0;
     keepScratchFolder                              = false;
@@ -1377,7 +1357,6 @@ namespace dftfe
     loadQuadData                                   = false;
     restartSpinFromNoSpin                          = false;
     reproducible_output                            = false;
-    meshAdaption                                   = false;
     pinnedNodeForPBC                               = true;
     startingWFCType                                = "";
     restrictToOnePass                              = false;
@@ -1656,13 +1635,9 @@ namespace dftfe
         meshSizeOuterDomain   = prm.get_double("BASE MESH SIZE");
         meshSizeInnerBall     = prm.get_double("MESH SIZE AT ATOM");
         meshSizeOuterBall     = prm.get_double("MESH SIZE AROUND ATOM");
-        meshAdaption          = prm.get_bool("MESH ADAPTION");
         autoAdaptBaseMeshSize = prm.get_bool("AUTO ADAPT BASE MESH SIZE");
         topfrac               = prm.get_double("TOP FRAC");
         numLevels             = prm.get_double("NUM LEVELS");
-        numberWaveFunctionsForEstimate =
-          prm.get_integer("ERROR ESTIMATE WAVEFUNCTIONS");
-        toleranceKinetic = prm.get_double("TOLERANCE FOR MESH ADAPTION");
         gaussianConstantForce =
           prm.get_double("GAUSSIAN CONSTANT FORCE GENERATOR");
         gaussianOrderForce = prm.get_double("GAUSSIAN ORDER FORCE GENERATOR");
@@ -1880,7 +1855,7 @@ namespace dftfe
     if (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0 &&
         verbosity >= 1 && printParams)
       {
-        prm.print_parameters(std::cout, dealii::ParameterHandler::ShortText);
+        prm.print_parameters(std::cout, dealii::ParameterHandler::ShortPRM);
       }
 
     //
@@ -1897,7 +1872,11 @@ namespace dftfe
       dealii::ExcMessage(
         "DFT-FE Error: LOCAL DENSITY OF STATES is currently not implemented in the case of periodic and semi-periodic boundary conditions."));
 
-
+    if (!useLibXCForXCEvaluation)
+      AssertThrow(
+        !(XCType == "GGA-REVPBE" || XCType == "GGA-PBESOL"),
+        dealii::ExcMessage(
+          "DFT-FE Error: USE LIBXC FOR XC FUNCTIONAL EVALUATION has to be set to true for this XC functional"));
     if (floatingNuclearCharges)
       AssertThrow(
         smearedNuclearCharges,
@@ -1989,15 +1968,6 @@ namespace dftfe
           "DFT-FE Error: WFC BLOCK SIZE and CHEBY WFC BLOCK SIZE must be same for band parallelization."));
     if (XCType.substr(0, 4) == "MGGA")
       {
-        AssertThrow(
-          !isCellStress,
-          dealii::ExcMessage(
-            "DFT-FE Error: Computation of CELL STRESS with MGGA functional is not completed yet."));
-        if (!floatingNuclearCharges)
-          AssertThrow(
-            !isIonForce,
-            dealii::ExcMessage(
-              "DFT-FE Error: Computation of ION FORCE with MGGA functional in all-electron calculation is not completed yet."));
         AssertThrow(
           mixingMethod != "LOW_RANK_DIELECM_PRECOND",
           dealii::ExcMessage(
@@ -2155,7 +2125,7 @@ namespace dftfe
       }
     else if (!isPseudopotential && orthogType == "Auto" && !useDevice)
       {
-#ifdef USE_PETSC;
+#ifdef USE_PETSC
         if (verbosity >= 1 &&
             dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0)
           std::cout
@@ -2175,7 +2145,7 @@ namespace dftfe
       }
     else if (orthogType == "GS" && !useDevice)
       {
-#ifndef USE_PETSC;
+#ifndef USE_PETSC
         AssertThrow(
           orthogType != "GS",
           dealii::ExcMessage(

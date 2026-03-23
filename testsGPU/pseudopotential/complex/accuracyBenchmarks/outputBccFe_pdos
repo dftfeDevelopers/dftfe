@@ -1,9 +1,9 @@
 number of atoms: 2
 number of atoms types: 1
 Total number of k-points 216
-Found 1923728352 GPUs
+Found -1886764352 GPUs
 MPI rank 0 uses GPU #3
-Found -940095248 GPUs
+Found 0 GPUs
 MPI rank 0 uses GPU #0
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
 v1 : 5.368001262539999985e+00 0.000000000000000000e+00 0.000000000000000000e+00
@@ -51,7 +51,7 @@ Energy computations (Hartree)
              Total energy:        -253.23942177
 Total energy  : -253.23942177
 Total entropic energy: 0.00073820
-Total free energy: -253.24015997
+Total free energy: -253.24015998
 Writing PDOS outputs...
 File: pdosData_atom#0_wfc#0(3s).out
         # E(eV)     sumPDOS_up   sumPDOS_down           s_up         s_down

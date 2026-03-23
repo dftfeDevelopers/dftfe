@@ -124,19 +124,19 @@ namespace dftfe
     // extract locally owned dofs
     //
     locally_owned_dofs = dofHandler.locally_owned_dofs();
-    dealii::DoFTools::extract_locally_relevant_dofs(dofHandler,
-                                                    locally_relevant_dofs);
-    dealii::DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3, 3>(),
-                                                 dofHandler,
-                                                 d_supportPoints);
+    locally_relevant_dofs =
+      dealii::DoFTools::extract_locally_relevant_dofs(dofHandler);
+    d_supportPoints =
+      dealii::DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3, 3>(),
+                                                   dofHandler);
 
 
     locally_owned_dofsEigen = dofHandlerEigen.locally_owned_dofs();
-    dealii::DoFTools::extract_locally_relevant_dofs(dofHandlerEigen,
-                                                    locally_relevant_dofsEigen);
-    dealii::DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3, 3>(),
-                                                 dofHandlerEigen,
-                                                 d_supportPointsEigen);
+    locally_relevant_dofsEigen =
+      dealii::DoFTools::extract_locally_relevant_dofs(dofHandlerEigen);
+    d_supportPointsEigen =
+      dealii::DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3, 3>(),
+                                                   dofHandlerEigen);
 
 
     //
@@ -187,35 +187,21 @@ namespace dftfe
     //
     constraintsNone.clear();
     constraintsNoneEigen.clear();
-    constraintsNone.reinit(locally_relevant_dofs);
-    constraintsNoneEigen.reinit(locally_relevant_dofsEigen);
+    constraintsNone.reinit(locally_owned_dofs, locally_relevant_dofs);
+    constraintsNoneEigen.reinit(locally_owned_dofsEigen,
+                                locally_relevant_dofsEigen);
     dealii::DoFTools::make_hanging_node_constraints(dofHandler,
                                                     constraintsNone);
     dealii::DoFTools::make_hanging_node_constraints(dofHandlerEigen,
                                                     constraintsNoneEigen);
-
-    // create unitVectorsXYZ
-    std::vector<std::vector<double>> unitVectorsXYZ;
-    unitVectorsXYZ.resize(3);
-
-    for (dftfe::Int i = 0; i < 3; ++i)
-      {
-        unitVectorsXYZ[i].resize(3, 0.0);
-        unitVectorsXYZ[i][i] = 0.0;
-      }
 
     std::vector<dealii::Tensor<1, 3>> offsetVectors;
     // resize offset vectors
     offsetVectors.resize(3);
 
     for (dftfe::Int i = 0; i < 3; ++i)
-      {
-        for (dftfe::Int j = 0; j < 3; ++j)
-          {
-            offsetVectors[i][j] =
-              unitVectorsXYZ[i][j] - d_domainBoundingVectors[i][j];
-          }
-      }
+      for (dftfe::Int j = 0; j < 3; ++j)
+        offsetVectors[i][j] = -d_domainBoundingVectors[i][j];
 
     std::vector<dealii::GridTools::PeriodicFacePair<
       typename dealii::DoFHandler<3>::cell_iterator>>
@@ -226,12 +212,8 @@ namespace dftfe
                                                 d_dftParamsPtr->periodicY,
                                                 d_dftParamsPtr->periodicZ};
     for (dftfe::uInt d = 0; d < 3; ++d)
-      {
-        if (periodic[d] == 1)
-          {
-            periodicDirectionVector.push_back(d);
-          }
-      }
+      if (periodic[d] == 1)
+        periodicDirectionVector.push_back(d);
 
 
     for (dftfe::Int i = 0;
@@ -259,24 +241,27 @@ namespace dftfe
     dealii::DoFTools::make_periodicity_constraints<3, 3>(
       periodicity_vector2Eigen, constraintsNoneEigen);
 
-
-
-    constraintsNone.close();
-    constraintsNoneEigen.close();
+    dftfe::vectorTools::makeAffineConstraintsConsistentInParallel(
+      dofHandler, constraintsNone);
+    dftfe::vectorTools::makeAffineConstraintsConsistentInParallel(
+      dofHandlerEigen, constraintsNoneEigen);
 
     //
     // create a constraint matrix without only hanging node constraints
     //
     d_noConstraints.clear();
     dealii::AffineConstraints<double> noConstraintsEigen;
-    d_noConstraints.reinit(locally_relevant_dofs);
-    noConstraintsEigen.reinit(locally_relevant_dofsEigen);
+    d_noConstraints.reinit(locally_owned_dofs, locally_relevant_dofs);
+    noConstraintsEigen.reinit(locally_owned_dofsEigen,
+                              locally_relevant_dofsEigen);
     dealii::DoFTools::make_hanging_node_constraints(dofHandler,
                                                     d_noConstraints);
     dealii::DoFTools::make_hanging_node_constraints(dofHandlerEigen,
                                                     noConstraintsEigen);
-    d_noConstraints.close();
-    noConstraintsEigen.close();
+    dftfe::vectorTools::makeAffineConstraintsConsistentInParallel(
+      dofHandler, d_noConstraints);
+    dftfe::vectorTools::makeAffineConstraintsConsistentInParallel(
+      dofHandlerEigen, noConstraintsEigen);
 
     if (d_dftParamsPtr->createConstraintsFromSerialDofhandler)
       {
@@ -320,14 +305,14 @@ namespace dftfe
           d_dftParamsPtr->periodicY,
           d_dftParamsPtr->periodicZ);
         constraintsNoneEigen.clear();
-        constraintsNoneEigen.reinit(locally_relevant_dofs);
+        constraintsNoneEigen.reinit(locally_owned_dofs, locally_relevant_dofs);
         constraintsNoneEigen.merge(constraintsNone,
                                    dealii::AffineConstraints<double>::
                                      MergeConflictBehavior::right_object_wins);
         constraintsNoneEigen.close();
 
         noConstraintsEigen.clear();
-        noConstraintsEigen.reinit(locally_relevant_dofs);
+        noConstraintsEigen.reinit(locally_owned_dofs, locally_relevant_dofs);
         noConstraintsEigen.merge(d_noConstraints,
                                  dealii::AffineConstraints<double>::
                                    MergeConflictBehavior::right_object_wins);
@@ -343,19 +328,6 @@ namespace dftfe
     if (d_dftParamsPtr->verbosity >= 4)
       dftUtils::printCurrentMemoryUsage(
         mpi_communicator, "Created the basic constraint matrices");
-
-    forcePtr->initUnmoved(triangulation,
-                          d_mesh.getSerialMeshUnmoved(),
-                          d_domainBoundingVectors,
-                          false);
-    forcePtr->initUnmoved(triangulation,
-                          d_mesh.getSerialMeshUnmoved(),
-                          d_domainBoundingVectors,
-                          true);
-
-    if (d_dftParamsPtr->verbosity >= 4)
-      dftUtils::printCurrentMemoryUsage(mpi_communicator, "Force initUnmoved");
-
 
     d_excManagerPtr->init(d_dftParamsPtr->XCType,
                           true,

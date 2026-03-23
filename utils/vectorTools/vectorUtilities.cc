@@ -27,6 +27,26 @@ namespace dftfe
   namespace vectorTools
   {
     void
+    makeAffineConstraintsConsistentInParallel(
+      const dealii::DoFHandler<3>       &dofHandlerPar,
+      dealii::AffineConstraints<double> &constraints)
+    {
+      constraints.close();
+#if (DEAL_II_VERSION_MAJOR >= 9 && DEAL_II_VERSION_MINOR >= 7)
+      if (!constraints.is_consistent_in_parallel(
+            dealii::Utilities::MPI::all_gather(
+              dofHandlerPar.get_communicator(),
+              dofHandlerPar.locally_owned_dofs()),
+            dealii::DoFTools::extract_locally_active_dofs(dofHandlerPar),
+            dofHandlerPar.get_communicator()))
+        constraints.make_consistent_in_parallel(
+          dofHandlerPar.locally_owned_dofs(),
+          constraints.get_local_lines(),
+          dofHandlerPar.get_communicator());
+#endif
+    }
+
+    void
     createParallelConstraintMatrixFromSerial(
       const dealii::Triangulation<3, 3>      &serTria,
       const dealii::DoFHandler<3>            &dofHandlerPar,
@@ -56,9 +76,8 @@ namespace dftfe
       const dealii::IndexSet &locally_owned_dofs_par =
         dofHandlerPar.locally_owned_dofs();
 
-      dealii::IndexSet locally_relevant_dofs_par;
-      dealii::DoFTools::extract_locally_relevant_dofs(
-        dofHandlerPar, locally_relevant_dofs_par);
+      dealii::IndexSet locally_relevant_dofs_par =
+        dealii::DoFTools::extract_locally_relevant_dofs(dofHandlerPar);
 
       dealii::DoFHandler<3> dofHandlerSer(serTria);
       dofHandlerSer.distribute_dofs(dofHandlerPar.get_fe());
@@ -140,19 +159,13 @@ namespace dftfe
           double>::MergeConflictBehavior::right_object_wins);
       constraintsHangingSer.close();
 
-      // create unitVectorsXYZ
-      std::vector<std::vector<double>> unitVectorsXYZ(3,
-                                                      std::vector<double>(3,
-                                                                          0.0));
-
       std::vector<dealii::Tensor<1, 3>> offsetVectors;
       // resize offset vectors
       offsetVectors.resize(3);
 
       for (dftfe::Int i = 0; i < 3; ++i)
         for (dftfe::Int j = 0; j < 3; ++j)
-          offsetVectors[i][j] =
-            unitVectorsXYZ[i][j] - domainBoundingVectors[i][j];
+          offsetVectors[i][j] = -domainBoundingVectors[i][j];
 
       std::vector<dealii::GridTools::PeriodicFacePair<
         typename dealii::DoFHandler<3>::cell_iterator>>
@@ -188,10 +201,12 @@ namespace dftfe
           mpi_comm_domain, "Created periodic constraints serial");
 
       periodicHangingConstraints.clear();
-      periodicHangingConstraints.reinit(locally_relevant_dofs_par);
+      periodicHangingConstraints.reinit(locally_owned_dofs_par,
+                                        locally_relevant_dofs_par);
 
       onlyHangingConstraints.clear();
-      onlyHangingConstraints.reinit(locally_relevant_dofs_par);
+      onlyHangingConstraints.reinit(locally_owned_dofs_par,
+                                    locally_relevant_dofs_par);
 
       for (auto index : locally_relevant_dofs_par)
         {

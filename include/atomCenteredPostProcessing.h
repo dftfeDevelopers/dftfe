@@ -80,12 +80,15 @@ namespace dftfe
      */
     void
     initialiseNonLocalContribution(
-      const std::vector<std::vector<double>> &atomLocations,
       const std::vector<dftfe::Int>          &imageIds,
       const std::vector<std::vector<double>> &periodicCoords,
       const std::vector<double>              &kPointWeights,
       const std::vector<double>              &kPointCoordinates,
       const bool                              updateNonlocalSparsity);
+
+    void
+    determineAtomsOfInterstPostProcessing(
+      const std::vector<std::vector<double>> &atomCoordinates);
 
     const std::shared_ptr<
       AtomicCenteredNonLocalOperator<ValueType, memorySpace>>
@@ -136,6 +139,10 @@ namespace dftfe
 
     void
     createAtomCenteredSphericalFunctionsForOrbitals();
+
+
+    std::vector<std::vector<double>>   d_atomLocationsInterestPostProcessing;
+    std::map<dftfe::uInt, dftfe::uInt> d_atomIdPostProcessingInterestToGlobalId;
 
     std::map<dftfe::uInt, std::vector<std::pair<dftfe::uInt, dftfe::uInt>>>
                         nlNumsMap;

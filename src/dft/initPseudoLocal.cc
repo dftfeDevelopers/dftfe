@@ -20,7 +20,7 @@
 #include <dftUtils.h>
 #include <fileReaders.h>
 #include <vectorUtilities.h>
-
+#include <feevaluationWrapper.h>
 namespace dftfe
 {
   //

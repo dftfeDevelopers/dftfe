@@ -53,7 +53,7 @@ namespace dftfe
         dftUtils::verifyCheckpointFileExists(filename1);
         try
           {
-            d_serialTriangulationUnmoved.load(filename1.c_str(), false);
+            d_serialTriangulationUnmoved.load(filename1.c_str());
           }
         catch (...)
           {
@@ -146,9 +146,8 @@ namespace dftfe
       SolutionTransfer<3, typename dftfe::distributedCPUVec<double>>
         solTrans(dofHandler);
 
-    dealii::IndexSet locally_relevant_dofs;
-    dealii::DoFTools::extract_locally_relevant_dofs(dofHandler,
-                                                    locally_relevant_dofs);
+    dealii::IndexSet locally_relevant_dofs =
+      dealii::DoFTools::extract_locally_relevant_dofs(dofHandler);
 
     const dealii::IndexSet &locally_owned_dofs =
       dofHandler.locally_owned_dofs();

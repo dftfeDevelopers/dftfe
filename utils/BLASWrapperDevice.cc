@@ -981,6 +981,41 @@ namespace dftfe
       d_deviceBlasHandle.wait();
 #endif
     }
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xdot(const dftfe::uInt N,
+                                                         const float      *X,
+                                                         const dftfe::uInt INCX,
+                                                         const float      *Y,
+                                                         const dftfe::uInt INCY,
+                                                         float *result)
+    {
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
+      dftfe::utils::deviceBlasStatus_t status =
+        DFTFE_DEVICE_BLAS_INT(S, dot)(d_deviceBlasHandle,
+                                      dftfe::Int(N),
+                                      X,
+                                      dftfe::Int(INCX),
+                                      Y,
+                                      dftfe::Int(INCY),
+                                      result);
+      DEVICEBLAS_API_CHECK(status);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+      float *dev_res = sycl::malloc_device<float>(1, d_deviceBlasHandle);
+      if (!dev_res)
+        throw std::bad_alloc{};
+      dftfe::utils::deviceEvent_t event =
+        DFTFE_DEVICE_BLAS_INT(S, dot)(d_deviceBlasHandle,
+                                      dftfe::Int(N),
+                                      X,
+                                      dftfe::Int(INCX),
+                                      Y,
+                                      dftfe::Int(INCY),
+                                      dev_res);
+      d_deviceBlasHandle.memcpy(result, dev_res, sizeof(float)).wait();
+      sycl::free(dev_res, d_deviceBlasHandle);
+      d_deviceBlasHandle.wait();
+#endif
+    }
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xdot(
@@ -1056,6 +1091,45 @@ namespace dftfe
         dftfe::Int(INCY),
         dftfe::utils::makeDataTypeDeviceBlasCompatible(dev_res)));
       d_deviceBlasHandle.memcpy(result, dev_res, sizeof(std::complex<double>))
+        .wait();
+      sycl::free(dev_res, d_deviceBlasHandle);
+      d_deviceBlasHandle.wait();
+#endif
+    }
+
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xdot(
+      const dftfe::uInt          N,
+      const std::complex<float> *X,
+      const dftfe::uInt          INCX,
+      const std::complex<float> *Y,
+      const dftfe::uInt          INCY,
+      std::complex<float>       *result)
+    {
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
+      dftfe::utils::deviceBlasStatus_t status = DFTFE_DEVICE_BLAS_INT(C, dotc)(
+        d_deviceBlasHandle,
+        dftfe::Int(N),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(X),
+        dftfe::Int(INCX),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(Y),
+        dftfe::Int(INCY),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(result));
+      DEVICEBLAS_API_CHECK(status);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+      std::complex<float> *dev_res =
+        sycl::malloc_device<std::complex<float>>(1, d_deviceBlasHandle);
+      if (!dev_res)
+        throw std::bad_alloc{};
+      DEVICEBLAS_API_CHECK(DFTFE_DEVICE_BLAS_INT(C, dotu)(
+        d_deviceBlasHandle,
+        dftfe::Int(N),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(X),
+        dftfe::Int(INCX),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(Y),
+        dftfe::Int(INCY),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(dev_res)));
+      d_deviceBlasHandle.memcpy(result, dev_res, sizeof(std::complex<float>))
         .wait();
       sycl::free(dev_res, d_deviceBlasHandle);
       d_deviceBlasHandle.wait();

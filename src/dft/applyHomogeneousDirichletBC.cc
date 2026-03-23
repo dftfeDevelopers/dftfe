@@ -28,10 +28,6 @@ namespace dftfe
     dealii::AffineConstraints<double>       &constraintMatrix)
 
   {
-    dealii::IndexSet locallyRelevantDofs;
-    dealii::DoFTools::extract_locally_relevant_dofs(_dofHandler,
-                                                    locallyRelevantDofs);
-
     const dftfe::uInt vertices_per_cell =
       dealii::GeometryInfo<3>::vertices_per_cell;
     const dftfe::uInt dofs_per_cell  = _dofHandler.get_fe().dofs_per_cell;

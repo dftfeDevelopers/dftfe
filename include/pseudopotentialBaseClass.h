@@ -80,6 +80,9 @@ namespace dftfe
       memorySpace>>
     getNonLocalOperatorSinglePrec() = 0;
 
+    virtual const std::map<dftfe::uInt, dftfe::uInt> &
+    getPSPAtomIdToGlobalIdMap() = 0;
+
 
 
   }; // end of class

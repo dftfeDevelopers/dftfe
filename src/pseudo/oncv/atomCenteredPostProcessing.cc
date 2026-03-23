@@ -129,7 +129,6 @@ namespace dftfe
   void
   atomCenteredOrbitalsPostProcessing<ValueType, memorySpace>::
     initialiseNonLocalContribution(
-      const std::vector<std::vector<double>> &atomLocations,
       const std::vector<dftfe::Int>          &imageIds,
       const std::vector<std::vector<double>> &periodicCoords,
       const std::vector<double>              &kPointWeights,
@@ -139,11 +138,15 @@ namespace dftfe
     std::vector<dftfe::uInt> atomicNumbers;
     std::vector<double>      atomCoords;
 
-    for (dftfe::Int iAtom = 0; iAtom < atomLocations.size(); iAtom++)
+    for (dftfe::Int iAtom = 0;
+         iAtom < d_atomLocationsInterestPostProcessing.size();
+         iAtom++)
       {
-        atomicNumbers.push_back(atomLocations[iAtom][0]);
+        atomicNumbers.push_back(
+          d_atomLocationsInterestPostProcessing[iAtom][0]);
         for (dftfe::Int dim = 2; dim < 5; dim++)
-          atomCoords.push_back(atomLocations[iAtom][dim]);
+          atomCoords.push_back(
+            d_atomLocationsInterestPostProcessing[iAtom][dim]);
       }
 
     d_atomicOrbitalFnsContainer->initaliseCoordinates(atomCoords,
@@ -165,6 +168,36 @@ namespace dftfe
       d_BasisOperatorHostPtr,
       d_BLASWrapperHostPtr,
       d_nlpspQuadratureId);
+  }
+
+
+  template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+  void
+  atomCenteredOrbitalsPostProcessing<ValueType, memorySpace>::
+    determineAtomsOfInterstPostProcessing(
+      const std::vector<std::vector<double>> &atomCoordinates)
+  {
+    d_atomLocationsInterestPostProcessing.clear();
+    d_atomIdPostProcessingInterestToGlobalId.clear();
+    dftfe::uInt atomIdPseudo = 0;
+    // pcout<<"Atoms of interest: "<<std::endl;
+    for (dftfe::uInt iAtom = 0; iAtom < atomCoordinates.size(); iAtom++)
+      {
+        if (true)
+          {
+            d_atomLocationsInterestPostProcessing.push_back(
+              atomCoordinates[iAtom]);
+            d_atomIdPostProcessingInterestToGlobalId[atomIdPseudo] = iAtom;
+            // pcout<<iAtom<<" "<<atomIdPseudo<<" ";
+            // for(dftfe::Int i = 0; i <
+            // d_atomLocationsInterestPostProcessing[atomIdPseudo].size();
+            // i++)
+            //   pcout<<d_atomLocationsInterestPostProcessing[atomIdPseudo][i]<<"
+            //   ";
+            // pcout<<std::endl;
+            atomIdPseudo++;
+          }
+      }
   }
 
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
@@ -376,6 +409,7 @@ namespace dftfe
     std::vector<std::vector<std::map<dftfe::uInt, std::vector<double>>>>
       pdosKernelWithoutSmearFunction;
     pdosKernelWithoutSmearFunction.resize(numSpinComponents);
+
     for (dftfe::uInt spinIndex = 0; spinIndex < numSpinComponents; spinIndex++)
       {
         pdosKernelWithoutSmearFunction[spinIndex].resize(kPointWeights.size());
@@ -407,8 +441,7 @@ namespace dftfe
                 // atom) summed over all atoms that have compact support on
                 // the elements in the processor
 
-                d_nonLocalOperator->initialiseFlattenedDataStructure(
-                  currentBlockSize, resVec);
+
 
                 if ((jvec + currentBlockSize) <=
                       bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
@@ -461,13 +494,18 @@ namespace dftfe
                                 tempCellNodalData.resize(currentCellsBlockSize *
                                                          currentBlockSize *
                                                          numNodesPerElement);
+                                d_nonLocalOperator
+                                  ->initialiseFlattenedDataStructure(
+                                    currentBlockSize, resVec);
                                 if constexpr (memorySpace ==
                                               dftfe::utils::MemorySpace::DEVICE)
                                   {
                                     d_nonLocalOperator
                                       ->initialiseCellWaveFunctionPointers(
-                                        tempCellNodalData);
+                                        tempCellNodalData,
+                                        currentCellsBlockSize);
                                   }
+
                                 previousSize =
                                   currentCellsBlockSize * currentBlockSize;
                               }

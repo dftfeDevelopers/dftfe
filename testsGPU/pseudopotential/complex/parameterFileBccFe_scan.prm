@@ -10,6 +10,7 @@ subsection Geometry
   set DOMAIN VECTORS FILE = bccFe_domainVectors.inp
   subsection Optimization
     set ION FORCE = true
+    set CELL STRESS = true
   end
 end
 

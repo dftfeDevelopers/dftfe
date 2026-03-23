@@ -143,8 +143,10 @@ namespace dftfe
                     }
                 }
 
-              if (isConstraintRhsExpandingOutOfIndexSet)
-                continue;
+              Assert(
+                !isConstraintRhsExpandingOutOfIndexSet,
+                dealii::ExcMessage(
+                  "Master nodes are not locally available for constraints"));
 
               d_rowIdsLocal.push_back(partitioner->global_to_local(lineDof));
               d_rowIdsGlobal.push_back(lineDof);
@@ -187,8 +189,10 @@ namespace dftfe
                     }
                 }
 
-              if (isConstraintRhsExpandingOutOfIndexSet)
-                continue;
+              Assert(
+                !isConstraintRhsExpandingOutOfIndexSet,
+                dealii::ExcMessage(
+                  "Master nodes are not locally available for constraints"));
 
               d_rowIdsLocal.push_back(partitioner->global_to_local(lineDof));
               d_rowIdsGlobal.push_back(lineDof);

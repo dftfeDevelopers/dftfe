@@ -26,7 +26,6 @@
 #include <dftUtils.h>
 #include <energyCalculator.h>
 #include <fileReaders.h>
-#include <force.h>
 #include <linalg.h>
 #include <linearAlgebraOperations.h>
 #include <linearAlgebraOperationsInternal.h>
@@ -172,6 +171,8 @@ namespace dftfe
   {
     d_nOMPThreads = 1;
     d_useHubbard  = false;
+    MPI_Barrier(d_mpiCommParent);
+    d_dftfeClassStartTime = MPI_Wtime();
 #ifdef _OPENMP
     if (const char *penv = std::getenv("DFTFE_NUM_THREADS"))
       {
@@ -203,10 +204,6 @@ namespace dftfe
 
     d_elpaScala = new dftfe::elpaScalaManager(mpi_comm_domain);
 
-    forcePtr = new forceClass<memorySpace>(this,
-                                           mpi_comm_parent,
-                                           mpi_comm_domain,
-                                           dftParams);
     groupSymmetryPtr =
       std::make_shared<groupSymmetryClass>(mpi_comm_parent,
                                            mpi_comm_domain,
@@ -278,7 +275,6 @@ namespace dftfe
   {
     finalizeKohnShamDFTOperator();
     matrix_free_data.clear();
-    delete forcePtr;
 #if defined(DFTFE_WITH_DEVICE)
     delete d_devicecclMpiCommDomainPtr;
 #endif
@@ -369,7 +365,9 @@ namespace dftfe
   void
   dftClass<memorySpace>::set()
   {
-    d_BLASWrapperPtrHost = std::make_shared<
+    MPI_Barrier(d_mpiCommParent);
+    double startTimeLocal = MPI_Wtime();
+    d_BLASWrapperPtrHost  = std::make_shared<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>();
     d_basisOperationsPtrHost = std::make_shared<
       dftfe::basis::FEBasisOperations<dataTypes::number,
@@ -948,6 +946,16 @@ namespace dftfe
 
     d_elpaScala->processGridELPASetup(d_numEigenValues, *d_dftParamsPtr);
     MPI_Barrier(d_mpiCommParent);
+    double cuttentTime = MPI_Wtime();
+    if (d_dftParamsPtr->verbosity >= 3 && !d_dftParamsPtr->reproducible_output)
+      {
+        pcout << "DFT-FE Timer: Time taken for setting up atomic system: "
+              << cuttentTime - startTimeLocal << " seconds" << std::endl;
+        pcout
+          << "DFT-FE Timer: Total Time taken till setting up atomic system: "
+          << cuttentTime - d_dftfeClassStartTime << " seconds" << std::endl;
+      }
+
     computingTimerStandard.leave_subsection("Atomic system initialization");
   }
 
@@ -975,12 +983,11 @@ namespace dftfe
           pcout
             << "initPseudoPotentialAll: Time taken for initializing core density for non-linear core correction: "
             << init_core << std::endl;
-        determineAtomsOfInterstPseudopotential(atomLocations);
+        d_oncvClassPtr->determineAtomsOfInterstPseudopotential(atomLocations);
         MPI_Barrier(d_mpiCommParent);
         if (d_dftParamsPtr->isPseudopotential == true)
           {
             d_oncvClassPtr->initialiseNonLocalContribution(
-              d_atomLocationsInterestPseudopotential,
               d_imageIdsTrunc,
               d_imagePositionsTrunc,
               d_kPointWeights,     // accounts for interpool
@@ -992,13 +999,13 @@ namespace dftfe
             if (d_dftParamsPtr->writePdosFile)
               {
                 d_atomCenteredOrbitalsPostProcessingPtr
-                  ->initialiseNonLocalContribution(
-                    d_atomLocationsInterestPseudopotential,
-                    d_imageIdsTrunc,
-                    d_imagePositionsTrunc,
-                    d_kPointWeights,
-                    d_kPointCoordinates,
-                    updateNonlocalSparsity);
+                  ->determineAtomsOfInterstPostProcessing(atomLocations);
+                d_atomCenteredOrbitalsPostProcessingPtr
+                  ->initialiseNonLocalContribution(d_imageIdsTrunc,
+                                                   d_imagePositionsTrunc,
+                                                   d_kPointWeights,
+                                                   d_kPointCoordinates,
+                                                   updateNonlocalSparsity);
               }
           }
       }
@@ -1148,42 +1155,21 @@ namespace dftfe
   dftClass<memorySpace>::init()
   {
     computingTimerStandard.enter_subsection("KSDFT problem initialization");
-
+    MPI_Barrier(d_mpiCommParent);
+    double startTimeLocal = MPI_Wtime();
     initImageChargesUpdateKPoints();
 
     calculateNearestAtomDistances();
 
     computing_timer.enter_subsection("mesh generation");
-    //
-    // generate mesh (both parallel and serial)
-    // while parallel meshes are always generated, serial meshes are only
-    // generated for following three cases: symmetrization is on, ionic
-    // optimization is on as well as reuse wfcs and density from previous ionic
-    // step is on, or if serial constraints generation is on.
-    //
-    // if (d_dftParamsPtr->loadRhoData)
-    //   {
-    //     d_mesh.generateCoarseMeshesForRestart(
-    //       atomLocations,
-    //       d_imagePositionsTrunc,
-    //       d_imageIdsTrunc,
-    //       d_nearestAtomDistances,
-    //       d_domainBoundingVectors,
-    //       d_dftParamsPtr->useSymm ||
-    //         d_dftParamsPtr->createConstraintsFromSerialDofhandler);
 
-    //     loadTriaInfoAndRhoNodalData();
-    //   }
-    // else
-    //{
     d_mesh.generateSerialUnmovedAndParallelMovedUnmovedMesh(
       atomLocations,
       d_imagePositionsTrunc,
       d_imageIdsTrunc,
       d_nearestAtomDistances,
       d_domainBoundingVectors,
-      d_dftParamsPtr->useSymm ||
-        d_dftParamsPtr->createConstraintsFromSerialDofhandler);
+      d_dftParamsPtr->createConstraintsFromSerialDofhandler);
     //}
     computing_timer.leave_subsection("mesh generation");
 
@@ -1201,6 +1187,34 @@ namespace dftfe
     // constraints on the unmoved Mesh
     //
     initUnmovedTriangulation(triangulationPar);
+    if ((d_dftParamsPtr->isIonForce || d_dftParamsPtr->isCellStress))
+      {
+#ifdef DFTFE_WITH_DEVICE
+        if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
+          d_configForcePtr = std::make_shared<
+            configurationalForceClass<dftfe::utils::MemorySpace::DEVICE>>(
+            d_BLASWrapperPtr,
+            d_BLASWrapperPtrHost,
+            d_mpiCommParent,
+            mpi_communicator,
+            interpoolcomm,
+            interBandGroupComm,
+            *d_dftParamsPtr);
+        else
+#endif
+          d_configForcePtr = std::make_shared<
+            configurationalForceClass<dftfe::utils::MemorySpace::HOST>>(
+            d_BLASWrapperPtrHost,
+            d_BLASWrapperPtrHost,
+            d_mpiCommParent,
+            mpi_communicator,
+            interpoolcomm,
+            interBandGroupComm,
+            *d_dftParamsPtr);
+        d_configForcePtr->setUnmovedTriangulation(triangulationPar,
+                                                  d_mesh.getSerialMeshUnmoved(),
+                                                  d_domainBoundingVectors);
+      }
 
     if (d_dftParamsPtr->verbosity >= 4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator,
@@ -1239,10 +1253,22 @@ namespace dftfe
         groupSymmetryPtr->setupCommPatternForNodalField(d_dofHandlerRhoNodal);
       }
 #endif
-
+    MPI_Barrier(d_mpiCommParent);
+    double cuttentTime = MPI_Wtime();
+    if (d_dftParamsPtr->verbosity >= 3 && !d_dftParamsPtr->reproducible_output)
+      {
+        pcout
+          << "DFT-FE Timer: Time taken for initialization of Mesh and Boundary Conditions: "
+          << cuttentTime - startTimeLocal << " seconds" << std::endl;
+        pcout
+          << "DFT-FE Timer: Total Time taken till initialization of Mesh and Boundary Conditions: "
+          << cuttentTime - d_dftfeClassStartTime << " seconds" << std::endl;
+      }
     //
     // initialize pseudopotential data for both local and nonlocal part
     //
+    MPI_Barrier(d_mpiCommParent);
+    startTimeLocal = MPI_Wtime();
     if (d_dftParamsPtr->isPseudopotential == true)
       d_oncvClassPtr->initialise(d_basisOperationsPtrHost,
 #if defined(DFTFE_WITH_DEVICE)
@@ -1261,8 +1287,9 @@ namespace dftfe
                                  atomLocations,
                                  d_numEigenValues,
                                  d_dftParamsPtr->useSinglePrecCheby,
-                                 (d_dftParamsPtr->isIonForce) ||
-                                   d_dftParamsPtr->isCellStress);
+                                 d_dftParamsPtr->floatingNuclearCharges,
+                                 d_dftParamsPtr->isIonForce,
+                                 d_dftParamsPtr->isCellStress);
 
     if (d_dftParamsPtr->solverMode == "NSCF")
       {
@@ -1418,6 +1445,47 @@ namespace dftfe
     d_netFloatingDispSinceLastCheckForSmearedChargeOverlaps.resize(
       atomLocations.size() * 3, 0.0);
 
+    if ((d_dftParamsPtr->isIonForce || d_dftParamsPtr->isCellStress))
+      {
+#ifdef DFTFE_WITH_DEVICE
+        if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
+          d_configForcePtr->initialize(d_basisOperationsPtrDevice,
+                                       d_basisOperationsPtrHost,
+                                       d_basisOperationsPtrElectroDevice,
+                                       d_basisOperationsPtrElectroHost,
+                                       d_oncvClassPtr,
+                                       d_excManagerPtr,
+                                       d_densityQuadratureId,
+                                       d_densityQuadratureIdElectro,
+                                       d_lpspQuadratureId,
+                                       d_lpspQuadratureIdElectro,
+                                       d_nlpspQuadratureId,
+                                       d_smearedChargeQuadratureIdElectro);
+        else
+#endif
+          d_configForcePtr->initialize(d_basisOperationsPtrHost,
+                                       d_basisOperationsPtrHost,
+                                       d_basisOperationsPtrElectroHost,
+                                       d_basisOperationsPtrElectroHost,
+                                       d_oncvClassPtr,
+                                       d_excManagerPtr,
+                                       d_densityQuadratureId,
+                                       d_densityQuadratureIdElectro,
+                                       d_lpspQuadratureId,
+                                       d_lpspQuadratureIdElectro,
+                                       d_nlpspQuadratureId,
+                                       d_smearedChargeQuadratureIdElectro);
+      }
+    MPI_Barrier(d_mpiCommParent);
+    cuttentTime = MPI_Wtime();
+    if (d_dftParamsPtr->verbosity >= 3 && !d_dftParamsPtr->reproducible_output)
+      {
+        pcout << "DFT-FE Timer: Time taken for PseudoPotential Initialisation: "
+              << cuttentTime - startTimeLocal << " seconds" << std::endl;
+        pcout
+          << "DFT-FE Timer: Total Time taken till PseudoPotential Initialisation: "
+          << cuttentTime - d_dftfeClassStartTime << " seconds" << std::endl;
+      }
     computingTimerStandard.leave_subsection("KSDFT problem initialization");
   }
 
@@ -1884,115 +1952,12 @@ namespace dftfe
 
 
   //
-  // generate a-posteriori mesh
-  //
-  template <dftfe::utils::MemorySpace memorySpace>
-  void
-  dftClass<memorySpace>::aposterioriMeshGenerate()
-  {
-    //
-    // get access to triangulation objects from meshGenerator class
-    //
-    dealii::parallel::distributed::Triangulation<3> &triangulationPar =
-      d_mesh.getParallelMeshMoved();
-    dftfe::uInt numberLevelRefinements = d_dftParamsPtr->numLevels;
-    dftfe::uInt numberWaveFunctionsErrorEstimate =
-      d_dftParamsPtr->numberWaveFunctionsForEstimate;
-    bool        refineFlag = true;
-    dftfe::uInt countLevel = 0;
-    double      traceXtKX  = computeTraceXtKX(numberWaveFunctionsErrorEstimate);
-    double      traceXtKXPrev = traceXtKX;
-
-    while (refineFlag)
-      {
-        if (numberLevelRefinements > 0)
-          {
-            distributedCPUVec<double> tempVec;
-            matrix_free_data.initialize_dof_vector(tempVec);
-
-            std::vector<distributedCPUVec<double>> eigenVectorsArray(
-              numberWaveFunctionsErrorEstimate);
-
-            for (dftfe::uInt i = 0; i < numberWaveFunctionsErrorEstimate; ++i)
-              eigenVectorsArray[i].reinit(tempVec);
-
-
-            vectorTools::copyFlattenedSTLVecToSingleCompVec(
-              d_eigenVectorsFlattenedHost.data(),
-              d_numEigenValues,
-              matrix_free_data.get_vector_partitioner()->locally_owned_size(),
-              std::make_pair(0, numberWaveFunctionsErrorEstimate),
-              eigenVectorsArray);
-
-
-            for (dftfe::uInt i = 0; i < numberWaveFunctionsErrorEstimate; ++i)
-              {
-                constraintsNone.distribute(eigenVectorsArray[i]);
-                eigenVectorsArray[i].update_ghost_values();
-              }
-
-
-            d_mesh.generateAutomaticMeshApriori(
-              dofHandler,
-              triangulationPar,
-              eigenVectorsArray,
-              d_dftParamsPtr->finiteElementPolynomialOrder);
-          }
-
-
-        //
-        // initialize dofHandlers of refined mesh and move triangulation
-        //
-        initUnmovedTriangulation(triangulationPar);
-        moveMeshToAtoms(triangulationPar, d_mesh.getSerialMeshUnmoved());
-        initBoundaryConditions();
-        d_smearedChargeMomentsComputed = false;
-        initElectronicFields();
-        initPseudoPotentialAll();
-
-        //
-        // compute Tr(XtHX) for each level of mesh
-        //
-        // dataTypes::number traceXtHX =
-        // computeTraceXtHX(numberWaveFunctionsErrorEstimate); pcout<<" Tr(XtHX)
-        // value for Level: "<<countLevel<<" "<<traceXtHX<<std::endl;
-
-        //
-        // compute Tr(XtKX) for each level of mesh
-        //
-        traceXtKX = computeTraceXtKX(numberWaveFunctionsErrorEstimate);
-        if (d_dftParamsPtr->verbosity > 0)
-          pcout << " Tr(XtKX) value for Level: " << countLevel << " "
-                << traceXtKX << std::endl;
-
-        // compute change in traceXtKX
-        double deltaKinetic =
-          std::abs(traceXtKX - traceXtKXPrev) / atomLocations.size();
-
-        // reset traceXtkXPrev to traceXtKX
-        traceXtKXPrev = traceXtKX;
-
-        //
-        // set refineFlag
-        //
-        countLevel += 1;
-        if (countLevel >= numberLevelRefinements ||
-            deltaKinetic <= d_dftParamsPtr->toleranceKinetic)
-          refineFlag = false;
-      }
-  }
-
-
-  //
   // dft run
   //
   template <dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<memorySpace>::run()
   {
-    if (d_dftParamsPtr->meshAdaption)
-      aposterioriMeshGenerate();
-
     if (d_dftParamsPtr->restartFolder != "." &&
         (d_dftParamsPtr->saveQuadData) &&
         dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
@@ -2314,7 +2279,7 @@ namespace dftfe
           {
 #ifdef DFTFE_WITH_DEVICE
             kerkerPreconditionedResidualSolverProblemDevice.init(
-              d_basisOperationsPtrElectroDevice,
+              d_basisOperationsPtrElectroHost,
               d_constraintsRhoNodal,
               d_preCondTotalDensityResidualVector,
               d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ?
@@ -2438,7 +2403,13 @@ namespace dftfe
         kohnShamDFTEigenOperator.computeVEffExternalPotCorr(d_pseudoVLoc);
         computingTimerStandard.leave_subsection("Init local PSP");
       }
-
+    MPI_Barrier(d_mpiCommParent);
+    double currentTime = MPI_Wtime();
+    if (d_dftParamsPtr->verbosity >= 3 && !d_dftParamsPtr->reproducible_output)
+      {
+        pcout << "DFT-FE Timer: Total Time taken till Start of SCF Iteration: "
+              << currentTime - d_dftfeClassStartTime << " seconds" << std::endl;
+      }
 
     computingTimerStandard.enter_subsection("Total scf solve");
 
@@ -4085,7 +4056,13 @@ namespace dftfe
       }
     if (d_dftParamsPtr->verbosity >= 1)
       pcout << "Total free energy: " << d_freeEnergy << std::endl;
-
+    MPI_Barrier(d_mpiCommParent);
+    currentTime = MPI_Wtime();
+    if (d_dftParamsPtr->verbosity >= 3 && !d_dftParamsPtr->reproducible_output)
+      {
+        pcout << "DFT-FE Timer: Total Time taken till now: "
+              << currentTime - d_dftfeClassStartTime << " seconds" << std::endl;
+      }
     if (d_dftParamsPtr->verbosity >= 0 && d_dftParamsPtr->spinPolarized == 1)
       totalMagnetization(d_densityOutQuadValues[1]);
 
@@ -4113,38 +4090,6 @@ namespace dftfe
             << "DFT-FE Warning: Ion force accuracy may be affected for the given scf iteration solve tolerance: "
             << d_dftParamsPtr->selfConsistentSolverTolerance
             << ", recommended to use TOLERANCE below 1e-4." << std::endl;
-
-        if (computeForces)
-          {
-            computing_timer.enter_subsection("Ion force computation");
-            computingTimerStandard.enter_subsection("Ion force computation");
-            forcePtr->computeAtomsForces(matrix_free_data,
-                                         groupSymmetryPtr,
-                                         d_dispersionCorr,
-                                         d_eigenDofHandlerIndex,
-                                         d_smearedChargeQuadratureIdElectro,
-                                         d_lpspQuadratureIdElectro,
-                                         d_matrixFreeDataPRefined,
-                                         d_phiTotDofHandlerIndexElectro,
-                                         d_phiTotRhoOut,
-                                         d_densityOutQuadValues,
-                                         d_gradDensityOutQuadValues,
-                                         d_densityTotalOutValuesLpspQuad,
-                                         d_gradDensityTotalOutValuesLpspQuad,
-                                         d_rhoCore,
-                                         d_gradRhoCore,
-                                         d_hessianRhoCore,
-                                         d_gradRhoCoreAtoms,
-                                         d_hessianRhoCoreAtoms,
-                                         d_pseudoVLoc,
-                                         d_pseudoVLocAtoms,
-                                         d_constraintsPRefined,
-                                         d_vselfBinsManager);
-            if (d_dftParamsPtr->verbosity >= 0)
-              forcePtr->printAtomsForces();
-            computingTimerStandard.leave_subsection("Ion force computation");
-            computing_timer.leave_subsection("Ion force computation");
-          }
       }
 
     if (d_dftParamsPtr->isCellStress)
@@ -4155,57 +4100,135 @@ namespace dftfe
             << "DFT-FE Warning: Cell stress accuracy may be affected for the given scf iteration solve tolerance: "
             << d_dftParamsPtr->selfConsistentSolverTolerance
             << ", recommended to use TOLERANCE below 1e-4." << std::endl;
-
-        if (computestress)
+      }
+    if (d_dftParamsPtr->isIonForce || d_dftParamsPtr->isCellStress)
+      {
+        if (computeForces || computestress)
           {
-            computing_timer.enter_subsection("Cell stress computation");
-            computingTimerStandard.enter_subsection("Cell stress computation");
-            computeStress();
-            computingTimerStandard.leave_subsection("Cell stress computation");
-            computing_timer.leave_subsection("Cell stress computation");
+            computing_timer.enter_subsection("Force and Stress computation");
+            computingTimerStandard.enter_subsection(
+              "Force and Stress computation");
+            if (d_dftParamsPtr->isCellStress && computestress &&
+                (d_dftParamsPtr->isPseudopotential ||
+                 d_dftParamsPtr->smearedNuclearCharges))
+              {
+                computeVselfFieldGateauxDerFD();
+              }
+#ifdef DFTFE_WITH_DEVICE
+            if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
+              d_configForcePtr->computeForceAndStress(
+                d_numEigenValues,
+                d_kPointCoordinates,
+                d_kPointWeights,
+                d_domainBoundingVectors,
+                d_domainVolume,
+                groupSymmetryPtr,
+                d_dispersionCorr,
+                d_eigenVectorsFlattenedDevice,
+                eigenValues,
+                d_partialOccupancies,
+                atomLocations,
+                d_imageIdsTrunc,
+                d_imageChargesTrunc,
+                d_imagePositionsTrunc,
+                d_phiTotRhoOut,
+                d_rhoOutNodalValuesDistributed,
+                d_densityOutQuadValues,
+                d_gradDensityOutQuadValues,
+                d_tauOutQuadValues,
+                d_densityTotalOutValuesLpspQuad,
+                d_gradDensityTotalOutValuesLpspQuad,
+                d_auxDensityMatrixXCOutPtr,
+                d_rhoCore,
+                d_gradRhoCore,
+                d_hessianRhoCore,
+                d_gradRhoCoreAtoms,
+                d_hessianRhoCoreAtoms,
+                d_pseudoVLoc,
+                d_pseudoVLocAtoms,
+                d_dofHandlerRhoNodal,
+                d_vselfBinsManager,
+                d_vselfFieldGateauxDerStrainFDBins,
+                d_binsStartDofHandlerIndexElectro,
+                d_phiExtDofHandlerIndexElectro,
+                d_bQuadAtomIdsAllAtoms,
+                d_bQuadAtomIdsAllAtomsImages,
+                d_bQuadValuesAllAtoms,
+                d_smearedChargeWidths,
+                d_smearedChargeScaling,
+                d_gaussianConstantsForce,
+                d_generatorFlatTopWidths,
+                d_dftParamsPtr->floatingNuclearCharges,
+                d_dftParamsPtr->isIonForce && computeForces,
+                d_dftParamsPtr->isCellStress && computestress);
+            else
+#endif
+              d_configForcePtr->computeForceAndStress(
+                d_numEigenValues,
+                d_kPointCoordinates,
+                d_kPointWeights,
+                d_domainBoundingVectors,
+                d_domainVolume,
+                groupSymmetryPtr,
+                d_dispersionCorr,
+                d_eigenVectorsFlattenedHost,
+                eigenValues,
+                d_partialOccupancies,
+                atomLocations,
+                d_imageIdsTrunc,
+                d_imageChargesTrunc,
+                d_imagePositionsTrunc,
+                d_phiTotRhoOut,
+                d_rhoOutNodalValuesDistributed,
+                d_densityOutQuadValues,
+                d_gradDensityOutQuadValues,
+                d_tauOutQuadValues,
+                d_densityTotalOutValuesLpspQuad,
+                d_gradDensityTotalOutValuesLpspQuad,
+                d_auxDensityMatrixXCOutPtr,
+                d_rhoCore,
+                d_gradRhoCore,
+                d_hessianRhoCore,
+                d_gradRhoCoreAtoms,
+                d_hessianRhoCoreAtoms,
+                d_pseudoVLoc,
+                d_pseudoVLocAtoms,
+                d_dofHandlerRhoNodal,
+                d_vselfBinsManager,
+                d_vselfFieldGateauxDerStrainFDBins,
+                d_binsStartDofHandlerIndexElectro,
+                d_phiExtDofHandlerIndexElectro,
+                d_bQuadAtomIdsAllAtoms,
+                d_bQuadAtomIdsAllAtomsImages,
+                d_bQuadValuesAllAtoms,
+                d_smearedChargeWidths,
+                d_smearedChargeScaling,
+                d_gaussianConstantsForce,
+                d_generatorFlatTopWidths,
+                d_dftParamsPtr->floatingNuclearCharges,
+                d_dftParamsPtr->isIonForce && computeForces,
+                d_dftParamsPtr->isCellStress && computestress);
+            if (d_dftParamsPtr->isIonForce && computeForces &&
+                (d_dftParamsPtr->verbosity >= 0))
+              d_configForcePtr->printAtomsForces();
+            if (d_dftParamsPtr->isCellStress && computestress &&
+                (d_dftParamsPtr->verbosity >= 0))
+              d_configForcePtr->printStress();
+            computingTimerStandard.leave_subsection(
+              "Force and Stress computation");
+            MPI_Barrier(d_mpiCommParent);
+            double currentTime = MPI_Wtime();
+            if (d_dftParamsPtr->verbosity >= 3 &&
+                !d_dftParamsPtr->reproducible_output)
+              {
+                pcout << "DFT-FE Timer: Total Time taken till now: "
+                      << currentTime - d_dftfeClassStartTime << " seconds"
+                      << std::endl;
+              }
+            computing_timer.leave_subsection("Force and Stress computation");
           }
       }
     return std::make_tuple(scfConverged, norm);
-  }
-
-
-  template <dftfe::utils::MemorySpace memorySpace>
-  void
-  dftClass<memorySpace>::computeStress()
-  {
-    KohnShamDFTBaseOperator<memorySpace> &kohnShamDFTEigenOperator =
-      *d_kohnShamDFTOperatorPtr;
-
-    if (d_dftParamsPtr->isPseudopotential ||
-        d_dftParamsPtr->smearedNuclearCharges)
-      {
-        computeVselfFieldGateauxDerFD();
-      }
-
-    forcePtr->computeStress(matrix_free_data,
-                            groupSymmetryPtr,
-                            d_dispersionCorr,
-                            d_eigenDofHandlerIndex,
-                            d_smearedChargeQuadratureIdElectro,
-                            d_lpspQuadratureIdElectro,
-                            d_matrixFreeDataPRefined,
-                            d_phiTotDofHandlerIndexElectro,
-                            d_phiTotRhoOut,
-                            d_densityOutQuadValues,
-                            d_gradDensityOutQuadValues,
-                            d_densityTotalOutValuesLpspQuad,
-                            d_gradDensityTotalOutValuesLpspQuad,
-                            d_pseudoVLoc,
-                            d_pseudoVLocAtoms,
-                            d_rhoCore,
-                            d_gradRhoCore,
-                            d_hessianRhoCore,
-                            d_gradRhoCoreAtoms,
-                            d_hessianRhoCoreAtoms,
-                            d_constraintsPRefined,
-                            d_vselfBinsManager);
-    if (d_dftParamsPtr->verbosity >= 0)
-      forcePtr->printStress();
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
@@ -4482,11 +4505,8 @@ namespace dftfe
       std::numeric_limits<double>::min(),
       std::numeric_limits<dftfe::uInt>::min(),
       true,
-      dealii::DataOutBase::VtkFlags::ZlibCompressionLevel::
-        best_speed, // This flag is version dependent for dealII 9.5.0 it
-                    // is
-                    // dealii::DataOutBase::CompressionLevel::best_speed
-      true));       // higher order cells set to true
+      dealii::DataOutBase::CompressionLevel::best_speed,
+      true)); // higher order cells set to true
     data_outEigen.build_patches(d_dftParamsPtr->finiteElementPolynomialOrder);
 
     std::string tempFolder = "waveFunctionOutputFolder";
@@ -4556,11 +4576,8 @@ namespace dftfe
       std::numeric_limits<double>::min(),
       std::numeric_limits<dftfe::uInt>::min(),
       true,
-      dealii::DataOutBase::VtkFlags::ZlibCompressionLevel::
-        best_speed, // This flag is version dependent for dealII 9.5.0 it
-                    // is
-                    // dealii::DataOutBase::CompressionLevel::best_speed
-      true));       // higher order cells set to true
+      dealii::DataOutBase::CompressionLevel::best_speed,
+      true)); // higher order cells set to true
     dataOutRho.build_patches(d_dftParamsPtr->finiteElementPolynomialOrder);
 
     std::string tempFolder = "densityOutputFolder";
@@ -4883,14 +4900,14 @@ namespace dftfe
   const std::vector<double> &
   dftClass<memorySpace>::getForceonAtoms() const
   {
-    return (forcePtr->getAtomsForces());
+    return (d_configForcePtr->getAtomsForces());
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
   const dealii::Tensor<2, 3, double> &
   dftClass<memorySpace>::getCellStress() const
   {
-    return (forcePtr->getStress());
+    return (d_configForcePtr->getStress());
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
@@ -5102,11 +5119,8 @@ namespace dftfe
       std::numeric_limits<double>::min(),
       std::numeric_limits<dftfe::uInt>::min(),
       true,
-      dealii::DataOutBase::VtkFlags::ZlibCompressionLevel::
-        best_speed, // This flag is version dependent for dealII 9.5.0 it
-                    // is
-                    // dealii::DataOutBase::CompressionLevel::best_speed
-      true));       // higher order cells set to true
+      dealii::DataOutBase::CompressionLevel::best_speed,
+      true)); // higher order cells set to true
     dataOutRho.build_patches(d_dftParamsPtr->finiteElementPolynomialOrder);
 
     std::string tempFolder = "meshOutputFolder";
@@ -5181,33 +5195,6 @@ namespace dftfe
                                       d_densityDofHandlerIndexElectro,
                                       d_densityQuadratureIdElectro);
     return normValue;
-  }
-  template <dftfe::utils::MemorySpace memorySpace>
-  void
-  dftClass<memorySpace>::determineAtomsOfInterstPseudopotential(
-    const std::vector<std::vector<double>> &atomCoordinates)
-  {
-    d_atomLocationsInterestPseudopotential.clear();
-    d_atomIdPseudopotentialInterestToGlobalId.clear();
-    dftfe::uInt atomIdPseudo = 0;
-    // pcout<<"Atoms of interest: "<<std::endl;
-    for (dftfe::uInt iAtom = 0; iAtom < atomCoordinates.size(); iAtom++)
-      {
-        if (true)
-          {
-            d_atomLocationsInterestPseudopotential.push_back(
-              atomCoordinates[iAtom]);
-            d_atomIdPseudopotentialInterestToGlobalId[atomIdPseudo] = iAtom;
-            // pcout<<iAtom<<" "<<atomIdPseudo<<" ";
-            // for(dftfe::Int i = 0; i <
-            // d_atomLocationsInterestPseudopotential[atomIdPseudo].size();
-            // i++)
-            //   pcout<<d_atomLocationsInterestPseudopotential[atomIdPseudo][i]<<"
-            //   ";
-            // pcout<<std::endl;
-            atomIdPseudo++;
-          }
-      }
   }
 
   template <dftfe::utils::MemorySpace memorySpace>

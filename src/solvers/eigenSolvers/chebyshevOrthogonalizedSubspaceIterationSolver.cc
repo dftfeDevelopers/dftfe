@@ -523,7 +523,7 @@ namespace dftfe
       }
 
     computingTimerStandard.leave_subsection("Chebyshev filtering on CPU");
-    if (d_dftParams.verbosity >= 4)
+    if (d_dftParams.verbosity >= 3)
       pcout << "ChebyShev Filtering Done: " << std::endl;
 
     if (d_dftParams.orthogType.compare("CGS") == 0)
@@ -587,7 +587,7 @@ namespace dftfe
           eigenVectorsFlattened);
         computing_timer.leave_subsection("Gram-Schmidt Orthogn Opt");
 
-        if (d_dftParams.verbosity >= 4)
+        if (d_dftParams.verbosity >= 3)
           pcout << "Orthogonalization Done: " << std::endl;
 
         computing_timer.enter_subsection("Rayleigh-Ritz proj Opt");
@@ -609,7 +609,7 @@ namespace dftfe
 
         computing_timer.leave_subsection("Rayleigh-Ritz proj Opt");
 
-        if (d_dftParams.verbosity >= 4)
+        if (d_dftParams.verbosity >= 3)
           {
             pcout << "Rayleigh-Ritz Done: " << std::endl;
             pcout << std::endl;
@@ -636,7 +636,7 @@ namespace dftfe
       }
 
 
-    if (d_dftParams.verbosity >= 4)
+    if (d_dftParams.verbosity >= 3)
       {
         pcout << "EigenVector Residual Computation Done: " << std::endl;
         pcout << std::endl;

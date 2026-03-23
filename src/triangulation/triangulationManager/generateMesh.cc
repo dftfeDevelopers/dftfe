@@ -749,27 +749,17 @@ namespace dftfe
     dealii::DoFHandler<3> dofHandler;
     dofHandler.reinit(parallelTriangulation);
     dofHandler.distribute_dofs(FE);
-    dealii::IndexSet locally_relevant_dofs;
-    dealii::DoFTools::extract_locally_relevant_dofs(dofHandler,
-                                                    locally_relevant_dofs);
+    dealii::IndexSet locally_relevant_dofs =
+      dealii::DoFTools::extract_locally_relevant_dofs(dofHandler);
+    dealii::IndexSet locally_owned_dofs = dofHandler.locally_owned_dofs();
 
     dealii::AffineConstraints<double> constraints;
     constraints.clear();
-    constraints.reinit(locally_relevant_dofs);
+    constraints.reinit(locally_owned_dofs, locally_relevant_dofs);
     dealii::DoFTools::make_hanging_node_constraints(dofHandler, constraints);
     std::vector<dealii::GridTools::PeriodicFacePair<
       typename dealii::DoFHandler<3>::cell_iterator>>
       periodicity_vector;
-
-    // create unitVectorsXYZ
-    std::vector<std::vector<double>> unitVectorsXYZ;
-    unitVectorsXYZ.resize(3);
-
-    for (dftfe::Int i = 0; i < 3; ++i)
-      {
-        unitVectorsXYZ[i].resize(3, 0.0);
-        unitVectorsXYZ[i][i] = 0.0;
-      }
 
     std::vector<dealii::Tensor<1, 3>> offsetVectors;
     // resize offset vectors
@@ -779,8 +769,7 @@ namespace dftfe
       {
         for (dftfe::Int j = 0; j < 3; ++j)
           {
-            offsetVectors[i][j] =
-              unitVectorsXYZ[i][j] - d_domainBoundingVectors[i][j];
+            offsetVectors[i][j] = -d_domainBoundingVectors[i][j];
           }
       }
 
@@ -812,11 +801,11 @@ namespace dftfe
 
     dealii::DoFTools::make_periodicity_constraints<3, 3>(periodicity_vector,
                                                          constraints);
-    constraints.close();
+    dftfe::vectorTools::makeAffineConstraintsConsistentInParallel(dofHandler,
+                                                                  constraints);
 
-    dealii::IndexSet locally_active_dofs_debug;
-    dealii::DoFTools::extract_locally_active_dofs(dofHandler,
-                                                  locally_active_dofs_debug);
+    dealii::IndexSet locally_active_dofs_debug =
+      dealii::DoFTools::extract_locally_active_dofs(dofHandler);
 
     const std::vector<dealii::IndexSet> &locally_owned_dofs_debug =
       dealii::Utilities::MPI::all_gather(mpi_communicator,
