@@ -87,8 +87,7 @@ namespace dftfe
                                  d_mpiComm));
               onecclIdPtr = ccl::create_kvs(onecclIdAddr);
             }
-          // Use create_communicators (plural) with explicit rank-device
-          // vector to pass sycl device and context for Level Zero support
+
           ccl::vector_class<ccl::pair_class<int, ccl::device>> rankDeviceMap;
           rankDeviceMap.push_back(
             {myRank, ccl::create_device(dftfe::utils::syclDevice)});
@@ -99,9 +98,6 @@ namespace dftfe
                                                  onecclIdPtr);
           onecclCommPtr =
             std::make_shared<ccl::communicator>(std::move(comms[0]));
-          d_deviceCCLCommStream =
-            std::make_shared<ccl::stream>(ccl::create_stream(
-              dftfe::utils::queueRegistry.at(d_deviceCommStream)));
           dcclCommInit = true;
         }
 #  endif
@@ -123,7 +119,6 @@ namespace dftfe
 #  if defined(DFTFE_WITH_SYCL_ONECCL)
       if (dcclCommInit)
         {
-          d_deviceCCLCommStream.reset();
           onecclCommPtr.reset();
           onecclIdPtr.reset();
         }
@@ -304,8 +299,6 @@ namespace dftfe
                                    d_mpiComm));
         }
 #  endif
-
-
       return 0;
     }
 

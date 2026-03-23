@@ -911,7 +911,7 @@ namespace dftfe
                 {
                   MemoryTransfer<memorySpace, MemorySpace::HOST_PINNED>
                     memoryTransfer;
-                  if (d_ghostDataCopyHostPinnedPtr->size() > 0)
+                  if (d_ghostDataCopySinglePrecHostPinnedPtr->size() > 0)
                     memoryTransfer.copy(
                       d_ghostDataCopySinglePrecHostPinnedPtr->size(),
                       d_ghostDataCopySinglePrec.data(),
@@ -948,7 +948,7 @@ namespace dftfe
                 {
                   MemoryTransfer<memorySpace, MemorySpace::HOST_PINNED>
                     memoryTransfer;
-                  if (d_ghostDataCopyHostPinnedPtr->size() > 0)
+                  if (d_ghostDataCopyHalfPrecHostPinnedPtr->size() > 0)
                     memoryTransfer.copy(
                       d_ghostDataCopyHalfPrecHostPinnedPtr->size(),
                       d_ghostDataCopyHalfPrec.data(),
@@ -1228,7 +1228,7 @@ namespace dftfe
                   {
                     MemoryTransfer<MemorySpace::HOST_PINNED, memorySpace>
                       memoryTransfer;
-                    if (d_ghostDataCopyHostPinnedPtr->size() > 0)
+                    if (d_ghostDataCopySinglePrecHostPinnedPtr->size() > 0)
                       memoryTransfer.copy(
                         d_ghostDataCopySinglePrecHostPinnedPtr->size(),
                         d_ghostDataCopySinglePrecHostPinnedPtr->begin(),
@@ -1417,7 +1417,7 @@ namespace dftfe
                   {
                     MemoryTransfer<MemorySpace::HOST_PINNED, memorySpace>
                       memoryTransfer;
-                    if (d_ghostDataCopyHostPinnedPtr->size() > 0)
+                    if (d_ghostDataCopyHalfPrecHostPinnedPtr->size() > 0)
                       memoryTransfer.copy(
                         d_ghostDataCopyHalfPrecHostPinnedPtr->size(),
                         d_ghostDataCopyHalfPrecHostPinnedPtr->begin(),
@@ -1934,7 +1934,7 @@ namespace dftfe
                   {
                     MemoryTransfer<MemorySpace::HOST_PINNED, memorySpace>
                       memoryTransfer;
-                    if (d_ghostDataCopyHostPinnedPtr->size() > 0)
+                    if (d_ghostDataCopySinglePrecHostPinnedPtr->size() > 0)
                       memoryTransfer.copy(
                         d_ghostDataCopySinglePrecHostPinnedPtr->size(),
                         d_ghostDataCopySinglePrecHostPinnedPtr->begin(),

@@ -24,13 +24,10 @@
 #    include <DeviceTypeConfig.h>
 #    if defined(DFTFE_WITH_CUDA_NCCL)
 #      include <nccl.h>
-#      include <DeviceTypeConfig.h>
 #    elif defined(DFTFE_WITH_HIP_RCCL)
 #      include <rccl.h>
-#      include <DeviceTypeConfig.h>
 #    elif defined(DFTFE_WITH_SYCL_ONECCL)
 #      include <oneapi/ccl.hpp>
-#      include <DeviceTypeConfig.h>
 #    endif
 
 namespace dftfe
@@ -143,7 +140,6 @@ namespace dftfe
 #    if defined(DFTFE_WITH_SYCL_ONECCL)
       inline static std::shared_ptr<ccl::kvs>          onecclIdPtr;
       inline static std::shared_ptr<ccl::communicator> onecclCommPtr;
-      inline static std::shared_ptr<ccl::stream>       d_deviceCCLCommStream;
 #    endif
 
       inline static bool                         dcclCommInit;
