@@ -153,13 +153,15 @@ namespace dftfe
         {
           auto devStream =
             ccl::create_stream(dftfe::utils::queueRegistry.at(stream));
-          ONECCLCHECK(ccl::allreduce((const void *)send,
-                                     (void *)recv,
-                                     size,
-                                     ccl::datatype::float32,
-                                     ccl::reduction::sum,
-                                     *onecclCommPtr,
-                                     devStream));
+          ccl::event e;
+          ONECCLCHECK(e = ccl::allreduce((const void *)send,
+                                         (void *)recv,
+                                         size,
+                                         ccl::datatype::float32,
+                                         ccl::reduction::sum,
+                                         *onecclCommPtr,
+                                         devStream));
+          e.wait();
         }
 #  endif
 
@@ -210,13 +212,15 @@ namespace dftfe
         {
           auto devStream =
             ccl::create_stream(dftfe::utils::queueRegistry.at(stream));
-          ONECCLCHECK(ccl::allreduce((const void *)send,
-                                     (void *)recv,
-                                     size,
-                                     ccl::datatype::float64,
-                                     ccl::reduction::sum,
-                                     *onecclCommPtr,
-                                     devStream));
+          ccl::event e;
+          ONECCLCHECK(e = ccl::allreduce((const void *)send,
+                                         (void *)recv,
+                                         size,
+                                         ccl::datatype::float64,
+                                         ccl::reduction::sum,
+                                         *onecclCommPtr,
+                                         devStream));
+          e.wait();
         }
 #  endif
 
@@ -269,13 +273,15 @@ namespace dftfe
         {
           auto devStream =
             ccl::create_stream(dftfe::utils::queueRegistry.at(stream));
-          ONECCLCHECK(ccl::allreduce((const void *)send,
-                                     (void *)recv,
-                                     size * 2,
-                                     ccl::datatype::float64,
-                                     ccl::reduction::sum,
-                                     *onecclCommPtr,
-                                     devStream));
+          ccl::event e;
+          ONECCLCHECK(e = ccl::allreduce((const void *)send,
+                                         (void *)recv,
+                                         size * 2,
+                                         ccl::datatype::float64,
+                                         ccl::reduction::sum,
+                                         *onecclCommPtr,
+                                         devStream));
+          e.wait();
         }
 #  endif
 
@@ -327,13 +333,15 @@ namespace dftfe
         {
           auto devStream =
             ccl::create_stream(dftfe::utils::queueRegistry.at(stream));
-          ONECCLCHECK(ccl::allreduce((const void *)send,
-                                     (void *)recv,
-                                     size * 2,
-                                     ccl::datatype::float32,
-                                     ccl::reduction::sum,
-                                     *onecclCommPtr,
-                                     devStream));
+          ccl::event e;
+          ONECCLCHECK(e = ccl::allreduce((const void *)send,
+                                         (void *)recv,
+                                         size * 2,
+                                         ccl::datatype::float32,
+                                         ccl::reduction::sum,
+                                         *onecclCommPtr,
+                                         devStream));
+          e.wait();
         }
 #  endif
 
@@ -399,26 +407,28 @@ namespace dftfe
           auto devStream =
             ccl::create_stream(dftfe::utils::queueRegistry.at(stream));
 
+          ccl::event e1, e2;
           ONECCLCHECK(ccl::group_start());
 
-          ONECCLCHECK(ccl::allreduce((const void *)send1,
-                                     (void *)recv1,
-                                     size1,
-                                     ccl::datatype::float64,
-                                     ccl::reduction::sum,
-                                     *onecclCommPtr,
-                                     devStream));
+          ONECCLCHECK(e1 = ccl::allreduce((const void *)send1,
+                                          (void *)recv1,
+                                          size1,
+                                          ccl::datatype::float64,
+                                          ccl::reduction::sum,
+                                          *onecclCommPtr,
+                                          devStream));
 
-          ONECCLCHECK(ccl::allreduce((const void *)send2,
-                                     (void *)recv2,
-                                     size2,
-                                     ccl::datatype::float32,
-                                     ccl::reduction::sum,
-                                     *onecclCommPtr,
-                                     devStream));
-
+          ONECCLCHECK(e2 = ccl::allreduce((const void *)send2,
+                                          (void *)recv2,
+                                          size2,
+                                          ccl::datatype::float32,
+                                          ccl::reduction::sum,
+                                          *onecclCommPtr,
+                                          devStream));
 
           ONECCLCHECK(ccl::group_end());
+          e1.wait();
+          e2.wait();
         }
 #  endif
 
@@ -501,24 +511,28 @@ namespace dftfe
           auto devStream =
             ccl::create_stream(dftfe::utils::queueRegistry.at(stream));
 
+          ccl::event e1, e2;
           ONECCLCHECK(ccl::group_start());
 
-          ONECCLCHECK(ccl::allreduce((const void *)send1,
-                                     (void *)recv1,
-                                     size1 * 2,
-                                     ccl::datatype::float64,
-                                     ccl::reduction::sum,
-                                     *onecclCommPtr,
-                                     devStream));
+          ONECCLCHECK(e1 = ccl::allreduce((const void *)send1,
+                                          (void *)recv1,
+                                          size1 * 2,
+                                          ccl::datatype::float64,
+                                          ccl::reduction::sum,
+                                          *onecclCommPtr,
+                                          devStream));
 
-          ONECCLCHECK(ccl::allreduce((const void *)send2,
-                                     (void *)recv2,
-                                     size2 * 2,
-                                     ccl::datatype::float32,
-                                     ccl::reduction::sum,
-                                     *onecclCommPtr,
-                                     devStream));
+          ONECCLCHECK(e2 = ccl::allreduce((const void *)send2,
+                                          (void *)recv2,
+                                          size2 * 2,
+                                          ccl::datatype::float32,
+                                          ccl::reduction::sum,
+                                          *onecclCommPtr,
+                                          devStream));
+
           ONECCLCHECK(ccl::group_end());
+          e1.wait();
+          e2.wait();
         }
 #  endif
 
