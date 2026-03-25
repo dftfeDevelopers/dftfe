@@ -18,13 +18,13 @@
 /*
  * @author Sambit Das.
  */
-
 #include <MPICommunicatorP2P.h>
 #include <MPICommunicatorP2PKernels.h>
 #include <MPITags.h>
 #include <Exceptions.h>
 #include <DeviceAPICalls.h>
 #include <deviceDirectCCLWrapper.h>
+
 namespace dftfe
 {
   namespace utils
@@ -48,7 +48,7 @@ namespace dftfe
 #endif
 #if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
         if (memorySpace == MemorySpace::DEVICE &&
-            dftfe::utils::DeviceCCLWrapper::ncclCommInit)
+            dftfe::utils::DeviceCCLWrapper::dcclCommInit)
           d_commProtocol = communicationProtocol::nccl;
 #endif
 

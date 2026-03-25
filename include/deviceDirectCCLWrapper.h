@@ -18,18 +18,16 @@
 #if defined(DFTFE_WITH_DEVICE)
 #  ifndef deviceDirectCCLWrapper_h
 #    define deviceDirectCCLWrapper_h
-
 #    include <complex>
 #    include <mpi.h>
 #    include <TypeConfig.h>
 #    include <DeviceTypeConfig.h>
-
 #    if defined(DFTFE_WITH_CUDA_NCCL)
 #      include <nccl.h>
-#      include <DeviceTypeConfig.h>
 #    elif defined(DFTFE_WITH_HIP_RCCL)
 #      include <rccl.h>
-#      include <DeviceTypeConfig.h>
+#    elif defined(DFTFE_WITH_SYCL_ONECCL)
+#      include <oneapi/ccl.hpp>
 #    endif
 
 namespace dftfe
@@ -51,6 +49,26 @@ namespace dftfe
               }                                           \
         } while (0)
 #    endif
+
+#    if defined(DFTFE_WITH_SYCL_ONECCL)
+#      define ONECCLCHECK(cmd)                              \
+        do                                                  \
+          {                                                 \
+            try                                             \
+              {                                             \
+                cmd;                                        \
+              }                                             \
+            catch (const ccl::exception &e)                 \
+              {                                             \
+                printf("Failed, oneCCL error %s:%d '%s'\n", \
+                       __FILE__,                            \
+                       __LINE__,                            \
+                       e.what());                           \
+                exit(EXIT_FAILURE);                         \
+              }                                             \
+        } while (0)
+#    endif
+
     /**
      *  @brief Wrapper class for Device Direct collective communications library.
      *  Adapted from
@@ -118,7 +136,13 @@ namespace dftfe
       inline static ncclUniqueId *ncclIdPtr;
       inline static ncclComm_t   *ncclCommPtr;
 #    endif
-      inline static bool                         ncclCommInit;
+
+#    if defined(DFTFE_WITH_SYCL_ONECCL)
+      inline static std::shared_ptr<ccl::kvs>          onecclIdPtr;
+      inline static std::shared_ptr<ccl::communicator> onecclCommPtr;
+#    endif
+
+      inline static bool                         dcclCommInit;
       inline static dftfe::utils::deviceStream_t d_deviceCommStream;
       inline static bool                         commStreamCreated;
       inline static dftfe::Int d_deviceDirectDCCLInstanceCounter;

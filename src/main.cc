@@ -48,7 +48,6 @@
 int
 main(int argc, char *argv[])
 {
-  //
   MPI_Init(&argc, &argv);
 
 #if defined(DFTFE_WITH_MDI)
@@ -179,6 +178,9 @@ main(int argc, char *argv[])
 #    endif
 #    if defined(DFTFE_WITH_HIP_RCCL)
       std::cout << "with RCCL support, ";
+#    endif
+#    if defined(DFTFE_WITH_SYCL_ONECCL)
+      std::cout << "with ONECCL support, ";
 #    endif
 #  else
       std::cout << "without GPU support, ";

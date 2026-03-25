@@ -20,11 +20,6 @@ SET(TARGET_VERSION "1.0-pre") # used in docs/Doxyfile.in
 
 add_definitions(-w)
 
-#FIXME: find a better way to replace O3 with O2 in CMAKE_CXX_FLAGS_RELEASE
-IF("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-  add_compile_options("-O2")
-ENDIF()
-
 IF (USE_64BIT_INT)
   IF ("${GPU_VENDOR}" STREQUAL "intel")
     add_compile_options("-fno-sycl-id-queries-fit-in-int")
@@ -123,6 +118,7 @@ SET(TARGET_SRC
   ./src/symmetry/groupSymmetry.cc
   ./src/geoOpt/geoOptIon.cc
   ./src/geoOpt/geoOptCell.cc
+  ./src/matrixFree/MatrixFree.cc
   ./src/solvers/nonlinearSolverProblem.cc
   ./src/solvers/nonLinearSolver.cc
   ./src/solvers/linearSolver.cc
@@ -235,13 +231,13 @@ SET(DEVICE_SRC
   ./utils/MPICommunicatorP2PKernelsDevice.cc
   ./utils/compressionWrapperDevice.cc
   ./src/solvers/linearSolverCGDeviceKernels.cc
-  ./utils/matrixFreeDeviceKernels.cc
+  ./src/matrixFree/MatrixFreeDevice.cc
   ./utils/FEBasisOperationsKernelsInternalDevice.cc
   ./src/atom/AtomicCenteredNonLocalOperatorKernelsDevice.cc
   ./src/force/configurationalForceKernels.cc
   ./src/dftOperator/KohnShamHamiltonianOperatorDeviceKernels.cc
   ./src/excManager/excManagerDeviceKernels.cc
-  ./src/excManager/exchangeCorrelationFunctionalEvaluatorDevice.cc  
+  ./src/excManager/exchangeCorrelationFunctionalEvaluatorDevice.cc
   )
 ELSEIF ("${GPU_LANG}" STREQUAL "hip")
 SET(DEVICE_SRC
@@ -258,7 +254,7 @@ SET(DEVICE_SRC
   ./utils/MPICommunicatorP2PKernelsDevice.cc
   ./utils/compressionWrapperDevice.cc
   ./src/solvers/linearSolverCGDeviceKernels.cc
-  ./utils/matrixFreeDeviceKernels.cc
+  ./src/matrixFree/MatrixFreeDevice.cc
   ./utils/FEBasisOperationsKernelsInternalDevice.cc
   ./src/atom/AtomicCenteredNonLocalOperatorKernelsDevice.cc
   ./src/dftOperator/KohnShamHamiltonianOperatorDeviceKernels.cc
@@ -281,12 +277,12 @@ SET(DEVICE_SRC
   ./utils/MPICommunicatorP2PKernelsDevice.cc
   ./utils/compressionWrapperDevice.cc
   ./src/solvers/linearSolverCGDeviceKernels.cc
-  ./utils/matrixFreeDeviceKernels.cc
+  ./src/matrixFree/MatrixFreeDevice.cc
   ./utils/FEBasisOperationsKernelsInternalDevice.cc
   ./src/atom/AtomicCenteredNonLocalOperatorKernelsDevice.cc
   ./src/dftOperator/KohnShamHamiltonianOperatorDeviceKernels.cc
   ./src/excManager/excManagerDeviceKernels.cc
-  ./src/excManager/exchangeCorrelationFunctionalEvaluatorDevice.cc  
+  ./src/excManager/exchangeCorrelationFunctionalEvaluatorDevice.cc
   ./src/force/configurationalForceKernels.cc
   )
 
@@ -308,7 +304,7 @@ IF (WITH_GPU)
     ENDIF()
 ENDIF()
 IF (WITH_GPU)
-  LIST(APPEND TARGET_SRC 
+  LIST(APPEND TARGET_SRC
   ./src/linAlg/linearAlgebraOperationsDevice.cc
   ./utils/constraintMatrixInfoDevice.cc
   ./src/dft/solveVselfInBinsDevice.cc
@@ -711,6 +707,20 @@ IF (WITH_GPU AND "${GPU_LANG}" STREQUAL "hip")
  ENDIF()
 ENDIF()
 
+#
+# ONECCL. Pass path to -DCMAKE_PREFIX_PATH
+#
+IF (WITH_GPU AND "${GPU_LANG}" STREQUAL "sycl")
+ IF (WITH_DCCL)
+   find_package(ONECCL REQUIRED)
+   IF (ONECCL_FOUND)
+      MESSAGE(STATUS "Will Link With ONECCL")
+      ADD_DEFINITIONS(-DDFTFE_WITH_SYCL_ONECCL)
+      find_package(MPI REQUIRED)
+      target_link_libraries(${TARGETLIB} PUBLIC ONECCL MPI::MPI_CXX)
+   ENDIF()
+ ENDIF()
+ENDIF()
 
 TARGET_INCLUDE_DIRECTORIES(${TARGETLIB} PUBLIC ${CMAKE_SOURCE_DIR}/include)
 TARGET_LINK_LIBRARIES(${TARGET} PUBLIC ${TARGETLIB})
