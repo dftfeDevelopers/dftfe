@@ -27,7 +27,7 @@ namespace dftfe
       uint8_t real;
       uint8_t imag;
 
-      __forceinline__ __device__ constexpr ComplexU8(uint8_t r = 0,
+      __forceinline__ __host__ constexpr ComplexU8(uint8_t r = 0,
                                                      uint8_t i = 0)
         : real(r)
         , imag(i)

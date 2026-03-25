@@ -114,25 +114,24 @@ namespace dftfe
                     d_blockSize,
                   0.0);
 
-              d_compressBitsPerValue = 12;
+              d_compressBitsPerValue = 16;
 
               d_maxCompressedTargetBytes =
-                d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size() *
-                d_blockSize * d_compressBitsPerValue / 8;
-
-              d_maxCompressedTargetBytes =
-                ((d_maxCompressedTargetBytes + 7) / 8) * 8;
-
-              d_maxCompressedGhostBytes = d_mpiPatternP2P->localGhostSize() *
-                                          d_blockSize * d_compressBitsPerValue /
-                                          8;
+                ((d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size() *
+                    d_blockSize * d_compressBitsPerValue / 8 +
+                  7) /
+                 8) *
+                8;
 
               d_maxCompressedGhostBytes =
-                ((d_maxCompressedGhostBytes + 7) / 8) * 8;
+                ((d_mpiPatternP2P->localGhostSize() * d_blockSize *
+                    d_compressBitsPerValue / 8 +
+                  7) /
+                 8) *
+                8;
 
-              // Pre-allocate device-side compressed buffers
-              d_sendRecvBufferCompress.resize(d_maxCompressedTargetBytes, 0);
-              d_ghostDataCopyCompress.resize(d_maxCompressedGhostBytes, 0);
+              d_activeCompressedTargetBytes = d_maxCompressedTargetBytes;
+              d_activeCompressedGhostBytes  = d_maxCompressedGhostBytes;
 
               d_ghostDataCopyCompressHostPinnedPtr =
                 std::make_shared<MemoryStorage<
@@ -311,21 +310,25 @@ namespace dftfe
 
         else if (precision == communicationPrecision::compress)
           {
-            dftfe::uInt neededTargetBytes =
-              d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size() *
-              d_blockSize * d_compressBitsPerValue / 8;
-            neededTargetBytes = ((neededTargetBytes + 7) / 8) * 8;
+            d_activeCompressedTargetBytes =
+              ((d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size() *
+                  d_blockSize * d_compressBitsPerValue / 8 +
+                7) /
+               8) *
+              8;
 
-            dftfe::uInt neededGhostBytes =
-              d_mpiPatternP2P->localGhostSize() *
-              d_blockSize * d_compressBitsPerValue / 8;
-            neededGhostBytes = ((neededGhostBytes + 7) / 8) * 8;
+            d_activeCompressedGhostBytes =
+              ((d_mpiPatternP2P->localGhostSize() * d_blockSize *
+                  d_compressBitsPerValue / 8 +
+                7) /
+               8) *
+              8;
 
-            // Keep max to avoid shrinking when bpv drops (12 -> 8)
+            // Keep max to avoid shrinking when bpv drops (16 -> 8)
             d_maxCompressedTargetBytes =
-              std::max(d_maxCompressedTargetBytes, neededTargetBytes);
+              std::max(d_maxCompressedTargetBytes, d_activeCompressedTargetBytes);
             d_maxCompressedGhostBytes =
-              std::max(d_maxCompressedGhostBytes, neededGhostBytes);
+              std::max(d_maxCompressedGhostBytes, d_activeCompressedGhostBytes);
 
             if (d_sendRecvBufferCompress.size() < d_maxCompressedTargetBytes)
               d_sendRecvBufferCompress.resize(d_maxCompressedTargetBytes, 0);
@@ -377,7 +380,9 @@ namespace dftfe
         dftfe::uInt bpv)
       {
 #ifdef DFTFE_WITH_DEVICE
-        d_compressBitsPerValue = bpv;
+        d_compressBitsPerValue        = bpv;
+        d_activeCompressedTargetBytes = ((d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size() * d_blockSize * bpv / 8 + 7) / 8) * 8;
+        d_activeCompressedGhostBytes  = ((d_mpiPatternP2P->localGhostSize() * d_blockSize * bpv / 8 + 7) / 8) * 8;
 #endif
       }
 
@@ -1068,16 +1073,9 @@ namespace dftfe
                     MemoryTransfer<MemorySpace::HOST_PINNED, memorySpace>
                       memoryTransfer;
 
-                    const dftfe::uInt activeTargetBytes =
-                      ((d_mpiPatternP2P
-                          ->getOwnedLocalIndicesForTargetProcs()
-                          .size() *
-                        d_blockSize * d_compressBitsPerValue / 8) +
-                       7) /
-                      8 * 8;
-                    if (activeTargetBytes > 0)
+                    if (d_activeCompressedTargetBytes > 0)
                       memoryTransfer.copy(
-                        activeTargetBytes,
+                        d_activeCompressedTargetBytes,
                         d_sendRecvBufferCompressHostPinnedPtr->begin(),
                         d_sendRecvBufferCompress.begin());
 
@@ -1308,40 +1306,30 @@ namespace dftfe
                 {
                   MemoryTransfer<memorySpace, MemorySpace::HOST_PINNED>
                     memoryTransfer;
-                  const dftfe::uInt activeGhostBytes =
-                    ((d_mpiPatternP2P->localGhostSize() * d_blockSize *
-                      d_compressBitsPerValue / 8) +
-                     7) /
-                    8 * 8;
-                  if (activeGhostBytes > 0)
+                  if (d_activeCompressedGhostBytes > 0)
                     memoryTransfer.copy(
-                      activeGhostBytes,
+                      d_activeCompressedGhostBytes,
                       d_ghostDataCopyCompress.data(),
                       d_ghostDataCopyCompressHostPinnedPtr->data());
                 }
             if constexpr (memorySpace == MemorySpace::DEVICE)
               {
-                // Begin Decompression
-                if (d_maxCompressedGhostBytes > 0)
-                  {
-                    if (d_useZfpCompression)
-                      dftfe::compressionWrapper::decompress(
-                        d_ghostDataCopyCompress.data(),
-                        dataArray.data() +
-                          d_mpiPatternP2P->localOwnedSize() * d_blockSize,
-                        d_mpiPatternP2P->localGhostSize() * d_blockSize,
-                        d_compressBitsPerValue,
-                        dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
-                    else
-                      dftfe::compressionWrapper::decompress_bfp(
-                        d_ghostDataCopyCompress.data(),
-                        dataArray.data() +
-                          d_mpiPatternP2P->localOwnedSize() * d_blockSize,
-                        d_mpiPatternP2P->localGhostSize() * d_blockSize,
-                        d_compressBitsPerValue,
-                        dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
-                  }
-                // End Decompression
+                if (d_useZfpCompression)
+                  dftfe::compressionWrapper::decompress(
+                    d_ghostDataCopyCompress.data(),
+                    dataArray.data() +
+                      d_mpiPatternP2P->localOwnedSize() * d_blockSize,
+                    d_mpiPatternP2P->localGhostSize() * d_blockSize,
+                    d_compressBitsPerValue,
+                    dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
+                else
+                  dftfe::compressionWrapper::decompress_bfp(
+                    d_ghostDataCopyCompress.data(),
+                    dataArray.data() +
+                      d_mpiPatternP2P->localOwnedSize() * d_blockSize,
+                    d_mpiPatternP2P->localGhostSize() * d_blockSize,
+                    d_compressBitsPerValue,
+                    dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
               }
             else
 #endif
@@ -2003,14 +1991,9 @@ namespace dftfe
                   {
                     MemoryTransfer<MemorySpace::HOST_PINNED, memorySpace>
                       memoryTransfer;
-                    const dftfe::uInt activeGhostBytes =
-                      ((d_mpiPatternP2P->localGhostSize() * d_blockSize *
-                        d_compressBitsPerValue / 8) +
-                       7) /
-                      8 * 8;
-                    if (activeGhostBytes > 0)
+                    if (d_activeCompressedGhostBytes > 0)
                       memoryTransfer.copy(
-                        activeGhostBytes,
+                        d_activeCompressedGhostBytes,
                         d_ghostDataCopyCompressHostPinnedPtr->begin(),
                         d_ghostDataCopyCompress.data());
 
@@ -2272,16 +2255,9 @@ namespace dftfe
                 {
                   MemoryTransfer<memorySpace, MemorySpace::HOST_PINNED>
                     memoryTransfer;
-                  const dftfe::uInt activeTargetBytes =
-                    ((d_mpiPatternP2P
-                        ->getOwnedLocalIndicesForTargetProcs()
-                        .size() *
-                      d_blockSize * d_compressBitsPerValue / 8) +
-                     7) /
-                    8 * 8;
-                  if (activeTargetBytes > 0)
+                  if (d_activeCompressedTargetBytes > 0)
                     memoryTransfer.copy(
-                      activeTargetBytes,
+                      d_activeCompressedTargetBytes,
                       d_sendRecvBufferCompress.data(),
                       d_sendRecvBufferCompressHostPinnedPtr->data());
                 }
@@ -2289,33 +2265,28 @@ namespace dftfe
             // directly to scattered positions, eliminating intermediate buffer
             if constexpr (memorySpace == MemorySpace::DEVICE)
               {
-                if (d_maxCompressedTargetBytes > 0 &&
+                if (d_useZfpCompression)
+                  dftfe::compressionWrapper::decompress_scatter_add(
+                    d_sendRecvBufferCompress.data(),
                     d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs()
-                        .size() > 0)
-                  {
-                    if (d_useZfpCompression)
-                      dftfe::compressionWrapper::decompress_scatter_add(
-                        d_sendRecvBufferCompress.data(),
-                        d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs()
-                          .data(),
-                        d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs()
-                          .size(),
-                        d_blockSize,
-                        dataArray.data(),
-                        d_compressBitsPerValue,
-                        dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
-                    else
-                      dftfe::compressionWrapper::decompress_scatter_add_bfp(
-                        d_sendRecvBufferCompress.data(),
-                        d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs()
-                          .data(),
-                        d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs()
-                          .size(),
-                        d_blockSize,
-                        dataArray.data(),
-                        d_compressBitsPerValue,
-                        dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
-                  }
+                      .data(),
+                    d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs()
+                      .size(),
+                    d_blockSize,
+                    dataArray.data(),
+                    d_compressBitsPerValue,
+                    dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
+                else
+                  dftfe::compressionWrapper::decompress_scatter_add_bfp(
+                    d_sendRecvBufferCompress.data(),
+                    d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs()
+                      .data(),
+                    d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs()
+                      .size(),
+                    d_blockSize,
+                    dataArray.data(),
+                    d_compressBitsPerValue,
+                    dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
               }
             else
 #endif

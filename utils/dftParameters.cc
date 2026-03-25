@@ -1102,21 +1102,21 @@ namespace dftfe
 
           prm.declare_entry(
             "COMPRESS BITS EARLY",
-            "12",
+            "16",
             dealii::Patterns::Integer(4, 16),
-            "[Advanced] Bits per value for early SCF compression. Default 12.");
+            "[Advanced] Bits per value for early SCF compression (iterations 0 to COMPRESS LATE START SCF - 1). Default 16.");
 
           prm.declare_entry(
             "COMPRESS BITS LATE",
             "8",
             dealii::Patterns::Integer(4, 16),
-            "[Advanced] Bits per value for late SCF compression. Default 8.");
+            "[Advanced] Bits per value for late SCF compression (from COMPRESS LATE START SCF onward). Default 8.");
 
           prm.declare_entry(
-            "COMPRESS START SCF",
-            "5",
+            "COMPRESS LATE START SCF",
+            "6",
             dealii::Patterns::Integer(0, 100),
-            "[Advanced] SCF iteration at which to switch from early to late compression settings. Default 5.");
+            "[Advanced] SCF iteration at which late compression settings take effect (iterations before this use early settings). Default 6.");
 
           prm.declare_entry(
             "USE MIXED PREC COMMUN ONLY XTOX XTHX",
@@ -1815,7 +1815,7 @@ namespace dftfe
         compressAlgoLate          = prm.get("COMPRESS ALGO LATE");
         compressBitsPerValueEarly = prm.get_integer("COMPRESS BITS EARLY");
         compressBitsPerValueLate  = prm.get_integer("COMPRESS BITS LATE");
-        compressStartSCF          = prm.get_integer("COMPRESS START SCF");
+        compressLateStartSCF      = prm.get_integer("COMPRESS LATE START SCF");
         tensorOpType       = prm.get("TENSOR OP TYPE SINGLE PREC CHEBY");
         overlapComputeCommunCheby =
           prm.get_bool("OVERLAP COMPUTE COMMUN CHEBY");

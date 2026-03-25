@@ -200,11 +200,13 @@ namespace dftfe
           MemorySpace::HOST_PINNED>>
           d_sendRecvBufferCompressHostPinnedPtr;
 
-        dftfe::uInt d_compressBitsPerValue = 12;
+        dftfe::uInt d_compressBitsPerValue = 16;
         bool        d_useZfpCompression = false;
 
-        dftfe::uInt d_maxCompressedTargetBytes = 0;
-        dftfe::uInt d_maxCompressedGhostBytes  = 0;
+        dftfe::uInt d_maxCompressedTargetBytes    = 0;
+        dftfe::uInt d_maxCompressedGhostBytes     = 0;
+        dftfe::uInt d_activeCompressedTargetBytes = 0;
+        dftfe::uInt d_activeCompressedGhostBytes  = 0;
 
 #endif // DFTFE_WITH_DEVICE
 

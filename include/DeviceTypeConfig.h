@@ -23,10 +23,13 @@
 
 #    ifdef DFTFE_WITH_DEVICE_LANG_CUDA
 #      include "DeviceTypeConfig.cu.h"
+#      include "DeviceTypeConfigCompress.cu.h"
 #    elif DFTFE_WITH_DEVICE_LANG_HIP
 #      include "DeviceTypeConfig.hip.h"
+#      include "DeviceTypeConfigCompress.hip.h"
 #    elif DFTFE_WITH_DEVICE_LANG_SYCL
 #      include "DeviceTypeConfig.sycl.h"
+#      include "DeviceTypeConfigCompress.sycl.h"
 #    endif
 
 #  endif // dftfeDeviceTypeConfig_h

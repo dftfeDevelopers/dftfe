@@ -78,7 +78,7 @@ namespace dftfe
                            int                          bits_per_value,
                            dftfe::utils::deviceStream_t stream);
 
-    // BFP variants (faster, bpv <= 8)
+    // BFP variants (faster, supports 8/12/16 bpv)
     void
     compress_bfp(const double                *d_data,
                  void                        *d_compressed,

@@ -126,7 +126,10 @@ namespace dftfe
 
       d_deviceDirectDCCLInstanceCounter--;
       if (commStreamCreated && d_deviceDirectDCCLInstanceCounter == 0)
-        dftfe::utils::deviceStreamDestroy(d_deviceCommStream);
+        {
+          dftfe::utils::deviceStreamDestroy(d_deviceCommStream);
+          commStreamCreated = false;
+        }
     }
 
     dftfe::Int

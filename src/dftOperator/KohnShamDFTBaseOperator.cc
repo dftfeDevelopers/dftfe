@@ -1212,7 +1212,7 @@ namespace dftfe
           {
             const bool isLate =
               d_dftParamsPtr->scfIterCount >=
-              d_dftParamsPtr->compressStartSCF;
+              d_dftParamsPtr->compressLateStartSCF;
             const dftfe::uInt bpv =
               isLate ? d_dftParamsPtr->compressBitsPerValueLate
                      : d_dftParamsPtr->compressBitsPerValueEarly;
