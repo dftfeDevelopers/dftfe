@@ -1210,15 +1210,14 @@ namespace dftfe
 
         else if (d_dftParamsPtr->communPrecCheby == "COMPRESSED")
           {
-            const bool isLate =
-              d_dftParamsPtr->scfIterCount >=
-              d_dftParamsPtr->compressLateStartSCF;
-            const dftfe::uInt bpv =
-              isLate ? d_dftParamsPtr->compressBitsPerValueLate
-                     : d_dftParamsPtr->compressBitsPerValueEarly;
-            const bool useZfp =
-              (isLate ? d_dftParamsPtr->compressAlgoLate
-                      : d_dftParamsPtr->compressAlgoEarly) == "ZFP";
+            const bool isLate = d_dftParamsPtr->scfIterCount + 1 >=
+                                d_dftParamsPtr->compressLateStartSCF;
+            const dftfe::uInt bpv = isLate ?
+                                      d_dftParamsPtr->compressBitsPerValueLate :
+                                      d_dftParamsPtr->compressBitsPerValueEarly;
+            const bool        useZfp =
+              (isLate ? d_dftParamsPtr->compressAlgoLate :
+                        d_dftParamsPtr->compressAlgoEarly) == "ZFP";
             d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec
               .setCompressBitsPerValue(bpv);
             d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec

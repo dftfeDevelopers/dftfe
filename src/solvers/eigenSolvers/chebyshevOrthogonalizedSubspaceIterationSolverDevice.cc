@@ -420,15 +420,14 @@ namespace dftfe
                     else if (useMixedPrecOverall &&
                              d_dftParams.communPrecCheby == "COMPRESSED")
                       {
-                        const bool isLate =
-                          d_dftParams.scfIterCount >=
-                          d_dftParams.compressLateStartSCF;
+                        const bool isLate = d_dftParams.scfIterCount + 1 >=
+                                            d_dftParams.compressLateStartSCF;
                         const dftfe::uInt bpv =
-                          isLate ? d_dftParams.compressBitsPerValueLate
-                                 : d_dftParams.compressBitsPerValueEarly;
+                          isLate ? d_dftParams.compressBitsPerValueLate :
+                                   d_dftParams.compressBitsPerValueEarly;
                         const bool useZfp =
-                          (isLate ? d_dftParams.compressAlgoLate
-                                  : d_dftParams.compressAlgoEarly) == "ZFP";
+                          (isLate ? d_dftParams.compressAlgoLate :
+                                    d_dftParams.compressAlgoEarly) == "ZFP";
                         (*XBlockFP32).setCompressBitsPerValue(bpv);
                         (*HXBlockFP32).setCompressBitsPerValue(bpv);
                         (*XBlock2FP32).setCompressBitsPerValue(bpv);
@@ -534,15 +533,14 @@ namespace dftfe
                     else if (useMixedPrecOverall &&
                              d_dftParams.communPrecCheby == "COMPRESSED")
                       {
-                        const bool isLate =
-                          d_dftParams.scfIterCount >=
-                          d_dftParams.compressLateStartSCF;
+                        const bool isLate = d_dftParams.scfIterCount + 1 >=
+                                            d_dftParams.compressLateStartSCF;
                         const dftfe::uInt bpv =
-                          isLate ? d_dftParams.compressBitsPerValueLate
-                                 : d_dftParams.compressBitsPerValueEarly;
+                          isLate ? d_dftParams.compressBitsPerValueLate :
+                                   d_dftParams.compressBitsPerValueEarly;
                         const bool useZfp =
-                          (isLate ? d_dftParams.compressAlgoLate
-                                  : d_dftParams.compressAlgoEarly) == "ZFP";
+                          (isLate ? d_dftParams.compressAlgoLate :
+                                    d_dftParams.compressAlgoEarly) == "ZFP";
                         (*XBlockFP32).setCompressBitsPerValue(bpv);
                         (*HXBlockFP32).setCompressBitsPerValue(bpv);
                         (*XBlockFP32).setCompressUseZfp(useZfp);
