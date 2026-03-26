@@ -720,6 +720,8 @@ namespace compression
     portable_atomicAdd(&dataArray[base + 3], fblock[3]);
   }
 
+#endif /* BFP 12bpv specialized */
+
   /* =========================================================================
      Specialized BFP 8-bpv kernels (32-bit → 1 × uint32_t per block)
 
@@ -1238,8 +1240,6 @@ namespace compression
   }
 
 #endif /* BFP 16bpv specialized */
-
-#endif /* BFP 12bpv specialized SYCL */
 
   /* --- BFP super-block kernels (bpv > 8, tightly packed via Word stream) ---
    */

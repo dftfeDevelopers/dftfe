@@ -1259,6 +1259,8 @@ namespace compression
     portable_atomicAdd(&dataArray[base + 3], fblock[3]);
   }
 
+#endif /* ZFP specialized bpt=1 kernels */
+
   /* =========================================================================
      Specialized ZFP 16-bpv (64-bit) kernels
 
@@ -1535,8 +1537,6 @@ namespace compression
   }
 
 #endif /* ZFP 16bpv specialized kernels */
-
-#endif /* ZFP specialized bpt=1 kernels */
 
 } /* namespace compression */
 
