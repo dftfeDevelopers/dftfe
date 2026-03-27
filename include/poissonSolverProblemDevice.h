@@ -15,6 +15,11 @@
 // ---------------------------------------------------------------------
 //
 
+/**
+ * @author Gourab Panigrahi
+ *
+ */
+
 #if defined(DFTFE_WITH_DEVICE)
 #  ifndef poissonSolverProblemDevice_H_
 #    define poissonSolverProblemDevice_H_
@@ -26,6 +31,8 @@
 #    include <headers.h>
 #    include "FEBasisOperations.h"
 #    include "BLASWrapper.h"
+#    include "MatrixFreeWrapper.h"
+#    include <DeviceAPICalls.h>
 
 namespace dftfe
 {
@@ -140,13 +147,6 @@ namespace dftfe
 
   private:
     /**
-     * @brief Sets up the matrixfree shapefunction, gradient, jacobian and map for matrixfree computeAX
-     *
-     */
-    void
-    setupMatrixFree();
-
-    /**
      * @brief Sets up the constraints matrix
      *
      */
@@ -192,9 +192,6 @@ namespace dftfe
      *
      */
     void
-    meanValueConstraintSetZero(distributedDeviceVec<double> &vec) const;
-
-    void
     meanValueConstraintSetZero(distributedCPUVec<double> &vec) const;
 
     /// storage for diagonal of the A matrix
@@ -216,22 +213,16 @@ namespace dftfe
     // locally owned and total degrees of freedom including ghost
     dftfe::Int d_nLocalCells, d_xLocalDof, d_xLen;
 
-    // shape function value, gradient, jacobian and map for matrixfree
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
-      d_shapeFunction, d_jacobianFactor;
-    dftfe::utils::MemoryStorage<dftfe::Int, dftfe::utils::MemorySpace::DEVICE>
-      d_map;
-
-    // Pointers to shape function value, gradient, jacobian and map for
-    // matrixfree
-    double     *d_shapeFunctionPtr;
-    double     *d_jacobianFactorPtr;
-    dftfe::Int *d_mapPtr;
-
+    // Matrix free wrapper object
+    std::unique_ptr<
+      dftfe::MatrixFreeWrapperClass<double,
+                                    dftfe::operatorList::Laplace,
+                                    dftfe::utils::MemorySpace::DEVICE,
+                                    false>>
+      d_matrixFreeWrapperDevice;
 
     // constraints
     dftUtils::constraintMatrixInfo<dftfe::utils::MemorySpace::DEVICE>
-      d_constraintsTotalPotentialInfo,
       d_inhomogenousConstraintsTotalPotentialInfo;
 
     /// pointer to dealii dealii::AffineConstraints<double> object

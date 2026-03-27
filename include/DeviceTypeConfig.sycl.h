@@ -22,6 +22,9 @@
 #include <complex>
 #include <set>
 #include <map>
+#include <TypeConfig.h>
+#include <sycl/sycl.hpp>
+
 namespace dftfe
 {
   namespace utils

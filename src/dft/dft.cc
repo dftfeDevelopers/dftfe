@@ -2295,7 +2295,7 @@ namespace dftfe
           {
 #ifdef DFTFE_WITH_DEVICE
             kerkerPreconditionedResidualSolverProblemDevice.init(
-              d_basisOperationsPtrElectroDevice,
+              d_basisOperationsPtrElectroHost,
               d_constraintsRhoNodal,
               d_preCondTotalDensityResidualVector,
               d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ?
