@@ -246,7 +246,7 @@ namespace compression
     typedef int          Int;
     typedef unsigned int UInt;
     static constexpr int EBIAS  = 127;
-    static constexpr int EBITS  = 8; /* exponent bits (not counting cont.) */
+    static constexpr int EBITS  = 8; /* exponent bits */
     static constexpr int PREC   = 32;
     static constexpr int MINEXP = -149;
   };

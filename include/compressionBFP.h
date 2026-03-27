@@ -47,21 +47,20 @@ namespace compression
      minimal branches.
 
      Layout per block (maxbits = bits_per_value * 4, LSB first):
-       [0]                  continuation bit (0 = zero block)
-       [1 .. EBITS]         biased exponent (EBITS bits)
-       [EBITS+1 .. end]     4 x vbits-bit signed coefficients
+       [0 .. EBITS-1]       biased exponent (EBITS bits, 0 = zero block)
+       [EBITS .. end]       4 x vbits-bit signed coefficients
 
-     vbits = (maxbits - EBITS - 1) / 4
+     vbits = (maxbits - EBITS) / 4
 
-     Examples for double (EBITS=11, ebits=12):
-       8 bpv: maxbits=32, vbits=5, total used=32  (exact fit)
-       7 bpv: maxbits=28, vbits=4, total used=28  (exact fit)
-       6 bpv: maxbits=24, vbits=3, total used=24  (exact fit)
+     Examples for double (EBITS=11):
+       8 bpv: maxbits=32, vbits=5, total used=31  (1 bit unused)
+       7 bpv: maxbits=28, vbits=4, total used=27  (1 bit unused)
+       6 bpv: maxbits=24, vbits=3, total used=23  (1 bit unused)
 
-     Examples for float (EBITS=8, ebits=9):
-       8 bpv: maxbits=32, vbits=5, total used=29  (3 bits unused)
-       7 bpv: maxbits=28, vbits=4, total used=25  (3 bits unused)
-       6 bpv: maxbits=24, vbits=3, total used=21  (3 bits unused)
+     Examples for float (EBITS=8):
+       8 bpv: maxbits=32, vbits=6, total used=32  (exact fit)
+       7 bpv: maxbits=28, vbits=5, total used=28  (exact fit)
+       6 bpv: maxbits=24, vbits=4, total used=24  (exact fit)
 
      Two kernel paths:
        bpv == 8:  uint32_t per block, 1 thread/block, 1 store (fastest)
@@ -77,7 +76,7 @@ namespace compression
   COMPRESSION_DEVICE_INLINE unsigned int
   bfp_encode_block(Scalar *fblock, unsigned int maxbits)
   {
-    const unsigned int ebits = (unsigned int)traits<Scalar>::EBITS + 1u;
+    const unsigned int ebits = (unsigned int)traits<Scalar>::EBITS;
     const unsigned int vbits = (maxbits - ebits) / 4u;
 
     int emax = max_exponent<Scalar>(fblock);
@@ -87,9 +86,9 @@ namespace compression
       maxprec ? (unsigned int)(emax + traits<Scalar>::EBIAS) : 0u;
 
     if (!e)
-      return 0u; /* zero block */
+      return 0u; /* zero block: exponent field = 0 */
 
-    unsigned int packed = 2u * e + 1u; /* continuation + exponent */
+    unsigned int packed = e; /* exponent in lower EBITS bits */
 
     /* quantize: q_i = round_toward_zero(value_i * 2^(vbits-1) / 2^emax) */
     Scalar             s = portable_ldexp((Scalar)1.0, (int)vbits - 1 - emax);
@@ -108,10 +107,11 @@ namespace compression
   COMPRESSION_DEVICE_INLINE void
   bfp_decode_block(unsigned int packed, Scalar *fblock, unsigned int maxbits)
   {
-    const unsigned int ebits = (unsigned int)traits<Scalar>::EBITS + 1u;
+    const unsigned int ebits = (unsigned int)traits<Scalar>::EBITS;
     const unsigned int vbits = (maxbits - ebits) / 4u;
 
-    if (!(packed & 1u))
+    unsigned int e_raw = packed & ((1u << ebits) - 1u);
+    if (!e_raw)
       {
         for (int i = 0; i < 4; i++)
           fblock[i] = (Scalar)0;
@@ -121,8 +121,7 @@ namespace compression
     const unsigned int vmask          = (1u << vbits) - 1u;
     const int          sign_threshold = 1 << (vbits - 1);
 
-    unsigned int e_raw = (packed >> 1) & ((1u << (ebits - 1u)) - 1u);
-    int          emax  = (int)e_raw - traits<Scalar>::EBIAS;
+    int emax = (int)e_raw - traits<Scalar>::EBIAS;
 
     /* dequantize: value_i = q_i * 2^(emax - vbits + 1) */
     Scalar scale = portable_ldexp((Scalar)1.0, emax - (int)vbits + 1);
@@ -148,13 +147,13 @@ namespace compression
      packing.
 
      Layout per block (48 bits, LSB first):
-       float:  [0] cont + [1:8] exp(8) + [9:17] v0(9) + [18:26] v1(9)
-               + [27:35] v2(9) + [36:44] v3(9) + [45:47] unused(3)
-       double: [0] cont + [1:11] exp(11) + [12:20] v0(9) + [21:29] v1(9)
-               + [30:38] v2(9) + [39:47] v3(9)
+       float:  [0:7] exp(8) + [8:17] v0(10) + [18:27] v1(10)
+               + [28:37] v2(10) + [38:47] v3(10)
+       double: [0:10] exp(11) + [11:19] v0(9) + [20:28] v1(9)
+               + [29:37] v2(9) + [38:46] v3(9) + [47] unused(1)
 
-     vbits = (48 - ebits) / 4 = 9 for both float and double.
-     float has 3 unused bits at [45:47]; double is an exact fit.
+     vbits: float = (48 - 8) / 4 = 10, double = (48 - 11) / 4 = 9.
+     float is an exact fit; double has 1 unused bit at [47].
      =========================================================================
    */
 
@@ -162,7 +161,7 @@ namespace compression
   COMPRESSION_DEVICE_INLINE uint64
   bfp_encode_block_48(Scalar *fblock)
   {
-    constexpr unsigned int ebits = (unsigned int)traits<Scalar>::EBITS + 1u;
+    constexpr unsigned int ebits = (unsigned int)traits<Scalar>::EBITS;
     constexpr unsigned int vbits = (48u - ebits) / 4u;
     constexpr unsigned int vmask = (1u << vbits) - 1u;
 
@@ -175,7 +174,7 @@ namespace compression
     if (!e)
       return (uint64)0;
 
-    uint64 packed = (uint64)(2u * e + 1u);
+    uint64 packed = (uint64)e;
     Scalar s      = portable_ldexp((Scalar)1.0, (int)vbits - 1 - emax);
 
     for (int i = 0; i < 4; i++)
@@ -191,19 +190,19 @@ namespace compression
   COMPRESSION_DEVICE_INLINE void
   bfp_decode_block_48(uint64 packed, Scalar *fblock)
   {
-    constexpr unsigned int ebits          = (unsigned int)traits<Scalar>::EBITS + 1u;
+    constexpr unsigned int ebits          = (unsigned int)traits<Scalar>::EBITS;
     constexpr unsigned int vbits          = (48u - ebits) / 4u;
     constexpr unsigned int vmask          = (1u << vbits) - 1u;
     constexpr int          sign_threshold = 1 << (vbits - 1);
+    constexpr unsigned int emask          = (1u << ebits) - 1u;
 
-    if (!(packed & 1ULL))
+    unsigned int e_raw = (unsigned int)(packed & emask);
+    if (!e_raw)
       {
         fblock[0] = fblock[1] = fblock[2] = fblock[3] = (Scalar)0;
         return;
       }
 
-    unsigned int e_raw =
-      (unsigned int)((packed >> 1) & ((1u << (ebits - 1u)) - 1u));
     int    emax  = (int)e_raw - traits<Scalar>::EBIAS;
     Scalar scale = portable_ldexp((Scalar)1.0, emax - (int)vbits + 1);
 
@@ -226,10 +225,10 @@ namespace compression
      compatible with the uint32_t stream layout.
 
      Layout per block (32 bits, LSB first):
-       float:  [0] cont + [1:8]  exp(8)  + [9:13]  v0(5) + [14:18] v1(5)
-               + [19:23] v2(5) + [24:28] v3(5) + [29:31] pad(3)
-       double: [0] cont + [1:11] exp(11) + [12:16] v0(5) + [17:21] v1(5)
-               + [22:26] v2(5) + [27:31] v3(5)
+       float:  [0:7]  exp(8)  + [8:13]  v0(6) + [14:19] v1(6)
+               + [20:25] v2(6) + [26:31] v3(6)
+       double: [0:10] exp(11) + [11:15] v0(5) + [16:20] v1(5)
+               + [21:25] v2(5) + [26:30] v3(5) + [31] pad(1)
      =========================================================================
    */
 
@@ -237,7 +236,7 @@ namespace compression
   COMPRESSION_DEVICE_INLINE unsigned int
   bfp_encode_block_32(Scalar *fblock)
   {
-    constexpr unsigned int ebits = (unsigned int)traits<Scalar>::EBITS + 1u;
+    constexpr unsigned int ebits = (unsigned int)traits<Scalar>::EBITS;
     constexpr unsigned int vbits = (32u - ebits) / 4u;
     constexpr unsigned int vmask = (1u << vbits) - 1u;
 
@@ -250,7 +249,7 @@ namespace compression
     if (!e)
       return 0u;
 
-    unsigned int packed = 2u * e + 1u;
+    unsigned int packed = e;
     Scalar       s      = portable_ldexp((Scalar)1.0, (int)vbits - 1 - emax);
 
     for (int i = 0; i < 4; i++)
@@ -266,20 +265,21 @@ namespace compression
   COMPRESSION_DEVICE_INLINE void
   bfp_decode_block_32(unsigned int packed, Scalar *fblock)
   {
-    constexpr unsigned int ebits          = (unsigned int)traits<Scalar>::EBITS + 1u;
+    constexpr unsigned int ebits          = (unsigned int)traits<Scalar>::EBITS;
     constexpr unsigned int vbits          = (32u - ebits) / 4u;
     constexpr unsigned int vmask          = (1u << vbits) - 1u;
     constexpr int          sign_threshold = 1 << (vbits - 1);
+    constexpr unsigned int emask          = (1u << ebits) - 1u;
 
-    if (!(packed & 1u))
+    unsigned int e_raw = packed & emask;
+    if (!e_raw)
       {
         fblock[0] = fblock[1] = fblock[2] = fblock[3] = (Scalar)0;
         return;
       }
 
-    unsigned int e_raw = (packed >> 1) & ((1u << (ebits - 1u)) - 1u);
-    int          emax  = (int)e_raw - traits<Scalar>::EBIAS;
-    Scalar       scale = portable_ldexp((Scalar)1.0, emax - (int)vbits + 1);
+    int    emax  = (int)e_raw - traits<Scalar>::EBIAS;
+    Scalar scale = portable_ldexp((Scalar)1.0, emax - (int)vbits + 1);
 
     for (int i = 0; i < 4; i++)
       {
@@ -300,10 +300,10 @@ namespace compression
      1 × uint64 store. All bit widths are compile-time constants.
 
      Layout per block (64 bits, LSB first):
-       float:  [0] cont + [1:8]  exp(8)  + [9:22]  v0(14) + [23:36] v1(14)
-               + [37:50] v2(14) + [51:64] v3(14) - (unused 1 bit for float)
-       double: [0] cont + [1:11] exp(11) + [12:24] v0(13) + [25:37] v1(13)
-               + [38:50] v2(13) + [51:63] v3(13) + [64] pad(1)
+       float:  [0:7]  exp(8)  + [8:21]  v0(14) + [22:35] v1(14)
+               + [36:49] v2(14) + [50:63] v3(14)
+       double: [0:10] exp(11) + [11:23] v0(13) + [24:36] v1(13)
+               + [37:49] v2(13) + [50:62] v3(13) + [63] pad(1)
      =========================================================================
    */
 
@@ -311,7 +311,7 @@ namespace compression
   COMPRESSION_DEVICE_INLINE uint64
   bfp_encode_block_64(Scalar *fblock)
   {
-    constexpr unsigned int ebits = (unsigned int)traits<Scalar>::EBITS + 1u;
+    constexpr unsigned int ebits = (unsigned int)traits<Scalar>::EBITS;
     constexpr unsigned int vbits = (64u - ebits) / 4u;
     constexpr unsigned int vmask = (1u << vbits) - 1u;
 
@@ -324,7 +324,7 @@ namespace compression
     if (!e)
       return (uint64)0;
 
-    uint64 packed = (uint64)(2u * e + 1u);
+    uint64 packed = (uint64)e;
     Scalar s      = portable_ldexp((Scalar)1.0, (int)vbits - 1 - emax);
 
     for (int i = 0; i < 4; i++)
@@ -340,19 +340,19 @@ namespace compression
   COMPRESSION_DEVICE_INLINE void
   bfp_decode_block_64(uint64 packed, Scalar *fblock)
   {
-    constexpr unsigned int ebits          = (unsigned int)traits<Scalar>::EBITS + 1u;
+    constexpr unsigned int ebits          = (unsigned int)traits<Scalar>::EBITS;
     constexpr unsigned int vbits          = (64u - ebits) / 4u;
     constexpr unsigned int vmask          = (1u << vbits) - 1u;
     constexpr int          sign_threshold = 1 << (vbits - 1);
+    constexpr unsigned int emask          = (1u << ebits) - 1u;
 
-    if (!(packed & 1ULL))
+    unsigned int e_raw = (unsigned int)(packed & emask);
+    if (!e_raw)
       {
         fblock[0] = fblock[1] = fblock[2] = fblock[3] = (Scalar)0;
         return;
       }
 
-    unsigned int e_raw =
-      (unsigned int)((packed >> 1) & ((1u << (ebits - 1u)) - 1u));
     int    emax  = (int)e_raw - traits<Scalar>::EBIAS;
     Scalar scale = portable_ldexp((Scalar)1.0, emax - (int)vbits + 1);
 
@@ -372,7 +372,7 @@ namespace compression
   COMPRESSION_DEVICE_INLINE void
   bfp_encode_block_writer(Writer &writer, Scalar *fblock, unsigned int maxbits)
   {
-    const unsigned int ebits = (unsigned int)traits<Scalar>::EBITS + 1u;
+    const unsigned int ebits = (unsigned int)traits<Scalar>::EBITS;
     const unsigned int vbits = (maxbits - ebits) / 4u;
 
     int emax = max_exponent<Scalar>(fblock);
@@ -384,7 +384,7 @@ namespace compression
     if (!e)
       return; /* zero block: write nothing (buffer is pre-zeroed) */
 
-    writer.write_bits(2u * e + 1u, ebits); /* continuation + exponent */
+    writer.write_bits(e, ebits); /* exponent */
 
     Scalar             s = portable_ldexp((Scalar)1.0, (int)vbits - 1 - emax);
     const unsigned int vmask = (1u << vbits) - 1u;
@@ -400,18 +400,18 @@ namespace compression
   COMPRESSION_DEVICE_INLINE void
   bfp_decode_block_reader(Reader &reader, Scalar *fblock, unsigned int maxbits)
   {
-    const unsigned int ebits = (unsigned int)traits<Scalar>::EBITS + 1u;
+    const unsigned int ebits = (unsigned int)traits<Scalar>::EBITS;
     const unsigned int vbits = (maxbits - ebits) / 4u;
 
-    unsigned int s_cont = reader.read_bit();
-    if (!s_cont)
+    unsigned int e_raw = (unsigned int)reader.read_bits(ebits);
+    if (!e_raw)
       {
         for (int i = 0; i < 4; i++)
           fblock[i] = (Scalar)0;
         return;
       }
 
-    int       emax  = (int)reader.read_bits(ebits - 1u) - traits<Scalar>::EBIAS;
+    int       emax  = (int)e_raw - traits<Scalar>::EBIAS;
     Scalar    scale = portable_ldexp((Scalar)1.0, emax - (int)vbits + 1);
     const int sign_threshold = 1 << (vbits - 1);
 
