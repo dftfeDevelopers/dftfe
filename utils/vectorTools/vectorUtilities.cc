@@ -32,18 +32,18 @@ namespace dftfe
       dealii::AffineConstraints<double> &constraints)
     {
       constraints.close();
-#if (DEAL_II_VERSION_MAJOR >= 9 && DEAL_II_VERSION_MINOR >= 7)
-      if (!constraints.is_consistent_in_parallel(
-            dealii::Utilities::MPI::all_gather(
-              dofHandlerPar.get_communicator(),
-              dofHandlerPar.locally_owned_dofs()),
-            dealii::DoFTools::extract_locally_active_dofs(dofHandlerPar),
-            dofHandlerPar.get_communicator()))
-        constraints.make_consistent_in_parallel(
-          dofHandlerPar.locally_owned_dofs(),
-          constraints.get_local_lines(),
-          dofHandlerPar.get_communicator());
-#endif
+      // #if (DEAL_II_VERSION_MAJOR >= 9 && DEAL_II_VERSION_MINOR >= 7)
+      //       if (!constraints.is_consistent_in_parallel(
+      //             dealii::Utilities::MPI::all_gather(
+      //               dofHandlerPar.get_communicator(),
+      //               dofHandlerPar.locally_owned_dofs()),
+      //             dealii::DoFTools::extract_locally_active_dofs(dofHandlerPar),
+      //             dofHandlerPar.get_communicator()))
+      //         constraints.make_consistent_in_parallel(
+      //           dofHandlerPar.locally_owned_dofs(),
+      //           constraints.get_local_lines(),
+      //           dofHandlerPar.get_communicator());
+      // #endif
     }
 
     void

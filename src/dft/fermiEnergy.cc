@@ -44,14 +44,18 @@ namespace dftfe
               if (temp1 <= 0.0)
                 {
                   temp2 = 1.0 / (1.0 + exp(temp1));
-                  functionValue += (2.0 - dftParams.spinPolarized) *
-                                   kPointWeights[kPoint] * temp2;
+                  functionValue +=
+                    (2.0 - dftParams.spinPolarized -
+                     ((dftParams.noncolin || dftParams.hasSOC) ? 1.0 : 0.0)) *
+                    kPointWeights[kPoint] * temp2;
                 }
               else
                 {
                   temp2 = 1.0 / (1.0 + exp(-temp1));
-                  functionValue += (2.0 - dftParams.spinPolarized) *
-                                   kPointWeights[kPoint] * exp(-temp1) * temp2;
+                  functionValue +=
+                    (2.0 - dftParams.spinPolarized -
+                     ((dftParams.noncolin || dftParams.hasSOC) ? 1.0 : 0.0)) *
+                    kPointWeights[kPoint] * exp(-temp1) * temp2;
                 }
             }
         }
@@ -81,15 +85,19 @@ namespace dftfe
                 {
                   temp2 = 1.0 / (1.0 + exp(temp1));
                   functionDerivative +=
-                    (2.0 - dftParams.spinPolarized) * kPointWeights[kPoint] *
-                    (exp(temp1) / (C_kb * TVal)) * temp2 * temp2;
+                    (2.0 - dftParams.spinPolarized -
+                     ((dftParams.noncolin || dftParams.hasSOC) ? 1.0 : 0.0)) *
+                    kPointWeights[kPoint] * (exp(temp1) / (C_kb * TVal)) *
+                    temp2 * temp2;
                 }
               else
                 {
                   temp2 = 1.0 / (1.0 + exp(-temp1));
                   functionDerivative +=
-                    (2.0 - dftParams.spinPolarized) * kPointWeights[kPoint] *
-                    (exp(-temp1) / (C_kb * TVal)) * temp2 * temp2;
+                    (2.0 - dftParams.spinPolarized -
+                     ((dftParams.noncolin || dftParams.hasSOC) ? 1.0 : 0.0)) *
+                    kPointWeights[kPoint] * (exp(-temp1) / (C_kb * TVal)) *
+                    temp2 * temp2;
                 }
             }
         }

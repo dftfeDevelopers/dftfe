@@ -5,11 +5,6 @@ Z:12
 number of electrons: 3.100000000000000000e+02
 number of eigen values: 180
 =============================================================================================================================
-MPI rank 3 uses GPU #3
-MPI rank 2 uses GPU #2
-MPI rank 1 uses GPU #1
-Found 362963648 GPUs
-MPI rank 0 uses GPU #0
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
 v1 : 1.176399999999999935e+01 0.000000000000000000e+00 0.000000000000000000e+00
 v2 : 0.000000000000000000e+00 1.917200000000000060e+01 0.000000000000000000e+00

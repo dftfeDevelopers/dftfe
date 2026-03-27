@@ -99,6 +99,15 @@ namespace dftfe
           d_gradDensityValsSpinDownAllQuads,
           indexRangeGrad);
       }
+
+    if (densityData.find(DensityDescriptorDataAttributes::magAxisValues) !=
+        densityData.end())
+      {
+        fillDensityAttributeData(
+          densityData[DensityDescriptorDataAttributes::magAxisValues],
+          d_magAxisAllQuads,
+          indexRangeGrad);
+      }
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
@@ -236,6 +245,18 @@ namespace dftfe
           for (dftfe::uInt idim = 0; idim < 3; idim++)
             d_gradDensityValsSpinDownAllQuads[3 * iquad + idim] =
               gradDensityVals[3 * nQ + 3 * iquad + idim];
+      }
+
+    if (projectionInputs.find("magAxis") != projectionInputs.end())
+      {
+        const dftfe::utils::MemoryStorage<double,
+                                          dftfe::utils::MemorySpace::HOST>
+          &magAxisVals = projectionInputs.find("magAxis")->second;
+        d_magAxisAllQuads.resize(nQ * 3, 0);
+
+        for (dftfe::uInt iquad = 0; iquad < nQ; iquad++)
+          for (dftfe::uInt idim = 0; idim < 3; idim++)
+            d_magAxisAllQuads[3 * iquad + idim] = magAxisVals[3 * iquad + idim];
       }
 
     if (projectionInputs.find("tauFunc") != projectionInputs.end())

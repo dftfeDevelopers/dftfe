@@ -39,8 +39,7 @@ namespace dftfe
     dealii::FEValues<3> fe_values(dofHandlerOfField.get_fe(),
                                   quadrature_formula,
                                   dealii::update_JxW_values);
-    const dftfe::uInt dofs_per_cell = dofHandlerOfField.get_fe().dofs_per_cell;
-    const dftfe::uInt n_q_points    = quadrature_formula.size();
+    const dftfe::uInt   n_q_points = quadrature_formula.size();
 
     dealii::DoFHandler<3>::active_cell_iterator cell = dofHandlerOfField
                                                          .begin_active(),
@@ -74,8 +73,7 @@ namespace dftfe
     dealii::FEValues<3> fe_values(dofHandlerOfField.get_fe(),
                                   quadrature_formula,
                                   dealii::update_JxW_values);
-    const dftfe::uInt dofs_per_cell = dofHandlerOfField.get_fe().dofs_per_cell;
-    const dftfe::uInt n_q_points    = quadrature_formula.size();
+    const dftfe::uInt   n_q_points = quadrature_formula.size();
 
     dealii::DoFHandler<3>::active_cell_iterator cell = dofHandlerOfField
                                                          .begin_active(),
@@ -114,8 +112,7 @@ namespace dftfe
                                   quadrature_formula,
                                   dealii::update_values |
                                     dealii::update_JxW_values);
-    const dftfe::uInt dofs_per_cell = dofHandlerOfField.get_fe().dofs_per_cell;
-    const dftfe::uInt n_q_points    = quadrature_formula.size();
+    const dftfe::uInt   n_q_points = quadrature_formula.size();
     rhoNodalField.update_ghost_values();
     dealii::DoFHandler<3>::active_cell_iterator cell = dofHandlerOfField
                                                          .begin_active(),
@@ -206,8 +203,7 @@ namespace dftfe
     dealii::FEValues<3> fe_values(FE,
                                   quadrature_formula,
                                   dealii::update_JxW_values);
-    const dftfe::uInt   dofs_per_cell = FE.dofs_per_cell;
-    const dftfe::uInt   n_q_points    = quadrature_formula.size();
+    const dftfe::uInt   n_q_points = quadrature_formula.size();
 
     dealii::DoFHandler<3>::active_cell_iterator cell =
                                                   dofHandler.begin_active(),
@@ -238,6 +234,272 @@ namespace dftfe
     pcout << "Net magnetization     : " << normValue << std::endl;
     if (d_dftParamsPtr->reproducible_output)
       pcout << std::setprecision(default_precision);
+  }
+
+  template <dftfe::utils::MemorySpace memorySpace>
+  void
+  dftClass<memorySpace>::totalNonCollinearMagnetization(
+    const std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &densityQuadValues)
+  {
+    double                       normValue = 0.0;
+    double                       xsum      = 0.0;
+    double                       ysum      = 0.0;
+    double                       zsum      = 0.0;
+    const dealii::Quadrature<3> &quadrature_formula =
+      matrix_free_data.get_quadrature(d_densityQuadratureId);
+    dealii::FEValues<3> fe_values(FE,
+                                  quadrature_formula,
+                                  dealii::update_JxW_values);
+    const dftfe::uInt   n_q_points = quadrature_formula.size();
+
+    dealii::DoFHandler<3>::active_cell_iterator cell =
+                                                  dofHandler.begin_active(),
+                                                endc = dofHandler.end();
+    dftfe::uInt iCell                                = 0;
+    for (; cell != endc; ++cell)
+      {
+        if (cell->is_locally_owned())
+          {
+            fe_values.reinit(cell);
+            const double *rhoValues =
+              densityQuadValues[0].data() + iCell * n_q_points;
+            const double *magXValues =
+              densityQuadValues[3].data() + iCell * n_q_points;
+            const double *magYValues =
+              densityQuadValues[2].data() + iCell * n_q_points;
+            const double *magZValues =
+              densityQuadValues[1].data() + iCell * n_q_points;
+            for (dftfe::uInt q_point = 0; q_point < n_q_points; ++q_point)
+              {
+                const double magX = magXValues[q_point];
+                const double magY = magYValues[q_point];
+                const double magZ = magZValues[q_point];
+                xsum += magX * fe_values.JxW(q_point);
+                ysum += magY * fe_values.JxW(q_point);
+                zsum += magZ * fe_values.JxW(q_point);
+                normValue +=
+                  std::sqrt(magX * magX + magY * magY + magZ * magZ) *
+                  fe_values.JxW(q_point);
+              }
+            ++iCell;
+          }
+      }
+    pcout << "magnetization vector : "
+          << dealii::Utilities::MPI::sum(xsum, mpi_communicator) << " "
+          << dealii::Utilities::MPI::sum(ysum, mpi_communicator) << " "
+          << dealii::Utilities::MPI::sum(zsum, mpi_communicator) << std::endl;
+    pcout << "Absolute magentization : "
+          << dealii::Utilities::MPI::sum(normValue, mpi_communicator)
+          << std::endl;
+  }
+
+  template <dftfe::utils::MemorySpace memorySpace>
+  void
+  dftClass<memorySpace>::localNonCollinearMagnetizationDensity(
+    const std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &densityQuadValues)
+  {
+    const dftfe::uInt numAtoms      = atomLocations.size();
+    dftfe::uInt  numAtomsInclImages = numAtoms + d_imagePositionsTrunc.size();
+    const double cutOffRadius       = 0.5 * d_minDist / 1.2 * 0.99;
+    std::vector<double>           normValue(numAtoms, 0.0);
+    std::vector<double>           xsum(numAtoms, 0.0);
+    std::vector<double>           ysum(numAtoms, 0.0);
+    std::vector<double>           zsum(numAtoms, 0.0);
+    std::vector<dealii::Point<3>> atomCoordinates(numAtomsInclImages);
+    std::vector<dftfe::uInt>      atomIDs(numAtomsInclImages);
+    for (dftfe::uInt iAtom = 0; iAtom < numAtomsInclImages; ++iAtom)
+      {
+        if (iAtom < numAtoms)
+          {
+            atomIDs[iAtom]            = iAtom;
+            atomCoordinates[iAtom][0] = atomLocations[iAtom][2];
+            atomCoordinates[iAtom][1] = atomLocations[iAtom][3];
+            atomCoordinates[iAtom][2] = atomLocations[iAtom][4];
+          }
+        else
+          {
+            const dftfe::Int imageId  = iAtom - numAtoms;
+            atomIDs[iAtom]            = d_imageIdsTrunc[imageId];
+            atomCoordinates[iAtom][0] = d_imagePositionsTrunc[imageId][0];
+            atomCoordinates[iAtom][1] = d_imagePositionsTrunc[imageId][1];
+            atomCoordinates[iAtom][2] = d_imagePositionsTrunc[imageId][2];
+          }
+      }
+
+
+    const dealii::Quadrature<3> &quadrature_formula =
+      matrix_free_data.get_quadrature(d_densityQuadratureId);
+    dealii::FEValues<3> fe_values(FE,
+                                  quadrature_formula,
+                                  dealii::update_JxW_values |
+                                    dealii::update_quadrature_points);
+    const dftfe::uInt   n_q_points = quadrature_formula.size();
+
+    dealii::DoFHandler<3>::active_cell_iterator cell =
+                                                  dofHandler.begin_active(),
+                                                endc = dofHandler.end();
+    dftfe::uInt iCell                                = 0;
+    for (; cell != endc; ++cell)
+      {
+        if (cell->is_locally_owned())
+          {
+            fe_values.reinit(cell);
+            const double *rhoValues =
+              densityQuadValues[0].data() + iCell * n_q_points;
+            const double *magXValues =
+              densityQuadValues[3].data() + iCell * n_q_points;
+            const double *magYValues =
+              densityQuadValues[2].data() + iCell * n_q_points;
+            const double *magZValues =
+              densityQuadValues[1].data() + iCell * n_q_points;
+            for (dftfe::uInt q_point = 0; q_point < n_q_points; ++q_point)
+              {
+                const dealii::Point<3> quadPoint =
+                  fe_values.quadrature_point(q_point);
+                for (dftfe::uInt iAtom = 0; iAtom < numAtomsInclImages; ++iAtom)
+                  {
+                    const double distFromAtom =
+                      (atomCoordinates[iAtom] - quadPoint).norm();
+                    if (distFromAtom < 1.2 * cutOffRadius)
+                      {
+                        const double magX = magXValues[q_point];
+                        const double magY = magYValues[q_point];
+                        const double magZ = magZValues[q_point];
+                        const double weight =
+                          distFromAtom < cutOffRadius ?
+                            1.0 :
+                            (1.0 - (distFromAtom - cutOffRadius) / 0.2 /
+                                     cutOffRadius);
+                        xsum[atomIDs[iAtom]] +=
+                          magX * weight * fe_values.JxW(q_point);
+                        ysum[atomIDs[iAtom]] +=
+                          magY * weight * fe_values.JxW(q_point);
+                        zsum[atomIDs[iAtom]] +=
+                          magZ * weight * fe_values.JxW(q_point);
+                        normValue[atomIDs[iAtom]] +=
+                          std::sqrt(magX * magX + magY * magY + magZ * magZ) *
+                          weight * fe_values.JxW(q_point);
+                        break;
+                      }
+                  }
+              }
+            ++iCell;
+          }
+      }
+    for (dftfe::uInt iAtom = 0; iAtom < numAtoms; ++iAtom)
+      {
+        pcout << "Atom : " << iAtom
+              << "; Atomic Number : " << atomLocations[iAtom][0] << std::endl;
+        pcout << "magnetization vector : "
+              << dealii::Utilities::MPI::sum(xsum[iAtom], mpi_communicator)
+              << " "
+              << dealii::Utilities::MPI::sum(ysum[iAtom], mpi_communicator)
+              << " "
+              << dealii::Utilities::MPI::sum(zsum[iAtom], mpi_communicator)
+              << std::endl;
+        pcout << "Absolute magentization : "
+              << dealii::Utilities::MPI::sum(normValue[iAtom], mpi_communicator)
+              << std::endl;
+      }
+  }
+
+  template <dftfe::utils::MemorySpace memorySpace>
+  void
+  dftClass<memorySpace>::localCollinearMagnetizationDensity(
+    const std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &densityQuadValues)
+  {
+    const dftfe::uInt numAtoms      = atomLocations.size();
+    dftfe::uInt  numAtomsInclImages = numAtoms + d_imagePositionsTrunc.size();
+    const double cutOffRadius       = 0.5 * d_minDist / 1.2 * 0.99;
+    std::vector<double>           normValue(numAtoms, 0.0);
+    std::vector<double>           zsum(numAtoms, 0.0);
+    std::vector<dealii::Point<3>> atomCoordinates(numAtomsInclImages);
+    std::vector<dftfe::uInt>      atomIDs(numAtomsInclImages);
+    for (dftfe::uInt iAtom = 0; iAtom < numAtomsInclImages; ++iAtom)
+      {
+        if (iAtom < numAtoms)
+          {
+            atomIDs[iAtom]            = iAtom;
+            atomCoordinates[iAtom][0] = atomLocations[iAtom][2];
+            atomCoordinates[iAtom][1] = atomLocations[iAtom][3];
+            atomCoordinates[iAtom][2] = atomLocations[iAtom][4];
+          }
+        else
+          {
+            const dftfe::Int imageId  = iAtom - numAtoms;
+            atomIDs[iAtom]            = d_imageIdsTrunc[imageId];
+            atomCoordinates[iAtom][0] = d_imagePositionsTrunc[imageId][0];
+            atomCoordinates[iAtom][1] = d_imagePositionsTrunc[imageId][1];
+            atomCoordinates[iAtom][2] = d_imagePositionsTrunc[imageId][2];
+          }
+      }
+
+
+    const dealii::Quadrature<3> &quadrature_formula =
+      matrix_free_data.get_quadrature(d_densityQuadratureId);
+    dealii::FEValues<3> fe_values(FE,
+                                  quadrature_formula,
+                                  dealii::update_JxW_values |
+                                    dealii::update_quadrature_points);
+    const dftfe::uInt   n_q_points = quadrature_formula.size();
+
+    dealii::DoFHandler<3>::active_cell_iterator cell =
+                                                  dofHandler.begin_active(),
+                                                endc = dofHandler.end();
+    dftfe::uInt iCell                                = 0;
+    for (; cell != endc; ++cell)
+      {
+        if (cell->is_locally_owned())
+          {
+            fe_values.reinit(cell);
+            const double *rhoValues =
+              densityQuadValues[0].data() + iCell * n_q_points;
+            const double *magZValues =
+              densityQuadValues[1].data() + iCell * n_q_points;
+            for (dftfe::uInt q_point = 0; q_point < n_q_points; ++q_point)
+              {
+                const dealii::Point<3> quadPoint =
+                  fe_values.quadrature_point(q_point);
+                for (dftfe::uInt iAtom = 0; iAtom < numAtomsInclImages; ++iAtom)
+                  {
+                    const double distFromAtom =
+                      (atomCoordinates[iAtom] - quadPoint).norm();
+                    if (distFromAtom < 1.2 * cutOffRadius)
+                      {
+                        const double magZ = magZValues[q_point];
+                        const double weight =
+                          distFromAtom < cutOffRadius ?
+                            1.0 :
+                            (1.0 - (distFromAtom - cutOffRadius) / 0.2 /
+                                     cutOffRadius);
+                        zsum[atomIDs[iAtom]] +=
+                          magZ * weight * fe_values.JxW(q_point);
+                        normValue[atomIDs[iAtom]] +=
+                          std::abs(magZ) * weight * fe_values.JxW(q_point);
+                        break;
+                      }
+                  }
+              }
+            ++iCell;
+          }
+      }
+    for (dftfe::uInt iAtom = 0; iAtom < numAtoms; ++iAtom)
+      {
+        pcout << "Atom : " << iAtom
+              << "; Atomic Number : " << atomLocations[iAtom][0] << std::endl;
+        pcout << "magnetization desnity : "
+              << dealii::Utilities::MPI::sum(zsum[iAtom], mpi_communicator)
+              << std::endl;
+        pcout << "Absolute magentization : "
+              << dealii::Utilities::MPI::sum(normValue[iAtom], mpi_communicator)
+              << std::endl;
+      }
   }
 
   //
