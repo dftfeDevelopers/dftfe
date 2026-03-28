@@ -565,8 +565,10 @@ namespace dftfe
         std::abs(d_dftParamsPtr->netCharge) > 1e-12)
       pcout << "Setting netcharge " << d_dftParamsPtr->netCharge << std::endl;
     if (d_dftParamsPtr->highestStateOfInterestForChebFiltering == 0)
-      d_dftParamsPtr->highestStateOfInterestForChebFiltering =
-        std::floor(numElectrons * 1.05 / 2.0);
+      d_dftParamsPtr->highestStateOfInterestForChebFiltering = std::floor(
+        numElectrons /
+        ((d_dftParamsPtr->noncolin || d_dftParamsPtr->hasSOC) ? 1.0 : 2.0) *
+        1.05);
     if (d_dftParamsPtr->solverMode == "NSCF" ||
         d_dftParamsPtr->solverMode == "BANDS")
       {
@@ -2635,6 +2637,8 @@ namespace dftfe
     while (!scfConverged && (scfIter < d_dftParamsPtr->numSCFIterations))
       {
         dealii::Timer local_timer(d_mpiCommParent, true);
+        if (d_dftParamsPtr->verbosity > 0 && d_dftParamsPtr->noncolin)
+          localNonCollinearMagnetizationDensity(d_densityInQuadValues);
         if (d_dftParamsPtr->verbosity >= 1)
           pcout
             << "************************Begin Self-Consistent-Field Iteration: "
@@ -3727,66 +3731,67 @@ namespace dftfe
                    }
                }
         //*/
-        if (d_dftParamsPtr->saveQuadData && scfIter % 10 == 0 &&
-            d_dftParamsPtr->solverMode == "GS")
-          {
-            std::vector<std::string> field = {"RHO", "MAG_Z", "MAG_Y", "MAG_X"};
-            std::vector<std::string> Gradfield = {"gradRHO",
-                                                  "gradMAG_Z",
-                                                  "gradMAG_Y",
-                                                  "gradMAG_X"};
-            std::vector<std::string> field2    = {"TAU",
-                                                  "TAUMAG_Z",
-                                                  "TAUMAG_Y",
-                                                  "TAUMAG_X"};
-            for (dftfe::Int i = 0; i < d_densityOutQuadValues.size(); i++)
-              {
-                saveQuadratureData(d_basisOperationsPtrHost,
-                                   d_densityQuadratureId,
-                                   d_densityOutQuadValues[i],
-                                   1,
-                                   field[i],
-                                   d_dftParamsPtr->restartFolder,
-                                   d_mpiCommParent,
-                                   mpi_communicator,
-                                   interpoolcomm,
-                                   interBandGroupComm);
-                bool isGradDensityDataDependent =
-                  (d_excManagerPtr->getExcSSDFunctionalObj()
-                     ->getDensityBasedFamilyType() == densityFamilyType::GGA);
-                if (isGradDensityDataDependent)
-                  {
-                    saveQuadratureData(d_basisOperationsPtrHost,
-                                       d_densityQuadratureId,
-                                       d_gradDensityOutQuadValues[i],
-                                       3,
-                                       Gradfield[i],
-                                       d_dftParamsPtr->restartFolder,
-                                       d_mpiCommParent,
-                                       mpi_communicator,
-                                       interpoolcomm,
-                                       interBandGroupComm);
-                  }
-              }
-            if (isTauMGGA)
-              for (dftfe::Int i = 0; i < d_tauOutQuadValues.size(); i++)
-                {
-                  saveQuadratureData(d_basisOperationsPtrHost,
-                                     d_densityQuadratureId,
-                                     d_tauOutQuadValues[i],
-                                     1,
-                                     field2[i],
-                                     d_dftParamsPtr->restartFolder,
-                                     d_mpiCommParent,
-                                     mpi_communicator,
-                                     interpoolcomm,
-                                     interBandGroupComm);
-                }
-            if (d_useHubbard)
-              {
-                d_hubbardClassPtr->writeHubbOccToFile();
-              }
-          }
+        // if (d_dftParamsPtr->saveQuadData && scfIter % 10 == 0 &&
+        //     d_dftParamsPtr->solverMode == "GS")
+        //   {
+        //     std::vector<std::string> field = {"RHO", "MAG_Z", "MAG_Y",
+        //     "MAG_X"}; std::vector<std::string> Gradfield = {"gradRHO",
+        //                                           "gradMAG_Z",
+        //                                           "gradMAG_Y",
+        //                                           "gradMAG_X"};
+        //     std::vector<std::string> field2    = {"TAU",
+        //                                           "TAUMAG_Z",
+        //                                           "TAUMAG_Y",
+        //                                           "TAUMAG_X"};
+        //     for (dftfe::Int i = 0; i < d_densityOutQuadValues.size(); i++)
+        //       {
+        //         saveQuadratureData(d_basisOperationsPtrHost,
+        //                            d_densityQuadratureId,
+        //                            d_densityOutQuadValues[i],
+        //                            1,
+        //                            field[i],
+        //                            d_dftParamsPtr->restartFolder,
+        //                            d_mpiCommParent,
+        //                            mpi_communicator,
+        //                            interpoolcomm,
+        //                            interBandGroupComm);
+        //         bool isGradDensityDataDependent =
+        //           (d_excManagerPtr->getExcSSDFunctionalObj()
+        //              ->getDensityBasedFamilyType() ==
+        //              densityFamilyType::GGA);
+        //         if (isGradDensityDataDependent)
+        //           {
+        //             saveQuadratureData(d_basisOperationsPtrHost,
+        //                                d_densityQuadratureId,
+        //                                d_gradDensityOutQuadValues[i],
+        //                                3,
+        //                                Gradfield[i],
+        //                                d_dftParamsPtr->restartFolder,
+        //                                d_mpiCommParent,
+        //                                mpi_communicator,
+        //                                interpoolcomm,
+        //                                interBandGroupComm);
+        //           }
+        //       }
+        //     if (isTauMGGA)
+        //       for (dftfe::Int i = 0; i < d_tauOutQuadValues.size(); i++)
+        //         {
+        //           saveQuadratureData(d_basisOperationsPtrHost,
+        //                              d_densityQuadratureId,
+        //                              d_tauOutQuadValues[i],
+        //                              1,
+        //                              field2[i],
+        //                              d_dftParamsPtr->restartFolder,
+        //                              d_mpiCommParent,
+        //                              mpi_communicator,
+        //                              interpoolcomm,
+        //                              interBandGroupComm);
+        //         }
+        //     if (d_useHubbard)
+        //       {
+        //         d_hubbardClassPtr->writeHubbOccToFile();
+        //       }
+        //   }
       }
 
     // if (d_dftParamsPtr->saveRhoData &&
