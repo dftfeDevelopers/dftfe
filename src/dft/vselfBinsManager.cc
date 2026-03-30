@@ -1180,8 +1180,7 @@ namespace dftfe
                         {
                           const dealii::types::global_dof_index nodeId =
                             iFaceGlobalDofIndices[iFaceDof];
-                          if (!onlyHangingNodeConstraints.is_constrained(
-                                nodeId))
+                          if (!constraintMatrix.is_constrained(nodeId))
                             {
                               Assert(boundaryNodeMap.find(nodeId) !=
                                        boundaryNodeMap.end(),
@@ -1206,8 +1205,7 @@ namespace dftfe
                               const std::vector<
                                 std::pair<dealii::types::global_dof_index,
                                           double>> *rowData =
-                                onlyHangingNodeConstraints
-                                  .get_constraint_entries(nodeId);
+                                constraintMatrix.get_constraint_entries(nodeId);
                               for (dftfe::uInt j = 0; j < rowData->size(); ++j)
                                 {
                                   if (d_dftParams

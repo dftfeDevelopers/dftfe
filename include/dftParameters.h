@@ -53,7 +53,8 @@ namespace dftfe
     std::string auxBasisDataXC;
     bool        useLibXCForXCEvaluation;
 
-    double radiusAtomBall, mixingParameter, spinMixingEnhancementFactor;
+    double radiusAtomBall, mixingParameter, inverseKerkerMixingParameter,
+      spinMixingEnhancementFactor;
     bool   adaptAndersonMixingParameter;
     double absLinearSolverTolerance, selfConsistentSolverTolerance, TVal,
       selfConsistentSolverEnergyTolerance, tot_magnetization,
@@ -108,8 +109,9 @@ namespace dftfe
     bool        saveQuadData;
     bool        loadQuadData;
     bool        restartSpinFromNoSpin;
-
-    bool reproducible_output;
+    bool        restartNonCollinartFromCollinear;
+    double      magPhi, magTheta;
+    bool        reproducible_output;
 
     bool writeWfcSolutionFields;
     bool printKE;
@@ -189,6 +191,8 @@ namespace dftfe
     bool        memOptMode;
     bool        approxOverlapMatrix;
     bool        useReformulatedChFSI;
+    bool        noncolin;
+    bool        hasSOC;
 
     dftfe::uInt dc_dispersioncorrectiontype;
     dftfe::uInt dc_d3dampingtype;

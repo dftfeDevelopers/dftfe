@@ -2478,14 +2478,60 @@ namespace dftfe
                       }
                   }
               }
+            else if (couplingtype == CouplingStructure::blockDiagonal)
+              {
+                const ValueType one   = 1.0;
+                const ValueType zero  = 0.0;
+                dftfe::uInt     alpha = 0;
+                for (int iAtom = 0; iAtom < d_totalAtomsInCurrentProc; iAtom++)
+                  {
+                    const dftfe::uInt atomId = atomIdsInProc[iAtom];
+                    const dftfe::uInt Znum   = atomicNumber[atomId];
+                    const dftfe::uInt numberSphericalFunctions =
+                      d_atomCenteredSphericalFunctionContainer
+                        ->getTotalNumberOfSphericalFunctionsPerAtom(Znum);
+                    const dftfe::uInt localId =
+                      sphericalFunctionKetTimesVectorParFlattened
+                        .getMPIPatternP2P()
+                        ->globalToLocal(
+                          d_sphericalFunctionIdsNumberingMapCurrentProcess
+                            .find(std::make_pair(atomId, 0))
+                            ->second);
+                    d_BLASWrapperPtr->xgemm(
+                      'N',
+                      'T',
+                      d_numberWaveFunctions / 2,
+                      numberSphericalFunctions * 2,
+                      numberSphericalFunctions * 2,
+                      &one,
+                      sphericalFunctionKetTimesVectorParFlattened.begin() +
+                        localId * d_numberWaveFunctions,
+                      d_numberWaveFunctions / 2,
+                      couplingMatrix.begin() + alpha,
+                      numberSphericalFunctions * 2,
+                      &zero,
+                      &d_sphericalFnTimesWavefunMatrix[atomId][0],
+                      d_numberWaveFunctions / 2);
+                    if (!flagCopyResultsToMatrix)
+                      {
+                        d_BLASWrapperPtr->xcopy(
+                          d_numberWaveFunctions * numberSphericalFunctions,
+                          &d_sphericalFnTimesWavefunMatrix[atomId][0],
+                          1,
+                          sphericalFunctionKetTimesVectorParFlattened.begin() +
+                            localId * d_numberWaveFunctions,
+                          1);
+                      }
+                    alpha +=
+                      numberSphericalFunctions * numberSphericalFunctions * 4;
+                  }
+              }
             else if (couplingtype == CouplingStructure::dense)
               {
-                dftfe::uInt startIndex = 0;
-                dftfe::uInt totalShift =
-                  couplingMatrix.size() / d_kPointWeights.size();
-                const dftfe::uInt inc   = 1;
-                const ValueType   alpha = 1;
-                const ValueType   beta  = 0;
+                dftfe::uInt       startIndex = 0;
+                const dftfe::uInt inc        = 1;
+                const ValueType   alpha      = 1;
+                const ValueType   beta       = 0;
                 for (dftfe::Int iAtom = 0; iAtom < d_totalAtomsInCurrentProc;
                      iAtom++)
                   {
@@ -2575,6 +2621,47 @@ namespace dftfe
                 else
                   copyPaddedMemoryStorageVectorToDistributeVectorDevice(
                     d_sphericalFnTimesVectorDevice,
+                    sphericalFunctionKetTimesVectorParFlattened);
+              }
+            else if (couplingtype == CouplingStructure::blockDiagonal)
+              {
+                copyDistributedVectorToPaddedMemoryStorageVectorDevice(
+                  sphericalFunctionKetTimesVectorParFlattened,
+                  d_sphericalFnTimesVectorDevice);
+                const ValueType one  = 1.0;
+                const ValueType zero = 0.0;
+
+                d_BLASWrapperPtr->xgemmStridedBatched(
+                  'N',
+                  'T',
+                  d_numberWaveFunctions / 2,
+                  d_maxSingleAtomContribution * 2,
+                  d_maxSingleAtomContribution * 2,
+                  &one,
+                  d_sphericalFnTimesVectorDevice.begin(),
+                  d_numberWaveFunctions / 2,
+                  d_maxSingleAtomContribution * d_numberWaveFunctions,
+                  couplingMatrix.begin(),
+                  d_maxSingleAtomContribution * 2,
+                  d_maxSingleAtomContribution * d_maxSingleAtomContribution * 4,
+                  &zero,
+                  d_couplingMatrixTimesVectorDevice.begin(),
+                  d_numberWaveFunctions / 2,
+                  d_maxSingleAtomContribution * d_numberWaveFunctions,
+                  d_totalAtomsInCurrentProc);
+                if (flagCopyResultsToMatrix)
+                  dftfe::AtomicCenteredNonLocalOperatorKernelsDevice::
+                    copyFromParallelNonLocalVecToAllCellsVec(
+                      d_numberWaveFunctions,
+                      d_totalNonlocalElems,
+                      d_maxSingleAtomContribution,
+                      d_couplingMatrixTimesVectorDevice.begin(),
+                      d_sphericalFnTimesVectorAllCellsDevice.begin(),
+                      d_indexMapFromPaddedNonLocalVecToParallelNonLocalVecDevice
+                        .begin());
+                else
+                  copyPaddedMemoryStorageVectorToDistributeVectorDevice(
+                    d_couplingMatrixTimesVectorDevice,
                     sphericalFunctionKetTimesVectorParFlattened);
               }
             else if (couplingtype == CouplingStructure::dense)

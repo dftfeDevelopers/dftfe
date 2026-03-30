@@ -225,7 +225,25 @@ namespace dftfe
           "RESTART SP FROM NO SP",
           "false",
           dealii::Patterns::Bool(),
-          "[Standard] Enables ground-state solve for SPIN POLARIZED case reading the SPIN UNPOLARIZED density from the checkpoint files, and use the TOTAL MAGNETIZATION to compute the spin up and spin down densities. This option is used in conjuction with LOAD QUAD DATA or LOAD RHO DATA. Default false.");
+          "[Standard] Enables ground-state solve for SPIN POLARIZED case reading the SPIN UNPOLARIZED density from the checkpoint files, and use the TOTAL MAGNETIZATION to compute the spin up and spin down densities. This option is used in conjuction with LOAD QUAD DATA. Default false.");
+
+        prm.declare_entry(
+          "RESTART NONCOLLINEAR FROM COLLINEAR",
+          "false",
+          dealii::Patterns::Bool(),
+          "[Standard] Enables ground-state solve for NONCOLLINEAR case reading the COLLINEAR SPIN POLARIZED charge and magnetization densities from the checkpoint files, and use the MAG PHI and MAG THETA variable to rotate the collinear magentization density. This option is used in conjuction with LOAD QUAD DATA. Default false.");
+
+        prm.declare_entry(
+          "MAG PHI",
+          "0",
+          dealii::Patterns::Double(0),
+          "[Standard] The angle (in degrees) with z-axis for rotating the COLLINEAR SPIN POLARIZED magnetization density when using RESTART NONCOLLINEAR FROM COLLINEAR. Default 0");
+
+        prm.declare_entry(
+          "MAG THETA",
+          "0",
+          dealii::Patterns::Double(0),
+          "[Standard] The angle (in degrees) with between the projection of the magnetization density onto the xy plane and the x-axis for rotating the COLLINEAR SPIN POLARIZED magnetization density when using RESTART NONCOLLINEAR FROM COLLINEAR. Default 0");
       }
       prm.leave_subsection();
 
@@ -717,7 +735,17 @@ namespace dftfe
           dealii::Patterns::Integer(0, 1),
           "[Standard] Spin polarization: 0 for no spin polarization and 1 for collinear spin polarization calculation. Default option is 0.");
 
+        prm.declare_entry(
+          "NONCOLLINEAR SPIN",
+          "false",
+          dealii::Patterns::Bool(),
+          "[Standard] Perform a noncollinear spin calculation. Default option is false.");
 
+        prm.declare_entry(
+          "SPIN-ORBIT COUPLING",
+          "false",
+          dealii::Patterns::Bool(),
+          "[Standard] Perform a an SOC calculation, requires fully relativistic pseudopotentials. Recommended pseudopotential databases are http://www.quantum-simulation.org/potentials/sg15\_oncv or http://www.pseudo-dojo.org/. Default option is false.");
 
         prm.declare_entry(
           "TOTAL MAGNETIZATION",
@@ -841,6 +869,12 @@ namespace dftfe
           "0.0",
           dealii::Patterns::Double(-1e-12, 1.0),
           "[Standard] Mixing parameter to be used in density mixing schemes. For default value of 0.0, it is heuristically set for different mixing schemes (0.2 for Anderson, and 0.5 for Kerker and LRD.");
+
+        prm.declare_entry(
+          "INVERSE KERKER MIXING PARAMETER",
+          "0.0",
+          dealii::Patterns::Double(-1e-12, 1000.0),
+          "[Standard] Mixing parameter to be used in for gradient of potential in density mixing schemes. Setting this parameter to a non-zero value enables the use of inner products of gradient of the electrostatic potential similiar to the inverse Kerker metric in VASP. For default value of 0.0, this feature is disabled.");
 
         prm.declare_entry(
           "SPIN MIXING ENHANCEMENT FACTOR",
@@ -1581,6 +1615,10 @@ namespace dftfe
       saveQuadData          = prm.get_bool("SAVE QUAD DATA");
       loadQuadData          = prm.get_bool("LOAD QUAD DATA");
       restartSpinFromNoSpin = prm.get_bool("RESTART SP FROM NO SP");
+      restartNonCollinartFromCollinear =
+        prm.get_bool("RESTART NONCOLLINEAR FROM COLLINEAR");
+      magPhi   = prm.get_double("MAG PHI");
+      magTheta = prm.get_double("MAG THETA");
       if (solverMode == "NEB")
         saveQuadData = true;
     }
@@ -1731,7 +1769,10 @@ namespace dftfe
       XCType              = prm.get("EXCHANGE CORRELATION TYPE");
       useLibXCForXCEvaluation =
         prm.get_bool("USE LIBXC FOR XC FUNCTIONAL EVALUATION");
-      spinPolarized     = prm.get_integer("SPIN POLARIZATION");
+      noncolin = prm.get_bool("NONCOLLINEAR SPIN");
+      hasSOC   = prm.get_bool("SPIN-ORBIT COUPLING");
+      spinPolarized =
+        noncolin || hasSOC ? 0 : prm.get_integer("SPIN POLARIZATION");
       modelXCInputFile  = prm.get("MODEL XC INPUT FILE");
       auxBasisTypeXC    = prm.get("AUX BASIS TYPE");
       auxBasisDataXC    = prm.get("AUX BASIS DATA");
@@ -1757,6 +1798,8 @@ namespace dftfe
       selfConsistentSolverEnergyTolerance = prm.get_double("ENERGY TOLERANCE");
       mixingHistory                       = prm.get_integer("MIXING HISTORY");
       mixingParameter                     = prm.get_double("MIXING PARAMETER");
+      inverseKerkerMixingParameter =
+        prm.get_double("INVERSE KERKER MIXING PARAMETER");
       spinMixingEnhancementFactor =
         prm.get_double("SPIN MIXING ENHANCEMENT FACTOR");
       adaptAndersonMixingParameter =
@@ -1933,7 +1976,21 @@ namespace dftfe
     AssertThrow(solverMode != "BANDS",
                 dealii::ExcMessage(
                   "DFT-FE Error: Real executable cannot be used for bands."));
+    AssertThrow(
+      !(noncolin || hasSOC),
+      dealii::ExcMessage(
+        "DFT-FE Error: Real executable cannot be used noncollinear magnetism and spin-orbit coupling."));
 #endif
+    if (noncolin || hasSOC)
+      AssertThrow(
+        mixingMethod != "LOW_RANK_DIELECM_PRECOND",
+        dealii::ExcMessage(
+          "DFT-FE Error: LRDM mixing scheme for noncollinear magnetism and spin-orbit coupling is not implemented yet."));
+    if (noncolin || hasSOC)
+      AssertThrow(
+        mixingMethod != "LOW_RANK_DIELECM_PRECOND",
+        dealii::ExcMessage(
+          "DFT-FE Error: LRDM mixing scheme for noncollinear magnetism and spin-orbit coupling is not implemented yet."));
     if (numberEigenValues != 0)
       AssertThrow(
         nbandGrps <= numberEigenValues,
@@ -2007,6 +2064,10 @@ namespace dftfe
           mixingMethod != "LOW_RANK_DIELECM_PRECOND",
           dealii::ExcMessage(
             "DFT-FE Error: LRDM mixing scheme in MGGA functional is not completed yet."));
+        AssertThrow(
+          !(noncolin || hasSOC),
+          dealii::ExcMessage(
+            "DFT-FE Error: Non-collinear magnetism and spin-orbit coupling with MGGA functional is not implemented yet."));
       }
 
     bool isHubbard = (XCType.substr(XCType.size() - 2) == "+U");
@@ -2022,6 +2083,12 @@ namespace dftfe
         !(useSymm),
         dealii::ExcMessage(
           "DFT-FE Error: Group symmetry for Hubbard is not implemented yet."));
+
+    if (isHubbard)
+      AssertThrow(
+        !(noncolin || hasSOC),
+        dealii::ExcMessage(
+          "DFT-FE Error: Non-collinear magnetism and spin-orbit coupling with Hubbard is not implemented yet."));
 
     if (dc_dispersioncorrectiontype == 1 || dc_dispersioncorrectiontype == 2)
       {
@@ -2264,6 +2331,8 @@ namespace dftfe
           chebyshevTolerance = 1.0e-2;
         else if (solverMode != "NSCF" && solverMode != "BANDS")
           chebyshevTolerance = 5.0e-2;
+        else
+          chebyshevTolerance = 1.0e-8;
       }
 
     if (std::fabs(mixingParameter - 0.0) < 1.0e-12)

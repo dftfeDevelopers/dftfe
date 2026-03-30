@@ -731,6 +731,11 @@ namespace dftfe
     mutable std::vector<int> iwork;
 
     /**
+     * real workspace array.
+     */
+    mutable std::vector<double> rwork;
+
+    /**
      * Integer array holding pivoting information required
      * by ScaLAPACK's matrix factorization routines.
      */

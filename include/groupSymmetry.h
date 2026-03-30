@@ -50,7 +50,8 @@ namespace dftfe
     initGroupSymmetry(std::vector<std::vector<double>> &atomLocations,
                       std::vector<std::vector<double>> &domainBoundingVectors,
                       std::vector<bool> &periodicBoundaryConditions,
-                      const bool         isCollinearSpin = false);
+                      const bool         isCollinearSpin    = false,
+                      const bool         isNonCollinearSpin = false);
 
     void
     reinitGroupSymmetry(
@@ -68,6 +69,13 @@ namespace dftfe
     void
     symmetrizeScalarFieldFromLocalValues(
       distributedCPUVec<double>   &scalarField,
+      const dealii::DoFHandler<3> &dofHandler);
+
+    void
+    symmetrizeVectorFieldFromLocalValues(
+      distributedCPUVec<double>   &vectorFieldComponentx,
+      distributedCPUVec<double>   &vectorFieldComponenty,
+      distributedCPUVec<double>   &vectorFieldComponentz,
       const dealii::DoFHandler<3> &dofHandler);
 
     void

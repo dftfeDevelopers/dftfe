@@ -115,6 +115,8 @@ namespace dftfe
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       d_densityValsSpinDownAllQuads;
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      d_magAxisAllQuads;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       d_gradDensityValsSpinUpAllQuads;
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       d_gradDensityValsSpinDownAllQuads;

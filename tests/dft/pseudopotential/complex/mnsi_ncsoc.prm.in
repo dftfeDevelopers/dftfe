@@ -1,0 +1,72 @@
+set SOLVER MODE = GS
+set VERBOSITY = 0
+set REPRODUCIBLE OUTPUT = true
+set MEM OPT MODE = true
+subsection Geometry
+  set NATOMS=8
+  set NATOM TYPES=2
+  set ATOMIC COORDINATES FILE      = @SOURCE_DIR@/mnsi_coordinates.inp          
+  set DOMAIN VECTORS FILE = @SOURCE_DIR@/mnsi_domainVectors.inp 
+  subsection Optimization
+    set ION FORCE = true
+    set CELL STRESS = true
+  end
+end
+
+subsection Boundary conditions
+  set PERIODIC1                       = true
+  set PERIODIC2                       = true
+  set PERIODIC3                       = true
+  set FLOATING NUCLEAR CHARGES           = true
+end
+subsection Brillouin zone k point sampling options
+  set USE GROUP SYMMETRY         = false
+  set USE TIME REVERSAL SYMMETRY = false
+  subsection Monkhorst-Pack (MP) grid generation
+    set SAMPLING POINTS 1 = 2
+    set SAMPLING POINTS 2 = 2
+    set SAMPLING POINTS 3 = 2
+    set SAMPLING SHIFT 1  = 0
+    set SAMPLING SHIFT 2  = 0
+    set SAMPLING SHIFT 3  = 0
+  end
+end
+
+
+subsection DFT functional parameters
+  set EXCHANGE CORRELATION TYPE   = GGA-PBE
+  set PSEUDOPOTENTIAL CALCULATION = true
+  set PSEUDOPOTENTIAL FILE NAMES LIST = @SOURCE_DIR@/mnsi_pseudo.inp
+  set PSEUDO TESTS FLAG               = true
+  set NONCOLLINEAR SPIN = true
+  set SPIN-ORBIT COUPLING             = true
+end
+
+subsection SCF parameters
+  set ADAPT ANDERSON MIXING PARAMETER = false
+  set MIXING METHOD                   = ANDERSON
+  set MIXING PARAMETER                 = 0.5
+  set KERKER MIXING PARAMETER         = 0.287
+  set SPIN MIXING ENHANCEMENT FACTOR  = 1.0
+  set MIXING HISTORY           = 15
+  set TEMPERATURE                      = 500
+  set TOLERANCE                        = 1e-6
+  subsection Eigen-solver parameters
+    set CHEBYSHEV FILTER TOLERANCE                           = 1e-3
+  end
+end
+
+subsection Finite element mesh parameters
+  set POLYNOMIAL ORDER=3
+  set POLYNOMIAL ORDER ELECTROSTATICS = 0
+  subsection Auto mesh generation parameters
+    set ATOM BALL RADIUS = 6
+    set MESH SIZE AROUND ATOM  = 1.2
+  end
+end
+subsection Parallelization
+  set BAND PARAL OPT           = true
+  set MPI ALLREDUCE BLOCK SIZE = 100.0
+  set NPBAND                   = 1
+  set NPKPT                    = 8
+end

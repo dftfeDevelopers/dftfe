@@ -291,6 +291,8 @@ namespace dftfe
         if (d_dftParams.orthogType.compare("CGS") == 0 &&
             !d_dftParams.isPseudopotential)
           chebyshevOrder *= 0.5;
+        if (d_dftParams.noncolin || d_dftParams.hasSOC)
+          chebyshevOrder *= 2.0;
       }
 
     chebyshevOrder =
