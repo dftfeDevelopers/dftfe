@@ -150,9 +150,9 @@ namespace dftfe
     std::string     communPrecCheby;
     bool            useSinglePrecCheby;
     mutable dftfe::uInt scfIterCount = 0;
-    dftfe::uInt     compressLateStartSCF = 6;
+    dftfe::uInt     compressLateStartSCF = 200;
     dftfe::uInt     compressBitsPerValueEarly = 16;
-    dftfe::uInt     compressBitsPerValueLate  = 8;
+    dftfe::uInt     compressBitsPerValueLate  = 16;
     std::string     compressAlgoEarly = "BFP";
     std::string     compressAlgoLate  = "BFP";
     bool        overlapComputeCommunCheby;
