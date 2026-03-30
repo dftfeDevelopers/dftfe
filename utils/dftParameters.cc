@@ -1137,18 +1137,18 @@ namespace dftfe
           prm.declare_entry(
             "COMPRESS BITS EARLY",
             "16",
-            dealii::Patterns::Integer(4, 32),
+            dealii::Patterns::Integer(8, 16),
             "[Advanced] Bits per value for early SCF compression (iterations 0 to COMPRESS LATE START SCF - 1). Default 16.");
 
           prm.declare_entry(
             "COMPRESS BITS LATE",
             "16",
-            dealii::Patterns::Integer(4, 32),
+            dealii::Patterns::Integer(8, 16),
             "[Advanced] Bits per value for late SCF compression (from COMPRESS LATE START SCF onward). Default 16.");
 
           prm.declare_entry(
             "COMPRESS LATE START SCF",
-            "200",
+            "1000",
             dealii::Patterns::Integer(0, 1000),
             "[Advanced] SCF iteration at which late compression settings take effect (iterations before this use early settings). Default 200.");
 
