@@ -2337,14 +2337,14 @@ namespace dftfe
                                   finiteElementPolynomialOrderRhoNodal + 1;
       }
 
-    if (useIntermediateDensityQuadrature &&
-        intermediateDensityQuadratureRule >= densityQuadratureRule)
+    if (useIntermediateDensityQuadrature)
       {
-        if (intermediateDensityQuadratureRule == densityQuadratureRule)
-          useIntermediateDensityQuadrature = false;
-        else if (intermediateDensityQuadratureRule > densityQuadratureRule)
+        if (intermediateDensityQuadratureRule == 0)
           intermediateDensityQuadratureRule =
             2 * finiteElementPolynomialOrder + 1;
+
+        if (intermediateDensityQuadratureRule >= densityQuadratureRule)
+          useIntermediateDensityQuadrature = false;
       }
 
 
