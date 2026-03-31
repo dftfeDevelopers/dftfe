@@ -386,6 +386,10 @@ namespace dftfe
         d_matrixFreeDataPtr->get_quadrature(quadId2),
         dealii::update_values);
 
+      dealii::Triangulation<3> reference_cell;
+      dealii::GridGenerator::hyper_cube(reference_cell, 0., 1.);
+      feCollocIntermediateDensityToDensityQuad.reinit(reference_cell.begin());
+
       const dftfe::uInt numQuads =
         d_matrixFreeDataPtr->get_quadrature(quadId2).size();
       const dftfe::uInt dofsPerCell = fe_dgq.dofs_per_cell;

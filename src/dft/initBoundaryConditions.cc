@@ -309,12 +309,15 @@ namespace dftfe
                 true,
                 !d_dftParamsPtr->approxOverlapMatrix);
             d_basisOperationsPtrHost->computeInverseSqrtMassVector(true, false);
-            d_basisOperationsPtrHost
-              ->shapeFunctionsCenteredAtQuad1EvaluatedAtQuad2(
-                d_intermediateDensityQuadratureId, d_densityQuadratureId);
-            d_basisOperationsPtrHost
-              ->shapeFunctionsCenteredAtQuad1EvaluatedAtQuad2(
-                d_intermediateDensityQuadratureId, d_gllQuadratureId);
+            if (d_dftParamsPtr->useIntermediateDensityQuadrature)
+              {
+                d_basisOperationsPtrHost
+                  ->shapeFunctionsCenteredAtQuad1EvaluatedAtQuad2(
+                    d_intermediateDensityQuadratureId, d_densityQuadratureId);
+                d_basisOperationsPtrHost
+                  ->shapeFunctionsCenteredAtQuad1EvaluatedAtQuad2(
+                    d_intermediateDensityQuadratureId, d_gllQuadratureId);
+              }
           }
       }
     if (!d_dftParamsPtr->useDevice && recomputeBasisData)

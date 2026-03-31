@@ -496,6 +496,11 @@ namespace dftfe
           "0",
           dealii::Patterns::Integer(0, 24),
           "[Standard] The intermediate quadrtaure rule used for computing the electron density. From this, the electron density is computed at the quadrature points corresponding to DENSITY QUADRATURE RULE using FEM interpolation.");
+        prm.declare_entry(
+          "USE INTERMEDIATE DENSITY QUADRATURE",
+          "false",
+          dealii::Patterns::Bool(),
+          "[Standard] If set to true, uses INTERMEDIATE DENSITY QUADRATURE RULE for computing the electron density from wavefunctions, then interpolates to the target density quadrature rule using FEM interpolation.");
         prm.enter_subsection("Auto mesh generation parameters");
         {
           prm.declare_entry(
@@ -1673,6 +1678,8 @@ namespace dftfe
       densityQuadratureRule = prm.get_integer("DENSITY QUADRATURE RULE");
       intermediateDensityQuadratureRule =
         prm.get_integer("INTERMEDIATE DENSITY QUADRATURE RULE");
+      useIntermediateDensityQuadrature =
+        prm.get_bool("USE INTERMEDIATE DENSITY QUADRATURE");
       prm.enter_subsection("Auto mesh generation parameters");
       {
         outerAtomBallRadius   = prm.get_double("ATOM BALL RADIUS");
@@ -1953,11 +1960,6 @@ namespace dftfe
       dealii::ExcMessage(
         "DFT-FE Error: Real executable cannot be used noncollinear magnetism and spin-orbit coupling."));
 #endif
-    if (noncolin || hasSOC)
-      AssertThrow(
-        mixingMethod != "LOW_RANK_DIELECM_PRECOND",
-        dealii::ExcMessage(
-          "DFT-FE Error: LRDM mixing scheme for noncollinear magnetism and spin-orbit coupling is not implemented yet."));
     if (noncolin || hasSOC)
       AssertThrow(
         mixingMethod != "LOW_RANK_DIELECM_PRECOND",
@@ -2335,10 +2337,14 @@ namespace dftfe
                                   finiteElementPolynomialOrderRhoNodal + 1;
       }
 
-    if (intermediateDensityQuadratureRule == 0)
+    if (useIntermediateDensityQuadrature &&
+        intermediateDensityQuadratureRule >= densityQuadratureRule)
       {
-        intermediateDensityQuadratureRule =
-          2 * finiteElementPolynomialOrder + 1;
+        if (intermediateDensityQuadratureRule == densityQuadratureRule)
+          useIntermediateDensityQuadrature = false;
+        else if (intermediateDensityQuadratureRule > densityQuadratureRule)
+          intermediateDensityQuadratureRule =
+            2 * finiteElementPolynomialOrder + 1;
       }
 
 
