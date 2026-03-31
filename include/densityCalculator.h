@@ -36,7 +36,7 @@ namespace dftfe
     std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
                               &BLASWrapperPtr,
     const dftfe::uInt          matrixFreeDofhandlerIndex,
-    const dftfe::uInt          tempQuadratureIndex,
+    const dftfe::uInt          intermediateQuadratureIndex,
     const dftfe::uInt          quadratureIndex,
     const std::vector<double> &kPointCoords,
     const std::vector<double> &kPointWeights,

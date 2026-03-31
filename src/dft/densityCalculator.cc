@@ -39,7 +39,7 @@ namespace dftfe
     std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
                               &BLASWrapperPtr,
     const dftfe::uInt          matrixFreeDofhandlerIndex,
-    const dftfe::uInt          tempQuadratureIndex,
+    const dftfe::uInt          intermediateQuadratureIndex,
     const dftfe::uInt          quadratureIndex,
     const std::vector<double> &kPointCoords,
     const std::vector<double> &kPointWeights,
@@ -111,11 +111,13 @@ namespace dftfe
       basisOperationsPtr->d_matrixFreeDataPtr->get_quadrature(quadratureIndex)
         .size();
 
-    const bool useTempQuadrature = dftParams.useIntermediateDensityQuadrature;
+    const bool useIntermediateQuadrature =
+      dftParams.useIntermediateDensityQuadrature;
     basisOperationsPtr->reinit(BVec * numWfnSpinors,
                                cellsBlockSize,
-                               useTempQuadrature ? tempQuadratureIndex :
-                                                   quadratureIndex);
+                               useIntermediateQuadrature ?
+                                 intermediateQuadratureIndex :
+                                 quadratureIndex);
     const dftfe::uInt numQuadPoints = basisOperationsPtr->nQuadsPerCell();
 
     dftfe::utils::MemoryStorage<NumberType, memorySpace> wfcQuadPointData;
@@ -245,8 +247,8 @@ namespace dftfe
 
                     basisOperationsPtr->reinit(currentBlockSize * numWfnSpinors,
                                                cellsBlockSize,
-                                               useTempQuadrature ?
-                                                 tempQuadratureIndex :
+                                               useIntermediateQuadrature ?
+                                                 intermediateQuadratureIndex :
                                                  quadratureIndex,
                                                false);
 
@@ -329,7 +331,7 @@ namespace dftfe
     dftfe::utils::MemoryStorage<double, memorySpace> gradRhoRefinedStorage;
     dftfe::utils::MemoryStorage<double, memorySpace> tauRefinedStorage;
 
-    if (useTempQuadrature)
+    if (useIntermediateQuadrature)
       {
         rhoRefinedStorage.resize(totalLocallyOwnedCells *
                                    numQuadsQuadratureIndex * numRhoComponents,
@@ -349,11 +351,12 @@ namespace dftfe
                                      0.0);
           }
       }
-    auto &rhoRefined     = useTempQuadrature ? rhoRefinedStorage : rho;
-    auto &gradRhoRefined = useTempQuadrature ? gradRhoRefinedStorage : gradRho;
-    auto &tauRefined     = useTempQuadrature ? tauRefinedStorage : tau;
+    auto &rhoRefined = useIntermediateQuadrature ? rhoRefinedStorage : rho;
+    auto &gradRhoRefined =
+      useIntermediateQuadrature ? gradRhoRefinedStorage : gradRho;
+    auto &tauRefined = useIntermediateQuadrature ? tauRefinedStorage : tau;
 
-    if (useTempQuadrature)
+    if (useIntermediateQuadrature)
       {
         basisOperationsPtr->reinit(BVec, cellsBlockSize, quadratureIndex);
         for (dftfe::uInt spinIndex = 0; spinIndex < numRhoComponents;
@@ -361,7 +364,7 @@ namespace dftfe
           {
             basisOperationsPtr->interpolateQ1ToQ2(
               rho.data() + spinIndex * totalLocallyOwnedCells * numQuadPoints,
-              tempQuadratureIndex,
+              intermediateQuadratureIndex,
               quadratureIndex,
               rhoRefined.data() +
                 spinIndex * totalLocallyOwnedCells * numQuadsQuadratureIndex,
@@ -370,7 +373,7 @@ namespace dftfe
               basisOperationsPtr->interpolateQ1ToQ2(
                 gradRho.data() +
                   spinIndex * totalLocallyOwnedCells * numQuadPoints * 3,
-                tempQuadratureIndex,
+                intermediateQuadratureIndex,
                 quadratureIndex,
                 gradRhoRefined.data() + spinIndex * totalLocallyOwnedCells *
                                           numQuadsQuadratureIndex * 3,
@@ -378,7 +381,7 @@ namespace dftfe
             if (isEvaluateTau)
               basisOperationsPtr->interpolateQ1ToQ2(
                 tau.data() + spinIndex * totalLocallyOwnedCells * numQuadPoints,
-                tempQuadratureIndex,
+                intermediateQuadratureIndex,
                 quadratureIndex,
                 tauRefined.data() +
                   spinIndex * totalLocallyOwnedCells * numQuadsQuadratureIndex,
@@ -832,7 +835,7 @@ namespace dftfe
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
                               &BLASWrapperPtr,
     const dftfe::uInt          matrixFreeDofhandlerIndex,
-    const dftfe::uInt          tempQuadratureIndex,
+    const dftfe::uInt          intermediateQuadratureIndex,
     const dftfe::uInt          quadratureIndex,
     const std::vector<double> &kPointCoords,
     const std::vector<double> &kPointWeights,
@@ -869,7 +872,7 @@ namespace dftfe
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
                               &BLASWrapperPtr,
     const dftfe::uInt          matrixFreeDofhandlerIndex,
-    const dftfe::uInt          tempQuadratureIndex,
+    const dftfe::uInt          intermediateQuadratureIndex,
     const dftfe::uInt          quadratureIndex,
     const std::vector<double> &kPointCoords,
     const std::vector<double> &kPointWeights,
