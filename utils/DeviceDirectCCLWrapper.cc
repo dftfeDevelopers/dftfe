@@ -43,11 +43,6 @@ namespace dftfe
       MPICHECK(MPI_Comm_dup(mpiComm, &d_mpiComm));
       MPICHECK(MPI_Comm_size(mpiComm, &totalRanks));
       MPICHECK(MPI_Comm_rank(mpiComm, &myRank));
-      if (!commStreamCreated)
-        {
-          dftfe::utils::deviceStreamCreate(d_deviceCommStream, true);
-          commStreamCreated = true;
-        }
 
 #  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
       if (!dcclCommInit && useDCCL)
@@ -101,6 +96,12 @@ namespace dftfe
           dcclCommInit = true;
         }
 #  endif
+
+      if (!commStreamCreated)
+        {
+          dftfe::utils::deviceStreamCreate(d_deviceCommStream, true);
+          commStreamCreated = true;
+        }
     }
 
     DeviceCCLWrapper::~DeviceCCLWrapper()
@@ -126,7 +127,10 @@ namespace dftfe
 
       d_deviceDirectDCCLInstanceCounter--;
       if (commStreamCreated && d_deviceDirectDCCLInstanceCounter == 0)
-        dftfe::utils::deviceStreamDestroy(d_deviceCommStream);
+        {
+          dftfe::utils::deviceStreamDestroy(d_deviceCommStream);
+          commStreamCreated = false;
+        }
     }
 
     dftfe::Int
