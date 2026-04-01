@@ -233,7 +233,9 @@ namespace dftfe
     // SparsityPattern VEctor
     quadratureVector.push_back(dealii::QGauss<1>(8));
     quadratureVector.push_back(
-      dealii::QGauss<1>(d_dftParamsPtr->intermediateDensityQuadratureRule));
+      dealii::QGauss<1>(d_dftParamsPtr->useIntermediateDensityQuadrature ?
+                          d_dftParamsPtr->intermediateDensityQuadratureRule :
+                          1));
 
     d_densityQuadratureId             = 0;
     d_nlpspQuadratureId               = 1;
@@ -292,8 +294,10 @@ namespace dftfe
               updateFlagsLPSP,
               updateFlagsfeOrderPlusOne,
               updateFlagssparsityPattern,
-              dftfe::basis::update_values | dftfe::basis::update_gradients |
-                dftfe::basis::update_inversejacobians};
+              d_dftParamsPtr->useIntermediateDensityQuadrature ?
+                dftfe::basis::update_values | dftfe::basis::update_gradients |
+                  dftfe::basis::update_inversejacobians :
+                dftfe::basis::update_default};
             d_basisOperationsPtrHost->init(matrix_free_data,
                                            d_constraintsVector,
                                            d_densityDofHandlerIndex,
