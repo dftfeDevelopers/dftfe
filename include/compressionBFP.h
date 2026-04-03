@@ -97,12 +97,14 @@ namespace compression
 
     unsigned int packed = e; /* exponent in lower EBITS bits */
 
-    /* quantize: q_i = round_toward_zero(value_i * 2^(vbits-1) / 2^emax) */
-    Scalar             s = portable_ldexp((Scalar)1.0, (int)vbits - 1 - emax);
+    /* quantize: q_i = round(value_i * 2^(vbits-1) / 2^emax), clamped to signed range */
+    Scalar             s     = portable_ldexp((Scalar)1.0, (int)vbits - 1 - emax);
     const unsigned int vmask = (1u << vbits) - 1u;
+    const int          qmax  = (int)(vmask >> 1u);
     for (int i = 0; i < 4; i++)
       {
-        int q = (int)rint(s * fblock[i]);
+        const int q_raw = (int)rint(s * fblock[i]);
+        const int q     = q_raw > qmax ? qmax : q_raw;
         packed |= ((unsigned int)q & vmask)
                   << (ebits + (unsigned int)i * vbits);
       }
@@ -181,12 +183,14 @@ namespace compression
     if (!e)
       return (uint64)0;
 
-    uint64 packed = (uint64)e;
-    Scalar s      = portable_ldexp((Scalar)1.0, (int)vbits - 1 - emax);
+    uint64    packed = (uint64)e;
+    Scalar    s      = portable_ldexp((Scalar)1.0, (int)vbits - 1 - emax);
+    const int qmax   = (int)(vmask >> 1u);
 
     for (int i = 0; i < 4; i++)
       {
-        int q = (int)rint(s * fblock[i]);
+        const int q_raw = (int)rint(s * fblock[i]);
+        const int q     = q_raw > qmax ? qmax : q_raw;
         packed |= ((uint64)((unsigned int)q & vmask))
                   << (ebits + (unsigned int)i * vbits);
       }
@@ -261,12 +265,14 @@ namespace compression
     if (!e)
       return (uint64)0;
 
-    uint64 packed = (uint64)e;
-    Scalar s      = portable_ldexp((Scalar)1.0, (int)vbits - 1 - emax);
+    uint64    packed = (uint64)e;
+    Scalar    s      = portable_ldexp((Scalar)1.0, (int)vbits - 1 - emax);
+    const int qmax   = (int)(vmask >> 1u);
 
     for (int i = 0; i < 4; i++)
       {
-        int q = (int)rint(s * fblock[i]);
+        const int q_raw = (int)rint(s * fblock[i]);
+        const int q     = q_raw > qmax ? qmax : q_raw;
         packed |= ((uint64)((unsigned int)q & vmask))
                   << (ebits + (unsigned int)i * vbits);
       }
@@ -338,10 +344,12 @@ namespace compression
 
     unsigned int packed = e;
     Scalar       s      = portable_ldexp((Scalar)1.0, (int)vbits - 1 - emax);
+    const int    qmax   = (int)(vmask >> 1u);
 
     for (int i = 0; i < 4; i++)
       {
-        int q = (int)rint(s * fblock[i]);
+        const int q_raw = (int)rint(s * fblock[i]);
+        const int q     = q_raw > qmax ? qmax : q_raw;
         packed |= ((unsigned int)q & vmask)
                   << (ebits + (unsigned int)i * vbits);
       }
@@ -411,12 +419,14 @@ namespace compression
     if (!e)
       return (uint64)0;
 
-    uint64 packed = (uint64)e;
-    Scalar s      = portable_ldexp((Scalar)1.0, (int)vbits - 1 - emax);
+    uint64    packed = (uint64)e;
+    Scalar    s      = portable_ldexp((Scalar)1.0, (int)vbits - 1 - emax);
+    const int qmax   = (int)(vmask >> 1u);
 
     for (int i = 0; i < 4; i++)
       {
-        int q = (int)rint(s * fblock[i]);
+        const int q_raw = (int)rint(s * fblock[i]);
+        const int q     = q_raw > qmax ? qmax : q_raw;
         packed |= ((uint64)((unsigned int)q & vmask))
                   << (ebits + (unsigned int)i * vbits);
       }
@@ -473,11 +483,13 @@ namespace compression
 
     writer.write_bits(e, ebits); /* exponent */
 
-    Scalar             s = portable_ldexp((Scalar)1.0, (int)vbits - 1 - emax);
+    Scalar             s     = portable_ldexp((Scalar)1.0, (int)vbits - 1 - emax);
     const unsigned int vmask = (1u << vbits) - 1u;
+    const int          qmax  = (int)(vmask >> 1u);
     for (int i = 0; i < 4; i++)
       {
-        int q = (int)rint(s * fblock[i]);
+        const int q_raw = (int)rint(s * fblock[i]);
+        const int q     = q_raw > qmax ? qmax : q_raw;
         writer.write_bits((uint64)((unsigned int)q & vmask), vbits);
       }
   }
