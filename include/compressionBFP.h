@@ -102,7 +102,7 @@ namespace compression
     const unsigned int vmask = (1u << vbits) - 1u;
     for (int i = 0; i < 4; i++)
       {
-        int q = (int)(s * fblock[i]);
+        int q = (int)rint(s * fblock[i]);
         packed |= ((unsigned int)q & vmask)
                   << (ebits + (unsigned int)i * vbits);
       }
@@ -186,7 +186,7 @@ namespace compression
 
     for (int i = 0; i < 4; i++)
       {
-        int q = (int)(s * fblock[i]);
+        int q = (int)rint(s * fblock[i]);
         packed |= ((uint64)((unsigned int)q & vmask))
                   << (ebits + (unsigned int)i * vbits);
       }
@@ -266,7 +266,7 @@ namespace compression
 
     for (int i = 0; i < 4; i++)
       {
-        int q = (int)(s * fblock[i]);
+        int q = (int)rint(s * fblock[i]);
         packed |= ((uint64)((unsigned int)q & vmask))
                   << (ebits + (unsigned int)i * vbits);
       }
@@ -341,7 +341,7 @@ namespace compression
 
     for (int i = 0; i < 4; i++)
       {
-        int q = (int)(s * fblock[i]);
+        int q = (int)rint(s * fblock[i]);
         packed |= ((unsigned int)q & vmask)
                   << (ebits + (unsigned int)i * vbits);
       }
@@ -416,7 +416,7 @@ namespace compression
 
     for (int i = 0; i < 4; i++)
       {
-        int q = (int)(s * fblock[i]);
+        int q = (int)rint(s * fblock[i]);
         packed |= ((uint64)((unsigned int)q & vmask))
                   << (ebits + (unsigned int)i * vbits);
       }
@@ -477,7 +477,7 @@ namespace compression
     const unsigned int vmask = (1u << vbits) - 1u;
     for (int i = 0; i < 4; i++)
       {
-        int q = (int)(s * fblock[i]);
+        int q = (int)rint(s * fblock[i]);
         writer.write_bits((uint64)((unsigned int)q & vmask), vbits);
       }
   }
