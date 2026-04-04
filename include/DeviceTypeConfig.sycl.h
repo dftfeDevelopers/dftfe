@@ -70,9 +70,12 @@ namespace dftfe
       sycl::device::get_devices(sycl::info::device_type::gpu);
     inline dftfe::uInt   syclDeviceId = 0;
     inline sycl::device  syclDevice   = allSyclGPUDevices[syclDeviceId];
+    inline sycl::context syclContext{syclDevice};
     inline std::map<dftfe::uInt, sycl::queue> queueRegistry{
       {defaultStream,
-       sycl::queue(syclDevice, sycl::property::queue::in_order{})}};
+       sycl::queue(syclContext,
+                   syclDevice,
+                   sycl::property::queue::in_order{})}};
     inline std::set<dftfe::uInt> usedStreamIds{defaultStream};
   } // namespace utils
 } // namespace dftfe

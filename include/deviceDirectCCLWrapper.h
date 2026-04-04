@@ -27,7 +27,7 @@
 #    elif defined(DFTFE_WITH_HIP_RCCL)
 #      include <rccl.h>
 #    elif defined(DFTFE_WITH_SYCL_ONECCL)
-#      include <oneapi/ccl.h>
+#      include <oneapi/ccl.hpp>
 #    endif
 
 namespace dftfe
@@ -51,18 +51,21 @@ namespace dftfe
 #    endif
 
 #    if defined(DFTFE_WITH_SYCL_ONECCL)
-#      define ONECCLCHECK(cmd)                                 \
-        do                                                     \
-          {                                                    \
-            onecclResult_t r = cmd;                            \
-            if (r != onecclSuccess)                            \
-              {                                                \
-                printf("Failed, oneCCL error %s:%d '%s'\n",   \
-                       __FILE__,                               \
-                       __LINE__,                               \
-                       onecclGetErrorString(r));               \
-                exit(EXIT_FAILURE);                            \
-              }                                                \
+#      define ONECCLCHECK(cmd)                              \
+        do                                                  \
+          {                                                 \
+            try                                             \
+              {                                             \
+                cmd;                                        \
+              }                                             \
+            catch (const ccl::exception &e)                 \
+              {                                             \
+                printf("Failed, oneCCL error %s:%d '%s'\n", \
+                       __FILE__,                            \
+                       __LINE__,                            \
+                       e.what());                           \
+                exit(EXIT_FAILURE);                         \
+              }                                             \
         } while (0)
 #    endif
 
@@ -135,8 +138,8 @@ namespace dftfe
 #    endif
 
 #    if defined(DFTFE_WITH_SYCL_ONECCL)
-      inline static onecclUniqueId *onecclIdPtr;
-      inline static onecclComm_t    onecclCommPtr;
+      inline static std::shared_ptr<ccl::kvs>          onecclIdPtr;
+      inline static std::shared_ptr<ccl::communicator> onecclCommPtr;
 #    endif
 
       inline static bool                         dcclCommInit;
