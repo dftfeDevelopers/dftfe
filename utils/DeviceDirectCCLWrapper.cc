@@ -165,7 +165,8 @@ namespace dftfe
                                          ccl::reduction::sum,
                                          *onecclCommPtr,
                                          devStream));
-          e.wait();
+          deviceEvent_t commEvent = e.get_native();
+          dftfe::utils::deviceStreamWaitEvent(stream, commEvent, 0);
         }
 #  endif
 
@@ -224,7 +225,8 @@ namespace dftfe
                                          ccl::reduction::sum,
                                          *onecclCommPtr,
                                          devStream));
-          e.wait();
+          deviceEvent_t commEvent = e.get_native();
+          dftfe::utils::deviceStreamWaitEvent(stream, commEvent, 0);
         }
 #  endif
 
@@ -285,7 +287,8 @@ namespace dftfe
                                          ccl::reduction::sum,
                                          *onecclCommPtr,
                                          devStream));
-          e.wait();
+          deviceEvent_t commEvent = e.get_native();
+          dftfe::utils::deviceStreamWaitEvent(stream, commEvent, 0);
         }
 #  endif
 
@@ -345,7 +348,8 @@ namespace dftfe
                                          ccl::reduction::sum,
                                          *onecclCommPtr,
                                          devStream));
-          e.wait();
+          deviceEvent_t commEvent = e.get_native();
+          dftfe::utils::deviceStreamWaitEvent(stream, commEvent, 0);
         }
 #  endif
 
@@ -431,8 +435,10 @@ namespace dftfe
                                           devStream));
 
           ONECCLCHECK(ccl::group_end());
-          e1.wait();
-          e2.wait();
+          deviceEvent_t commEvent1 = e1.get_native();
+          deviceEvent_t commEvent2 = e2.get_native();
+          dftfe::utils::deviceStreamWaitEvent(stream, commEvent1, 0);
+          dftfe::utils::deviceStreamWaitEvent(stream, commEvent2, 0);
         }
 #  endif
 
@@ -535,8 +541,10 @@ namespace dftfe
                                           devStream));
 
           ONECCLCHECK(ccl::group_end());
-          e1.wait();
-          e2.wait();
+          deviceEvent_t commEvent1 = e1.get_native();
+          deviceEvent_t commEvent2 = e2.get_native();
+          dftfe::utils::deviceStreamWaitEvent(stream, commEvent1, 0);
+          dftfe::utils::deviceStreamWaitEvent(stream, commEvent2, 0);
         }
 #  endif
 
