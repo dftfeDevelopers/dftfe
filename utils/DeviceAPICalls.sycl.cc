@@ -57,9 +57,7 @@ namespace dftfe
       dftfe::utils::usedStreamIds.clear();
       dftfe::utils::usedStreamIds.insert(dftfe::utils::defaultStream);
       dftfe::utils::queueRegistry[dftfe::utils::defaultStream] =
-        sycl::queue(dftfe::utils::syclContext,
-                    dftfe::utils::syclDevice,
-                    sycl::property::queue::in_order{});
+        sycl::queue(dftfe::utils::syclDevice, sycl::property::queue::in_order{});
       return dftfe::utils::deviceSuccess;
     }
 
@@ -104,7 +102,6 @@ namespace dftfe
       dftfe::utils::syclDeviceId = deviceId;
       dftfe::utils::syclDevice =
         dftfe::utils::allSyclGPUDevices[dftfe::utils::syclDeviceId];
-      dftfe::utils::syclContext = sycl::context(dftfe::utils::syclDevice);
       return dftfe::utils::deviceSuccess;
     }
 
@@ -396,9 +393,7 @@ namespace dftfe
         pStream++;
       dftfe::utils::usedStreamIds.insert(pStream);
       dftfe::utils::queueRegistry[pStream] =
-        sycl::queue(dftfe::utils::syclContext,
-                    dftfe::utils::syclDevice,
-                    sycl::property::queue::in_order{});
+        sycl::queue(dftfe::utils::syclDevice, sycl::property::queue::in_order{});
 
       return dftfe::utils::deviceSuccess;
     }
