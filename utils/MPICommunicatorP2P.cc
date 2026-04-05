@@ -522,7 +522,7 @@ namespace dftfe
                             d_blockSize * (sizeof(ValueType) / 4),
                           ncclFloat,
                           d_mpiPatternP2P->getTargetProcIds().data()[i],
-                          *dftfe::utils::DeviceCCLWrapper::ncclCommPtr,
+                          *dftfe::utils::DeviceCCLWrapper::dcclCommPtr,
                           dftfe::utils::DeviceCCLWrapper::d_deviceCommStream));
 
                       sendArrayStartPtr +=
@@ -547,7 +547,7 @@ namespace dftfe
                             d_blockSize * (sizeof(ValueType) / 4),
                           ncclFloat,
                           d_mpiPatternP2P->getGhostProcIds().data()[i],
-                          *dftfe::utils::DeviceCCLWrapper::ncclCommPtr,
+                          *dftfe::utils::DeviceCCLWrapper::dcclCommPtr,
                           dftfe::utils::DeviceCCLWrapper::d_deviceCommStream));
 
                       recvArrayStartPtr +=
@@ -709,7 +709,7 @@ namespace dftfe
                              4),
                           ncclFloat,
                           d_mpiPatternP2P->getTargetProcIds().data()[i],
-                          *dftfe::utils::DeviceCCLWrapper::ncclCommPtr,
+                          *dftfe::utils::DeviceCCLWrapper::dcclCommPtr,
                           dftfe::utils::DeviceCCLWrapper::d_deviceCommStream));
 
                       sendArrayStartPtr +=
@@ -737,7 +737,7 @@ namespace dftfe
                              4),
                           ncclFloat,
                           d_mpiPatternP2P->getGhostProcIds().data()[i],
-                          *dftfe::utils::DeviceCCLWrapper::ncclCommPtr,
+                          *dftfe::utils::DeviceCCLWrapper::dcclCommPtr,
                           dftfe::utils::DeviceCCLWrapper::d_deviceCommStream));
 
                       recvArrayStartPtr +=
@@ -897,7 +897,7 @@ namespace dftfe
                                    ValueType>::type),
                           ncclChar,
                           d_mpiPatternP2P->getTargetProcIds().data()[i],
-                          *dftfe::utils::DeviceCCLWrapper::ncclCommPtr,
+                          *dftfe::utils::DeviceCCLWrapper::dcclCommPtr,
                           dftfe::utils::DeviceCCLWrapper::d_deviceCommStream));
 
                       sendArrayStartPtr +=
@@ -924,7 +924,7 @@ namespace dftfe
                                    ValueType>::type),
                           ncclChar,
                           d_mpiPatternP2P->getGhostProcIds().data()[i],
-                          *dftfe::utils::DeviceCCLWrapper::ncclCommPtr,
+                          *dftfe::utils::DeviceCCLWrapper::dcclCommPtr,
                           dftfe::utils::DeviceCCLWrapper::d_deviceCommStream));
 
                       recvArrayStartPtr +=
@@ -1448,7 +1448,7 @@ namespace dftfe
                             d_blockSize * (sizeof(ValueType) / 4),
                           ncclFloat,
                           d_mpiPatternP2P->getGhostProcIds().data()[i],
-                          *dftfe::utils::DeviceCCLWrapper::ncclCommPtr,
+                          *dftfe::utils::DeviceCCLWrapper::dcclCommPtr,
                           dftfe::utils::DeviceCCLWrapper::d_deviceCommStream));
 
                       sendArrayStartPtr +=
@@ -1471,7 +1471,7 @@ namespace dftfe
                             d_blockSize * (sizeof(ValueType) / 4),
                           ncclFloat,
                           d_mpiPatternP2P->getTargetProcIds().data()[i],
-                          *dftfe::utils::DeviceCCLWrapper::ncclCommPtr,
+                          *dftfe::utils::DeviceCCLWrapper::dcclCommPtr,
                           dftfe::utils::DeviceCCLWrapper::d_deviceCommStream));
 
                       recvArrayStartPtr +=
@@ -1632,7 +1632,7 @@ namespace dftfe
                              4),
                           ncclFloat,
                           d_mpiPatternP2P->getGhostProcIds().data()[i],
-                          *dftfe::utils::DeviceCCLWrapper::ncclCommPtr,
+                          *dftfe::utils::DeviceCCLWrapper::dcclCommPtr,
                           dftfe::utils::DeviceCCLWrapper::d_deviceCommStream));
 
                       sendArrayStartPtr +=
@@ -1658,7 +1658,7 @@ namespace dftfe
                              4),
                           ncclFloat,
                           d_mpiPatternP2P->getTargetProcIds().data()[i],
-                          *dftfe::utils::DeviceCCLWrapper::ncclCommPtr,
+                          *dftfe::utils::DeviceCCLWrapper::dcclCommPtr,
                           dftfe::utils::DeviceCCLWrapper::d_deviceCommStream));
 
                       recvArrayStartPtr +=
@@ -1820,7 +1820,7 @@ namespace dftfe
                                    ValueType>::type),
                           ncclChar,
                           d_mpiPatternP2P->getGhostProcIds().data()[i],
-                          *dftfe::utils::DeviceCCLWrapper::ncclCommPtr,
+                          *dftfe::utils::DeviceCCLWrapper::dcclCommPtr,
                           dftfe::utils::DeviceCCLWrapper::d_deviceCommStream));
 
                       sendArrayStartPtr +=
@@ -1845,7 +1845,7 @@ namespace dftfe
                                    ValueType>::type),
                           ncclChar,
                           d_mpiPatternP2P->getTargetProcIds().data()[i],
-                          *dftfe::utils::DeviceCCLWrapper::ncclCommPtr,
+                          *dftfe::utils::DeviceCCLWrapper::dcclCommPtr,
                           dftfe::utils::DeviceCCLWrapper::d_deviceCommStream));
 
                       recvArrayStartPtr +=
@@ -2410,7 +2410,7 @@ namespace dftfe
                             d_blockSize * (sizeof(ValueType) / 4),
                           ncclFloat,
                           d_mpiPatternP2P->getGhostProcIds().data()[i],
-                          *dftfe::utils::DeviceCCLWrapper::ncclCommPtr,
+                          *dftfe::utils::DeviceCCLWrapper::dcclCommPtr,
                           dftfe::utils::DeviceCCLWrapper::d_deviceCommStream));
 
                       sendArrayStartPtr +=
@@ -2433,7 +2433,7 @@ namespace dftfe
                             d_blockSize * (sizeof(ValueType) / 4),
                           ncclFloat,
                           d_mpiPatternP2P->getTargetProcIds().data()[i],
-                          *dftfe::utils::DeviceCCLWrapper::ncclCommPtr,
+                          *dftfe::utils::DeviceCCLWrapper::dcclCommPtr,
                           dftfe::utils::DeviceCCLWrapper::d_deviceCommStream));
 
                       recvArrayStartPtr +=
@@ -2595,7 +2595,7 @@ namespace dftfe
                              4),
                           ncclFloat,
                           d_mpiPatternP2P->getGhostProcIds().data()[i],
-                          *dftfe::utils::DeviceCCLWrapper::ncclCommPtr,
+                          *dftfe::utils::DeviceCCLWrapper::dcclCommPtr,
                           dftfe::utils::DeviceCCLWrapper::d_deviceCommStream));
 
                       sendArrayStartPtr +=
@@ -2621,7 +2621,7 @@ namespace dftfe
                              4),
                           ncclFloat,
                           d_mpiPatternP2P->getTargetProcIds().data()[i],
-                          *dftfe::utils::DeviceCCLWrapper::ncclCommPtr,
+                          *dftfe::utils::DeviceCCLWrapper::dcclCommPtr,
                           dftfe::utils::DeviceCCLWrapper::d_deviceCommStream));
 
                       recvArrayStartPtr +=

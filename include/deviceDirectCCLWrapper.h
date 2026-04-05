@@ -133,13 +133,13 @@ namespace dftfe
         deviceStream_t             &stream);
 
 #    if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
-      inline static ncclUniqueId *ncclIdPtr;
-      inline static ncclComm_t   *ncclCommPtr;
+  inline static ncclUniqueId *dcclIdPtr;
+  inline static ncclComm_t   *dcclCommPtr;
 #    endif
 
 #    if defined(DFTFE_WITH_SYCL_ONECCL)
-      inline static std::shared_ptr<ccl::kvs>          onecclIdPtr;
-      inline static std::shared_ptr<ccl::communicator> onecclCommPtr;
+  inline static std::shared_ptr<ccl::kvs>          dcclIdPtr;
+  inline static std::shared_ptr<ccl::communicator> dcclCommPtr;
 #    endif
 
       inline static bool                         dcclCommInit;
