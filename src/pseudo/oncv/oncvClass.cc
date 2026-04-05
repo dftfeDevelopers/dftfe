@@ -19,6 +19,98 @@
 #include <oncvClass.h>
 namespace dftfe
 {
+  namespace internal
+  {
+    std::complex<double>
+    computeRealToComplexYlmRotMatrixElements(const dftfe::Int l,
+                                             const dftfe::Int m1,
+                                             const dftfe::Int m2)
+    {
+      if (std::abs(m1) > l || std::abs(m2) > l)
+        return 0.0;
+      std::complex<double> U(0.0, 0.0);
+      const dftfe::Int     arem1m2Zero = (m1 == 0 && m2 == 0) ? 1 : 0;
+      U.real(arem1m2Zero + 1 / sqrt(2.0) *
+                             ((m1 > 0 ? 1.0 : 0.0) * ((m2 == m1) ? 1.0 : 0.0) +
+                              (m1 < 0 ? 1.0 : 0.0) * pow(-1, std::abs(m1)) *
+                                ((m2 == -m1) ? 1.0 : 0.0)));
+      U.imag(1 / sqrt(2.0) *
+             ((m1 > 0 ? 1.0 : 0.0) * ((m2 == -m1) ? 1.0 : 0.0) +
+              (m1 < 0 ? 1.0 : 0.0) * pow(-1, std::abs(m1)) *
+                ((m2 == m1) ? -1.0 : 0.0)));
+
+      return U;
+    }
+
+    std::complex<double>
+    computeRealToComplexYlmRotMatrixElements(const bool       s,
+                                             const double     j,
+                                             const dftfe::Int l,
+                                             const double     mj,
+                                             const dftfe::Int m)
+    {
+      bool isjlplushalf  = std::abs(j - l - 0.5) < 1e-8;
+      bool isjlminushalf = std::abs(j - l + 0.5) < 1e-8;
+      if (!(isjlplushalf | isjlminushalf))
+        {
+          std::cout << "DEBUG j value is incorrect" << std::endl;
+        }
+      // std::cout<<"DEBUG rerr "<<mj+0.5<<" "<<(dftfe::Int)(mj+0.5)<<"
+      // "<<mj-0.5<<"
+      // "<<(dftfe::Int)(mj-0.5)<<std::endl;
+      const dftfe::Int m1 = s ? (mj + 0.5) : (mj - 0.5);
+      if ((s ? std::abs(m1 - mj - 0.5) : std::abs(m1 - mj + 0.5)) > 1e-8)
+        std::cout << "DEBUG rounding error" << std::endl;
+      return computeRealToComplexYlmRotMatrixElements(l, m1, m);
+    }
+
+    double
+    computeClebschGordonCeoff(const bool       s,
+                              const double     j,
+                              const dftfe::Int l,
+                              const double     mj)
+    {
+      bool isjlplushalf  = std::abs(j - l - 0.5) < 1e-8;
+      bool isjlminushalf = std::abs(j - l + 0.5) < 1e-8;
+      if (!(isjlplushalf | isjlminushalf))
+        {
+          std::cout << "DEBUG j value is incorrect " << j << " " << l
+                    << std::endl;
+        }
+      double alpha;
+      if (isjlplushalf)
+        {
+          alpha = s ? std::sqrt((l - mj + 0.5) / (2.0 * l + 1.0)) :
+                      std::sqrt((l + mj + 0.5) / (2.0 * l + 1.0));
+        }
+      else
+        {
+          alpha = s ? -std::sqrt((l + mj + 0.5) / (2.0 * l + 1.0)) :
+                      std::sqrt((l - mj + 0.5) / (2.0 * l + 1.0));
+        }
+      return alpha;
+    }
+    std::complex<double>
+    computefcoeff(const double     j,
+                  const dftfe::Int l,
+                  const dftfe::Int m1,
+                  const dftfe::Int m2,
+                  const bool       s1,
+                  const bool       s2)
+    {
+      std::complex<double> fcoeff = 0.0;
+      for (double mj = -j; mj < j + 0.1; mj += 1.0)
+        {
+          fcoeff +=
+            computeClebschGordonCeoff(s1, j, l, mj) *
+            computeClebschGordonCeoff(s2, j, l, mj) *
+            computeRealToComplexYlmRotMatrixElements(s1, j, l, mj, m1) *
+            std::conj(
+              computeRealToComplexYlmRotMatrixElements(s2, j, l, mj, m2));
+        }
+      return fcoeff;
+    }
+  } // namespace internal
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   oncvClass<ValueType, memorySpace>::oncvClass(
     const MPI_Comm                           &mpi_comm_parent,
@@ -45,6 +137,7 @@ namespace dftfe
     d_verbosity              = verbosity;
     d_atomTypeAtributes      = atomAttributes;
     d_useDevice              = useDevice;
+    d_hasSOC                 = false;
     d_memoryOptMode          = memOptMode;
   }
 
@@ -425,8 +518,6 @@ namespace dftfe
             memorySpace>::createAtomCenteredSphericalFunctionsForProjectors()
   {
     d_atomicProjectorFnsVector.clear();
-    std::vector<std::vector<dftfe::Int>> projectorIdDetails;
-    std::vector<std::vector<dftfe::Int>> atomicFunctionIdDetails;
     for (std::set<dftfe::uInt>::iterator it = d_atomTypes.begin();
          it != d_atomTypes.end();
          ++it)
@@ -441,17 +532,16 @@ namespace dftfe
         dftfe::uInt   Znum = *it;
         std::ifstream readPseudoDataFileNames(pseudoAtomDataFile);
         dftfe::uInt   numberOfProjectors;
+        dftfe::uInt   socFlag;
         readPseudoDataFileNames >> numberOfProjectors;
+        readPseudoDataFileNames >> socFlag;
         readPseudoDataFileNames.ignore();
-        projectorIdDetails.resize(numberOfProjectors);
         std::string          readLine;
         std::set<dftfe::Int> radFunctionIds;
-        atomicFunctionIdDetails.resize(numberOfProjectors);
+        dftfe::uInt          maxCount = socFlag == 1 ? 4 : 3;
+        d_hasSOC                      = socFlag == 1;
         for (dftfe::uInt i = 0; i < numberOfProjectors; ++i)
           {
-            std::vector<dftfe::Int> &radAndAngularFunctionId =
-              atomicFunctionIdDetails[i];
-            radAndAngularFunctionId.resize(3, 0);
             std::getline(readPseudoDataFileNames, readLine);
 
             std::istringstream lineString(readLine);
@@ -461,16 +551,20 @@ namespace dftfe
             std::string        dummyString;
             while (lineString >> dummyString)
               {
-                if (count < 3)
+                if (count < maxCount)
                   {
                     Id = atoi(dummyString.c_str());
 
                     if (count == 1)
                       radFunctionIds.insert(Id);
-                    radAndAngularFunctionId[count] = Id;
+                    if (socFlag == 1)
+                      {
+                        d_atomicProjectorFnsljmValues[Znum][i][count] =
+                          std::stod(dummyString.c_str());
+                      }
                   }
 
-                if (count > 3)
+                if (count >= maxCount)
                   {
                     std::cerr << "Invalid argument in the SingleAtomData file"
                               << std::endl;
@@ -707,20 +801,99 @@ namespace dftfe
         std::vector<dftfe::uInt> atomicNumber =
           d_atomicProjectorFnsContainer->getAtomicNumbers();
         d_couplingMatrixEntries.clear();
+        if constexpr (std::is_same<dataTypes::number,
+                                   std::complex<double>>::value)
+          if (d_hasSOC)
+            {
+              dftfe::uInt numberRadialSphericalFunctions =
+                d_atomicProjectorFnsContainer
+                  ->getTotalNumberOfSphericalFunctionsInCurrentProcessor();
+              for (dftfe::Int iAtom = 0; iAtom < atomIdsInProcessor.size();
+                   iAtom++)
+                {
+                  dftfe::uInt atomId = atomIdsInProcessor[iAtom];
+                  dftfe::uInt Znum   = atomicNumber[atomId];
+                  dftfe::uInt numberRadialSphericalFunctionsPerAtom =
+                    d_atomicProjectorFnsContainer
+                      ->getTotalNumberOfRadialSphericalFunctionsPerAtom(Znum);
+                  dftfe::uInt numberSphericalFunctionsPerAtom =
+                    d_atomicProjectorFnsContainer
+                      ->getTotalNumberOfSphericalFunctionsPerAtom(Znum);
+                  std::vector<ValueType> entriesCurrentAtom(
+                    numberSphericalFunctionsPerAtom *
+                      numberSphericalFunctionsPerAtom * 4,
+                    0.0);
+                  for (dftfe::uInt alpha = 0;
+                       alpha < numberSphericalFunctionsPerAtom;
+                       alpha++)
+                    for (dftfe::uInt beta = 0;
+                         beta < numberSphericalFunctionsPerAtom;
+                         beta++)
+                      for (dftfe::uInt spinAlpha = 0; spinAlpha < 2;
+                           ++spinAlpha)
+                        for (dftfe::uInt spinBeta = 0; spinBeta < 2; ++spinBeta)
+                          {
+                            const dftfe::Int radialIndexAlpha =
+                              d_atomicProjectorFnsljmValues[Znum][alpha][0];
+                            const dftfe::Int lQuantumNumberAlpha =
+                              d_atomicProjectorFnsljmValues[Znum][alpha][1];
+                            const double jQuantumNumberAlpha =
+                              d_atomicProjectorFnsljmValues[Znum][alpha][2];
+                            const dftfe::Int mQuantumNumberAlpha =
+                              d_atomicProjectorFnsljmValues[Znum][alpha][3];
 
-        for (dftfe::Int iAtom = 0; iAtom < atomIdsInProcessor.size(); iAtom++)
+                            const dftfe::Int radialIndexBeta =
+                              d_atomicProjectorFnsljmValues[Znum][beta][0];
+                            const dftfe::Int lQuantumNumberBeta =
+                              d_atomicProjectorFnsljmValues[Znum][beta][1];
+                            const double jQuantumNumberBeta =
+                              d_atomicProjectorFnsljmValues[Znum][beta][2];
+                            const dftfe::Int mQuantumNumberBeta =
+                              d_atomicProjectorFnsljmValues[Znum][beta][3];
+                            if (radialIndexAlpha == radialIndexBeta)
+                              if (lQuantumNumberAlpha == lQuantumNumberBeta)
+                                if (std::abs(jQuantumNumberAlpha -
+                                             jQuantumNumberBeta) < 1e-8)
+                                  {
+                                    entriesCurrentAtom
+                                      [4 * numberSphericalFunctionsPerAtom *
+                                         beta +
+                                       2 * numberSphericalFunctionsPerAtom *
+                                         spinBeta +
+                                       2 * alpha + spinAlpha] =
+                                        dftfe::internal::computefcoeff(
+                                          jQuantumNumberAlpha,
+                                          lQuantumNumberBeta,
+                                          mQuantumNumberAlpha,
+                                          mQuantumNumberBeta,
+                                          spinAlpha == 1,
+                                          spinBeta == 1) *
+                                        d_atomicNonLocalPseudoPotentialConstants
+                                          [Znum][alpha];
+                                  }
+                          }
+                  Entries.insert(Entries.end(),
+                                 entriesCurrentAtom.begin(),
+                                 entriesCurrentAtom.end());
+                }
+            }
+        if (!d_hasSOC)
           {
-            dftfe::uInt atomId = atomIdsInProcessor[iAtom];
-            dftfe::uInt Znum   = atomicNumber[atomId];
-            dftfe::uInt numberSphericalFunctions =
-              d_atomicProjectorFnsContainer
-                ->getTotalNumberOfSphericalFunctionsPerAtom(Znum);
-            for (dftfe::uInt alpha = 0; alpha < numberSphericalFunctions;
-                 alpha++)
+            for (dftfe::Int iAtom = 0; iAtom < atomIdsInProcessor.size();
+                 iAtom++)
               {
-                double V =
-                  d_atomicNonLocalPseudoPotentialConstants[Znum][alpha];
-                Entries.push_back(ValueType(V));
+                dftfe::uInt atomId = atomIdsInProcessor[iAtom];
+                dftfe::uInt Znum   = atomicNumber[atomId];
+                dftfe::uInt numberSphericalFunctions =
+                  d_atomicProjectorFnsContainer
+                    ->getTotalNumberOfSphericalFunctionsPerAtom(Znum);
+                for (dftfe::uInt alpha = 0; alpha < numberSphericalFunctions;
+                     alpha++)
+                  {
+                    double V =
+                      d_atomicNonLocalPseudoPotentialConstants[Znum][alpha];
+                    Entries.push_back(ValueType(V));
+                  }
               }
           }
       }
@@ -742,7 +915,10 @@ namespace dftfe
           {
             std::vector<ValueType> EntriesPadded;
             d_nonLocalOperator->paddingCouplingMatrix(
-              Entries, EntriesPadded, CouplingStructure::diagonal);
+              Entries,
+              EntriesPadded,
+              d_hasSOC ? CouplingStructure::blockDiagonal :
+                         CouplingStructure::diagonal);
             d_couplingMatrixEntries.resize(EntriesPadded.size());
             d_couplingMatrixEntries.copyFrom(EntriesPadded);
             d_HamiltonianCouplingMatrixEntriesUpdated = true;
@@ -831,12 +1007,18 @@ namespace dftfe
         atomicNumbers[atomId]));
   }
 
-
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   const std::map<dftfe::uInt, dftfe::uInt> &
   oncvClass<ValueType, memorySpace>::getPSPAtomIdToGlobalIdMap()
   {
     return d_atomIdPseudopotentialInterestToGlobalId;
+  }
+
+  template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+  const bool
+  oncvClass<ValueType, memorySpace>::hasSOC() const
+  {
+    return d_hasSOC;
   }
   template class oncvClass<dataTypes::number, dftfe::utils::MemorySpace::HOST>;
 #if defined(DFTFE_WITH_DEVICE)

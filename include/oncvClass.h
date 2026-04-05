@@ -203,6 +203,9 @@ namespace dftfe
     const std::map<dftfe::uInt, dftfe::uInt> &
     getPSPAtomIdToGlobalIdMap();
 
+    const bool
+    hasSOC() const;
+
 
   private:
     /**
@@ -318,8 +321,11 @@ namespace dftfe
       d_atomicValenceDensityVector;
     std::vector<
       std::map<dftfe::uInt, std::shared_ptr<AtomCenteredSphericalFunctionBase>>>
-         d_atomicCoreDensityVector;
+      d_atomicCoreDensityVector;
+    std::map<unsigned int, std::map<unsigned int, std::array<double, 4>>>
+         d_atomicProjectorFnsljmValues;
     bool d_reproducible_output;
+    bool d_hasSOC;
     /// FIXME: eventually it should be a map of atomic number to struct-
     /// {valence number, mesh input etc}
     std::map<dftfe::uInt, dftfe::uInt> d_atomTypeAtributes;

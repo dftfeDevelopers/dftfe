@@ -1099,6 +1099,8 @@ namespace dftfe
              const int            *DESCZ,
              std::complex<double> *work,
              int                  *lwork,
+             double               *rwork,
+             int                  *lrwork,
              int                  *iwork,
              int                  *liwork,
              int                  *info);
@@ -2549,35 +2551,6 @@ namespace dftfe
   }
 
 
-  template <typename number>
-  inline void
-  psyevr(const char * /*jobz*/,
-         const char * /*range*/,
-         const char * /*uplo*/,
-         const int * /*n*/,
-         number * /*A*/,
-         const int * /*IA*/,
-         const int * /*JA*/,
-         const int * /*DESCA*/,
-         const number * /*VL*/,
-         const number * /*VU*/,
-         const int * /*IL*/,
-         const int * /*IU*/,
-         int * /*m*/,
-         int * /*nz*/,
-         number * /*w*/,
-         number * /*Z*/,
-         const int * /*IZ*/,
-         const int * /*JZ*/,
-         const int * /*DESCZ*/,
-         number * /*work*/,
-         int * /*lwork*/,
-         int * /*iwork*/,
-         int * /*liwork*/,
-         int * /*info*/)
-  {
-    AssertThrow(false, dealii::ExcNotImplemented());
-  }
 
   inline void
   psyevr(const char   *jobz,
@@ -2735,6 +2708,8 @@ namespace dftfe
          const int            *DESCZ,
          std::complex<double> *work,
          int                  *lwork,
+         double               *rwork,
+         int                  *lrwork,
          int                  *iwork,
          int                  *liwork,
          int                  *info)
@@ -2771,6 +2746,8 @@ namespace dftfe
              DESCZ,
              work,
              lwork,
+             rwork,
+             lrwork,
              iwork,
              liwork,
              info);

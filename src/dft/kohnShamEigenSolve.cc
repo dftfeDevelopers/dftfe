@@ -333,7 +333,8 @@ namespace dftfe
   {
     computing_timer.enter_subsection("Chebyshev solve");
 
-
+    const dftfe::uInt spinorFactor =
+      (d_dftParamsPtr->noncolin || d_dftParamsPtr->hasSOC) ? 2 : 1;
     if (d_dftParamsPtr->verbosity >= 2)
       {
         pcout << "kPoint: " << kPointIndex << std::endl;
@@ -419,7 +420,7 @@ namespace dftfe
       d_dftParamsPtr->solverMode == "BANDS" ?
         0 :
         ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
-          d_numEigenValues *
+          spinorFactor * d_numEigenValues *
           matrix_free_data.get_vector_partitioner()->locally_owned_size();
     subspaceIterationSolver.solve(
       kohnShamDFTEigenOperator,
@@ -427,7 +428,8 @@ namespace dftfe
       elpaScala,
       d_eigenVectorsFlattenedHost.data() + wfcStartIndex,
       d_numEigenValues,
-      matrix_free_data.get_vector_partitioner()->locally_owned_size(),
+      matrix_free_data.get_vector_partitioner()->locally_owned_size() *
+        spinorFactor,
       eigenValuesTemp,
       residualNormWaveFunctions,
       interBandGroupComm,
@@ -495,6 +497,9 @@ namespace dftfe
         if (d_dftParamsPtr->spinPolarized == 1)
           pcout << "spin: " << spinType + 1 << std::endl;
       }
+    const dftfe::uInt spinorFactor =
+      (d_dftParamsPtr->noncolin || d_dftParamsPtr->hasSOC) ? 2 : 1;
+
     std::vector<double> eigenValuesTemp(d_numEigenValues, 0.0);
     if (d_dftParamsPtr->useSinglePrecCheby ||
         d_dftParamsPtr->useReformulatedChFSI)
@@ -516,7 +521,7 @@ namespace dftfe
       d_dftParamsPtr->solverMode == "BANDS" ?
         0 :
         ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
-          d_numEigenValues *
+          spinorFactor * d_numEigenValues *
           matrix_free_data.get_vector_partitioner()->locally_owned_size();
 
     d_upperBoundUnwantedSpectrumValues[(1 + d_dftParamsPtr->spinPolarized) *
@@ -528,7 +533,8 @@ namespace dftfe
         elpaScala,
         d_eigenVectorsFlattenedDevice.begin() + wfcStartIndex,
         d_numEigenValues *
-          matrix_free_data.get_vector_partitioner()->locally_owned_size(),
+          matrix_free_data.get_vector_partitioner()->locally_owned_size() *
+          spinorFactor,
         d_numEigenValues,
         eigenValuesTemp,
         residualNormWaveFunctions,

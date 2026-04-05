@@ -83,6 +83,9 @@ namespace dftfe
     virtual const std::map<dftfe::uInt, dftfe::uInt> &
     getPSPAtomIdToGlobalIdMap() = 0;
 
+    virtual const bool
+    hasSOC() const = 0;
+
 
 
   }; // end of class

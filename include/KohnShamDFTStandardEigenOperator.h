@@ -44,6 +44,9 @@ namespace dftfe
       std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
         BLASWrapperPtr,
       std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+        BLASWrapperPtrHost,
+      std::shared_ptr<
         dftfe::basis::FEBasisOperations<dataTypes::number, double, memorySpace>>
         basisOperationsPtr,
       std::shared_ptr<
@@ -96,6 +99,23 @@ namespace dftfe
      */
     void
     overlapInverseMatrixTimesX(
+      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
+      const double scalarOinvX,
+      const double scalarY,
+      const double scalarX,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst);
+
+    /**
+     * @brief Computing Y = scalarOinvX*O^{-1/2}X + scalarX*X + scalarY*Y for a given X and Y in full precision
+     *
+     * @param src X vector
+     * @param scalarOinvX scalar for O^{-1}X
+     * @param scalarY scalar for Y
+     * @param scalarX scalar for X
+     * @param dst Y vector
+     */
+    void
+    overlapSqrtInverseMatrixTimesX(
       dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
       const double scalarOinvX,
       const double scalarY,

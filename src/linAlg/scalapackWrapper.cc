@@ -1509,74 +1509,155 @@ namespace dftfe
           }
         NumberType *A_loc = this->values.data();
 
-        /*
-         * By setting lwork to -1 a workspace query for optimal length of work
-         * is performed.
-         */
-        int         lwork  = -1;
-        int         liwork = -1;
-        NumberType *eigenvectors_loc =
-          (compute_eigenvectors ? eigenvectors->values.data() : nullptr);
-        work.resize(1);
-        iwork.resize(1);
+#ifdef USE_COMPLEX
+        if constexpr (std::is_same<NumberType, std::complex<double>>::value)
+          { /*
+             * By setting lwork to -1 a workspace query for optimal length of
+             * work is performed.
+             */
+            int         lwork  = -1;
+            int         liwork = -1;
+            int         lrwork = -1;
+            NumberType *eigenvectors_loc =
+              (compute_eigenvectors ? eigenvectors->values.data() : nullptr);
+            work.resize(1);
+            iwork.resize(1);
+            rwork.resize(1);
 
-        psyevr(&jobz,
-               &range,
-               &uplo,
-               &n_rows,
-               A_loc,
-               &submatrix_row,
-               &submatrix_column,
-               descriptor,
-               &vl,
-               &vu,
-               &il,
-               &iu,
-               &m,
-               &nz,
-               ev.data(),
-               eigenvectors_loc,
-               &eigenvectors->submatrix_row,
-               &eigenvectors->submatrix_column,
-               eigenvectors->descriptor,
-               work.data(),
-               &lwork,
-               iwork.data(),
-               &liwork,
-               &info);
-        AssertThrow(info == 0,
-                    dftfe::LAPACKSupport::ExcErrorCode("psyevr", info));
+            psyevr(&jobz,
+                   &range,
+                   &uplo,
+                   &n_rows,
+                   A_loc,
+                   &submatrix_row,
+                   &submatrix_column,
+                   descriptor,
+                   &vl,
+                   &vu,
+                   &il,
+                   &iu,
+                   &m,
+                   &nz,
+                   ev.data(),
+                   eigenvectors_loc,
+                   &eigenvectors->submatrix_row,
+                   &eigenvectors->submatrix_column,
+                   eigenvectors->descriptor,
+                   work.data(),
+                   &lwork,
+                   rwork.data(),
+                   &lrwork,
+                   iwork.data(),
+                   &liwork,
+                   &info);
+            AssertThrow(info == 0,
+                        dftfe::LAPACKSupport::ExcErrorCode("psyevr", info));
 
-        lwork = lworkFromWork(work);
-        work.resize(lwork);
-        liwork = iwork[0];
-        iwork.resize(liwork);
+            lwork = lworkFromWork(work);
+            work.resize(lwork);
+            lrwork = lworkFromWork(rwork);
+            rwork.resize(lrwork);
+            liwork = iwork[0];
+            iwork.resize(liwork);
 
-        psyevr(&jobz,
-               &range,
-               &uplo,
-               &n_rows,
-               A_loc,
-               &submatrix_row,
-               &submatrix_column,
-               descriptor,
-               &vl,
-               &vu,
-               &il,
-               &iu,
-               &m,
-               &nz,
-               ev.data(),
-               eigenvectors_loc,
-               &eigenvectors->submatrix_row,
-               &eigenvectors->submatrix_column,
-               eigenvectors->descriptor,
-               work.data(),
-               &lwork,
-               iwork.data(),
-               &liwork,
-               &info);
+            psyevr(&jobz,
+                   &range,
+                   &uplo,
+                   &n_rows,
+                   A_loc,
+                   &submatrix_row,
+                   &submatrix_column,
+                   descriptor,
+                   &vl,
+                   &vu,
+                   &il,
+                   &iu,
+                   &m,
+                   &nz,
+                   ev.data(),
+                   eigenvectors_loc,
+                   &eigenvectors->submatrix_row,
+                   &eigenvectors->submatrix_column,
+                   eigenvectors->descriptor,
+                   work.data(),
+                   &lwork,
+                   rwork.data(),
+                   &lrwork,
+                   iwork.data(),
+                   &liwork,
+                   &info);
+          }
+#else
+        if constexpr (!std::is_same<NumberType, std::complex<double>>::value)
+          { /*
+             * By setting lwork to -1 a workspace query for optimal length of
+             * work is performed.
+             */
+            int         lwork  = -1;
+            int         liwork = -1;
+            NumberType *eigenvectors_loc =
+              (compute_eigenvectors ? eigenvectors->values.data() : nullptr);
+            work.resize(1);
+            iwork.resize(1);
 
+            psyevr(&jobz,
+                   &range,
+                   &uplo,
+                   &n_rows,
+                   A_loc,
+                   &submatrix_row,
+                   &submatrix_column,
+                   descriptor,
+                   &vl,
+                   &vu,
+                   &il,
+                   &iu,
+                   &m,
+                   &nz,
+                   ev.data(),
+                   eigenvectors_loc,
+                   &eigenvectors->submatrix_row,
+                   &eigenvectors->submatrix_column,
+                   eigenvectors->descriptor,
+                   work.data(),
+                   &lwork,
+                   iwork.data(),
+                   &liwork,
+                   &info);
+            AssertThrow(info == 0,
+                        dftfe::LAPACKSupport::ExcErrorCode("psyevr", info));
+
+            lwork = lworkFromWork(work);
+            work.resize(lwork);
+            liwork = iwork[0];
+            iwork.resize(liwork);
+
+            psyevr(&jobz,
+                   &range,
+                   &uplo,
+                   &n_rows,
+                   A_loc,
+                   &submatrix_row,
+                   &submatrix_column,
+                   descriptor,
+                   &vl,
+                   &vu,
+                   &il,
+                   &iu,
+                   &m,
+                   &nz,
+                   ev.data(),
+                   eigenvectors_loc,
+                   &eigenvectors->submatrix_row,
+                   &eigenvectors->submatrix_column,
+                   eigenvectors->descriptor,
+                   work.data(),
+                   &lwork,
+                   iwork.data(),
+                   &liwork,
+                   &info);
+          }
+#endif
         AssertThrow(info == 0,
                     dftfe::LAPACKSupport::ExcErrorCode("psyevr", info));
 
