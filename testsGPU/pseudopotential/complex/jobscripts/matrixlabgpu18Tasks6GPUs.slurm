@@ -49,3 +49,4 @@ mpirun -n 6  $DFTFE_PATH/dftfe parameterFileBccFe_relaxFullMassMatrix.prm > outp
 mpirun -n 6  $DFTFE_PATH/dftfe parameterFileBccFe_scan.prm > outputBccFe_scan
 mpirun -n 6  $DFTFE_PATH/dftfe parameterFileBccFe_scan_kerker.prm > outputBccFe_scan_kerker
 mpirun -n 6  $DFTFE_PATH/dftfe parameterFileBccFe_scan_useLibxcFalse.prm > outputBccFe_scan_useLibxcFalse
+mpirun -n 6  $DFTFE_PATH/dftfe parameterFileFeCuPt2_scf_interMediateQuadRule.prm > outputFeCuPt2_scf_interMediateQuadRule
