@@ -666,7 +666,8 @@ namespace dftfe
              nDofsPerDim,
              nQuadPointsPerDim,
              batchSize,
-             subBatchSize>::constraintsDistribute(T *src, const bool applyInhomogenity)
+             subBatchSize>::constraintsDistribute(T         *src,
+                                                  const bool applyInhomogenity)
   {
     if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
       {

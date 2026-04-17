@@ -89,7 +89,9 @@ constraintsDistributeKernel(
     constrainedNodeOffset[blockIdx.x + 1] - constrainedNodeOffset[blockIdx.x];
   dftfe::uInt weightMatrixStart = weightMatrixOffset[blockIdx.x];
 
-  T inhomogenity = inhomogenityList[blockIdx.x];
+  T inhomogenity;
+  if constexpr (applyInhomogenity)
+    inhomogenity = inhomogenityList[blockIdx.x];
 
   for (dftfe::uInt j = threadIdx.y; j < constrainedBucketSize; j += yThreads)
     {

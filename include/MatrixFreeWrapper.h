@@ -192,8 +192,9 @@ namespace dftfe
     inline void
     constraintsDistribute(T *src, const bool applyInhomogenity = true)
     {
-      std::visit([&](auto &t) { t->constraintsDistribute(src, applyInhomogenity); },
-                 d_MatrixFreeObject);
+      std::visit(
+        [&](auto &t) { t->constraintsDistribute(src, applyInhomogenity); },
+        d_MatrixFreeObject);
     }
 
     /**
