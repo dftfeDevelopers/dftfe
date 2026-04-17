@@ -92,7 +92,7 @@ namespace dftfe
      *
      */
     inline void
-    constraintsDistribute(T *src);
+    constraintsDistribute(T *src, const bool applyInhomogenity = true);
 
     /**
      * @brief Apply transpose of constraints to src vector and set zero on src

@@ -35,7 +35,10 @@ getMultiVectorIndex(const dftfe::uInt  node,
 }
 
 
-template <typename T, std::uint32_t nDofsPerDim, std::uint32_t batchSize>
+template <typename T,
+          std::uint32_t nDofsPerDim,
+          std::uint32_t batchSize,
+          bool          applyInhomogenity>
 void
 constraintsDistributeKernel(sycl::nd_item<3>           item,
                             T                         *x,
@@ -91,7 +94,11 @@ constraintsDistributeKernel(sycl::nd_item<3>           item,
 
   for (dftfe::uInt j = threadIdxY; j < constrainedBucketSize; j += yThreads)
     {
-      T tmp = inhomogenity;
+      T tmp;
+      if constexpr (applyInhomogenity)
+        tmp = inhomogenity;
+      else
+        tmp = T(0);
 
       for (dftfe::uInt k = 0; k < constrainingBucketSize; k++)
         tmp +=

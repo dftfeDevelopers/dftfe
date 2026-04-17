@@ -849,7 +849,7 @@ namespace dftfe
 
     x.updateGhostValues();
 
-    d_matrixFreeWrapperDevice->constraintsDistribute(x.data());
+    d_matrixFreeWrapperDevice->constraintsDistribute(x.data(), false);
 
     d_matrixFreeWrapperDevice->computeAX(Ax.data(), x.data());
 
