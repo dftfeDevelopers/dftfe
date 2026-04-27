@@ -1,0 +1,63 @@
+set SOLVER MODE = GS
+set VERBOSITY = 0
+set REPRODUCIBLE OUTPUT = true
+set USE GPU = true
+
+subsection GPU
+  set AUTO GPU BLOCK SIZES = false
+end
+
+subsection Geometry
+  set NATOMS = 55
+  set NATOM TYPES = 1
+  set ATOMIC COORDINATES FILE = coordinatesPt.inp
+  set DOMAIN VECTORS FILE = domainVectorsPt.inp
+  subsection Optimization
+    set ION FORCE = true
+  end
+end
+
+subsection Boundary conditions
+  set MULTIPOLE BOUNDARY CONDITIONS      = true
+  set PERIODIC1                          = false
+  set PERIODIC2                          = false
+  set PERIODIC3                          = false
+end
+
+subsection Finite element mesh parameters
+  set POLYNOMIAL ORDER = 3
+  subsection Auto mesh generation parameters
+    set MESH SIZE AROUND ATOM = 3
+    set ATOM BALL RADIUS = 3
+  end
+end
+
+subsection DFT functional parameters
+  set EXCHANGE CORRELATION TYPE = GGA-PBE
+  set PSEUDOPOTENTIAL CALCULATION = true
+  set PSEUDOPOTENTIAL FILE NAMES LIST = pseudoPt.inp
+end
+
+subsection SCF parameters
+  set TEMPERATURE  = 500
+  set TOLERANCE  = 1e-4
+  set MIXING METHOD = ANDERSON_WITH_RESTA
+  set MIXING PARAMETER = 0.08
+  set MIXING HISTORY = 8
+  set MAXIMUM ITERATIONS = 2
+  set MGGA TAU MIXING VARIABLE = TAU
+  set MIX MGGA TAU VARIABLE = false
+  set COMPUTE ENERGY EACH ITER = true
+  set USE ENERGY RESIDUAL METRIC  = true
+  set ENERGY TOLERANCE = 1e-07
+
+  subsection Eigen-solver parameters
+    set USE APPROXIMATE OVERLAP MATRIX = false
+    set TENSOR OP TYPE SINGLE PREC CHEBY = TF32
+    set USE SINGLE PREC CHEBY = true
+    set COMMUN PREC CHEBY  = BF16
+    set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 600
+    set CHEBY WFC BLOCK SIZE = 100
+    set WFC BLOCK SIZE = 100
+ end
+end
