@@ -84,77 +84,727 @@ Reading initial guess for electron-density.....
 Pseudopotential initalization....
 
 Starting SCF iterations....
-Energy residual  : 3.0647e+02
+Energy residual  : 2.4294e+03
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -4726.700721
-Energy residual  : 728.9984
+             Total energy:         -3788.641502
+Energy residual  : 814.7474
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -5074.573958
-DFT-FE Warning: SCF iterations did not converge to the specified tolerance after: 2 iterations.
+             Total energy:         -5350.883716
+Energy residual  : 120.5896
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -5074.573958
+             Total energy:         -5977.203326
+Energy residual  : 81.9142
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -5962.544506
+Energy residual  : 59.7422
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -5980.571707
+Energy residual  : 16.2015
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6018.963108
+Energy residual  : 11.3383
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6022.368794
+Energy residual  : 2.7424
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6028.220009
+Energy residual  : 2.8075
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6027.727572
+Energy residual  : 1.8125
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6028.601316
+Energy residual  : 0.7693
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.074437
+Energy residual  : 0.7860
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.019401
+Energy residual  : 0.7790
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6028.949424
+Energy residual  : 0.3737
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.256787
+Energy residual  : 0.3477
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.267915
+Energy residual  : 0.3119
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.276932
+Energy residual  : 0.2939
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.274492
+Energy residual  : 0.2558
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.261940
+Energy residual  : 0.1586
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.288908
+Energy residual  : 0.1324
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.307441
+Energy residual  : 0.1295
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.310330
+Energy residual  : 0.1233
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.314946
+Energy residual  : 0.1114
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.320722
+Energy residual  : 0.0912
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.325568
+Energy residual  : 0.0593
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.331996
+Energy residual  : 0.0356
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.334301
+Energy residual  : 0.0303
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.337878
+Energy residual  : 0.0189
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.337833
+Energy residual  : 0.0115
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.335682
+Energy residual  : 0.0043
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.339372
+Energy residual  : 0.0045
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.342632
+Energy residual  : 0.0071
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.337120
+Energy residual  : 0.0071
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.342639
+Energy residual  : 0.0066
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.342640
+Energy residual  : 0.0070
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.343006
+Energy residual  : 0.0069
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.342441
+Energy residual  : 0.0057
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.341972
+Energy residual  : 0.0044
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.341263
+Energy residual  : 0.0042
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.341586
+Energy residual  : 0.0040
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.341517
+Energy residual  : 0.0040
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.341453
+Energy residual  : 0.0037
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.341305
+Energy residual  : 0.0034
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.341279
+Energy residual  : 0.0034
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.341259
+Energy residual  : 0.0033
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.341264
+Energy residual  : 0.0031
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340622
+Energy residual  : 0.0033
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.341174
+Energy residual  : 0.0032
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.341175
+Energy residual  : 0.0033
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.341244
+Energy residual  : 0.0034
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.341243
+Energy residual  : 0.0034
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.341260
+Energy residual  : 0.0033
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.341219
+Energy residual  : 0.0030
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.341026
+Energy residual  : 0.0027
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340839
+Energy residual  : 0.0022
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340562
+Energy residual  : 0.0022
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340652
+Energy residual  : 0.0021
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340256
+Energy residual  : 0.0023
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340593
+Energy residual  : 0.0024
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340741
+Energy residual  : 0.0026
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340887
+Energy residual  : 0.0023
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340885
+Energy residual  : 0.0023
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.341021
+Energy residual  : 0.0022
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.341131
+Energy residual  : 0.0019
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.341235
+Energy residual  : 0.0019
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.341411
+Energy residual  : 0.0020
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.341454
+Energy residual  : 0.0018
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.341414
+Energy residual  : 0.0018
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.341450
+Energy residual  : 0.0016
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.341473
+Energy residual  : 0.0012
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.341320
+Energy residual  : 0.0006
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340997
+Energy residual  : 0.0006
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340991
+Energy residual  : 0.0006
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.341003
+Energy residual  : 0.0004
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340966
+Energy residual  : 0.0004
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340957
+Energy residual  : 0.0004
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340938
+Energy residual  : 0.0004
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340937
+Energy residual  : 0.0003
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340914
+Energy residual  : 0.0004
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340921
+Energy residual  : 0.0004
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340977
+Energy residual  : 0.0004
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340968
+Energy residual  : 0.0004
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340979
+Energy residual  : 0.0004
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340947
+Energy residual  : 0.0002
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340886
+Energy residual  : 0.0002
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340870
+Energy residual  : 0.0002
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340823
+Energy residual  : 0.0002
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340800
+Energy residual  : 0.0001
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340788
+Energy residual  : 0.0001
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340788
+Energy residual  : 0.0001
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340805
+Energy residual  : 0.0001
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340827
+Energy residual  : 0.0001
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340850
+Energy residual  : 0.0001
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340840
+Energy residual  : 0.0001
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340845
+Energy residual  : 0.0000
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340849
+Energy residual  : 0.0000
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340863
+Energy residual  : 0.0000
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340879
+Energy residual  : 0.0000
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340887
+Energy residual  : 0.0000
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340887
+Energy residual  : 0.0000
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340888
+Energy residual  : 0.0000
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340886
+Energy residual  : 0.0000
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340891
+Energy residual  : 0.0000
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340895
+Energy residual  : 0.0000
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340894
+Energy residual  : 0.0000
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340890
+Energy residual  : 0.0000
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340879
+Energy residual  : 0.0000
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340870
+Energy residual  : 0.0000
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340850
+Energy residual  : 0.0000
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340853
+Energy residual  : 0.0000
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340850
+Energy residual  : 0.0000
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340848
+Energy residual  : 0.0000
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340850
+Energy residual  : 0.0000
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340853
+Energy residual  : 0.0000
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340852
+Energy residual  : 0.0000
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340851
+Energy residual  : 0.0000
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340852
+Energy residual  : 0.0000
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340852
+Energy residual  : 0.0000
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340852
+Energy residual  : 0.0000
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340851
+Energy residual  : 0.0000
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340852
+Energy residual  : 0.0000
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340852
+Energy residual  : 0.0000
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340852
+Energy residual  : 0.0000
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340852
+Energy residual  : 0.0000
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340852
+Energy residual  : 0.0000
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340852
+Energy residual  : 0.0000
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340852
+Energy residual  : 0.0000
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340852
+Energy residual  : 0.0000
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340852
+Energy residual  : 0.0000
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340852
+Energy residual  : 0.0000
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340852
+Energy residual  : 0.0000
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340852
+Energy residual  : 0.0000
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340853
+SCF iterations converged to the specified tolerance after: 132 iterations.
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -6029.340853
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  11.772376,7.576722,7.163901
-AtomId    1:  6.873301,11.713672,7.569221
-AtomId    2:  7.058749,7.752580,11.847999
-AtomId    3:  5.866957,5.361454,0.510665
-AtomId    4:  10.499774,6.665921,7.878984
-AtomId    5:  7.183589,10.265421,7.429554
-AtomId    6:  11.595013,11.471839,1.474566
-AtomId    7:  7.233897,7.009295,11.374771
-AtomId    8:  5.813894,0.484548,6.029796
-AtomId    9:  11.444904,7.156716,7.593498
-AtomId   10:  11.212674,0.979120,11.878067
-AtomId   11:  6.787829,7.714292,11.303324
-AtomId   12:  9.055193,0.317949,1.419839
-AtomId   13:  10.776253,6.614722,7.755949
-AtomId   14:  11.483068,0.065941,12.983475
-AtomId   15:  11.183146,11.872844,0.817898
-AtomId   16:  3.643772,0.224954,4.924603
-AtomId   17:  6.866250,5.374072,11.186254
-AtomId   18:  6.625013,11.603064,7.714500
-AtomId   19:  4.288220,6.204347,0.345510
-AtomId   20:  6.478514,11.004194,6.241324
-AtomId   21:  0.103288,5.660664,5.792629
-AtomId   22:  1.188230,11.717166,11.967437
-AtomId   23:  6.954525,10.960745,7.685813
-AtomId   24:  7.271754,7.019323,10.543183
-AtomId   25:  0.500816,9.373963,0.367108
-AtomId   26:  0.261413,11.228057,13.175735
-AtomId   27:  6.644074,10.143545,7.264573
-AtomId   28:  12.435676,11.068926,0.563538
-AtomId   29:  0.123564,3.210725,4.910102
-AtomId   30:  5.362330,7.023178,11.067753
-AtomId   31:  1.361846,0.803374,9.377902
-AtomId   32:  1.024963,11.829120,11.962496
-AtomId   33:  12.337197,0.924683,11.889353
-AtomId   34:  7.368328,6.760016,10.389442
-AtomId   35:  1.082278,0.839548,1.021843
-AtomId   36:  0.482541,11.365104,12.490550
-AtomId   37:  11.179135,0.558962,11.875471
-AtomId   38:  11.875630,11.510264,0.221054
-AtomId   39:  0.281658,0.294832,8.521421
-AtomId   40:  6.325828,5.349591,10.199594
-AtomId   41:  0.198108,4.580909,4.064912
-AtomId   42:  5.673403,10.537884,7.763503
-AtomId   43:  0.618420,8.965052,0.541803
-AtomId   44:  6.514127,10.142838,5.544077
-AtomId   45:  0.169489,3.312179,3.740339
-AtomId   46:  11.407046,7.171398,7.456147
-AtomId   47:  5.032028,3.704759,0.113404
-AtomId   48:  10.615501,6.505404,5.749364
-AtomId   49:  4.652946,0.270308,4.006399
-AtomId   50:  10.184741,5.397429,7.202481
-AtomId   51:  8.112361,0.095764,0.084585
-AtomId   52:  9.930936,5.977713,6.119702
-AtomId   53:  2.973355,0.060190,3.639015
-AtomId   54:  3.741977,3.982518,0.125616
+AtomId    0:  7.828020,0.128881,0.128877
+AtomId    1:  0.128881,7.828021,0.128880
+AtomId    2:  0.128879,0.128881,7.828020
+AtomId    3:  7.887585,7.887584,0.000009
+AtomId    4:  7.828024,0.128879,0.128879
+AtomId    5:  0.128886,7.828025,0.128878
+AtomId    6:  0.122860,0.122865,0.000003
+AtomId    7:  0.128887,0.128878,7.828028
+AtomId    8:  7.887585,0.000012,7.887584
+AtomId    9:  7.828026,0.128877,0.128877
+AtomId   10:  0.122865,0.000005,0.122867
+AtomId   11:  0.128878,0.128878,7.828025
+AtomId   12:  11.582057,0.000003,0.000002
+AtomId   13:  7.828024,0.128878,0.128883
+AtomId   14:  0.122859,0.000001,0.122865
+AtomId   15:  0.122865,0.122867,0.000003
+AtomId   16:  7.887587,0.000008,7.887587
+AtomId   17:  0.128882,0.128881,7.828027
+AtomId   18:  0.128878,7.828028,0.128878
+AtomId   19:  7.887587,7.887588,0.000005
+AtomId   20:  0.128879,7.828025,0.128883
+AtomId   21:  0.000008,7.887585,7.887586
+AtomId   22:  0.000003,0.122865,0.122861
+AtomId   23:  0.128879,7.828025,0.128885
+AtomId   24:  0.128880,0.128879,7.828024
+AtomId   25:  0.000005,11.582062,0.000006
+AtomId   26:  0.000009,0.122868,0.122868
+AtomId   27:  0.128881,7.828035,0.128879
+AtomId   28:  0.122866,0.122868,0.000009
+AtomId   29:  0.000013,7.887594,7.887595
+AtomId   30:  0.128881,0.128879,7.828037
+AtomId   31:  0.000002,0.000003,11.582058
+AtomId   32:  0.000003,0.122867,0.122866
+AtomId   33:  0.122863,0.000001,0.122861
+AtomId   34:  0.128884,0.128879,7.828023
+AtomId   35:  0.000003,0.000001,0.000004
+AtomId   36:  0.000002,0.122861,0.122864
+AtomId   37:  0.122866,0.000007,0.122868
+AtomId   38:  0.122863,0.122862,0.000003
+AtomId   39:  0.000005,0.000005,11.582066
+AtomId   40:  0.128881,0.128887,7.828031
+AtomId   41:  0.000005,7.887589,7.887587
+AtomId   42:  0.128884,7.828026,0.128879
+AtomId   43:  0.000002,11.582062,0.000002
+AtomId   44:  0.128882,7.828029,0.128881
+AtomId   45:  0.000008,7.887591,7.887591
+AtomId   46:  7.828028,0.128878,0.128884
+AtomId   47:  7.887595,7.887593,0.000013
+AtomId   48:  7.828038,0.128879,0.128879
+AtomId   49:  7.887588,0.000008,7.887586
+AtomId   50:  7.828026,0.128881,0.128881
+AtomId   51:  11.582065,0.000004,0.000005
+AtomId   52:  7.828031,0.128886,0.128879
+AtomId   53:  7.887597,0.000003,7.887596
+AtomId   54:  7.887591,7.887590,0.000000
 --------------------------------------------------------------------------------------------
