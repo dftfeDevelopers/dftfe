@@ -39,7 +39,10 @@ getMultiVectorIndex(const dftfe::uInt node,
 }
 
 
-template <typename T, std::uint32_t nDofsPerDim, std::uint32_t batchSize>
+template <typename T,
+          std::uint32_t nDofsPerDim,
+          std::uint32_t batchSize,
+          bool          applyInhomogenity>
 __global__ void
 constraintsDistributeKernel(
   T *__restrict__ x,
@@ -86,11 +89,17 @@ constraintsDistributeKernel(
     constrainedNodeOffset[blockIdx.x + 1] - constrainedNodeOffset[blockIdx.x];
   dftfe::uInt weightMatrixStart = weightMatrixOffset[blockIdx.x];
 
-  T inhomogenity = inhomogenityList[blockIdx.x];
+  T inhomogenity;
+  if constexpr (applyInhomogenity)
+    inhomogenity = inhomogenityList[blockIdx.x];
 
   for (dftfe::uInt j = threadIdx.y; j < constrainedBucketSize; j += yThreads)
     {
-      T tmp = inhomogenity;
+      T tmp;
+      if constexpr (applyInhomogenity)
+        tmp = inhomogenity;
+      else
+        tmp = T(0);
 
       for (dftfe::uInt k = 0; k < constrainingBucketSize; k++)
         tmp +=

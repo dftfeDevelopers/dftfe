@@ -666,7 +666,8 @@ namespace dftfe
              nDofsPerDim,
              nQuadPointsPerDim,
              batchSize,
-             subBatchSize>::constraintsDistribute(T *src)
+             subBatchSize>::constraintsDistribute(T         *src,
+                                                  const bool applyInhomogenity)
   {
     if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
       {
@@ -690,7 +691,8 @@ namespace dftfe
                                 d_inhomogenityListDevice.size(),
                                 d_nBatch,
                                 d_nOwnedDofs,
-                                d_nGhostDofs);
+                                d_nGhostDofs,
+                                applyInhomogenity);
       }
   }
 

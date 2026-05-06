@@ -39,6 +39,7 @@ mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileMg2x_12.prm > outputMg2x
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileMg2x_13.prm > outputMg2x_13
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileMg2x_17.prm > outputMg2x_17
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileBe.prm > outputBe
+mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFilePt.prm > outputPt
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFile_LLZO.prm > outputLLZO
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFile_ReS2.prm > outputReS2
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFile_ReS2FullMassMatrix.prm > outputReS2FullMassMatrix
