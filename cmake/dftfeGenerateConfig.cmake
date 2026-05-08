@@ -48,4 +48,10 @@ function(dftfeGenerateConfig)
     @ONLY
   )
   message(STATUS "DFT-FE: generated ${CMAKE_BINARY_DIR}/include/dftfe/config.h")
+
+  # Install config.h alongside the other public headers. This lives here rather
+  # than in the top-level install() block because dftfeGenerateConfig owns the
+  # full lifecycle of config.h: template, generation, and installation.
+  install(FILES "${CMAKE_BINARY_DIR}/include/dftfe/config.h"
+          DESTINATION include/dftfe)
 endfunction()

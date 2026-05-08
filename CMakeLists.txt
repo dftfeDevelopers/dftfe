@@ -757,10 +757,6 @@ install(DIRECTORY "${CMAKE_SOURCE_DIR}/include/dftfe"
         DESTINATION include
         PATTERN "*.in" EXCLUDE)
 
-# Generated config.h lives in the build tree; must be installed explicitly
-install(FILES "${CMAKE_BINARY_DIR}/include/dftfe/config.h"
-        DESTINATION include/dftfe)
-
 # Runtime data files (pseudopotential tables, etc.)
 install(DIRECTORY "${CMAKE_SOURCE_DIR}/data/"
         DESTINATION share/dftfe/data)
