@@ -669,8 +669,10 @@ ENDIF()
 TARGET_LINK_LIBRARIES(${TARGET} PUBLIC ${TARGETLIB})
 
 # ── Generate config.h ─────────────────────────────────────────────────────────
-# config.h encodes all build-time feature flags and is installed alongside the
-# other public headers so that consumers can test feature availability.
+# dftfeGenerateConfig() owns the full lifecycle of config.h: it processes
+# include/dftfe/config.h.in into ${CMAKE_BINARY_DIR}/include/dftfe/config.h
+# and registers the install rule that copies it to <prefix>/include/dftfe/.
+# See cmake/dftfeGenerateConfig.cmake for the feature-flag convention.
 include(cmake/dftfeGenerateConfig)
 dftfeGenerateConfig()
 
