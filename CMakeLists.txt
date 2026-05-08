@@ -399,6 +399,11 @@ IF (WITH_CUSTOMIZED_DEALII)
   MESSAGE(STATUS "DFT-FE: customised deal.II")
 ENDIF()
 
+OPTION(DISABLE_ASSERT "Disable runtime assertions" OFF)
+IF (DISABLE_ASSERT)
+  set(DFTFE_DISABLE_ASSERT 1)
+ENDIF()
+
 # Runtime data path: PRIVATE because it is an internal implementation detail.
 # BUILD_INTERFACE uses the source tree; INSTALL_INTERFACE uses the install prefix.
 target_compile_definitions(${TARGETLIB} PRIVATE
@@ -685,7 +690,7 @@ configure_package_config_file(
     INSTALL_DESTINATION "lib/cmake/dftfe")
 write_basic_package_version_file(
     "${CMAKE_BINARY_DIR}/cmake/dftfeConfigVersion.cmake"
-    VERSION "${DFTFE_VERSION}"
+    VERSION "${PROJECT_VERSION}"   # must be numeric; DFTFE_VERSION may have a suffix
     COMPATIBILITY SameMajorVersion)
 
 #
