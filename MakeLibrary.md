@@ -106,7 +106,8 @@ After `make install` with `CMAKE_INSTALL_PREFIX=/opt/dftfe`:
 │       └── XCfunctionalDefs/          ← XC functional inline definitions
 └── share/
     └── dftfe/
-        └── data/                      ← runtime data (pseudopotentials, etc.)
+        ├── data/                      ← runtime data (pseudopotentials, etc.)
+        └── helpers/                   ← helper files (e.g. parameterFile.prm)
 ```
 
 ---

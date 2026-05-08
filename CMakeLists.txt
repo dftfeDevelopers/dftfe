@@ -763,6 +763,10 @@ install(DIRECTORY "${CMAKE_SOURCE_DIR}/include/dftfe"
 install(DIRECTORY "${CMAKE_SOURCE_DIR}/data/"
         DESTINATION share/dftfe/data)
 
+# Helper files (e.g. parameterFile.prm) referenced as DFTFE_PATH/helpers/
+install(DIRECTORY "${CMAKE_SOURCE_DIR}/helpers/"
+        DESTINATION share/dftfe/helpers)
+
 # Exported CMake targets file (defines dftfe::dftfeReal / dftfe::dftfeComplex)
 install(EXPORT dftfeTargets
         FILE dftfeTargets.cmake
