@@ -16,9 +16,9 @@ The changes made to support this are:
   consumers can test feature availability without guessing compile flags.
 - `CMakeLists.txt` uses modern CMake target-based semantics: generator
   expressions for include paths so build-tree paths are never baked into the
-  exported targets, `target_compile_definitions` for all flags, and
-  `PRIVATE`/`PUBLIC` linkage based on whether third-party types appear in the
-  public headers.
+  exported targets, `set()` variables feeding `config.h` for all feature flags,
+  and `PRIVATE`/`PUBLIC` linkage based on whether third-party types appear in
+  the public headers.
 - `cmake/dftfeConfig.cmake.in` and the associated version file enable
   `find_package(dftfe)` in downstream projects without any manual path
   configuration beyond specifying the install prefix.
@@ -123,9 +123,10 @@ find_package(dftfe REQUIRED
 add_executable(myapp main.cpp)
 
 # A single target_link_libraries call propagates:
-#   - /opt/dftfe/include on the include path
-#   - all compile definitions (USE_REAL, DFTFE_WITH_HIGHERQUAD_PSP, etc.)
+#   - /opt/dftfe/include on the include path (gives access to dftfe/config.h)
 #   - transitive links to deal.II, ELPA, MPI, ...
+# Feature flags (USE_REAL, DFTFE_WITH_DEVICE, etc.) are not injected as
+# -D defines; include <dftfe/config.h> to access them.
 target_link_libraries(myapp PRIVATE dftfe::dftfeReal)
 # or dftfe::dftfeComplex if built with -DWITH_COMPLEX=ON
 ```
@@ -180,24 +181,39 @@ propagated. Always query them through `config.h`:
 #ifdef DFTFE_WITH_DEVICE
 ```
 
-### CMake: compile definitions
+### CMake: feature flags
 
-Use `target_compile_definitions`, never `add_definitions`:
+Feature flags are propagated through `config.h`, not through
+`INTERFACE_COMPILE_DEFINITIONS`. The pattern is:
 
-```cmake
-# CORRECT — definition is recorded on the target and exported to consumers
-target_compile_definitions(dftfeReal PUBLIC DFTFE_WITH_MY_FEATURE)
+1. In `CMakeLists.txt`, set a CMake variable when the feature is enabled:
+   ```cmake
+   # CORRECT — configure_file() reads this variable and writes #define into config.h
+   if(WITH_MY_FEATURE)
+     set(DFTFE_WITH_MY_FEATURE 1)
+   endif()
+   ```
 
-# WRONG — definition is directory-scoped and never appears in the exported
-#          target, so consumers do not inherit it
-add_definitions(-DDFTFE_WITH_MY_FEATURE)
-```
+2. In `include/dftfe/config.h.in`, add the matching `#cmakedefine`:
+   ```c
+   #cmakedefine DFTFE_WITH_MY_FEATURE
+   ```
 
-When adding a new feature flag:
-1. Add `#cmakedefine DFTFE_WITH_MY_FEATURE` to `include/dftfe/config.h.in`.
-2. Add `target_compile_definitions(${TARGETLIB} PUBLIC DFTFE_WITH_MY_FEATURE)`
-   (or `PRIVATE` if it is purely internal) to `CMakeLists.txt`.
-3. Include `#include <dftfe/config.h>` in headers/sources that test the flag.
+3. In any header or source that tests the flag, include `config.h` first:
+   ```cpp
+   #include <dftfe/config.h>
+   #ifdef DFTFE_WITH_MY_FEATURE
+     // ...
+   #endif
+   ```
+
+Never use `add_definitions` or `target_compile_definitions(PUBLIC)` for feature
+flags — the former is directory-scoped and never exported, the latter is
+redundant once `config.h` is the single source of truth.
+
+The one exception is `DFTFE_PATH`: it is a path whose value differs between the
+build tree and the install tree, so it must remain a PRIVATE target compile
+definition using generator expressions and cannot live in `config.h`.
 
 ### CMake: linkage (PUBLIC vs PRIVATE)
 
@@ -240,8 +256,8 @@ installed.
    those tests.
 4. If it introduces a new optional dependency:
    - Add `#cmakedefine DFTFE_WITH_NEW_DEP` to `include/dftfe/config.h.in`.
-   - Add the `find_package` / `find_library` call and
-     `target_compile_definitions` / `target_link_libraries` to
-     `CMakeLists.txt`.
+   - In `CMakeLists.txt`, add the `find_package` / `find_library` call, then
+     `set(DFTFE_WITH_NEW_DEP 1)` when the dependency is found, then
+     `target_link_libraries`.
    - Decide on `PUBLIC` vs `PRIVATE` linkage based on whether the dependency's
      types appear in dftfe's public headers.
