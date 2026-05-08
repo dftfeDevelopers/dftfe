@@ -4,18 +4,30 @@
 # Processed by configure_package_config_file() → installed as dftfeConfig.cmake
 # at <prefix>/lib/cmake/dftfe/.
 #
-# Downstream usage:
+# Downstream usage — example CMakeLists.txt:
+#
+#   cmake_minimum_required(VERSION 3.17)
+#   project(myapp LANGUAGES CXX)
 #
 #   find_package(dftfe REQUIRED HINTS /opt/dftfe/lib/cmake/dftfe)
+#
+#   add_executable(myapp main.cpp)
 #   target_link_libraries(myapp PRIVATE dftfe::dftfeReal)
+#   # use dftfe::dftfeComplex if DFT-FE was built with -DWITH_COMPLEX=ON
 #
-# Linking against dftfe::dftfeReal adds <prefix>/include to the consumer's
-# include path. Feature flags (USE_REAL, DFTFE_WITH_DEVICE, etc.) are not
-# injected as -D compiler flags; the consumer must include config.h to read
-# them:
+# Linking against the imported target automatically adds <prefix>/include to
+# the consumer's include path and transitively links deal.II, ELPA, and MPI.
 #
-#   #include <dftfe/config.h>   // exposes USE_REAL, DFTFE_WITH_DEVICE, ...
+# Feature flags (USE_REAL, DFTFE_WITH_DEVICE, etc.) are NOT injected as -D
+# compiler flags. The consumer reads them from the installed config.h:
+#
+#   // main.cpp
+#   #include <dftfe/config.h>       // USE_REAL, DFTFE_WITH_DEVICE, ...
 #   #include <dftfe/dftfeWrapper.h>
+#
+#   #ifdef DFTFE_WITH_DEVICE
+#     // GPU-aware code path
+#   #endif
 
 @PACKAGE_INIT@
 
