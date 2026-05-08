@@ -208,6 +208,81 @@ namespace dftfe
     }
 
     //
+    // frexp / ldexp overloads (used by BFP compression)
+    //
+
+    inline double
+    frexp(double x, int *e)
+    {
+      int    exp_val;
+      double result = sycl::frexp(x, &exp_val);
+      *e            = exp_val;
+      return result;
+    }
+
+    inline float
+    frexp(float x, int *e)
+    {
+      int   exp_val;
+      float result = sycl::frexp(x, &exp_val);
+      *e           = exp_val;
+      return result;
+    }
+
+    inline double
+    ldexp(double x, int e)
+    {
+      return sycl::ldexp(x, e);
+    }
+
+    inline float
+    ldexp(float x, int e)
+    {
+      return sycl::ldexp(x, e);
+    }
+
+    //
+    // min / max overloads
+    //
+
+    inline int
+    min(int a, int b)
+    {
+      return a < b ? a : b;
+    }
+
+    inline unsigned int
+    min(unsigned int a, unsigned int b)
+    {
+      return a < b ? a : b;
+    }
+
+    inline int
+    max(int a, int b)
+    {
+      return a > b ? a : b;
+    }
+
+    inline unsigned int
+    max(unsigned int a, unsigned int b)
+    {
+      return a > b ? a : b;
+    }
+
+    // NaN-safe: returns the non-NaN argument when one input is NaN.
+    inline double
+    max(double a, double b)
+    {
+      return sycl::fmax(a, b);
+    }
+
+    inline float
+    max(float a, float b)
+    {
+      return sycl::fmax(a, b);
+    }
+
+    //
     // conjugate overloads
     //
 

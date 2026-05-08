@@ -204,6 +204,75 @@ namespace dftfe
     }
 
     //
+    // frexp / ldexp overloads (used by BFP compression)
+    //
+
+    __forceinline__ __device__ double
+    frexp(double x, int *e)
+    {
+      return ::frexp(x, e);
+    }
+
+    __forceinline__ __device__ float
+    frexp(float x, int *e)
+    {
+      return ::frexpf(x, e);
+    }
+
+    __forceinline__ __device__ double
+    ldexp(double x, int e)
+    {
+      return ::ldexp(x, e);
+    }
+
+    __forceinline__ __device__ float
+    ldexp(float x, int e)
+    {
+      return ::ldexpf(x, e);
+    }
+
+    //
+    // min / max overloads
+    //
+
+    __forceinline__ __device__ int
+    min(int a, int b)
+    {
+      return a < b ? a : b;
+    }
+
+    __forceinline__ __device__ unsigned int
+    min(unsigned int a, unsigned int b)
+    {
+      return a < b ? a : b;
+    }
+
+    __forceinline__ __device__ int
+    max(int a, int b)
+    {
+      return a > b ? a : b;
+    }
+
+    __forceinline__ __device__ unsigned int
+    max(unsigned int a, unsigned int b)
+    {
+      return a > b ? a : b;
+    }
+
+    // NaN-safe: returns the non-NaN argument when one input is NaN.
+    __forceinline__ __device__ double
+    max(double a, double b)
+    {
+      return ::fmax(a, b);
+    }
+
+    __forceinline__ __device__ float
+    max(float a, float b)
+    {
+      return ::fmaxf(a, b);
+    }
+
+    //
     // conjugate overloads
     //
 
