@@ -33,6 +33,8 @@
 # generator expression and kept as a PRIVATE target_compile_definition.
 ##
 
+# @author Bikash Kanungo
+
 cmake_minimum_required(VERSION 3.17)
 
 # ── Version ───────────────────────────────────────────────────────────────────
