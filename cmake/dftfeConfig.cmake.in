@@ -19,7 +19,8 @@
 # the consumer's include path and transitively links deal.II, ELPA, and MPI.
 #
 # Feature flags (USE_REAL, DFTFE_WITH_DEVICE, etc.) are NOT injected as -D
-# compiler flags. The consumer reads them from the installed config.h:
+# compiler flags. config.h is generated and installed by dftfeGenerateConfig()
+# in cmake/dftfeGenerateConfig.cmake; the consumer reads flags from it:
 #
 #   // main.cpp
 #   #include <dftfe/config.h>       // USE_REAL, DFTFE_WITH_DEVICE, ...
