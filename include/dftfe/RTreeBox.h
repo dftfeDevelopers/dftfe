@@ -78,5 +78,5 @@ namespace dftfe
     }; // end of class RTreeBox
   }    // end of namespace utils
 } // end of namespace dftfe
-#include <../utils/RTreeBox.t.cc>
+#include <dftfe/RTreeBox.t.cc>
 #endif // dftfeRTreeBox_h

@@ -87,5 +87,5 @@ namespace dftfe
     }; // end of class RTreePoint
   }    // end of namespace utils
 } // end of namespace dftfe
-#include <../utils/RTreePoint.t.cc>
+#include <dftfe/RTreePoint.t.cc>
 #endif // dftfeRTreePoint_h

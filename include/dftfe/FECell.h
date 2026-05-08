@@ -108,7 +108,5 @@ namespace dftfe
   }    // end of namespace utils
 } // end of namespace dftfe
 
-#include "../utils/FECell.t.cc"
-
-// #include "../utils/FECell.t.cc"
+#include <dftfe/FECell.t.cc>
 #endif // DFTFE_FECELL_H

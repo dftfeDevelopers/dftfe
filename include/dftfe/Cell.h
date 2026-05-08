@@ -76,6 +76,6 @@ namespace dftfe
   }    // end of namespace utils
 } // end of namespace dftfe
 
-#include "../utils/Cell.t.cc"
+#include <dftfe/Cell.t.cc>
 
 #endif // DFTFE_CELL_H

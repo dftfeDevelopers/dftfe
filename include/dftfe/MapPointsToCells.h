@@ -85,5 +85,5 @@ namespace dftfe
   }    // end of namespace utils
 } // end of namespace dftfe
 
-#include "../src/TransferBetweenMeshes/MapPointsToCells.t.cc"
+#include <dftfe/MapPointsToCells.t.cc>
 #endif // dftfeMapPointsToCells_h
