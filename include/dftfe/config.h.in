@@ -32,6 +32,10 @@
 #cmakedefine DFTFE_WITH_CUDA_NCCL
 #cmakedefine DFTFE_WITH_HIP_RCCL
 
+/* HIP platform selection */
+#cmakedefine __HIP_PLATFORM_AMD__
+#cmakedefine __HIP_PLATFORM_NVIDIA__
+
 /* Optional: customised deal.II build */
 #cmakedefine DFTFE_WITH_CUSTOMIZED_DEALII
 
