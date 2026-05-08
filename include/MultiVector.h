@@ -486,9 +486,6 @@ namespace dftfe
       void
       setCompressBitsPerValue(dftfe::uInt bpv);
 
-      void
-      setCompressUseZfp(bool useZfp);
-
       dftfe::uInt
       globalSize() const;
       dftfe::uInt

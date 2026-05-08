@@ -1,11 +1,10 @@
 /*
 ** compressionTypes.h - GPU compressor: backend macros, type definitions,
-**                      device helpers, traits, host utilities, and the core
-**                      scalar device functions (negabinary, exponent,
-**                      quantisation, lifting transform, block padding).
+**                      device helpers, traits, and the core scalar device
+**                      functions used by the BFP encode/decode helpers.
 **
-** Included by compressionBlockIO.h, compressionZFP.h, compressionBFP.h,
-** and compression.h.  Never included directly by application code.
+** Included by compressionKernels.h and compression.h.
+** Never included directly by application code.
 */
 
 #ifndef COMPRESSION_TYPES_H
@@ -45,31 +44,18 @@ namespace compression
 {
 
   /* =========================================================================
-     Type definitions
+     Type definitions and launch parameters
      =========================================================================
    */
 
-  typedef unsigned long long int Word; /* must match ZFP 64-bit word */
   typedef unsigned long long int uint64;
 
-  static constexpr unsigned int WSIZE = sizeof(Word) * CHAR_BIT; /* 64 */
+  static constexpr int COMPRESSION_BLOCK_SIZE = 256;
 
   /* =========================================================================
      Portable device helpers
      =========================================================================
    */
-
-  /* Portable read-only load (__ldg on CUDA, plain load elsewhere) */
-  COMPRESSION_DEVICE_INLINE
-  Word
-  portable_ldg(const Word *ptr)
-  {
-#if defined(DFTFE_WITH_DEVICE_LANG_CUDA)
-    return __ldg(ptr);
-#else
-    return *ptr;
-#endif
-  }
 
   /* Portable math wrappers for device code */
   COMPRESSION_DEVICE_INLINE
@@ -263,69 +249,6 @@ namespace compression
   };
 
   /* =========================================================================
-     Host utilities
-     =========================================================================
-   */
-
-  /* Exact compressed size in bytes */
-  inline size_t
-  compressed_size(size_t num_values, int bits_per_value)
-  {
-    const size_t maxbits    = (size_t)bits_per_value * 4; /* bits per block */
-    const size_t num_blocks = (num_values + 3) / 4;
-    const size_t total_bits = maxbits * num_blocks;
-    const size_t num_words  = (total_bits + WSIZE - 1) / WSIZE;
-    return num_words * sizeof(Word);
-  }
-
-  /* GCD for computing super-block parameters */
-  inline unsigned int
-  compression_gcd(unsigned int a, unsigned int b)
-  {
-    while (b)
-      {
-        unsigned int t = b;
-        b              = a % b;
-        a              = t;
-      }
-    return a;
-  }
-
-  /* =========================================================================
-     Device helpers: negabinary conversion
-     =========================================================================
-   */
-
-  COMPRESSION_DEVICE_INLINE
-  unsigned int
-  int2uint(int x)
-  {
-    return ((unsigned int)x + 0xaaaaaaaau) ^ 0xaaaaaaaau;
-  }
-
-  COMPRESSION_DEVICE_INLINE
-  unsigned long long int
-  int2uint(long long int x)
-  {
-    return ((unsigned long long int)x + 0xaaaaaaaaaaaaaaaaull) ^
-           0xaaaaaaaaaaaaaaaaull;
-  }
-
-  COMPRESSION_DEVICE_INLINE
-  int
-  uint2int(unsigned int x)
-  {
-    return (int)((x ^ 0xaaaaaaaau) - 0xaaaaaaaau);
-  }
-
-  COMPRESSION_DEVICE_INLINE
-  long long int
-  uint2int(unsigned long long int x)
-  {
-    return (long long int)((x ^ 0xaaaaaaaaaaaaaaaaull) - 0xaaaaaaaaaaaaaaaaull);
-  }
-
-  /* =========================================================================
      Device: exponent computation
      =========================================================================
    */
@@ -369,89 +292,7 @@ namespace compression
   }
 
   /* =========================================================================
-     Device: forward lifting transform (1D, 4-vector)
-     =========================================================================
-   */
-
-  template <typename Int>
-  COMPRESSION_DEVICE_INLINE void
-  fwd_lift(Int *p)
-  {
-    Int x = p[0], y = p[1], z = p[2], w = p[3];
-    x += w;
-    x >>= 1;
-    w -= x;
-    z += y;
-    z >>= 1;
-    y -= z;
-    x += z;
-    x >>= 1;
-    z -= x;
-    w += y;
-    w >>= 1;
-    y -= w;
-    w += y >> 1;
-    y -= w >> 1;
-    p[0] = x;
-    p[1] = y;
-    p[2] = z;
-    p[3] = w;
-  }
-
-  /* =========================================================================
-     Device: inverse lifting transform (1D, 4-vector)
-     =========================================================================
-   */
-
-  template <typename Int>
-  COMPRESSION_DEVICE_INLINE void
-  inv_lift(Int *p)
-  {
-    Int x = p[0], y = p[1], z = p[2], w = p[3];
-    y += w >> 1;
-    w -= y >> 1;
-    y += w;
-    w -= y - w;
-    z += x;
-    x -= z - x;
-    y += z;
-    z -= y - z;
-    w += x;
-    x -= w - x;
-    p[0] = x;
-    p[1] = y;
-    p[2] = z;
-    p[3] = w;
-  }
-
-  /* =========================================================================
-     Device: forward quantize (float/double -> int)
-     =========================================================================
-   */
-
-  template <typename Scalar, typename Int>
-  COMPRESSION_DEVICE_INLINE void
-  fwd_cast(Int *iblock, const Scalar *fblock, int emax)
-  {
-    Scalar s = portable_ldexp((Scalar)1.0, traits<Scalar>::PREC - 2 - emax);
-    for (int i = 0; i < 4; i++)
-      iblock[i] = (Int)(s * fblock[i]);
-  }
-
-  /* =========================================================================
-     Device: inverse dequantize (int -> float/double)
-     =========================================================================
-   */
-
-  template <typename Int, typename Scalar>
-  COMPRESSION_DEVICE_INLINE Scalar
-  dequantize(int emax)
-  {
-    return portable_ldexp((Scalar)1.0, emax - (traits<Scalar>::PREC - 2));
-  }
-
-  /* =========================================================================
-     Device: pad partial block (ZFP-compatible, < 4 values)
+     Device: pad partial block (< 4 values)
      =========================================================================
    */
 

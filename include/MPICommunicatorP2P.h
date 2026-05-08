@@ -49,7 +49,7 @@ namespace dftfe
       {
         mpiHost,
         mpiDevice,
-        nccl
+        dccl
       };
 
       enum class communicationPrecision
@@ -123,9 +123,6 @@ namespace dftfe
         void
         setCompressBitsPerValue(dftfe::uInt bpv);
 
-        void
-        setCompressUseZfp(bool useZfp);
-
       private:
         std::shared_ptr<const MPIPatternP2P<memorySpace>> d_mpiPatternP2P;
 
@@ -134,6 +131,12 @@ namespace dftfe
         dftfe::uInt d_locallyOwnedSize;
 
         dftfe::uInt d_ghostSize;
+
+        dftfe::uInt d_compressBitsPerValue = 16;
+        dftfe::uInt d_maxCompressedTargetBytes    = 0;
+        dftfe::uInt d_maxCompressedGhostBytes     = 0;
+        dftfe::uInt d_activeCompressedTargetBytes = 0;
+        dftfe::uInt d_activeCompressedGhostBytes  = 0;
 
         MemoryStorage<ValueType, memorySpace> d_sendRecvBuffer;
 
@@ -200,13 +203,6 @@ namespace dftfe
           MemorySpace::HOST_PINNED>>
           d_sendRecvBufferCompressHostPinnedPtr;
 
-        dftfe::uInt d_compressBitsPerValue = 16;
-        bool        d_useZfpCompression = false;
-
-        dftfe::uInt d_maxCompressedTargetBytes    = 0;
-        dftfe::uInt d_maxCompressedGhostBytes     = 0;
-        dftfe::uInt d_activeCompressedTargetBytes = 0;
-        dftfe::uInt d_activeCompressedGhostBytes  = 0;
 
 #endif // DFTFE_WITH_DEVICE
 

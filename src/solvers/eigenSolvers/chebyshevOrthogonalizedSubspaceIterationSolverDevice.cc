@@ -422,22 +422,13 @@ namespace dftfe
                     else if (useMixedPrecOverall &&
                              d_dftParams.communPrecCheby == "COMPRESSED")
                       {
-                        const bool isLate = d_dftParams.scfIterCount + 1 >=
-                                            d_dftParams.compressLateStartSCF;
-                        const dftfe::uInt bpv =
-                          isLate ? d_dftParams.compressBitsPerValueLate :
-                                   d_dftParams.compressBitsPerValueEarly;
-                        const bool useZfp =
-                          (isLate ? d_dftParams.compressAlgoLate :
-                                    d_dftParams.compressAlgoEarly) == "ZFP";
+                        const dftfe::uInt bpv = d_dftParams.compressBitsPerValue;
+
                         (*XBlockFP32).setCompressBitsPerValue(bpv);
                         (*HXBlockFP32).setCompressBitsPerValue(bpv);
                         (*XBlock2FP32).setCompressBitsPerValue(bpv);
                         (*HXBlock2FP32).setCompressBitsPerValue(bpv);
-                        (*XBlockFP32).setCompressUseZfp(useZfp);
-                        (*HXBlockFP32).setCompressUseZfp(useZfp);
-                        (*XBlock2FP32).setCompressUseZfp(useZfp);
-                        (*HXBlock2FP32).setCompressUseZfp(useZfp);
+
                         (*XBlockFP32)
                           .setCommunicationPrecision(
                             dftfe::utils::mpi::communicationPrecision::
@@ -535,18 +526,10 @@ namespace dftfe
                     else if (useMixedPrecOverall &&
                              d_dftParams.communPrecCheby == "COMPRESSED")
                       {
-                        const bool isLate = d_dftParams.scfIterCount + 1 >=
-                                            d_dftParams.compressLateStartSCF;
-                        const dftfe::uInt bpv =
-                          isLate ? d_dftParams.compressBitsPerValueLate :
-                                   d_dftParams.compressBitsPerValueEarly;
-                        const bool useZfp =
-                          (isLate ? d_dftParams.compressAlgoLate :
-                                    d_dftParams.compressAlgoEarly) == "ZFP";
+                        const dftfe::uInt bpv = d_dftParams.compressBitsPerValue;
+
                         (*XBlockFP32).setCompressBitsPerValue(bpv);
                         (*HXBlockFP32).setCompressBitsPerValue(bpv);
-                        (*XBlockFP32).setCompressUseZfp(useZfp);
-                        (*HXBlockFP32).setCompressUseZfp(useZfp);
                         (*XBlockFP32)
                           .setCommunicationPrecision(
                             dftfe::utils::mpi::communicationPrecision::

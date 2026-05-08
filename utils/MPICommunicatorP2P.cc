@@ -49,7 +49,7 @@ namespace dftfe
 #if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
         if (memorySpace == MemorySpace::DEVICE &&
             dftfe::utils::DeviceCCLWrapper::dcclCommInit)
-          d_commProtocol = communicationProtocol::nccl;
+          d_commProtocol = communicationProtocol::dccl;
 #endif
 
         d_mpiCommunicator = d_mpiPatternP2P->mpiCommunicator();
@@ -388,16 +388,6 @@ namespace dftfe
 
       template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
       void
-      MPICommunicatorP2P<ValueType, memorySpace>::setCompressUseZfp(
-        bool useZfp)
-      {
-#ifdef DFTFE_WITH_DEVICE
-        d_useZfpCompression = useZfp;
-#endif
-      }
-
-      template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
-      void
       MPICommunicatorP2P<ValueType, memorySpace>::updateGhostValues(
         MemoryStorage<ValueType, memorySpace> &dataArray,
         const dftfe::uInt                      communicationChannel)
@@ -427,7 +417,7 @@ namespace dftfe
                 dftfe::utils::deviceSynchronize();
               }
 #endif
-            if (d_commProtocol != communicationProtocol::nccl)
+            if (d_commProtocol != communicationProtocol::dccl)
               for (dftfe::uInt i = 0;
                    i < (d_mpiPatternP2P->getGhostProcIds()).size();
                    ++i)
@@ -487,7 +477,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
             if constexpr (memorySpace == MemorySpace::DEVICE)
               {
-                if (d_commProtocol != communicationProtocol::nccl)
+                if (d_commProtocol != communicationProtocol::dccl)
                   dftfe::utils::deviceStreamSynchronize(
                     dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
                 if (d_commProtocol == communicationProtocol::mpiHost)
@@ -506,7 +496,7 @@ namespace dftfe
               }
 #  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
             if constexpr (memorySpace == MemorySpace::DEVICE)
-              if (d_commProtocol == communicationProtocol::nccl)
+              if (d_commProtocol == communicationProtocol::dccl)
                 {
                   NCCLCHECK(ncclGroupStart());
                   for (dftfe::uInt i = 0;
@@ -561,7 +551,7 @@ namespace dftfe
                 }
 #  endif
 #endif
-            if (d_commProtocol != communicationProtocol::nccl)
+            if (d_commProtocol != communicationProtocol::dccl)
               for (dftfe::uInt i = 0;
                    i < (d_mpiPatternP2P->getTargetProcIds()).size();
                    ++i)
@@ -606,7 +596,7 @@ namespace dftfe
                 dftfe::utils::deviceSynchronize();
               }
 #endif
-            if (d_commProtocol != communicationProtocol::nccl)
+            if (d_commProtocol != communicationProtocol::dccl)
               for (dftfe::uInt i = 0;
                    i < (d_mpiPatternP2P->getGhostProcIds()).size();
                    ++i)
@@ -670,7 +660,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
             if constexpr (memorySpace == MemorySpace::DEVICE)
               {
-                if (d_commProtocol != communicationProtocol::nccl)
+                if (d_commProtocol != communicationProtocol::dccl)
                   dftfe::utils::deviceStreamSynchronize(
                     dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
                 if (d_commProtocol == communicationProtocol::mpiHost)
@@ -690,7 +680,7 @@ namespace dftfe
               }
 #  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
             if constexpr (memorySpace == MemorySpace::DEVICE)
-              if (d_commProtocol == communicationProtocol::nccl)
+              if (d_commProtocol == communicationProtocol::dccl)
                 {
                   NCCLCHECK(ncclGroupStart());
                   for (dftfe::uInt i = 0;
@@ -751,7 +741,7 @@ namespace dftfe
                 }
 #  endif
 #endif
-            if (d_commProtocol != communicationProtocol::nccl)
+            if (d_commProtocol != communicationProtocol::dccl)
               for (dftfe::uInt i = 0;
                    i < (d_mpiPatternP2P->getTargetProcIds()).size();
                    ++i)
@@ -798,7 +788,7 @@ namespace dftfe
                 dftfe::utils::deviceSynchronize();
               }
 #endif
-            if (d_commProtocol != communicationProtocol::nccl)
+            if (d_commProtocol != communicationProtocol::dccl)
               for (dftfe::uInt i = 0;
                    i < (d_mpiPatternP2P->getGhostProcIds()).size();
                    ++i)
@@ -858,7 +848,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
             if constexpr (memorySpace == MemorySpace::DEVICE)
               {
-                if (d_commProtocol != communicationProtocol::nccl)
+                if (d_commProtocol != communicationProtocol::dccl)
                   dftfe::utils::deviceStreamSynchronize(
                     dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
                 if (d_commProtocol == communicationProtocol::mpiHost)
@@ -879,7 +869,7 @@ namespace dftfe
 
 #  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
             if constexpr (memorySpace == MemorySpace::DEVICE)
-              if (d_commProtocol == communicationProtocol::nccl)
+              if (d_commProtocol == communicationProtocol::dccl)
                 {
                   NCCLCHECK(ncclGroupStart());
                   for (dftfe::uInt i = 0;
@@ -938,7 +928,7 @@ namespace dftfe
                 }
 #  endif
 #endif
-            if (d_commProtocol != communicationProtocol::nccl)
+            if (d_commProtocol != communicationProtocol::dccl)
               for (dftfe::uInt i = 0;
                    i < (d_mpiPatternP2P->getTargetProcIds()).size();
                    ++i)
@@ -986,7 +976,7 @@ namespace dftfe
                 dftfe::utils::deviceSynchronize();
               }
 #endif
-            if (d_commProtocol != communicationProtocol::nccl)
+            if (d_commProtocol != communicationProtocol::dccl)
               for (dftfe::uInt i = 0;
                    i < (d_mpiPatternP2P->getGhostProcIds()).size();
                    ++i)
@@ -1028,19 +1018,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
               if constexpr (memorySpace == MemorySpace::DEVICE)
                 {
-                  if (d_useZfpCompression)
                     dftfe::compressionWrapper::compress_gather(
-                      dataArray.data(),
-                      d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs()
-                        .data(),
-                      d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs()
-                        .size(),
-                      d_blockSize,
-                      d_sendRecvBufferCompress.data(),
-                      d_compressBitsPerValue,
-                      dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
-                  else
-                    dftfe::compressionWrapper::compress_gather_bfp(
                       dataArray.data(),
                       d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs()
                         .data(),
@@ -1065,7 +1043,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
             if constexpr (memorySpace == MemorySpace::DEVICE)
               {
-                if (d_commProtocol != communicationProtocol::nccl)
+                if (d_commProtocol != communicationProtocol::dccl)
                   dftfe::utils::deviceStreamSynchronize(
                     dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
                 if (d_commProtocol == communicationProtocol::mpiHost)
@@ -1086,7 +1064,7 @@ namespace dftfe
 
 #  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
             if constexpr (memorySpace == MemorySpace::DEVICE)
-              if (d_commProtocol == communicationProtocol::nccl)
+              if (d_commProtocol == communicationProtocol::dccl)
                 {
                   NCCLCHECK(ncclGroupStart());
                   for (dftfe::uInt i = 0;
@@ -1147,7 +1125,7 @@ namespace dftfe
                 }
 #  endif
 #endif
-            if (d_commProtocol != communicationProtocol::nccl)
+            if (d_commProtocol != communicationProtocol::dccl)
               for (dftfe::uInt i = 0;
                    i < (d_mpiPatternP2P->getTargetProcIds()).size();
                    ++i)
@@ -1191,13 +1169,13 @@ namespace dftfe
         // wait for all send and recv requests to be completed
 #if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
         if constexpr (memorySpace == MemorySpace::DEVICE)
-          if (d_commProtocol == communicationProtocol::nccl)
+          if (d_commProtocol == communicationProtocol::dccl)
             dftfe::utils::deviceStreamSynchronize(
               dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
 #endif
         if (d_requestsUpdateGhostValues.size() > 0)
           {
-            if (d_commProtocol != communicationProtocol::nccl)
+            if (d_commProtocol != communicationProtocol::dccl)
               {
                 const dftfe::Int err =
                   MPI_Waitall(d_requestsUpdateGhostValues.size(),
@@ -1314,16 +1292,7 @@ namespace dftfe
                 }
             if constexpr (memorySpace == MemorySpace::DEVICE)
               {
-                if (d_useZfpCompression)
                   dftfe::compressionWrapper::decompress(
-                    d_ghostDataCopyCompress.data(),
-                    dataArray.data() +
-                      d_mpiPatternP2P->localOwnedSize() * d_blockSize,
-                    d_mpiPatternP2P->localGhostSize() * d_blockSize,
-                    d_compressBitsPerValue,
-                    dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
-                else
-                  dftfe::compressionWrapper::decompress_bfp(
                     d_ghostDataCopyCompress.data(),
                     dataArray.data() +
                       d_mpiPatternP2P->localOwnedSize() * d_blockSize,
@@ -1375,7 +1344,7 @@ namespace dftfe
                 dftfe::utils::deviceSynchronize();
               }
 #endif
-            if (d_commProtocol != communicationProtocol::nccl)
+            if (d_commProtocol != communicationProtocol::dccl)
               for (dftfe::uInt i = 0;
                    i < (d_mpiPatternP2P->getTargetProcIds()).size();
                    ++i)
@@ -1428,7 +1397,7 @@ namespace dftfe
                 }
 #  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
             if constexpr (memorySpace == MemorySpace::DEVICE)
-              if (d_commProtocol == communicationProtocol::nccl)
+              if (d_commProtocol == communicationProtocol::dccl)
                 {
                   NCCLCHECK(ncclGroupStart());
                   for (dftfe::uInt i = 0;
@@ -1483,7 +1452,7 @@ namespace dftfe
                 }
 #  endif
 #endif
-            if (d_commProtocol != communicationProtocol::nccl)
+            if (d_commProtocol != communicationProtocol::dccl)
               for (dftfe::uInt i = 0;
                    i < (d_mpiPatternP2P->getGhostProcIds()).size();
                    ++i)
@@ -1533,7 +1502,7 @@ namespace dftfe
                 dftfe::utils::deviceSynchronize();
               }
 #endif
-            if (d_commProtocol != communicationProtocol::nccl)
+            if (d_commProtocol != communicationProtocol::dccl)
               for (dftfe::uInt i = 0;
                    i < (d_mpiPatternP2P->getTargetProcIds()).size();
                    ++i)
@@ -1590,7 +1559,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
             if constexpr (memorySpace == MemorySpace::DEVICE)
               {
-                if (d_commProtocol != communicationProtocol::nccl)
+                if (d_commProtocol != communicationProtocol::dccl)
                   dftfe::utils::deviceStreamSynchronize(
                     dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
                 if (d_commProtocol == communicationProtocol::mpiHost)
@@ -1609,7 +1578,7 @@ namespace dftfe
               }
 #  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
             if constexpr (memorySpace == MemorySpace::DEVICE)
-              if (d_commProtocol == communicationProtocol::nccl)
+              if (d_commProtocol == communicationProtocol::dccl)
                 {
                   NCCLCHECK(ncclGroupStart());
                   for (dftfe::uInt i = 0;
@@ -1670,7 +1639,7 @@ namespace dftfe
                 }
 #  endif
 #endif
-            if (d_commProtocol != communicationProtocol::nccl)
+            if (d_commProtocol != communicationProtocol::dccl)
               for (dftfe::uInt i = 0;
                    i < (d_mpiPatternP2P->getGhostProcIds()).size();
                    ++i)
@@ -1723,7 +1692,7 @@ namespace dftfe
               }
 #endif
 
-            if (d_commProtocol != communicationProtocol::nccl)
+            if (d_commProtocol != communicationProtocol::dccl)
               for (dftfe::uInt i = 0;
                    i < (d_mpiPatternP2P->getTargetProcIds()).size();
                    ++i)
@@ -1779,7 +1748,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
             if constexpr (memorySpace == MemorySpace::DEVICE)
               {
-                if (d_commProtocol != communicationProtocol::nccl)
+                if (d_commProtocol != communicationProtocol::dccl)
                   dftfe::utils::deviceStreamSynchronize(
                     dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
                 if (d_commProtocol == communicationProtocol::mpiHost)
@@ -1798,7 +1767,7 @@ namespace dftfe
               }
 #  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
             if constexpr (memorySpace == MemorySpace::DEVICE)
-              if (d_commProtocol == communicationProtocol::nccl)
+              if (d_commProtocol == communicationProtocol::dccl)
                 {
                   NCCLCHECK(ncclGroupStart());
                   for (dftfe::uInt i = 0;
@@ -1857,7 +1826,7 @@ namespace dftfe
                 }
 #  endif
 #endif
-            if (d_commProtocol != communicationProtocol::nccl)
+            if (d_commProtocol != communicationProtocol::dccl)
               for (dftfe::uInt i = 0;
                    i < (d_mpiPatternP2P->getGhostProcIds()).size();
                    ++i)
@@ -1911,7 +1880,7 @@ namespace dftfe
               }
 #endif
 
-            if (d_commProtocol != communicationProtocol::nccl)
+            if (d_commProtocol != communicationProtocol::dccl)
               for (dftfe::uInt i = 0;
                    i < (d_mpiPatternP2P->getTargetProcIds()).size();
                    ++i)
@@ -1951,16 +1920,7 @@ namespace dftfe
                 // Begin Compression
                 if (d_mpiPatternP2P->localGhostSize() > 0)
                   {
-                    if (d_useZfpCompression)
                       dftfe::compressionWrapper::compress(
-                        dataArray.data() +
-                          d_mpiPatternP2P->localOwnedSize() * d_blockSize,
-                        d_ghostDataCopyCompress.data(),
-                        d_mpiPatternP2P->localGhostSize() * d_blockSize,
-                        d_compressBitsPerValue,
-                        dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
-                    else
-                      dftfe::compressionWrapper::compress_bfp(
                         dataArray.data() +
                           d_mpiPatternP2P->localOwnedSize() * d_blockSize,
                         d_ghostDataCopyCompress.data(),
@@ -1984,7 +1944,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
             if constexpr (memorySpace == MemorySpace::DEVICE)
               {
-                if (d_commProtocol != communicationProtocol::nccl)
+                if (d_commProtocol != communicationProtocol::dccl)
                   dftfe::utils::deviceStreamSynchronize(
                     dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
                 if (d_commProtocol == communicationProtocol::mpiHost)
@@ -2003,7 +1963,7 @@ namespace dftfe
               }
 #  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
             if constexpr (memorySpace == MemorySpace::DEVICE)
-              if (d_commProtocol == communicationProtocol::nccl)
+              if (d_commProtocol == communicationProtocol::dccl)
                 {
                   NCCLCHECK(ncclGroupStart());
                   for (dftfe::uInt i = 0;
@@ -2064,7 +2024,7 @@ namespace dftfe
                 }
 #  endif
 #endif
-            if (d_commProtocol != communicationProtocol::nccl)
+            if (d_commProtocol != communicationProtocol::dccl)
               for (dftfe::uInt i = 0;
                    i < (d_mpiPatternP2P->getGhostProcIds()).size();
                    ++i)
@@ -2111,13 +2071,13 @@ namespace dftfe
         // wait for all send and recv requests to be completed
 #if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
         if constexpr (memorySpace == MemorySpace::DEVICE)
-          if (d_commProtocol == communicationProtocol::nccl)
+          if (d_commProtocol == communicationProtocol::dccl)
             dftfe::utils::deviceStreamSynchronize(
               dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
 #endif
         if (d_requestsAccumulateAddLocallyOwned.size() > 0)
           {
-            if (d_commProtocol != communicationProtocol::nccl)
+            if (d_commProtocol != communicationProtocol::dccl)
               {
                 const dftfe::Int err =
                   MPI_Waitall(d_requestsAccumulateAddLocallyOwned.size(),
@@ -2265,19 +2225,7 @@ namespace dftfe
             // directly to scattered positions, eliminating intermediate buffer
             if constexpr (memorySpace == MemorySpace::DEVICE)
               {
-                if (d_useZfpCompression)
                   dftfe::compressionWrapper::decompress_scatter_add(
-                    d_sendRecvBufferCompress.data(),
-                    d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs()
-                      .data(),
-                    d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs()
-                      .size(),
-                    d_blockSize,
-                    dataArray.data(),
-                    d_compressBitsPerValue,
-                    dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
-                else
-                  dftfe::compressionWrapper::decompress_scatter_add_bfp(
                     d_sendRecvBufferCompress.data(),
                     d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs()
                       .data(),
@@ -2335,7 +2283,7 @@ namespace dftfe
               }
 #endif
 
-            if (d_commProtocol != communicationProtocol::nccl)
+            if (d_commProtocol != communicationProtocol::dccl)
               {
                 for (dftfe::uInt i = 0;
                      i < (d_mpiPatternP2P->getTargetProcIds()).size();
@@ -2390,7 +2338,7 @@ namespace dftfe
                 }
 #  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
             if constexpr (memorySpace == MemorySpace::DEVICE)
-              if (d_commProtocol == communicationProtocol::nccl)
+              if (d_commProtocol == communicationProtocol::dccl)
                 {
                   NCCLCHECK(ncclGroupStart());
                   for (dftfe::uInt i = 0;
@@ -2445,7 +2393,7 @@ namespace dftfe
                 }
 #  endif
 #endif
-            if (d_commProtocol != communicationProtocol::nccl)
+            if (d_commProtocol != communicationProtocol::dccl)
               for (dftfe::uInt i = 0;
                    i < (d_mpiPatternP2P->getGhostProcIds()).size();
                    ++i)
@@ -2496,7 +2444,7 @@ namespace dftfe
                 dftfe::utils::deviceSynchronize();
               }
 #endif
-            if (d_commProtocol != communicationProtocol::nccl)
+            if (d_commProtocol != communicationProtocol::dccl)
               for (dftfe::uInt i = 0;
                    i < (d_mpiPatternP2P->getTargetProcIds()).size();
                    ++i)
@@ -2553,7 +2501,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
             if constexpr (memorySpace == MemorySpace::DEVICE)
               {
-                if (d_commProtocol != communicationProtocol::nccl)
+                if (d_commProtocol != communicationProtocol::dccl)
                   dftfe::utils::deviceStreamSynchronize(
                     dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
                 if (d_commProtocol == communicationProtocol::mpiHost)
@@ -2572,7 +2520,7 @@ namespace dftfe
               }
 #  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
             if constexpr (memorySpace == MemorySpace::DEVICE)
-              if (d_commProtocol == communicationProtocol::nccl)
+              if (d_commProtocol == communicationProtocol::dccl)
                 {
                   NCCLCHECK(ncclGroupStart());
                   for (dftfe::uInt i = 0;
@@ -2633,7 +2581,7 @@ namespace dftfe
                 }
 #  endif
 #endif
-            if (d_commProtocol != communicationProtocol::nccl)
+            if (d_commProtocol != communicationProtocol::dccl)
               for (dftfe::uInt i = 0;
                    i < (d_mpiPatternP2P->getGhostProcIds()).size();
                    ++i)
@@ -2682,7 +2630,7 @@ namespace dftfe
         // wait for all send and recv requests to be completed
 #if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
         if constexpr (memorySpace == MemorySpace::DEVICE)
-          if (d_commProtocol == communicationProtocol::nccl)
+          if (d_commProtocol == communicationProtocol::dccl)
             dftfe::utils::deviceStreamSynchronize(
               dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
 #endif
@@ -2690,7 +2638,7 @@ namespace dftfe
         // wait for all send and recv requests to be completed
         if (d_requestsAccumulateInsertLocallyOwned.size() > 0)
           {
-            if (d_commProtocol != communicationProtocol::nccl)
+            if (d_commProtocol != communicationProtocol::dccl)
               {
                 const dftfe::Int err =
                   MPI_Waitall(d_requestsAccumulateInsertLocallyOwned.size(),
