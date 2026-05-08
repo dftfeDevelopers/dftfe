@@ -7,49 +7,49 @@
 #cmakedefine DFTFE_VERSION "@DFTFE_VERSION@"
 
 /* Use complex or real arithmetic (exactly one will be defined) */
-#cmakedefine USE_COMPLEX
-#cmakedefine USE_REAL
+#cmakedefine USE_COMPLEX 1
+#cmakedefine USE_REAL 1
 
 /* PETSc/SLEPc support (derived from deal.II configuration) */
-#cmakedefine USE_PETSC
+#cmakedefine USE_PETSC 1
 
 /* Higher-order quadrature for PSP */
-#cmakedefine DFTFE_WITH_HIGHERQUAD_PSP
+#cmakedefine DFTFE_WITH_HIGHERQUAD_PSP 1
 
 /* 64-bit integer indices */
-#cmakedefine DFTFE_WITH_64BIT_INT
+#cmakedefine DFTFE_WITH_64BIT_INT 1
 
 /* GPU support */
-#cmakedefine DFTFE_WITH_DEVICE
-#cmakedefine DFTFE_WITH_DEVICE_NVIDIA
-#cmakedefine DFTFE_WITH_DEVICE_AMD
-#cmakedefine DFTFE_WITH_DEVICE_INTEL
-#cmakedefine DFTFE_WITH_DEVICE_MKL
-#cmakedefine DFTFE_WITH_DEVICE_LANG_CUDA
-#cmakedefine DFTFE_WITH_DEVICE_LANG_HIP
-#cmakedefine DFTFE_WITH_DEVICE_LANG_SYCL
-#cmakedefine DFTFE_WITH_DEVICE_AWARE_MPI
-#cmakedefine DFTFE_WITH_CUDA_NCCL
-#cmakedefine DFTFE_WITH_HIP_RCCL
+#cmakedefine DFTFE_WITH_DEVICE 1
+#cmakedefine DFTFE_WITH_DEVICE_NVIDIA 1
+#cmakedefine DFTFE_WITH_DEVICE_AMD 1
+#cmakedefine DFTFE_WITH_DEVICE_INTEL 1
+#cmakedefine DFTFE_WITH_DEVICE_MKL 1
+#cmakedefine DFTFE_WITH_DEVICE_LANG_CUDA 1
+#cmakedefine DFTFE_WITH_DEVICE_LANG_HIP 1
+#cmakedefine DFTFE_WITH_DEVICE_LANG_SYCL 1
+#cmakedefine DFTFE_WITH_DEVICE_AWARE_MPI 1
+#cmakedefine DFTFE_WITH_CUDA_NCCL 1
+#cmakedefine DFTFE_WITH_HIP_RCCL 1
 
 /* HIP platform selection */
-#cmakedefine __HIP_PLATFORM_AMD__
-#cmakedefine __HIP_PLATFORM_NVIDIA__
+#cmakedefine __HIP_PLATFORM_AMD__ 1
+#cmakedefine __HIP_PLATFORM_NVIDIA__ 1
 
 /* Optional: customised deal.II build */
-#cmakedefine DFTFE_WITH_CUSTOMIZED_DEALII
+#cmakedefine DFTFE_WITH_CUSTOMIZED_DEALII 1
 
 /* Optional: dispersion corrections */
-#cmakedefine DFTFE_WITH_DFTD3
-#cmakedefine DFTFE_WITH_DFTD4
+#cmakedefine DFTFE_WITH_DFTD3 1
+#cmakedefine DFTFE_WITH_DFTD4 1
 
 /* Optional: LibTorch neural-network potentials */
-#cmakedefine DFTFE_WITH_TORCH
+#cmakedefine DFTFE_WITH_TORCH 1
 
 /* Optional: MDI protocol */
-#cmakedefine DFTFE_WITH_MDI
+#cmakedefine DFTFE_WITH_MDI 1
 
 /* Disable runtime assertions */
-#cmakedefine DFTFE_DISABLE_ASSERT
+#cmakedefine DFTFE_DISABLE_ASSERT 1
 
 #endif /* DFTFE_CONFIG_H */

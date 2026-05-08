@@ -513,7 +513,10 @@ which is required."
 ENDIF()
 
 # deal.II is PUBLIC: its types appear in dftfe's public headers.
-TARGET_INCLUDE_DIRECTORIES(${TARGETLIB} PUBLIC ${DEAL_II_INCLUDE_RELDIR})
+# Include directories are carried by the imported target (dealii::dealii_release
+# / dealii::dealii_debug) via INTERFACE_INCLUDE_DIRECTORIES, so no explicit
+# TARGET_INCLUDE_DIRECTORIES call is needed. DEAL_II_INCLUDE_RELDIR is a
+# relative path and must not be used directly — it resolves to the source tree.
 IF("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
     TARGET_LINK_LIBRARIES (${TARGETLIB} PUBLIC dealii::dealii_release)
 ELSE()
@@ -680,7 +683,7 @@ TARGET_LINK_LIBRARIES(${TARGET} PUBLIC ${TARGETLIB})
 # include/dftfe/config.h.in into ${CMAKE_BINARY_DIR}/include/dftfe/config.h
 # and registers the install rule that copies it to <prefix>/include/dftfe/.
 # See cmake/dftfeGenerateConfig.cmake for the feature-flag convention.
-include(cmake/dftfeGenerateConfig)
+include(dftfeGenerateConfig)
 dftfeGenerateConfig()
 
 # ── Package config files ──────────────────────────────────────────────────────
