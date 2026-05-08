@@ -7,6 +7,30 @@
 # Downstream projects consume the library via:
 #   find_package(dftfe REQUIRED HINTS <prefix>/lib/cmake/dftfe)
 #   target_link_libraries(myapp PRIVATE dftfe::dftfeReal)
+#
+# --- Feature flag convention ---
+#
+# Build-time feature flags (USE_REAL, DFTFE_WITH_DEVICE, etc.) are propagated
+# through config.h, not through INTERFACE_COMPILE_DEFINITIONS. The pattern is:
+#
+#   1. Set a CMake variable when the feature is active (done in this file):
+#        set(DFTFE_WITH_MY_FEATURE 1)
+#
+#   2. Add a matching #cmakedefine to include/dftfe/config.h.in:
+#        #cmakedefine DFTFE_WITH_MY_FEATURE
+#
+#   3. Include config.h in any header/source that tests the flag:
+#        #include <dftfe/config.h>
+#        #ifdef DFTFE_WITH_MY_FEATURE ...
+#
+# configure_file() (called via dftfeGenerateConfig()) reads the CMake variables
+# and writes the corresponding #define / #undef lines into config.h at build
+# time. The installed config.h gives consumers the same flag values without
+# requiring any -D flags on their compiler command line.
+#
+# The sole exception is DFTFE_PATH (the runtime data directory), whose value
+# differs between the build tree and the install tree. It is expressed as a
+# generator expression and kept as a PRIVATE target_compile_definition.
 ##
 
 cmake_minimum_required(VERSION 3.17)
