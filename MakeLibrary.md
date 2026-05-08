@@ -12,8 +12,10 @@ The changes made to support this are:
   included as `#include <dftfe/foo.h>`, avoiding namespace clashes with other
   libraries.
 - A generated `config.h` (from `include/dftfe/config.h.in`) encodes all
-  build-time feature flags. It is installed alongside the other headers so
-  consumers can test feature availability without guessing compile flags.
+  build-time feature flags. `cmake/dftfeGenerateConfig.cmake` owns the full
+  lifecycle: template processing at build time and installation alongside the
+  other public headers, so consumers can test feature availability without
+  guessing compile flags.
 - `CMakeLists.txt` uses modern CMake target-based semantics: generator
   expressions for include paths so build-tree paths are never baked into the
   exported targets, `set()` variables feeding `config.h` for all feature flags,
@@ -261,3 +263,6 @@ installed.
      `target_link_libraries`.
    - Decide on `PUBLIC` vs `PRIVATE` linkage based on whether the dependency's
      types appear in dftfe's public headers.
+   - No changes to install rules are needed: `dftfeGenerateConfig()` in
+     `cmake/dftfeGenerateConfig.cmake` handles generation and installation of
+     `config.h` automatically.
