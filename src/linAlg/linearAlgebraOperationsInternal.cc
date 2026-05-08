@@ -18,12 +18,13 @@
 //
 
 
-#include <dftUtils.h>
-#include <linearAlgebraOperations.h>
-#include <linearAlgebraOperationsInternal.h>
-#include <BLASWrapper.h>
+#include <dftfe/config.h>
+#include <dftfe/dftUtils.h>
+#include <dftfe/linearAlgebraOperations.h>
+#include <dftfe/linearAlgebraOperationsInternal.h>
+#include <dftfe/BLASWrapper.h>
 #ifdef DFTFE_WITH_DEVICE
-#  include <DeviceAPICalls.h>
+#  include <dftfe/DeviceAPICalls.h>
 #endif
 /** @file linearAlgebraOperationsInternal.cc
  *  @brief Contains small internal functions used in linearAlgebraOperations

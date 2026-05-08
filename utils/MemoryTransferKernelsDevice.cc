@@ -18,9 +18,10 @@
  * @author Sambit Das.
  */
 
+#include <dftfe/config.h>
 #ifdef DFTFE_WITH_DEVICE
-#  include <MemoryTransferKernelsDevice.h>
-#  include <DeviceAPICalls.h>
+#  include <dftfe/MemoryTransferKernelsDevice.h>
+#  include <dftfe/DeviceAPICalls.h>
 
 namespace dftfe
 {

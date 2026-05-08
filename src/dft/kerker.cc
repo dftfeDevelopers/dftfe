@@ -17,8 +17,9 @@
 // @author Phani Motamarri, Gourab Panigrahi
 //
 
-#include <dft.h>
-#include <linearAlgebraOperations.h>
+#include <dftfe/config.h>
+#include <dftfe/dft.h>
+#include <dftfe/linearAlgebraOperations.h>
 
 namespace dftfe
 {

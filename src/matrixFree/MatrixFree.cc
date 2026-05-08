@@ -20,7 +20,8 @@
  *
  */
 
-#include <MatrixFree.h>
+#include <dftfe/config.h>
+#include <dftfe/MatrixFree.h>
 
 namespace dftfe
 {

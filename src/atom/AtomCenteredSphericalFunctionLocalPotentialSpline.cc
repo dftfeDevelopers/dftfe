@@ -15,7 +15,7 @@
 // ---------------------------------------------------------------------
 //
 
-#include "AtomCenteredSphericalFunctionLocalPotentialSpline.h"
+#include <dftfe/AtomCenteredSphericalFunctionLocalPotentialSpline.h>
 #include "vector"
 namespace dftfe
 {

@@ -17,13 +17,14 @@
 // @author Vishal Subramanian
 //
 
-#include "excDensityGGAClass.h"
-#include "excDensityLDAClass.h"
-#include "excDensityLLMGGAClass.h"
-#include "ExcDFTPlusU.h"
-#include "Exceptions.h"
-#include "AuxDensityMatrixFE.h"
-#include <dftfeDataTypes.h>
+#include <dftfe/config.h>
+#include <dftfe/excDensityGGAClass.h>
+#include <dftfe/excDensityLDAClass.h>
+#include <dftfe/excDensityLLMGGAClass.h>
+#include <dftfe/ExcDFTPlusU.h>
+#include <dftfe/Exceptions.h>
+#include <dftfe/AuxDensityMatrixFE.h>
+#include <dftfe/dftfeDataTypes.h>
 
 namespace dftfe
 {

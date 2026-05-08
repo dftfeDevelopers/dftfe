@@ -24,10 +24,10 @@
 #include <iostream>
 #include <cmath>
 
-#include "Exceptions.h"
-#include "GaussianBasis.h"
-#include "SphericalFunctionUtil.h"
-#include "StringOperations.h"
+#include <dftfe/Exceptions.h>
+#include <dftfe/GaussianBasis.h>
+#include <dftfe/SphericalFunctionUtil.h>
+#include <dftfe/StringOperations.h>
 
 namespace dftfe
 {

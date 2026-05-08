@@ -23,13 +23,14 @@
  *
  */
 
-#include "dftParameters.h"
-#include "dftUtils.h"
-#include "linearAlgebraOperations.h"
-#include "linearAlgebraOperationsCPU.h"
-#include "linearAlgebraOperationsInternal.h"
-#include "constants.h"
-#include "elpaScalaManager.h"
+#include <dftfe/config.h>
+#include <dftfe/dftParameters.h>
+#include <dftfe/dftUtils.h>
+#include <dftfe/linearAlgebraOperations.h>
+#include <dftfe/linearAlgebraOperationsCPU.h>
+#include <dftfe/linearAlgebraOperationsInternal.h>
+#include <dftfe/constants.h>
+#include <dftfe/elpaScalaManager.h>
 #include "pseudoGS.cc"
 #ifdef USE_PETSC
 #  include <deal.II/lac/slepc_solver.h>

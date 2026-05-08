@@ -1,6 +1,6 @@
 #include <iostream>
 #include <stdexcept>
-#include "AtomicBasisData.h"
+#include <dftfe/AtomicBasisData.h>
 
 namespace dftfe
 {

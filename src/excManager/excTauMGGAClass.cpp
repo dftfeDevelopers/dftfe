@@ -17,14 +17,15 @@
 // @author Srinibas Nandi, Vishal Subramanian, Sambit Das
 //
 
-#include "excTauMGGAClass.h"
-#include "Exceptions.h"
-#include <dftfeDataTypes.h>
-#include <excManagerKernels.h>
+#include <dftfe/config.h>
+#include <dftfe/excTauMGGAClass.h>
+#include <dftfe/Exceptions.h>
+#include <dftfe/dftfeDataTypes.h>
+#include <dftfe/excManagerKernels.h>
 #if defined(DFTFE_WITH_DEVICE)
-#  include <DeviceAPICalls.h>
+#  include <dftfe/DeviceAPICalls.h>
 #endif
-#include <exchangeCorrelationFunctionalEvaluator.h>
+#include <dftfe/exchangeCorrelationFunctionalEvaluator.h>
 namespace dftfe
 {
   template <dftfe::utils::MemorySpace memorySpace>

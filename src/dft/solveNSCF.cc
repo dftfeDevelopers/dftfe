@@ -24,8 +24,9 @@
 // eigenvalues, eigenfunctions and ground-state energy
 // using the self-consistent Hamiltonian)
 //
-#include <dft.h>
-#include <energyCalculator.h>
+#include <dftfe/config.h>
+#include <dftfe/dft.h>
+#include <dftfe/energyCalculator.h>
 namespace dftfe
 {
   template <dftfe::utils::MemorySpace memorySpace>

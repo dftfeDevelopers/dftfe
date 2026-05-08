@@ -27,9 +27,10 @@
  * @author Ian C. Lin, Sambit Das.
  */
 
-#include <DeviceAPICalls.h>
+#include <dftfe/config.h>
+#include <dftfe/DeviceAPICalls.h>
 #include <algorithm>
-#include <MemoryManager.h>
+#include <dftfe/MemoryManager.h>
 #include <complex>
 
 namespace dftfe

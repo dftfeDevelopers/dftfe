@@ -15,7 +15,8 @@
 // ---------------------------------------------------------------------
 //
 
-#include "AtomCenteredSphericalFunctionContainer.h"
+#include <dftfe/config.h>
+#include <dftfe/AtomCenteredSphericalFunctionContainer.h>
 
 namespace dftfe
 {

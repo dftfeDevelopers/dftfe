@@ -1,3 +1,4 @@
+#include <dftfe/config.h>
 constexpr int batchSizeDeviceFP64 = 1;
 constexpr int batchSizeDeviceFP32 = 1;
 

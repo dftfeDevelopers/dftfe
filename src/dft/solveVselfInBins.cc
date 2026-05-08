@@ -18,14 +18,15 @@
 // @author Shiva Rudraraju, Phani Motamarri, Sambit Das
 //
 
-#include <constants.h>
-#include <constraintMatrixInfo.h>
-#include <dealiiLinearSolver.h>
-#include <dftUtils.h>
-#include <poissonSolverProblemWrapper.h>
-#include <feevaluationWrapper.h>
+#include <dftfe/config.h>
+#include <dftfe/constants.h>
+#include <dftfe/constraintMatrixInfo.h>
+#include <dftfe/dealiiLinearSolver.h>
+#include <dftfe/dftUtils.h>
+#include <dftfe/poissonSolverProblemWrapper.h>
+#include <dftfe/feevaluationWrapper.h>
 #ifdef DFTFE_WITH_DEVICE
-#  include <solveVselfInBinsDevice.h>
+#  include <dftfe/solveVselfInBinsDevice.h>
 #endif
 
 namespace dftfe

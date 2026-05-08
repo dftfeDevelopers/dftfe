@@ -2,8 +2,9 @@
 // Created by Sambit Das.
 //
 
-#include "AuxDensityMatrixFE.h"
-#include <Exceptions.h>
+#include <dftfe/config.h>
+#include <dftfe/AuxDensityMatrixFE.h>
+#include <dftfe/Exceptions.h>
 #include <iostream>
 
 namespace dftfe

@@ -15,13 +15,13 @@
 // ---------------------------------------------------------------------
 //
 
-#include <excManagerKernels.h>
-#include <deviceKernelsGeneric.h>
-#include <DeviceAPICalls.h>
-#include <DeviceDataTypeOverloads.h>
-#include <DeviceTypeConfig.h>
-#include <DeviceKernelLauncherHelpers.h>
-#include <BLASWrapper.h>
+#include <dftfe/excManagerKernels.h>
+#include <dftfe/deviceKernelsGeneric.h>
+#include <dftfe/DeviceAPICalls.h>
+#include <dftfe/DeviceDataTypeOverloads.h>
+#include <dftfe/DeviceTypeConfig.h>
+#include <dftfe/DeviceKernelLauncherHelpers.h>
+#include <dftfe/BLASWrapper.h>
 #ifndef utils_funcs
 #  define max(x, y) (((x) > (y)) ? (x) : (y))
 #  define abs(x) (((x) > (0)) ? (x) : (-x))

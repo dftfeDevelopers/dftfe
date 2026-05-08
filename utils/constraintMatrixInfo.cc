@@ -16,8 +16,9 @@
 //
 // @author  Phani Motamarri
 //
-#include <constraintMatrixInfo.h>
-#include <linearAlgebraOperations.h>
+#include <dftfe/config.h>
+#include <dftfe/constraintMatrixInfo.h>
+#include <dftfe/linearAlgebraOperations.h>
 
 namespace dftfe
 {

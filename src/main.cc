@@ -21,14 +21,15 @@
 // dft header
 //
 
-#include "dftfeWrapper.h"
-#include "runParameters.h"
-#include "molecularDynamicsClass.h"
-#include "nudgedElasticBandClass.h"
-#include "geometryOptimizationClass.h"
-#include <git_info.h>
+#include <dftfe/config.h>
+#include <dftfe/dftfeWrapper.h>
+#include <dftfe/runParameters.h>
+#include <dftfe/molecularDynamicsClass.h>
+#include <dftfe/nudgedElasticBandClass.h>
+#include <dftfe/geometryOptimizationClass.h>
+#include <dftfe/git_info.h>
 
-#include <dftUtils.h>
+#include <dftfe/dftUtils.h>
 
 
 //
@@ -42,7 +43,7 @@
 
 #if defined(DFTFE_WITH_MDI)
 #  include <mdi.h>
-#  include "MDIEngine.h"
+#  include <dftfe/MDIEngine.h>
 #endif
 
 int

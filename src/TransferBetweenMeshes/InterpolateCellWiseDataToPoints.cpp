@@ -19,26 +19,27 @@
  * @author Vishal Subramanian, Bikash Kanungo
  */
 
-#include "InterpolateCellWiseDataToPoints.h"
-#include "linearAlgebraOperationsInternal.h"
-#include "linearAlgebraOperations.h"
-#include "FECell.h"
+#include <dftfe/config.h>
+#include <dftfe/InterpolateCellWiseDataToPoints.h>
+#include <dftfe/linearAlgebraOperationsInternal.h>
+#include <dftfe/linearAlgebraOperations.h>
+#include <dftfe/FECell.h>
 
 #ifdef DFTFE_WITH_DEVICE
-#  include "deviceDirectCCLWrapper.h"
-#  include "elpaScalaManager.h"
-#  include "dftParameters.h"
-#  include <chebyshevOrthogonalizedSubspaceIterationSolverDevice.h>
-#  include <dftUtils.h>
-#  include <DeviceAPICalls.h>
-#  include <DeviceDataTypeOverloads.h>
-#  include <DeviceKernelLauncherHelpers.h>
-#  include <linearAlgebraOperationsDevice.h>
-#  include <vectorUtilities.h>
-#  include <DeviceAPICalls.h>
-#  include <DeviceDataTypeOverloads.h>
-#  include <DeviceKernelLauncherHelpers.h>
-#  include <vectorUtilities.h>
+#  include <dftfe/deviceDirectCCLWrapper.h>
+#  include <dftfe/elpaScalaManager.h>
+#  include <dftfe/dftParameters.h>
+#  include <dftfe/chebyshevOrthogonalizedSubspaceIterationSolverDevice.h>
+#  include <dftfe/dftUtils.h>
+#  include <dftfe/DeviceAPICalls.h>
+#  include <dftfe/DeviceDataTypeOverloads.h>
+#  include <dftfe/DeviceKernelLauncherHelpers.h>
+#  include <dftfe/linearAlgebraOperationsDevice.h>
+#  include <dftfe/vectorUtilities.h>
+#  include <dftfe/DeviceAPICalls.h>
+#  include <dftfe/DeviceDataTypeOverloads.h>
+#  include <dftfe/DeviceKernelLauncherHelpers.h>
+#  include <dftfe/vectorUtilities.h>
 #endif
 
 namespace dftfe

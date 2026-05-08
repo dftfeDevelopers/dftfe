@@ -15,7 +15,7 @@
 // ---------------------------------------------------------------------
 //
 
-#include "AtomCenteredSphericalFunctionBessel.h"
+#include <dftfe/AtomCenteredSphericalFunctionBessel.h>
 #include "vector"
 namespace dftfe
 {

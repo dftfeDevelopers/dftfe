@@ -15,8 +15,8 @@
 // ---------------------------------------------------------------------
 //
 
-#include <FEBasisOperationsKernelsInternal.h>
-#include <TypeConfig.h>
+#include <dftfe/FEBasisOperationsKernelsInternal.h>
+#include <dftfe/TypeConfig.h>
 #include <complex>
 #include <vector>
 #include <cstring>

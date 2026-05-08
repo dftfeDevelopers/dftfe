@@ -17,8 +17,8 @@
 // @author Vishal Subramanian
 //
 
-#include "MultiVectorCGSolver.h"
-#include "MemoryTransfer.h"
+#include <dftfe/MultiVectorCGSolver.h>
+#include <dftfe/MemoryTransfer.h>
 namespace dftfe
 {
   // constructor

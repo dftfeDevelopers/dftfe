@@ -18,7 +18,7 @@
 /*
  * @author Bikash Kanungo
  */
-#include "Exceptions.h"
+#include <dftfe/Exceptions.h>
 #include <exception>
 namespace dftfe
 {

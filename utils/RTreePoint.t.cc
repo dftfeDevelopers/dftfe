@@ -19,7 +19,7 @@
  * @author Bikash Kanungo, Vishal Subramanian
  */
 
-#include "Exceptions.h"
+#include <dftfe/Exceptions.h>
 namespace dftfe
 {
   namespace utils

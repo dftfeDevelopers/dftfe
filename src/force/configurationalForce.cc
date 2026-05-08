@@ -15,11 +15,12 @@
 // ---------------------------------------------------------------------
 
 
-#include <configurationalForce.h>
-#include <configurationalForceKernels.h>
-#include <constants.h>
-#include <ExcDFTPlusU.h>
-#include <feevaluationWrapper.h>
+#include <dftfe/config.h>
+#include <dftfe/configurationalForce.h>
+#include <dftfe/configurationalForceKernels.h>
+#include <dftfe/constants.h>
+#include <dftfe/ExcDFTPlusU.h>
+#include <dftfe/feevaluationWrapper.h>
 namespace dftfe
 {
   namespace internalForce

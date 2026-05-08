@@ -16,10 +16,11 @@
 //
 // @author Phani Motamarri, Shiva Rudraraju, Sambit Das
 //
+#include <dftfe/config.h>
 #include "applyHomogeneousDirichletBC.cc"
 #include "locatenodes.cc"
-#include <dft.h>
-#include <dftUtils.h>
+#include <dftfe/dft.h>
+#include <dftfe/dftUtils.h>
 
 namespace dftfe
 {

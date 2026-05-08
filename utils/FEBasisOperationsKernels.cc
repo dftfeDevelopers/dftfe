@@ -15,9 +15,10 @@
 // ---------------------------------------------------------------------
 //
 
-#include <FEBasisOperations.h>
-#include <linearAlgebraOperations.h>
-#include <FEBasisOperationsKernelsInternal.h>
+#include <dftfe/config.h>
+#include <dftfe/FEBasisOperations.h>
+#include <dftfe/linearAlgebraOperations.h>
+#include <dftfe/FEBasisOperationsKernelsInternal.h>
 
 namespace dftfe
 {

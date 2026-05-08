@@ -1,3 +1,4 @@
+#include <dftfe/config.h>
 #include "hip/hip_runtime.h"
 // ---------------------------------------------------------------------
 //
@@ -17,13 +18,13 @@
 
 
 #ifdef DFTFE_WITH_DEVICE_LANG_HIP
-#  include <DeviceAPICalls.h>
+#  include <dftfe/DeviceAPICalls.h>
 #  include <stdio.h>
 #  include <vector>
-#  include <DeviceDataTypeOverloads.h>
-#  include <DeviceTypeConfigHalfPrec.h>
-#  include <DeviceKernelLauncherHelpers.h>
-#  include <Exceptions.h>
+#  include <dftfe/DeviceDataTypeOverloads.h>
+#  include <dftfe/DeviceTypeConfigHalfPrec.h>
+#  include <dftfe/DeviceKernelLauncherHelpers.h>
+#  include <dftfe/Exceptions.h>
 namespace dftfe
 {
   namespace utils

@@ -17,15 +17,16 @@
 // @author Sambit Das, David M. Rogers
 //
 
+#include <dftfe/config.h>
 #if defined(DFTFE_WITH_DEVICE)
 #  include <iostream>
 
-#  include <deviceDirectCCLWrapper.h>
-#  include <deviceKernelsGeneric.h>
-#  include <DeviceDataTypeOverloads.h>
-#  include <DeviceKernelLauncherHelpers.h>
-#  include <DeviceAPICalls.h>
-#  include <Exceptions.h>
+#  include <dftfe/deviceDirectCCLWrapper.h>
+#  include <dftfe/deviceKernelsGeneric.h>
+#  include <dftfe/DeviceDataTypeOverloads.h>
+#  include <dftfe/DeviceKernelLauncherHelpers.h>
+#  include <dftfe/DeviceAPICalls.h>
+#  include <dftfe/Exceptions.h>
 #  if defined(DFTFE_WITH_CUDA_NCCL)
 #    include <nccl.h>
 #  elif defined(DFTFE_WITH_HIP_RCCL)

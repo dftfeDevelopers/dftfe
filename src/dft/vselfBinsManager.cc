@@ -17,12 +17,12 @@
 // @author  Sambit Das, Phani Motamarri
 //
 
-#include <vectorUtilities.h>
-#include <vselfBinsManager.h>
+#include <dftfe/vectorUtilities.h>
+#include <dftfe/vselfBinsManager.h>
 
 #include "createBinsSanityCheck.cc"
 #include "solveVselfInBins.cc"
-#include <dftUtils.h>
+#include <dftfe/dftUtils.h>
 namespace dftfe
 {
   namespace internal

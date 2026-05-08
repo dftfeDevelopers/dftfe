@@ -15,7 +15,7 @@
 // ---------------------------------------------------------------------
 //
 
-#include "AtomCenteredSphericalFunctionProjectorSpline.h"
+#include <dftfe/AtomCenteredSphericalFunctionProjectorSpline.h>
 #include "vector"
 namespace dftfe
 {

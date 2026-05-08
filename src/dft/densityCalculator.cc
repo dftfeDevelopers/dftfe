@@ -18,11 +18,12 @@
 //
 
 // source file for electron density related computations
-#include <constants.h>
-#include <densityCalculator.h>
-#include <dftUtils.h>
-#include <vectorUtilities.h>
-#include <MemoryStorage.h>
+#include <dftfe/config.h>
+#include <dftfe/constants.h>
+#include <dftfe/densityCalculator.h>
+#include <dftfe/dftUtils.h>
+#include <dftfe/vectorUtilities.h>
+#include <dftfe/MemoryStorage.h>
 
 
 namespace dftfe

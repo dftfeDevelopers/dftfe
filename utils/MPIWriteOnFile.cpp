@@ -21,12 +21,12 @@
 // Created by nelrufus on 7/17/18.
 //
 
-#include "MPIWriteOnFile.h"
+#include <dftfe/MPIWriteOnFile.h>
 #include <iostream>
 #include <fstream>
 #include <numeric>
-#include <TypeConfig.h>
-#include <dftfeDataTypes.h>
+#include <dftfe/TypeConfig.h>
+#include <dftfe/dftfeDataTypes.h>
 namespace dftfe
 {
   namespace dftUtils

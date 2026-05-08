@@ -1,6 +1,7 @@
-#include <atomCenteredPostProcessing.h>
-#include <deviceKernelsGeneric.h>
-#include <constants.h>
+#include <dftfe/config.h>
+#include <dftfe/atomCenteredPostProcessing.h>
+#include <dftfe/deviceKernelsGeneric.h>
+#include <dftfe/constants.h>
 #include <cassert>
 #include <iomanip>
 
