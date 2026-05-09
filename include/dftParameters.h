@@ -149,9 +149,9 @@ namespace dftfe
     bool        useDevice;
     bool        deviceFineGrainedTimings;
     bool        allowFullCPUMemSubspaceRot;
-    std::string     communPrecCheby;
-    bool            useSinglePrecCheby;
-    dftfe::uInt     compressBitsPerValue = 16;
+    std::string communPrecCheby;
+    bool        useSinglePrecCheby;
+    dftfe::uInt compressBitsPerValue = 16;
     bool        overlapComputeCommunCheby;
     bool        overlapComputeCommunOrthoRR;
     bool        autoDeviceBlockSizes;

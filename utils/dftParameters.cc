@@ -22,8 +22,6 @@
 #include <fstream>
 #include <iostream>
 
-
-
 namespace dftfe
 {
   namespace internalDftParameters
@@ -82,13 +80,13 @@ namespace dftfe
           "USE GPUDIRECT MPI ALL REDUCE",
           "false",
           dealii::Patterns::Bool(),
-          R"([Advanced] Use GPUDIRECT MPI\_Allreduce. This route will only work if DFT-FE is compiled with a device collective communications library (NVIDIA NCCL, AMD RCCL, or Intel oneCCL) or withGPUAwareMPI=ON. If a DCCL library and withGPUAwareMPI modes are both enabled, the DCCL mode takes precedence. Also note that one MPI rank per GPU can be used when using this option. Default: false.)");
+          R"([Advanced] Use GPUDIRECT MPI\_Allreduce. This route will only work if DFT-FE is compiled with a device collective communications library (NVIDIA NCCL or AMD RCCL) or withGPUAwareMPI=ON. If a DCCL library and withGPUAwareMPI modes are both enabled, the DCCL mode takes precedence. Also note that one MPI rank per GPU can be used when using this option. Default: false.)");
 
         prm.declare_entry(
           "USE DCCL",
           "false",
           dealii::Patterns::Bool(),
-          R"([Advanced] Use device collective communications library (NVIDIA NCCL, AMD RCCL, or Intel oneCCL) for GPU-direct allreduce. Default: false.)");
+          R"([Advanced] Use device collective communications library (NVIDIA NCCL or AMD RCCL) for GPU-direct allreduce. Default: false.)");
 
         prm.declare_entry(
           "USE ELPA GPU KERNEL",
@@ -110,7 +108,7 @@ namespace dftfe
           "PRINT KINETIC ENERGY",
           "false",
           dealii::Patterns::Bool(),
-          R"([Standard] Prints the Kinetic energy of the electrons.  Default: false.)");
+          R"([Standard] Prints the Kinetic energy of the electrons. Default: false.)");
 
         prm.declare_entry(
           "WRITE DENSITY FE MESH",
@@ -1122,11 +1120,11 @@ namespace dftfe
             dealii::Patterns::Selection("STANDARD|FP32|BF16|COMPRESSED"),
             "[Advanced] Sets communication precision for residual based Chebyshev filtering. Default setting is STANDARD. FP32, BF16 and COMPRESSED are ignored if USE SINGLE PREC CHEBY and USE GPU are false.");
 
-prm.declare_entry(
-    "COMPRESS BITS PER VALUE",
-    "16",
-    dealii::Patterns::Selection("8|10|12|16"),
-    "[Advanced] Bits per value for compression. Allowed values: 8, 10, 12, 16. Default 16");
+          prm.declare_entry(
+            "COMPRESS BITS PER VALUE",
+            "16",
+            dealii::Patterns::Selection("8|10|12|16"),
+            "[Advanced] Bits per value for compression. Allowed values: 8, 10, 12, 16. Default 16");
 
           prm.declare_entry(
             "USE MIXED PREC COMMUN ONLY XTOX XTHX",
@@ -1738,6 +1736,7 @@ prm.declare_entry(
         dc_d3cutoff3                = prm.get_double("THREE BODY CUTOFF");
         dc_d3cutoffCN               = prm.get_double("CN CUTOFF");
       }
+
       prm.leave_subsection();
       isPseudopotential   = prm.get_bool("PSEUDOPOTENTIAL CALCULATION");
       pseudoTestsFlag     = prm.get_bool("PSEUDO TESTS FLAG");
@@ -1833,7 +1832,7 @@ prm.declare_entry(
 
         compressBitsPerValue = prm.get_integer("COMPRESS BITS PER VALUE");
 
-        tensorOpType       = prm.get("TENSOR OP TYPE SINGLE PREC CHEBY");
+        tensorOpType = prm.get("TENSOR OP TYPE SINGLE PREC CHEBY");
         overlapComputeCommunCheby =
           prm.get_bool("OVERLAP COMPUTE COMMUN CHEBY");
         overlapComputeCommunOrthoRR =
@@ -1854,7 +1853,6 @@ prm.declare_entry(
       prm.leave_subsection();
     }
     prm.leave_subsection();
-
 
     prm.enter_subsection("Poisson problem parameters");
     {
@@ -1886,10 +1884,7 @@ prm.declare_entry(
       startingTempBOMD            = prm.get_double("STARTING TEMPERATURE");
       thermostatTimeConstantBOMD  = prm.get_double("THERMOSTAT TIME CONSTANT");
       MaxWallTime                 = prm.get_double("MAX WALL TIME");
-
-
-
-      tempControllerTypeBOMD = prm.get("TEMPERATURE CONTROLLER TYPE");
+      tempControllerTypeBOMD      = prm.get("TEMPERATURE CONTROLLER TYPE");
     }
     prm.leave_subsection();
 
@@ -1913,8 +1908,6 @@ prm.declare_entry(
     //
     setAutoParameters(mpi_comm_parent);
   }
-
-
 
   void
   dftParameters::check_parameters(const MPI_Comm &mpi_comm_parent) const
@@ -2116,7 +2109,6 @@ prm.declare_entry(
                     dealii::ExcMessage(std::string(
                       "D4 MBD has not been parametrized for this functional.")));
               }
-
             else if (XCType == "MGGA-SCAN")
               {
                 if (dc_dispersioncorrectiontype == 1)
@@ -2136,14 +2128,12 @@ prm.declare_entry(
       }
   }
 
-
   void
   dftParameters::setAutoParameters(const MPI_Comm &mpi_comm_parent)
   {
     //
     // Automated choice of mesh related parameters
     //
-
     if (isBOMD)
       isIonForce = true;
 
@@ -2203,7 +2193,6 @@ prm.declare_entry(
       {
         gaussianOrderMoveMeshToAtoms = 4.0;
       }
-
     //
     // Automated choice of eigensolver parameters
     //
@@ -2262,7 +2251,6 @@ prm.declare_entry(
             "DFT-FE Error: GS is not implemented on GPUs. Use Auto option."));
       }
 
-
     if (algoType == "FAST")
       {
         useMixedPrecXtOX                    = true;
@@ -2279,12 +2267,12 @@ prm.declare_entry(
       }
 #endif
 
-
 #ifndef DFTFE_WITH_DEVICE
     useDevice           = false;
     useELPADeviceKernel = false;
 #endif
 #if defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    useDCCL             = false;
     useELPADeviceKernel = false;
 #endif
 
@@ -2297,11 +2285,10 @@ prm.declare_entry(
       }
 
 #if !defined(DFTFE_WITH_CUDA_NCCL) && !defined(DFTFE_WITH_HIP_RCCL) && \
-  !defined(DFTFE_WITH_SYCL_ONECCL) && !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
+  !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
     useDeviceDirectAllReduce = false;
 #endif
-#if !defined(DFTFE_WITH_CUDA_NCCL) && !defined(DFTFE_WITH_HIP_RCCL) && \
-  !defined(DFTFE_WITH_SYCL_ONECCL)
+#if !defined(DFTFE_WITH_CUDA_NCCL) && !defined(DFTFE_WITH_HIP_RCCL)
     useDCCL = false;
 #endif
 #if !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
@@ -2354,7 +2341,6 @@ prm.declare_entry(
                                   finiteElementPolynomialOrderRhoNodal + 1;
       }
 
-
     // checking if the XC type is compatible with
     // overlap compute communication cheby
 
@@ -2374,6 +2360,4 @@ prm.declare_entry(
           }
       }
   }
-
-
 } // namespace dftfe

@@ -108,7 +108,7 @@ namespace dftfe
         for (int i = 0; i < 4; i++)
           {
             ValueType f = dftfe::utils::abs(p[i]);
-            mx       = dftfe::utils::max(mx, f);
+            mx          = dftfe::utils::max(mx, f);
           }
         return block_exponent<ValueType>(mx);
       }
@@ -142,8 +142,8 @@ namespace dftfe
         constexpr unsigned int vbits = (32u - ebits) / 4u;
         constexpr unsigned int vmask = (1u << vbits) - 1u;
 
-        int emax    = max_exponent<ValueType>(fblock);
-        int maxprec = calc_precision(emax,
+        int          emax    = max_exponent<ValueType>(fblock);
+        int          maxprec = calc_precision(emax,
                                      traits<ValueType>::PREC,
                                      traits<ValueType>::MINEXP);
         unsigned int e =
@@ -152,7 +152,7 @@ namespace dftfe
           return 0u;
 
         unsigned int packed = e;
-        ValueType       s =
+        ValueType    s =
           dftfe::utils::ldexp((ValueType)1.0, (int)vbits - 1 - emax);
         const int qmax = (int)(vmask >> 1u);
         for (int i = 0; i < 4; i++)
@@ -169,9 +169,9 @@ namespace dftfe
       DFTFE_COMP_DEVICE_INLINE void
       decode_block_32(unsigned int packed, ValueType *fblock)
       {
-        constexpr unsigned int ebits          = (unsigned int)traits<ValueType>::EBITS;
-        constexpr unsigned int vbits          = (32u - ebits) / 4u;
-        constexpr unsigned int vmask          = (1u << vbits) - 1u;
+        constexpr unsigned int ebits = (unsigned int)traits<ValueType>::EBITS;
+        constexpr unsigned int vbits = (32u - ebits) / 4u;
+        constexpr unsigned int vmask = (1u << vbits) - 1u;
         constexpr int          sign_threshold = 1 << (vbits - 1);
         constexpr unsigned int emask          = (1u << ebits) - 1u;
 
@@ -182,8 +182,9 @@ namespace dftfe
             return;
           }
 
-        int    emax  = (int)e_raw - traits<ValueType>::EBIAS;
-        ValueType scale = dftfe::utils::ldexp((ValueType)1.0, emax - (int)vbits + 1);
+        int       emax = (int)e_raw - traits<ValueType>::EBIAS;
+        ValueType scale =
+          dftfe::utils::ldexp((ValueType)1.0, emax - (int)vbits + 1);
         for (int i = 0; i < 4; i++)
           {
             unsigned int raw =
@@ -203,8 +204,8 @@ namespace dftfe
         constexpr unsigned int vbits = (40u - ebits) / 4u;
         constexpr unsigned int vmask = (1u << vbits) - 1u;
 
-        int emax    = max_exponent<ValueType>(fblock);
-        int maxprec = calc_precision(emax,
+        int          emax    = max_exponent<ValueType>(fblock);
+        int          maxprec = calc_precision(emax,
                                      traits<ValueType>::PREC,
                                      traits<ValueType>::MINEXP);
         unsigned int e =
@@ -213,9 +214,9 @@ namespace dftfe
           return (uint64)0;
 
         uint64    packed = (uint64)e;
-        ValueType    s      = dftfe::utils::ldexp((ValueType)1.0,
-                                          (int)vbits - 1 - emax);
-        const int qmax   = (int)(vmask >> 1u);
+        ValueType s =
+          dftfe::utils::ldexp((ValueType)1.0, (int)vbits - 1 - emax);
+        const int qmax = (int)(vmask >> 1u);
         for (int i = 0; i < 4; i++)
           {
             const int q_raw = (int)rint(s * fblock[i]);
@@ -230,9 +231,9 @@ namespace dftfe
       DFTFE_COMP_DEVICE_INLINE void
       decode_block_40(uint64 packed, ValueType *fblock)
       {
-        constexpr unsigned int ebits          = (unsigned int)traits<ValueType>::EBITS;
-        constexpr unsigned int vbits          = (40u - ebits) / 4u;
-        constexpr unsigned int vmask          = (1u << vbits) - 1u;
+        constexpr unsigned int ebits = (unsigned int)traits<ValueType>::EBITS;
+        constexpr unsigned int vbits = (40u - ebits) / 4u;
+        constexpr unsigned int vmask = (1u << vbits) - 1u;
         constexpr int          sign_threshold = 1 << (vbits - 1);
         constexpr unsigned int emask          = (1u << ebits) - 1u;
 
@@ -243,12 +244,14 @@ namespace dftfe
             return;
           }
 
-        int    emax  = (int)e_raw - traits<ValueType>::EBIAS;
-        ValueType scale = dftfe::utils::ldexp((ValueType)1.0, emax - (int)vbits + 1);
+        int       emax = (int)e_raw - traits<ValueType>::EBIAS;
+        ValueType scale =
+          dftfe::utils::ldexp((ValueType)1.0, emax - (int)vbits + 1);
         for (int i = 0; i < 4; i++)
           {
-            unsigned int raw = (unsigned int)(
-              (packed >> (ebits + (unsigned int)i * vbits)) & vmask);
+            unsigned int raw =
+              (unsigned int)((packed >> (ebits + (unsigned int)i * vbits)) &
+                             vmask);
             int q = (int)raw;
             if (q >= sign_threshold)
               q -= (1 << vbits);
@@ -264,8 +267,8 @@ namespace dftfe
         constexpr unsigned int vbits = (48u - ebits) / 4u;
         constexpr unsigned int vmask = (1u << vbits) - 1u;
 
-        int emax    = max_exponent<ValueType>(fblock);
-        int maxprec = calc_precision(emax,
+        int          emax    = max_exponent<ValueType>(fblock);
+        int          maxprec = calc_precision(emax,
                                      traits<ValueType>::PREC,
                                      traits<ValueType>::MINEXP);
         unsigned int e =
@@ -274,9 +277,9 @@ namespace dftfe
           return (uint64)0;
 
         uint64    packed = (uint64)e;
-        ValueType    s      = dftfe::utils::ldexp((ValueType)1.0,
-                                          (int)vbits - 1 - emax);
-        const int qmax   = (int)(vmask >> 1u);
+        ValueType s =
+          dftfe::utils::ldexp((ValueType)1.0, (int)vbits - 1 - emax);
+        const int qmax = (int)(vmask >> 1u);
         for (int i = 0; i < 4; i++)
           {
             const int q_raw = (int)rint(s * fblock[i]);
@@ -291,9 +294,9 @@ namespace dftfe
       DFTFE_COMP_DEVICE_INLINE void
       decode_block_48(uint64 packed, ValueType *fblock)
       {
-        constexpr unsigned int ebits          = (unsigned int)traits<ValueType>::EBITS;
-        constexpr unsigned int vbits          = (48u - ebits) / 4u;
-        constexpr unsigned int vmask          = (1u << vbits) - 1u;
+        constexpr unsigned int ebits = (unsigned int)traits<ValueType>::EBITS;
+        constexpr unsigned int vbits = (48u - ebits) / 4u;
+        constexpr unsigned int vmask = (1u << vbits) - 1u;
         constexpr int          sign_threshold = 1 << (vbits - 1);
         constexpr unsigned int emask          = (1u << ebits) - 1u;
 
@@ -304,12 +307,14 @@ namespace dftfe
             return;
           }
 
-        int    emax  = (int)e_raw - traits<ValueType>::EBIAS;
-        ValueType scale = dftfe::utils::ldexp((ValueType)1.0, emax - (int)vbits + 1);
+        int       emax = (int)e_raw - traits<ValueType>::EBIAS;
+        ValueType scale =
+          dftfe::utils::ldexp((ValueType)1.0, emax - (int)vbits + 1);
         for (int i = 0; i < 4; i++)
           {
-            unsigned int raw = (unsigned int)(
-              (packed >> (ebits + (unsigned int)i * vbits)) & vmask);
+            unsigned int raw =
+              (unsigned int)((packed >> (ebits + (unsigned int)i * vbits)) &
+                             vmask);
             int q = (int)raw;
             if (q >= sign_threshold)
               q -= (1 << vbits);
@@ -325,8 +330,8 @@ namespace dftfe
         constexpr unsigned int vbits = (64u - ebits) / 4u;
         constexpr unsigned int vmask = (1u << vbits) - 1u;
 
-        int emax    = max_exponent<ValueType>(fblock);
-        int maxprec = calc_precision(emax,
+        int          emax    = max_exponent<ValueType>(fblock);
+        int          maxprec = calc_precision(emax,
                                      traits<ValueType>::PREC,
                                      traits<ValueType>::MINEXP);
         unsigned int e =
@@ -335,9 +340,9 @@ namespace dftfe
           return (uint64)0;
 
         uint64    packed = (uint64)e;
-        ValueType    s      = dftfe::utils::ldexp((ValueType)1.0,
-                                          (int)vbits - 1 - emax);
-        const int qmax   = (int)(vmask >> 1u);
+        ValueType s =
+          dftfe::utils::ldexp((ValueType)1.0, (int)vbits - 1 - emax);
+        const int qmax = (int)(vmask >> 1u);
         for (int i = 0; i < 4; i++)
           {
             const int q_raw = (int)rint(s * fblock[i]);
@@ -352,9 +357,9 @@ namespace dftfe
       DFTFE_COMP_DEVICE_INLINE void
       decode_block_64(uint64 packed, ValueType *fblock)
       {
-        constexpr unsigned int ebits          = (unsigned int)traits<ValueType>::EBITS;
-        constexpr unsigned int vbits          = (64u - ebits) / 4u;
-        constexpr unsigned int vmask          = (1u << vbits) - 1u;
+        constexpr unsigned int ebits = (unsigned int)traits<ValueType>::EBITS;
+        constexpr unsigned int vbits = (64u - ebits) / 4u;
+        constexpr unsigned int vmask = (1u << vbits) - 1u;
         constexpr int          sign_threshold = 1 << (vbits - 1);
         constexpr unsigned int emask          = (1u << ebits) - 1u;
 
@@ -365,12 +370,14 @@ namespace dftfe
             return;
           }
 
-        int    emax  = (int)e_raw - traits<ValueType>::EBIAS;
-        ValueType scale = dftfe::utils::ldexp((ValueType)1.0, emax - (int)vbits + 1);
+        int       emax = (int)e_raw - traits<ValueType>::EBIAS;
+        ValueType scale =
+          dftfe::utils::ldexp((ValueType)1.0, emax - (int)vbits + 1);
         for (int i = 0; i < 4; i++)
           {
-            unsigned int raw = (unsigned int)(
-              (packed >> (ebits + (unsigned int)i * vbits)) & vmask);
+            unsigned int raw =
+              (unsigned int)((packed >> (ebits + (unsigned int)i * vbits)) &
+                             vmask);
             int q = (int)raw;
             if (q >= sign_threshold)
               q -= (1 << vbits);
@@ -393,7 +400,7 @@ namespace dftfe
           if (block_idx >= tot_blocks)
             return;
           unsigned int block_start = block_idx * 4u;
-          ValueType       fblock[4];
+          ValueType    fblock[4];
           if (block_start + 4u <= dim)
             {
               fblock[0] = data[block_start];
@@ -411,9 +418,9 @@ namespace dftfe
           stream[block_idx] = encode_block_32(fblock);
         },
         const ValueType *data,
-        unsigned int *stream,
-        unsigned int  dim,
-        unsigned int  tot_blocks);
+        unsigned int    *stream,
+        unsigned int     dim,
+        unsigned int     tot_blocks);
 
       template <typename ValueType>
       DFTFE_CREATE_KERNEL(
@@ -441,7 +448,7 @@ namespace dftfe
             }
         },
         const unsigned int *stream,
-        ValueType             *data,
+        ValueType          *data,
         unsigned int        dim,
         unsigned int        tot_blocks);
 
@@ -455,10 +462,9 @@ namespace dftfe
             return;
           const unsigned int blocks_per_entry = gatherBlockSize >> 2;
           unsigned int       gatherIdx        = block_idx / blocks_per_entry;
-          unsigned int       localBlock       = block_idx - gatherIdx * blocks_per_entry;
-          unsigned int       intraIdx         = localBlock * 4u;
-          size_t             base =
-            (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
+          unsigned int localBlock = block_idx - gatherIdx * blocks_per_entry;
+          unsigned int intraIdx   = localBlock * 4u;
+          size_t base = (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
 
           ValueType fblock[4];
           fblock[0]         = dataArray[base];
@@ -467,7 +473,7 @@ namespace dftfe
           fblock[3]         = dataArray[base + 3];
           stream[block_idx] = encode_block_32(fblock);
         },
-        const ValueType    *dataArray,
+        const ValueType *dataArray,
         const IndexType *indices,
         unsigned int     gatherBlockSize,
         unsigned int    *stream,
@@ -486,10 +492,9 @@ namespace dftfe
 
           const unsigned int blocks_per_entry = gatherBlockSize >> 2;
           unsigned int       gatherIdx        = block_idx / blocks_per_entry;
-          unsigned int       localBlock       = block_idx - gatherIdx * blocks_per_entry;
-          unsigned int       intraIdx         = localBlock * 4u;
-          size_t             base =
-            (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
+          unsigned int localBlock = block_idx - gatherIdx * blocks_per_entry;
+          unsigned int intraIdx   = localBlock * 4u;
+          size_t base = (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
 
           dftfe::utils::atomicAddWrapper(&dataArray[base], fblock[0]);
           dftfe::utils::atomicAddWrapper(&dataArray[base + 1], fblock[1]);
@@ -499,7 +504,7 @@ namespace dftfe
         const unsigned int *stream,
         const IndexType    *indices,
         unsigned int        gatherBlockSize,
-        ValueType             *dataArray,
+        ValueType          *dataArray,
         unsigned int        tot_blocks);
 
       /* ---- 10 bpv: 5 x uint8_t per block ---- */
@@ -512,7 +517,7 @@ namespace dftfe
           if (block_idx >= tot_blocks)
             return;
           unsigned int block_start = block_idx * 4u;
-          ValueType       fblock[4];
+          ValueType    fblock[4];
           if (block_start + 4u <= dim)
             {
               fblock[0] = data[block_start];
@@ -536,9 +541,9 @@ namespace dftfe
           stream[out + 4] = (uint8_t)(packed >> 32);
         },
         const ValueType *data,
-        uint8_t      *stream,
-        unsigned int  dim,
-        unsigned int  tot_blocks);
+        uint8_t         *stream,
+        unsigned int     dim,
+        unsigned int     tot_blocks);
 
       template <typename ValueType>
       DFTFE_CREATE_KERNEL(
@@ -549,8 +554,7 @@ namespace dftfe
           if (block_idx >= tot_blocks)
             return;
           size_t out    = (size_t)block_idx * 5u;
-          uint64 packed = (uint64)stream[out] |
-                          ((uint64)stream[out + 1] << 8) |
+          uint64 packed = (uint64)stream[out] | ((uint64)stream[out + 1] << 8) |
                           ((uint64)stream[out + 2] << 16) |
                           ((uint64)stream[out + 3] << 24) |
                           ((uint64)stream[out + 4] << 32);
@@ -574,7 +578,7 @@ namespace dftfe
             }
         },
         const uint8_t *stream,
-        ValueType        *data,
+        ValueType     *data,
         unsigned int   dim,
         unsigned int   tot_blocks);
 
@@ -588,10 +592,9 @@ namespace dftfe
             return;
           const unsigned int blocks_per_entry = gatherBlockSize >> 2;
           unsigned int       gatherIdx        = block_idx / blocks_per_entry;
-          unsigned int       localBlock       = block_idx - gatherIdx * blocks_per_entry;
-          unsigned int       intraIdx         = localBlock * 4u;
-          size_t             base =
-            (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
+          unsigned int localBlock = block_idx - gatherIdx * blocks_per_entry;
+          unsigned int intraIdx   = localBlock * 4u;
+          size_t base = (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
 
           ValueType fblock[4];
           fblock[0] = dataArray[base];
@@ -607,7 +610,7 @@ namespace dftfe
           stream[out + 3] = (uint8_t)(packed >> 24);
           stream[out + 4] = (uint8_t)(packed >> 32);
         },
-        const ValueType    *dataArray,
+        const ValueType *dataArray,
         const IndexType *indices,
         unsigned int     gatherBlockSize,
         uint8_t         *stream,
@@ -622,8 +625,7 @@ namespace dftfe
           if (block_idx >= tot_blocks)
             return;
           size_t out    = (size_t)block_idx * 5u;
-          uint64 packed = (uint64)stream[out] |
-                          ((uint64)stream[out + 1] << 8) |
+          uint64 packed = (uint64)stream[out] | ((uint64)stream[out + 1] << 8) |
                           ((uint64)stream[out + 2] << 16) |
                           ((uint64)stream[out + 3] << 24) |
                           ((uint64)stream[out + 4] << 32);
@@ -633,10 +635,9 @@ namespace dftfe
 
           const unsigned int blocks_per_entry = gatherBlockSize >> 2;
           unsigned int       gatherIdx        = block_idx / blocks_per_entry;
-          unsigned int       localBlock       = block_idx - gatherIdx * blocks_per_entry;
-          unsigned int       intraIdx         = localBlock * 4u;
-          size_t             base =
-            (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
+          unsigned int localBlock = block_idx - gatherIdx * blocks_per_entry;
+          unsigned int intraIdx   = localBlock * 4u;
+          size_t base = (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
 
           dftfe::utils::atomicAddWrapper(&dataArray[base], fblock[0]);
           dftfe::utils::atomicAddWrapper(&dataArray[base + 1], fblock[1]);
@@ -646,7 +647,7 @@ namespace dftfe
         const uint8_t   *stream,
         const IndexType *indices,
         unsigned int     gatherBlockSize,
-        ValueType          *dataArray,
+        ValueType       *dataArray,
         unsigned int     tot_blocks);
 
       /* ---- 12 bpv: 3 x uint16_t per block ---- */
@@ -659,7 +660,7 @@ namespace dftfe
           if (block_idx >= tot_blocks)
             return;
           unsigned int block_start = block_idx * 4u;
-          ValueType       fblock[4];
+          ValueType    fblock[4];
           if (block_start + 4u <= dim)
             {
               fblock[0] = data[block_start];
@@ -681,9 +682,9 @@ namespace dftfe
           stream[out + 2] = (uint16_t)(packed >> 32);
         },
         const ValueType *data,
-        uint16_t     *stream,
-        unsigned int  dim,
-        unsigned int  tot_blocks);
+        uint16_t        *stream,
+        unsigned int     dim,
+        unsigned int     tot_blocks);
 
       template <typename ValueType>
       DFTFE_CREATE_KERNEL(
@@ -717,7 +718,7 @@ namespace dftfe
             }
         },
         const uint16_t *stream,
-        ValueType         *data,
+        ValueType      *data,
         unsigned int    dim,
         unsigned int    tot_blocks);
 
@@ -731,10 +732,9 @@ namespace dftfe
             return;
           const unsigned int blocks_per_entry = gatherBlockSize >> 2;
           unsigned int       gatherIdx        = block_idx / blocks_per_entry;
-          unsigned int       localBlock       = block_idx - gatherIdx * blocks_per_entry;
-          unsigned int       intraIdx         = localBlock * 4u;
-          size_t             base =
-            (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
+          unsigned int localBlock = block_idx - gatherIdx * blocks_per_entry;
+          unsigned int intraIdx   = localBlock * 4u;
+          size_t base = (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
 
           ValueType fblock[4];
           fblock[0] = dataArray[base];
@@ -748,7 +748,7 @@ namespace dftfe
           stream[out + 1] = (uint16_t)(packed >> 16);
           stream[out + 2] = (uint16_t)(packed >> 32);
         },
-        const ValueType    *dataArray,
+        const ValueType *dataArray,
         const IndexType *indices,
         unsigned int     gatherBlockSize,
         uint16_t        *stream,
@@ -772,10 +772,9 @@ namespace dftfe
 
           const unsigned int blocks_per_entry = gatherBlockSize >> 2;
           unsigned int       gatherIdx        = block_idx / blocks_per_entry;
-          unsigned int       localBlock       = block_idx - gatherIdx * blocks_per_entry;
-          unsigned int       intraIdx         = localBlock * 4u;
-          size_t             base =
-            (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
+          unsigned int localBlock = block_idx - gatherIdx * blocks_per_entry;
+          unsigned int intraIdx   = localBlock * 4u;
+          size_t base = (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
 
           dftfe::utils::atomicAddWrapper(&dataArray[base], fblock[0]);
           dftfe::utils::atomicAddWrapper(&dataArray[base + 1], fblock[1]);
@@ -785,7 +784,7 @@ namespace dftfe
         const uint16_t  *stream,
         const IndexType *indices,
         unsigned int     gatherBlockSize,
-        ValueType          *dataArray,
+        ValueType       *dataArray,
         unsigned int     tot_blocks);
 
       /* ---- 16 bpv: 1 x uint64 per block ---- */
@@ -798,7 +797,7 @@ namespace dftfe
           if (block_idx >= tot_blocks)
             return;
           unsigned int block_start = block_idx * 4u;
-          ValueType       fblock[4];
+          ValueType    fblock[4];
           if (block_start + 4u <= dim)
             {
               fblock[0] = data[block_start];
@@ -816,9 +815,9 @@ namespace dftfe
           stream[block_idx] = encode_block_64(fblock);
         },
         const ValueType *data,
-        uint64       *stream,
-        unsigned int  dim,
-        unsigned int  tot_blocks);
+        uint64          *stream,
+        unsigned int     dim,
+        unsigned int     tot_blocks);
 
       template <typename ValueType>
       DFTFE_CREATE_KERNEL(
@@ -846,7 +845,7 @@ namespace dftfe
             }
         },
         const uint64 *stream,
-        ValueType       *data,
+        ValueType    *data,
         unsigned int  dim,
         unsigned int  tot_blocks);
 
@@ -860,10 +859,9 @@ namespace dftfe
             return;
           const unsigned int blocks_per_entry = gatherBlockSize >> 2;
           unsigned int       gatherIdx        = block_idx / blocks_per_entry;
-          unsigned int       localBlock       = block_idx - gatherIdx * blocks_per_entry;
-          unsigned int       intraIdx         = localBlock * 4u;
-          size_t             base =
-            (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
+          unsigned int localBlock = block_idx - gatherIdx * blocks_per_entry;
+          unsigned int intraIdx   = localBlock * 4u;
+          size_t base = (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
 
           ValueType fblock[4];
           fblock[0]         = dataArray[base];
@@ -872,7 +870,7 @@ namespace dftfe
           fblock[3]         = dataArray[base + 3];
           stream[block_idx] = encode_block_64(fblock);
         },
-        const ValueType    *dataArray,
+        const ValueType *dataArray,
         const IndexType *indices,
         unsigned int     gatherBlockSize,
         uint64          *stream,
@@ -891,10 +889,9 @@ namespace dftfe
 
           const unsigned int blocks_per_entry = gatherBlockSize >> 2;
           unsigned int       gatherIdx        = block_idx / blocks_per_entry;
-          unsigned int       localBlock       = block_idx - gatherIdx * blocks_per_entry;
-          unsigned int       intraIdx         = localBlock * 4u;
-          size_t             base =
-            (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
+          unsigned int localBlock = block_idx - gatherIdx * blocks_per_entry;
+          unsigned int intraIdx   = localBlock * 4u;
+          size_t base = (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
 
           dftfe::utils::atomicAddWrapper(&dataArray[base], fblock[0]);
           dftfe::utils::atomicAddWrapper(&dataArray[base + 1], fblock[1]);
@@ -904,7 +901,7 @@ namespace dftfe
         const uint64    *stream,
         const IndexType *indices,
         unsigned int     gatherBlockSize,
-        ValueType          *dataArray,
+        ValueType       *dataArray,
         unsigned int     tot_blocks);
 
 #  undef DFTFE_COMP_DEVICE_INLINE
@@ -914,14 +911,13 @@ namespace dftfe
          specialised kernel via DFTFE_LAUNCH_KERNEL.
          ==================================================================== */
 
-#  define DFTFE_COMP_ASSERT_BPV(bpv)                              \
-    assert(((bpv) == 8 || (bpv) == 10 || (bpv) == 12 ||           \
-            (bpv) == 16) &&                                       \
+#  define DFTFE_COMP_ASSERT_BPV(bpv)                                    \
+    assert(((bpv) == 8 || (bpv) == 10 || (bpv) == 12 || (bpv) == 16) && \
            "bits_per_value must be 8, 10, 12, or 16")
 
       template <typename ValueType>
       void
-      compress_impl(const ValueType                *d_data,
+      compress_impl(const ValueType             *d_data,
                     void                        *d_stream,
                     size_t                       num_values,
                     int                          bits_per_value,
@@ -935,9 +931,9 @@ namespace dftfe
 
         const unsigned int dim        = (unsigned int)num_values;
         const unsigned int num_blocks = (dim + 3u) / 4u;
-        const unsigned int grid       = (num_blocks +
-                                   dftfe::utils::DEVICE_BLOCK_SIZE - 1) /
-                                  dftfe::utils::DEVICE_BLOCK_SIZE;
+        const unsigned int grid =
+          (num_blocks + dftfe::utils::DEVICE_BLOCK_SIZE - 1) /
+          dftfe::utils::DEVICE_BLOCK_SIZE;
 
         switch (bits_per_value)
           {
@@ -987,7 +983,7 @@ namespace dftfe
       template <typename ValueType>
       void
       decompress_impl(const void                  *d_stream,
-                      ValueType                      *d_data,
+                      ValueType                   *d_data,
                       size_t                       num_values,
                       int                          bits_per_value,
                       dftfe::utils::deviceStream_t stream)
@@ -1000,22 +996,22 @@ namespace dftfe
 
         const unsigned int dim        = (unsigned int)num_values;
         const unsigned int num_blocks = (dim + 3u) / 4u;
-        const unsigned int grid       = (num_blocks +
-                                   dftfe::utils::DEVICE_BLOCK_SIZE - 1) /
-                                  dftfe::utils::DEVICE_BLOCK_SIZE;
+        const unsigned int grid =
+          (num_blocks + dftfe::utils::DEVICE_BLOCK_SIZE - 1) /
+          dftfe::utils::DEVICE_BLOCK_SIZE;
 
         switch (bits_per_value)
           {
             case 8:
-              DFTFE_LAUNCH_KERNEL(
-                (decompress_8_kernel<ValueType>),
-                grid,
-                dftfe::utils::DEVICE_BLOCK_SIZE,
-                stream,
-                reinterpret_cast<const unsigned int *>(d_stream),
-                d_data,
-                dim,
-                num_blocks);
+              DFTFE_LAUNCH_KERNEL((decompress_8_kernel<ValueType>),
+                                  grid,
+                                  dftfe::utils::DEVICE_BLOCK_SIZE,
+                                  stream,
+                                  reinterpret_cast<const unsigned int *>(
+                                    d_stream),
+                                  d_data,
+                                  dim,
+                                  num_blocks);
               break;
             case 10:
               DFTFE_LAUNCH_KERNEL((decompress_10_kernel<ValueType>),
@@ -1028,15 +1024,14 @@ namespace dftfe
                                   num_blocks);
               break;
             case 12:
-              DFTFE_LAUNCH_KERNEL(
-                (decompress_12_kernel<ValueType>),
-                grid,
-                dftfe::utils::DEVICE_BLOCK_SIZE,
-                stream,
-                reinterpret_cast<const uint16_t *>(d_stream),
-                d_data,
-                dim,
-                num_blocks);
+              DFTFE_LAUNCH_KERNEL((decompress_12_kernel<ValueType>),
+                                  grid,
+                                  dftfe::utils::DEVICE_BLOCK_SIZE,
+                                  stream,
+                                  reinterpret_cast<const uint16_t *>(d_stream),
+                                  d_data,
+                                  dim,
+                                  num_blocks);
               break;
             case 16:
               DFTFE_LAUNCH_KERNEL((decompress_16_kernel<ValueType>),
@@ -1053,7 +1048,7 @@ namespace dftfe
 
       template <typename ValueType, typename IndexType>
       void
-      compress_gather_impl(const ValueType                *dataArray,
+      compress_gather_impl(const ValueType             *dataArray,
                            const IndexType             *indices,
                            size_t                       num_indices,
                            unsigned int                 gather_block_size,
@@ -1070,9 +1065,9 @@ namespace dftfe
 
         const unsigned int dim        = (unsigned int)num_values;
         const unsigned int num_blocks = (dim + 3u) / 4u;
-        const unsigned int grid       = (num_blocks +
-                                   dftfe::utils::DEVICE_BLOCK_SIZE - 1) /
-                                  dftfe::utils::DEVICE_BLOCK_SIZE;
+        const unsigned int grid =
+          (num_blocks + dftfe::utils::DEVICE_BLOCK_SIZE - 1) /
+          dftfe::utils::DEVICE_BLOCK_SIZE;
 
         switch (bits_per_value)
           {
@@ -1133,7 +1128,7 @@ namespace dftfe
                                   const IndexType *indices,
                                   size_t           num_indices,
                                   unsigned int     gather_block_size,
-                                  ValueType          *dataArray,
+                                  ValueType       *dataArray,
                                   int              bits_per_value,
                                   dftfe::utils::deviceStream_t stream)
       {
@@ -1146,9 +1141,9 @@ namespace dftfe
 
         const unsigned int dim        = (unsigned int)num_values;
         const unsigned int num_blocks = (dim + 3u) / 4u;
-        const unsigned int grid       = (num_blocks +
-                                   dftfe::utils::DEVICE_BLOCK_SIZE - 1) /
-                                  dftfe::utils::DEVICE_BLOCK_SIZE;
+        const unsigned int grid =
+          (num_blocks + dftfe::utils::DEVICE_BLOCK_SIZE - 1) /
+          dftfe::utils::DEVICE_BLOCK_SIZE;
 
         switch (bits_per_value)
           {
@@ -1309,14 +1304,14 @@ namespace dftfe
                            int                          bits_per_value,
                            dftfe::utils::deviceStream_t stream)
     {
-      decompress_scatter_add_impl<double, dftfe::uInt>(
-        d_compressed,
-        indices,
-        num_indices,
-        (unsigned int)gather_block_size,
-        dataArray,
-        bits_per_value,
-        stream);
+      decompress_scatter_add_impl<double, dftfe::uInt>(d_compressed,
+                                                       indices,
+                                                       num_indices,
+                                                       (unsigned int)
+                                                         gather_block_size,
+                                                       dataArray,
+                                                       bits_per_value,
+                                                       stream);
     }
 
     void
@@ -1328,14 +1323,14 @@ namespace dftfe
                            int                          bits_per_value,
                            dftfe::utils::deviceStream_t stream)
     {
-      decompress_scatter_add_impl<float, dftfe::uInt>(
-        d_compressed,
-        indices,
-        num_indices,
-        (unsigned int)gather_block_size,
-        dataArray,
-        bits_per_value,
-        stream);
+      decompress_scatter_add_impl<float, dftfe::uInt>(d_compressed,
+                                                      indices,
+                                                      num_indices,
+                                                      (unsigned int)
+                                                        gather_block_size,
+                                                      dataArray,
+                                                      bits_per_value,
+                                                      stream);
     }
 
   } // namespace compressionWrapper

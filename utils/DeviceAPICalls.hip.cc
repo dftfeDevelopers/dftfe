@@ -383,7 +383,8 @@ namespace dftfe
                            deviceEvent_t &startEvent,
                            deviceEvent_t &stopEvent)
     {
-      deviceError_t err = hipEventElapsedTime(&milliseconds, startEvent, stopEvent);
+      deviceError_t err =
+        hipEventElapsedTime(&milliseconds, startEvent, stopEvent);
       DEVICE_API_CHECK(err);
       return err;
     }

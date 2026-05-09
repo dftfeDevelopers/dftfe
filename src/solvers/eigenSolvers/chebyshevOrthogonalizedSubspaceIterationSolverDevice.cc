@@ -422,7 +422,8 @@ namespace dftfe
                     else if (useMixedPrecOverall &&
                              d_dftParams.communPrecCheby == "COMPRESSED")
                       {
-                        const dftfe::uInt bpv = d_dftParams.compressBitsPerValue;
+                        const dftfe::uInt bpv =
+                          d_dftParams.compressBitsPerValue;
 
                         (*XBlockFP32).setCompressBitsPerValue(bpv);
                         (*HXBlockFP32).setCompressBitsPerValue(bpv);
@@ -526,7 +527,8 @@ namespace dftfe
                     else if (useMixedPrecOverall &&
                              d_dftParams.communPrecCheby == "COMPRESSED")
                       {
-                        const dftfe::uInt bpv = d_dftParams.compressBitsPerValue;
+                        const dftfe::uInt bpv =
+                          d_dftParams.compressBitsPerValue;
 
                         (*XBlockFP32).setCompressBitsPerValue(bpv);
                         (*HXBlockFP32).setCompressBitsPerValue(bpv);

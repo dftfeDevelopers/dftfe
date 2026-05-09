@@ -69,7 +69,6 @@ configure_file(
     @ONLY
 )
 
-
 if(ENABLE_MPI)
   find_package(MPI REQUIRED)
   include_directories(${MPI_CXX_INCLUDE_PATH})
@@ -685,24 +684,8 @@ IF (WITH_GPU AND "${GPU_LANG}" STREQUAL "hip")
  ENDIF()
 ENDIF()
 
-#
-# ONECCL. Pass path to -DCMAKE_PREFIX_PATH
-#
-IF (WITH_GPU AND "${GPU_LANG}" STREQUAL "sycl")
- IF (WITH_DCCL)
-   find_package(ONECCL REQUIRED)
-   IF (ONECCL_FOUND)
-      MESSAGE(STATUS "Will Link With ONECCL")
-      ADD_DEFINITIONS(-DDFTFE_WITH_SYCL_ONECCL)
-      find_package(MPI REQUIRED)
-      target_link_libraries(${TARGETLIB} PUBLIC ONECCL MPI::MPI_CXX)
-   ENDIF()
- ENDIF()
-ENDIF()
-
 TARGET_INCLUDE_DIRECTORIES(${TARGETLIB} PUBLIC ${CMAKE_SOURCE_DIR}/include)
 TARGET_LINK_LIBRARIES(${TARGET} PUBLIC ${TARGETLIB})
-
 
 #
 # Custom "debug" and "release" make targets:

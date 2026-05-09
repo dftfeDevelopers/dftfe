@@ -132,7 +132,7 @@ namespace dftfe
 
         dftfe::uInt d_ghostSize;
 
-        dftfe::uInt d_compressBitsPerValue = 16;
+        dftfe::uInt d_compressBitsPerValue        = 16;
         dftfe::uInt d_maxCompressedTargetBytes    = 0;
         dftfe::uInt d_maxCompressedGhostBytes     = 0;
         dftfe::uInt d_activeCompressedTargetBytes = 0;

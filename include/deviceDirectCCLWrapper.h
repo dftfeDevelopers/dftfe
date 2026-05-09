@@ -18,16 +18,16 @@
 #if defined(DFTFE_WITH_DEVICE)
 #  ifndef deviceDirectCCLWrapper_h
 #    define deviceDirectCCLWrapper_h
+
 #    include <complex>
 #    include <mpi.h>
 #    include <TypeConfig.h>
 #    include <DeviceTypeConfig.h>
+
 #    if defined(DFTFE_WITH_CUDA_NCCL)
 #      include <nccl.h>
 #    elif defined(DFTFE_WITH_HIP_RCCL)
 #      include <rccl.h>
-#    elif defined(DFTFE_WITH_SYCL_ONECCL)
-#      include <oneapi/ccl.hpp>
 #    endif
 
 namespace dftfe
@@ -47,25 +47,6 @@ namespace dftfe
                        ncclGetErrorString(r));            \
                 exit(EXIT_FAILURE);                       \
               }                                           \
-        } while (0)
-#    endif
-
-#    if defined(DFTFE_WITH_SYCL_ONECCL)
-#      define ONECCLCHECK(cmd)                              \
-        do                                                  \
-          {                                                 \
-            try                                             \
-              {                                             \
-                cmd;                                        \
-              }                                             \
-            catch (const ccl::exception &e)                 \
-              {                                             \
-                printf("Failed, oneCCL error %s:%d '%s'\n", \
-                       __FILE__,                            \
-                       __LINE__,                            \
-                       e.what());                           \
-                exit(EXIT_FAILURE);                         \
-              }                                             \
         } while (0)
 #    endif
 
@@ -92,13 +73,11 @@ namespace dftfe
                                    dftfe::Int      size,
                                    deviceStream_t &stream);
 
-
       dftfe::Int
       deviceDirectAllReduceWrapper(const double   *send,
                                    double         *recv,
                                    dftfe::Int      size,
                                    deviceStream_t &stream);
-
 
       dftfe::Int
       deviceDirectAllReduceWrapper(const std::complex<double> *send,
@@ -111,7 +90,6 @@ namespace dftfe
                                    std::complex<float>       *recv,
                                    dftfe::Int                 size,
                                    deviceStream_t            &stream);
-
 
       dftfe::Int
       deviceDirectAllReduceMixedPrecGroupWrapper(const double   *send1,
@@ -133,13 +111,8 @@ namespace dftfe
         deviceStream_t             &stream);
 
 #    if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
-  inline static ncclUniqueId *dcclIdPtr;
-  inline static ncclComm_t   *dcclCommPtr;
-#    endif
-
-#    if defined(DFTFE_WITH_SYCL_ONECCL)
-  inline static std::shared_ptr<ccl::kvs>          dcclIdPtr;
-  inline static std::shared_ptr<ccl::communicator> dcclCommPtr;
+      inline static ncclUniqueId *dcclIdPtr;
+      inline static ncclComm_t   *dcclCommPtr;
 #    endif
 
       inline static bool                         dcclCommInit;
