@@ -92,7 +92,8 @@ namespace dftfe
                           const dftfe::uInt  inhomogenityListSize,
                           const dftfe::uInt  nBatch,
                           const dftfe::uInt  nOwnedDofs,
-                          const dftfe::uInt  nGhostDofs);
+                          const dftfe::uInt  nGhostDofs,
+                          const bool         applyInhomogenity = true);
 
     static inline void
     constraintsDistributeTranspose(T                 *dst,

@@ -40,7 +40,8 @@ namespace dftfe
       finiteElementPolynomialOrderElectrostatics, n_refinement_steps,
       numberEigenValues, spinPolarized, nkx, nky, nkz, offsetFlagX, offsetFlagY,
       offsetFlagZ;
-    dftfe::uInt densityQuadratureRule;
+    dftfe::uInt densityQuadratureRule, intermediateDensityQuadratureRule;
+    bool        useIntermediateDensityQuadrature;
     dftfe::uInt chebyshevOrder, numPass, numSCFIterations,
       maxLinearSolverIterations, mixingHistory, npool, numLevels,
       maxLinearSolverIterationsHelmholtz;

@@ -489,6 +489,16 @@ namespace dftfe
           "0",
           dealii::Patterns::Integer(0, 24),
           "[Standard] The quadrtaure rule used for computing the electron density. It is automatically set to 16 for MGGA exchange-correlation functional or max of POLYNOMIAL ORDER DENSITY NODAL +1 for other exchange-correlation functionals if DENSITY QUADTRATURE RULE set to default value of zero.");
+        prm.declare_entry(
+          "INTERMEDIATE DENSITY QUADRATURE RULE",
+          "0",
+          dealii::Patterns::Integer(0, 24),
+          "[Standard] The intermediate quadrtaure rule used for computing the electron density. From this, the electron density is computed at the quadrature points corresponding to DENSITY QUADRATURE RULE using FEM interpolation.");
+        prm.declare_entry(
+          "USE INTERMEDIATE DENSITY QUADRATURE",
+          "false",
+          dealii::Patterns::Bool(),
+          "[Standard] If set to true, uses INTERMEDIATE DENSITY QUADRATURE RULE for computing the electron density from wavefunctions, then interpolates to the target density quadrature rule using FEM interpolation.");
         prm.enter_subsection("Auto mesh generation parameters");
         {
           prm.declare_entry(
@@ -1670,6 +1680,10 @@ namespace dftfe
              finiteElementPolynomialOrderElectrostatics) :
           prm.get_integer("POLYNOMIAL ORDER DENSITY NODAL");
       densityQuadratureRule = prm.get_integer("DENSITY QUADRATURE RULE");
+      intermediateDensityQuadratureRule =
+        prm.get_integer("INTERMEDIATE DENSITY QUADRATURE RULE");
+      useIntermediateDensityQuadrature =
+        prm.get_bool("USE INTERMEDIATE DENSITY QUADRATURE");
       prm.enter_subsection("Auto mesh generation parameters");
       {
         outerAtomBallRadius   = prm.get_double("ATOM BALL RADIUS");
@@ -1948,11 +1962,6 @@ namespace dftfe
       dealii::ExcMessage(
         "DFT-FE Error: Real executable cannot be used noncollinear magnetism and spin-orbit coupling."));
 #endif
-    if (noncolin || hasSOC)
-      AssertThrow(
-        mixingMethod != "LOW_RANK_DIELECM_PRECOND",
-        dealii::ExcMessage(
-          "DFT-FE Error: LRDM mixing scheme for noncollinear magnetism and spin-orbit coupling is not implemented yet."));
     if (noncolin || hasSOC)
       AssertThrow(
         mixingMethod != "LOW_RANK_DIELECM_PRECOND",
@@ -2340,6 +2349,17 @@ namespace dftfe
                                   16 :
                                   finiteElementPolynomialOrderRhoNodal + 1;
       }
+
+    if (useIntermediateDensityQuadrature)
+      {
+        if (intermediateDensityQuadratureRule == 0)
+          intermediateDensityQuadratureRule =
+            2 * finiteElementPolynomialOrder + 1;
+
+        if (intermediateDensityQuadratureRule >= densityQuadratureRule)
+          useIntermediateDensityQuadrature = false;
+      }
+
 
     // checking if the XC type is compatible with
     // overlap compute communication cheby

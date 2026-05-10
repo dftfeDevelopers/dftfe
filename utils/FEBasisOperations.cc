@@ -196,6 +196,11 @@ namespace dftfe
       d_nQuadsPerCell.resize(d_quadratureIDsVector.size());
       d_quadPoints    = basisOperationsSrc.d_quadPoints;
       d_cellCentroids = basisOperationsSrc.d_cellCentroids;
+      for (const auto &pair : basisOperationsSrc.d_shapeFnValQuad1ToQuad2)
+        {
+          d_shapeFnValQuad1ToQuad2[pair.first].resize(pair.second.size());
+          d_shapeFnValQuad1ToQuad2[pair.first].copyFrom(pair.second);
+        }
       initializeConstraints();
       for (dftfe::uInt iQuadIndex = 0;
            iQuadIndex < d_quadratureIDsVector.size();
@@ -362,6 +367,51 @@ namespace dftfe
               }
           }
     }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    void
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      shapeFunctionsCenteredAtQuad1EvaluatedAtQuad2(const dftfe::uInt quadId1,
+                                                    const dftfe::uInt quadId2)
+    {
+      dealii::FE_DGQArbitraryNodes<3> fe_dgq(
+        d_matrixFreeDataPtr->get_shape_info(d_dofHandlerID, quadId1)
+          .get_shape_data()
+          .quadrature);
+
+      dealii::FEValues<3> feCollocIntermediateDensityToDensityQuad(
+        fe_dgq,
+        d_matrixFreeDataPtr->get_quadrature(quadId2),
+        dealii::update_values);
+
+      dealii::Triangulation<3> reference_cell;
+      dealii::GridGenerator::hyper_cube(reference_cell, 0., 1.);
+      feCollocIntermediateDensityToDensityQuad.reinit(reference_cell.begin());
+
+      const dftfe::uInt numQuads =
+        d_matrixFreeDataPtr->get_quadrature(quadId2).size();
+      const dftfe::uInt dofsPerCell = fe_dgq.dofs_per_cell;
+
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        shapeFnValuesHost(numQuads * dofsPerCell);
+
+      auto key = std::make_pair(quadId1, quadId2);
+      d_shapeFnValQuad1ToQuad2[key].resize(numQuads * dofsPerCell);
+
+      for (dftfe::uInt iQuad = 0; iQuad < numQuads; iQuad++)
+        {
+          for (dftfe::uInt iNode = 0; iNode < dofsPerCell; iNode++)
+            {
+              shapeFnValuesHost[iNode * numQuads + iQuad] =
+                feCollocIntermediateDensityToDensityQuad.shape_value(iNode,
+                                                                     iQuad);
+            }
+        }
+      d_shapeFnValQuad1ToQuad2[key].copyFrom(shapeFnValuesHost);
+    }
+
 
     template <typename ValueTypeBasisCoeff,
               typename ValueTypeBasisData,
@@ -3905,6 +3955,91 @@ namespace dftfe
                     }
                 }
             }
+        }
+    }
+
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    void
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      interpolateQ1ToQ2(const double     *Q1Field,
+                        const dftfe::uInt quadId1,
+                        const dftfe::uInt quadId2,
+                        double           *Q2Field,
+                        const dftfe::uInt numComponents) const
+    {
+      AssertThrow(
+        numComponents == 1 || numComponents == 3,
+        dealii::ExcMessage(
+          "Number of components for interpolateQ1ToQ2 should be either 1 or 3."));
+
+      auto itr = std::find(d_quadratureIDsVector.begin(),
+                           d_quadratureIDsVector.end(),
+                           quadId1);
+      AssertThrow(
+        itr != d_quadratureIDsVector.end(),
+        dealii::ExcMessage(
+          "DFT-FE Error: FEBasisOperations Class not initialized with this quadrature Index."));
+
+      itr = std::find(d_quadratureIDsVector.begin(),
+                      d_quadratureIDsVector.end(),
+                      quadId2);
+      AssertThrow(
+        itr != d_quadratureIDsVector.end(),
+        dealii::ExcMessage(
+          "DFT-FE Error: FEBasisOperations Class not initialized with this quadrature Index."));
+
+      const dftfe::uInt numQuadsQ1 =
+        d_matrixFreeDataPtr->get_quadrature(quadId1).size();
+      const dftfe::uInt numQuadsQ2 =
+        d_matrixFreeDataPtr->get_quadrature(quadId2).size();
+      const dftfe::uInt nCells = this->nCells();
+
+      const double scalarCoeffAlpha = 1.0, scalarCoeffBeta = 0.0;
+
+      auto key = std::make_pair(quadId1, quadId2);
+      auto it  = d_shapeFnValQuad1ToQuad2.find(key);
+      AssertThrow(it != d_shapeFnValQuad1ToQuad2.end(),
+                  dealii::ExcMessage(
+                    "Shape function data for quadrature pair not found."));
+
+      if (numComponents == 1)
+        {
+          d_BLASWrapperPtr->xgemm('N',
+                                  'N',
+                                  numQuadsQ2,
+                                  nCells,
+                                  numQuadsQ1,
+                                  &scalarCoeffAlpha,
+                                  it->second.data(),
+                                  numQuadsQ2,
+                                  Q1Field,
+                                  numQuadsQ1,
+                                  &scalarCoeffBeta,
+                                  Q2Field,
+                                  numQuadsQ2);
+        }
+      else if (numComponents == 3)
+        {
+          d_BLASWrapperPtr->xgemmStridedBatched('N',
+                                                'T',
+                                                3,
+                                                numQuadsQ2,
+                                                numQuadsQ1,
+                                                &scalarCoeffAlpha,
+                                                Q1Field,
+                                                3,
+                                                3 * numQuadsQ1,
+                                                it->second.data(),
+                                                numQuadsQ2,
+                                                0,
+                                                &scalarCoeffBeta,
+                                                Q2Field,
+                                                3,
+                                                3 * numQuadsQ2,
+                                                nCells);
         }
     }
 

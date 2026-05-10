@@ -46,3 +46,4 @@ srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileBccFe_relaxFullMassMa
 srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileBccFe_scan.prm > outputBccFe_scan
 srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileBccFe_scan_kerker.prm > outputBccFe_scan_kerker
 srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileBccFe_scan_useLibxcFalse.prm > outputBccFe_scan_useLibxcFalse
+srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileFeCuPt2_scf_interMediateQuadRule.prm > outputFeCuPt2_scf_interMediateQuadRule
