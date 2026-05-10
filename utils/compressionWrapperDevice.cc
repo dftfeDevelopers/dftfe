@@ -17,8 +17,7 @@
 //  GPU Block Floating Point (BFP) compression: encode/decode helpers,
 //  GPU kernels, and the public dftfe::compressionWrapper entry points.
 //  Specialised for bits_per_value in {8, 10, 12, 16} with a 1-thread-per-
-//  4-value-block design (no atomics on compress, no cross-block packing).
-//
+//  4-value-block design (no atomics, no cross-block packing).
 
 #ifdef DFTFE_WITH_DEVICE
 
@@ -27,7 +26,6 @@
 #  include <DeviceTypeConfig.h>
 #  include <TypeConfig.h>
 #  include <compressionWrapper.h>
-#  include <cassert>
 #  include <climits>
 #  include <cmath>
 #  include <complex>
@@ -44,52 +42,41 @@ namespace dftfe
 
 #  if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || \
     defined(DFTFE_WITH_DEVICE_LANG_HIP)
-#    define DFTFE_COMP_DEVICE_INLINE __device__ __forceinline__
-#  else
-#    define DFTFE_COMP_DEVICE_INLINE inline
+#    define DFTFE_DEVICE_INLINE __device__ __forceinline__
+#  elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+#    define DFTFE_DEVICE_INLINE inline
 #  endif
 
-      /* ---- traits: IEEE 754 constants used by BFP quantisation ---- */
       template <typename ValueType>
       struct traits;
 
       template <>
       struct traits<float>
       {
-        static constexpr int EBIAS  = 127;
-        static constexpr int EBITS  = 8;
-        static constexpr int PREC   = 32;
-        static constexpr int MINEXP = -149;
+        static constexpr int EBIAS = 127;
+        static constexpr int EBITS = 8;
       };
 
       template <>
       struct traits<double>
       {
-        static constexpr int EBIAS  = 1023;
-        static constexpr int EBITS  = 11;
-        static constexpr int PREC   = 64;
-        static constexpr int MINEXP = -1074;
+        static constexpr int EBIAS = 1023;
+        static constexpr int EBITS = 11;
       };
 
       /* ---- partial-block padding (< 4 values) ---- */
       template <typename ValueType>
-      DFTFE_COMP_DEVICE_INLINE void
-      pad_block(ValueType *q, unsigned int n)
+      DFTFE_DEVICE_INLINE void
+      padBlock(ValueType *q, unsigned int n)
       {
-        if (n == 0)
-          q[0] = 0;
-        if (n <= 1)
-          q[1] = q[0];
-        if (n <= 2)
-          q[2] = q[1];
-        if (n <= 3)
-          q[3] = q[n <= 0 ? 0 : n - 1];
+        for (unsigned int i = n; i < 4; ++i)
+          q[i] = ValueType(0);
       }
 
       /* ---- exponent of largest absolute value in a block ---- */
       template <typename ValueType>
-      DFTFE_COMP_DEVICE_INLINE int
-      block_exponent(ValueType x)
+      DFTFE_DEVICE_INLINE int
+      blockExponent(ValueType x)
       {
         int e = -traits<ValueType>::EBIAS;
         if (x > 0)
@@ -101,8 +88,8 @@ namespace dftfe
       }
 
       template <typename ValueType>
-      DFTFE_COMP_DEVICE_INLINE int
-      max_exponent(const ValueType *p)
+      DFTFE_DEVICE_INLINE int
+      maxExponent(const ValueType *p)
       {
         ValueType mx = 0;
         for (int i = 0; i < 4; i++)
@@ -110,14 +97,7 @@ namespace dftfe
             ValueType f = dftfe::utils::abs(p[i]);
             mx          = dftfe::utils::max(mx, f);
           }
-        return block_exponent<ValueType>(mx);
-      }
-
-      DFTFE_COMP_DEVICE_INLINE int
-      calc_precision(int maxexp, int maxprec, int minexp)
-      {
-        return dftfe::utils::min(maxprec,
-                                 dftfe::utils::max(0, maxexp - minexp + 8));
+        return blockExponent<ValueType>(mx);
       }
 
       /* =====================================================================
@@ -125,8 +105,8 @@ namespace dftfe
 
          Each block of 4 values packs into a fixed-width word:
            bpv == 8:   uint32_t       (32 bits)
-           bpv == 10:  uint64 lo 40   (5 x uint8_t per block on the wire)
-           bpv == 12:  uint64 lo 48   (3 x uint16_t per block on the wire)
+           bpv == 10:  uint64 lo 40   (5 x uint8_t = 40 bits)
+           bpv == 12:  uint64 lo 48   (3 x uint16_t = 48 bits)
            bpv == 16:  uint64         (64 bits)
 
          Layout per block (LSB first):
@@ -135,30 +115,26 @@ namespace dftfe
          ==================================================================== */
 
       template <typename ValueType>
-      DFTFE_COMP_DEVICE_INLINE unsigned int
-      encode_block_32(ValueType *fblock)
+      DFTFE_DEVICE_INLINE unsigned int
+      encodeBlock32(ValueType *fblock)
       {
         constexpr unsigned int ebits = (unsigned int)traits<ValueType>::EBITS;
         constexpr unsigned int vbits = (32u - ebits) / 4u;
         constexpr unsigned int vmask = (1u << vbits) - 1u;
+        constexpr int minEmax = (int)vbits - 1 - traits<ValueType>::EBIAS;
 
-        int          emax    = max_exponent<ValueType>(fblock);
-        int          maxprec = calc_precision(emax,
-                                     traits<ValueType>::PREC,
-                                     traits<ValueType>::MINEXP);
-        unsigned int e =
-          maxprec ? (unsigned int)(emax + traits<ValueType>::EBIAS) : 0u;
-        if (!e)
+        int emax = maxExponent<ValueType>(fblock);
+        if (emax < minEmax)
           return 0u;
 
-        unsigned int packed = e;
+        unsigned int packed = (unsigned int)(emax + traits<ValueType>::EBIAS);
         ValueType    s =
           dftfe::utils::ldexp((ValueType)1.0, (int)vbits - 1 - emax);
         const int qmax = (int)(vmask >> 1u);
         for (int i = 0; i < 4; i++)
           {
-            const int q_raw = (int)rint(s * fblock[i]);
-            const int q     = q_raw > qmax ? qmax : q_raw;
+            const int qRaw = (int)dftfe::utils::rint(s * fblock[i]);
+            const int q    = qRaw > qmax ? qmax : qRaw;
             packed |= ((unsigned int)q & vmask)
                       << (ebits + (unsigned int)i * vbits);
           }
@@ -166,23 +142,23 @@ namespace dftfe
       }
 
       template <typename ValueType>
-      DFTFE_COMP_DEVICE_INLINE void
-      decode_block_32(unsigned int packed, ValueType *fblock)
+      DFTFE_DEVICE_INLINE void
+      decodeBlock32(unsigned int packed, ValueType *fblock)
       {
         constexpr unsigned int ebits = (unsigned int)traits<ValueType>::EBITS;
         constexpr unsigned int vbits = (32u - ebits) / 4u;
         constexpr unsigned int vmask = (1u << vbits) - 1u;
-        constexpr int          sign_threshold = 1 << (vbits - 1);
-        constexpr unsigned int emask          = (1u << ebits) - 1u;
+        constexpr int          signThreshold = 1 << (vbits - 1);
+        constexpr unsigned int emask         = (1u << ebits) - 1u;
 
-        unsigned int e_raw = packed & emask;
-        if (!e_raw)
+        unsigned int eRaw = packed & emask;
+        if (!eRaw)
           {
             fblock[0] = fblock[1] = fblock[2] = fblock[3] = (ValueType)0;
             return;
           }
 
-        int       emax = (int)e_raw - traits<ValueType>::EBIAS;
+        int       emax = (int)eRaw - traits<ValueType>::EBIAS;
         ValueType scale =
           dftfe::utils::ldexp((ValueType)1.0, emax - (int)vbits + 1);
         for (int i = 0; i < 4; i++)
@@ -190,37 +166,33 @@ namespace dftfe
             unsigned int raw =
               (packed >> (ebits + (unsigned int)i * vbits)) & vmask;
             int q = (int)raw;
-            if (q >= sign_threshold)
+            if (q >= signThreshold)
               q -= (1 << vbits);
             fblock[i] = scale * (ValueType)q;
           }
       }
 
       template <typename ValueType>
-      DFTFE_COMP_DEVICE_INLINE uint64
-      encode_block_40(ValueType *fblock)
+      DFTFE_DEVICE_INLINE uint64
+      encodeBlock40(ValueType *fblock)
       {
         constexpr unsigned int ebits = (unsigned int)traits<ValueType>::EBITS;
         constexpr unsigned int vbits = (40u - ebits) / 4u;
         constexpr unsigned int vmask = (1u << vbits) - 1u;
+        constexpr int minEmax = (int)vbits - 1 - traits<ValueType>::EBIAS;
 
-        int          emax    = max_exponent<ValueType>(fblock);
-        int          maxprec = calc_precision(emax,
-                                     traits<ValueType>::PREC,
-                                     traits<ValueType>::MINEXP);
-        unsigned int e =
-          maxprec ? (unsigned int)(emax + traits<ValueType>::EBIAS) : 0u;
-        if (!e)
+        int emax = maxExponent<ValueType>(fblock);
+        if (emax < minEmax)
           return (uint64)0;
 
-        uint64    packed = (uint64)e;
+        uint64    packed = (uint64)(emax + traits<ValueType>::EBIAS);
         ValueType s =
           dftfe::utils::ldexp((ValueType)1.0, (int)vbits - 1 - emax);
         const int qmax = (int)(vmask >> 1u);
         for (int i = 0; i < 4; i++)
           {
-            const int q_raw = (int)rint(s * fblock[i]);
-            const int q     = q_raw > qmax ? qmax : q_raw;
+            const int qRaw = (int)dftfe::utils::rint(s * fblock[i]);
+            const int q    = qRaw > qmax ? qmax : qRaw;
             packed |= ((uint64)((unsigned int)q & vmask))
                       << (ebits + (unsigned int)i * vbits);
           }
@@ -228,23 +200,23 @@ namespace dftfe
       }
 
       template <typename ValueType>
-      DFTFE_COMP_DEVICE_INLINE void
-      decode_block_40(uint64 packed, ValueType *fblock)
+      DFTFE_DEVICE_INLINE void
+      decodeBlock40(uint64 packed, ValueType *fblock)
       {
         constexpr unsigned int ebits = (unsigned int)traits<ValueType>::EBITS;
         constexpr unsigned int vbits = (40u - ebits) / 4u;
         constexpr unsigned int vmask = (1u << vbits) - 1u;
-        constexpr int          sign_threshold = 1 << (vbits - 1);
-        constexpr unsigned int emask          = (1u << ebits) - 1u;
+        constexpr int          signThreshold = 1 << (vbits - 1);
+        constexpr unsigned int emask         = (1u << ebits) - 1u;
 
-        unsigned int e_raw = (unsigned int)(packed & emask);
-        if (!e_raw)
+        unsigned int eRaw = (unsigned int)(packed & emask);
+        if (!eRaw)
           {
             fblock[0] = fblock[1] = fblock[2] = fblock[3] = (ValueType)0;
             return;
           }
 
-        int       emax = (int)e_raw - traits<ValueType>::EBIAS;
+        int       emax = (int)eRaw - traits<ValueType>::EBIAS;
         ValueType scale =
           dftfe::utils::ldexp((ValueType)1.0, emax - (int)vbits + 1);
         for (int i = 0; i < 4; i++)
@@ -253,37 +225,33 @@ namespace dftfe
               (unsigned int)((packed >> (ebits + (unsigned int)i * vbits)) &
                              vmask);
             int q = (int)raw;
-            if (q >= sign_threshold)
+            if (q >= signThreshold)
               q -= (1 << vbits);
             fblock[i] = scale * (ValueType)q;
           }
       }
 
       template <typename ValueType>
-      DFTFE_COMP_DEVICE_INLINE uint64
-      encode_block_48(ValueType *fblock)
+      DFTFE_DEVICE_INLINE uint64
+      encodeBlock48(ValueType *fblock)
       {
         constexpr unsigned int ebits = (unsigned int)traits<ValueType>::EBITS;
         constexpr unsigned int vbits = (48u - ebits) / 4u;
         constexpr unsigned int vmask = (1u << vbits) - 1u;
+        constexpr int minEmax = (int)vbits - 1 - traits<ValueType>::EBIAS;
 
-        int          emax    = max_exponent<ValueType>(fblock);
-        int          maxprec = calc_precision(emax,
-                                     traits<ValueType>::PREC,
-                                     traits<ValueType>::MINEXP);
-        unsigned int e =
-          maxprec ? (unsigned int)(emax + traits<ValueType>::EBIAS) : 0u;
-        if (!e)
+        int emax = maxExponent<ValueType>(fblock);
+        if (emax < minEmax)
           return (uint64)0;
 
-        uint64    packed = (uint64)e;
+        uint64    packed = (uint64)(emax + traits<ValueType>::EBIAS);
         ValueType s =
           dftfe::utils::ldexp((ValueType)1.0, (int)vbits - 1 - emax);
         const int qmax = (int)(vmask >> 1u);
         for (int i = 0; i < 4; i++)
           {
-            const int q_raw = (int)rint(s * fblock[i]);
-            const int q     = q_raw > qmax ? qmax : q_raw;
+            const int qRaw = (int)dftfe::utils::rint(s * fblock[i]);
+            const int q    = qRaw > qmax ? qmax : qRaw;
             packed |= ((uint64)((unsigned int)q & vmask))
                       << (ebits + (unsigned int)i * vbits);
           }
@@ -291,23 +259,23 @@ namespace dftfe
       }
 
       template <typename ValueType>
-      DFTFE_COMP_DEVICE_INLINE void
-      decode_block_48(uint64 packed, ValueType *fblock)
+      DFTFE_DEVICE_INLINE void
+      decodeBlock48(uint64 packed, ValueType *fblock)
       {
         constexpr unsigned int ebits = (unsigned int)traits<ValueType>::EBITS;
         constexpr unsigned int vbits = (48u - ebits) / 4u;
         constexpr unsigned int vmask = (1u << vbits) - 1u;
-        constexpr int          sign_threshold = 1 << (vbits - 1);
-        constexpr unsigned int emask          = (1u << ebits) - 1u;
+        constexpr int          signThreshold = 1 << (vbits - 1);
+        constexpr unsigned int emask         = (1u << ebits) - 1u;
 
-        unsigned int e_raw = (unsigned int)(packed & emask);
-        if (!e_raw)
+        unsigned int eRaw = (unsigned int)(packed & emask);
+        if (!eRaw)
           {
             fblock[0] = fblock[1] = fblock[2] = fblock[3] = (ValueType)0;
             return;
           }
 
-        int       emax = (int)e_raw - traits<ValueType>::EBIAS;
+        int       emax = (int)eRaw - traits<ValueType>::EBIAS;
         ValueType scale =
           dftfe::utils::ldexp((ValueType)1.0, emax - (int)vbits + 1);
         for (int i = 0; i < 4; i++)
@@ -316,37 +284,33 @@ namespace dftfe
               (unsigned int)((packed >> (ebits + (unsigned int)i * vbits)) &
                              vmask);
             int q = (int)raw;
-            if (q >= sign_threshold)
+            if (q >= signThreshold)
               q -= (1 << vbits);
             fblock[i] = scale * (ValueType)q;
           }
       }
 
       template <typename ValueType>
-      DFTFE_COMP_DEVICE_INLINE uint64
-      encode_block_64(ValueType *fblock)
+      DFTFE_DEVICE_INLINE uint64
+      encodeBlock64(ValueType *fblock)
       {
         constexpr unsigned int ebits = (unsigned int)traits<ValueType>::EBITS;
         constexpr unsigned int vbits = (64u - ebits) / 4u;
         constexpr unsigned int vmask = (1u << vbits) - 1u;
+        constexpr int minEmax = (int)vbits - 1 - traits<ValueType>::EBIAS;
 
-        int          emax    = max_exponent<ValueType>(fblock);
-        int          maxprec = calc_precision(emax,
-                                     traits<ValueType>::PREC,
-                                     traits<ValueType>::MINEXP);
-        unsigned int e =
-          maxprec ? (unsigned int)(emax + traits<ValueType>::EBIAS) : 0u;
-        if (!e)
+        int emax = maxExponent<ValueType>(fblock);
+        if (emax < minEmax)
           return (uint64)0;
 
-        uint64    packed = (uint64)e;
+        uint64    packed = (uint64)(emax + traits<ValueType>::EBIAS);
         ValueType s =
           dftfe::utils::ldexp((ValueType)1.0, (int)vbits - 1 - emax);
         const int qmax = (int)(vmask >> 1u);
         for (int i = 0; i < 4; i++)
           {
-            const int q_raw = (int)rint(s * fblock[i]);
-            const int q     = q_raw > qmax ? qmax : q_raw;
+            const int qRaw = (int)dftfe::utils::rint(s * fblock[i]);
+            const int q    = qRaw > qmax ? qmax : qRaw;
             packed |= ((uint64)((unsigned int)q & vmask))
                       << (ebits + (unsigned int)i * vbits);
           }
@@ -354,23 +318,23 @@ namespace dftfe
       }
 
       template <typename ValueType>
-      DFTFE_COMP_DEVICE_INLINE void
-      decode_block_64(uint64 packed, ValueType *fblock)
+      DFTFE_DEVICE_INLINE void
+      decodeBlock64(uint64 packed, ValueType *fblock)
       {
         constexpr unsigned int ebits = (unsigned int)traits<ValueType>::EBITS;
         constexpr unsigned int vbits = (64u - ebits) / 4u;
         constexpr unsigned int vmask = (1u << vbits) - 1u;
-        constexpr int          sign_threshold = 1 << (vbits - 1);
-        constexpr unsigned int emask          = (1u << ebits) - 1u;
+        constexpr int          signThreshold = 1 << (vbits - 1);
+        constexpr unsigned int emask         = (1u << ebits) - 1u;
 
-        unsigned int e_raw = (unsigned int)(packed & emask);
-        if (!e_raw)
+        unsigned int eRaw = (unsigned int)(packed & emask);
+        if (!eRaw)
           {
             fblock[0] = fblock[1] = fblock[2] = fblock[3] = (ValueType)0;
             return;
           }
 
-        int       emax = (int)e_raw - traits<ValueType>::EBIAS;
+        int       emax = (int)eRaw - traits<ValueType>::EBIAS;
         ValueType scale =
           dftfe::utils::ldexp((ValueType)1.0, emax - (int)vbits + 1);
         for (int i = 0; i < 4; i++)
@@ -379,7 +343,7 @@ namespace dftfe
               (unsigned int)((packed >> (ebits + (unsigned int)i * vbits)) &
                              vmask);
             int q = (int)raw;
-            if (q >= sign_threshold)
+            if (q >= signThreshold)
               q -= (1 << vbits);
             fblock[i] = scale * (ValueType)q;
           }
@@ -394,106 +358,117 @@ namespace dftfe
       template <typename ValueType>
       DFTFE_CREATE_KERNEL(
         void,
-        compress_8_kernel,
+        compress8Kernel,
         {
-          const unsigned int block_idx = (unsigned int)globalThreadId;
-          if (block_idx >= tot_blocks)
+          const unsigned int blockIdx = (unsigned int)globalThreadId;
+          if (blockIdx >= totBlocks)
             return;
-          unsigned int block_start = block_idx * 4u;
+          unsigned int blockStart = blockIdx * 4u;
           ValueType    fblock[4];
-          if (block_start + 4u <= dim)
+          if (blockStart + 4u <= dim)
             {
-              fblock[0] = data[block_start];
-              fblock[1] = data[block_start + 1];
-              fblock[2] = data[block_start + 2];
-              fblock[3] = data[block_start + 3];
+              fblock[0] = data[blockStart];
+              fblock[1] = data[blockStart + 1];
+              fblock[2] = data[blockStart + 2];
+              fblock[3] = data[blockStart + 3];
             }
           else
             {
-              unsigned int nx = dim - block_start;
+              unsigned int nx = dim - blockStart;
               for (unsigned int j = 0; j < nx; j++)
-                fblock[j] = data[block_start + j];
-              pad_block(fblock, nx);
+                fblock[j] = data[blockStart + j];
+              padBlock(fblock, nx);
             }
-          stream[block_idx] = encode_block_32(fblock);
+          stream[blockIdx] = encodeBlock32(fblock);
         },
         const ValueType *data,
         unsigned int    *stream,
         unsigned int     dim,
-        unsigned int     tot_blocks);
+        unsigned int     totBlocks);
 
       template <typename ValueType>
       DFTFE_CREATE_KERNEL(
         void,
-        decompress_8_kernel,
+        decompress8Kernel,
         {
-          const unsigned int block_idx = (unsigned int)globalThreadId;
-          if (block_idx >= tot_blocks)
+          const unsigned int blockIdx = (unsigned int)globalThreadId;
+          if (blockIdx >= totBlocks)
             return;
           ValueType fblock[4];
-          decode_block_32(stream[block_idx], fblock);
-          unsigned int block_start = block_idx * 4u;
-          if (block_start + 4u <= dim)
+          decodeBlock32(stream[blockIdx], fblock);
+          unsigned int blockStart = blockIdx * 4u;
+          if (blockStart + 4u <= dim)
             {
-              data[block_start]     = fblock[0];
-              data[block_start + 1] = fblock[1];
-              data[block_start + 2] = fblock[2];
-              data[block_start + 3] = fblock[3];
+              data[blockStart]     = fblock[0];
+              data[blockStart + 1] = fblock[1];
+              data[blockStart + 2] = fblock[2];
+              data[blockStart + 3] = fblock[3];
             }
           else
             {
-              unsigned int nx = dim - block_start;
+              unsigned int nx = dim - blockStart;
               for (unsigned int j = 0; j < nx; j++)
-                data[block_start + j] = fblock[j];
+                data[blockStart + j] = fblock[j];
             }
         },
         const unsigned int *stream,
         ValueType          *data,
         unsigned int        dim,
-        unsigned int        tot_blocks);
+        unsigned int        totBlocks);
 
+      // ---- gather/scatter invariant ----
+      // The fused compressGather / decompressScatterAdd kernels assume
+      // gatherBlockSize is a multiple of 4: blocksPerEntry truncates the
+      // divide-by-4, and there is no per-entry partial-block path (unlike
+      // the non-fused compress / decompress kernels which handle the
+      // single trailing block of the whole array). With non-multiple-of-4
+      // block sizes the kernel reads/writes past entry boundaries and the
+      // on-wire byte count in MPICommunicatorP2P also goes inconsistent.
+      // The invariant is enforced upstream in dftParameters.cc — see the
+      // "WFC BLOCK SIZE must be a multiple of 4" / "CHEBY WFC BLOCK SIZE
+      // must be a multiple of 4" AssertThrows under COMPRESSED.
       template <typename ValueType, typename IndexType>
       DFTFE_CREATE_KERNEL(
         void,
-        compress_gather_8_kernel,
+        compressGather8Kernel,
         {
-          const unsigned int block_idx = (unsigned int)globalThreadId;
-          if (block_idx >= tot_blocks)
+          const unsigned int blockIdx = (unsigned int)globalThreadId;
+          if (blockIdx >= totBlocks)
             return;
-          const unsigned int blocks_per_entry = gatherBlockSize >> 2;
-          unsigned int       gatherIdx        = block_idx / blocks_per_entry;
-          unsigned int localBlock = block_idx - gatherIdx * blocks_per_entry;
-          unsigned int intraIdx   = localBlock * 4u;
+          const unsigned int blocksPerEntry = gatherBlockSize >> 2;
+          unsigned int       gatherIdx      = blockIdx / blocksPerEntry;
+          unsigned int       localBlock = blockIdx - gatherIdx * blocksPerEntry;
+          unsigned int       intraIdx   = localBlock * 4u;
           size_t base = (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
 
           ValueType fblock[4];
-          fblock[0]         = dataArray[base];
-          fblock[1]         = dataArray[base + 1];
-          fblock[2]         = dataArray[base + 2];
-          fblock[3]         = dataArray[base + 3];
-          stream[block_idx] = encode_block_32(fblock);
+          fblock[0]        = dataArray[base];
+          fblock[1]        = dataArray[base + 1];
+          fblock[2]        = dataArray[base + 2];
+          fblock[3]        = dataArray[base + 3];
+          stream[blockIdx] = encodeBlock32(fblock);
         },
         const ValueType *dataArray,
         const IndexType *indices,
         unsigned int     gatherBlockSize,
         unsigned int    *stream,
-        unsigned int     tot_blocks);
+        unsigned int     totBlocks);
 
       template <typename ValueType, typename IndexType>
       DFTFE_CREATE_KERNEL(
         void,
-        decompress_scatter_add_8_kernel,
+        decompressScatterAdd8Kernel,
         {
-          const unsigned int block_idx = (unsigned int)globalThreadId;
-          if (block_idx >= tot_blocks)
+          const unsigned int blockIdx = (unsigned int)globalThreadId;
+          if (blockIdx >= totBlocks)
             return;
           ValueType fblock[4];
-          decode_block_32(stream[block_idx], fblock);
+          decodeBlock32(stream[blockIdx], fblock);
 
-          const unsigned int blocks_per_entry = gatherBlockSize >> 2;
-          unsigned int       gatherIdx        = block_idx / blocks_per_entry;
-          unsigned int localBlock = block_idx - gatherIdx * blocks_per_entry;
-          unsigned int intraIdx   = localBlock * 4u;
+          const unsigned int blocksPerEntry = gatherBlockSize >> 2;
+          unsigned int       gatherIdx      = blockIdx / blocksPerEntry;
+          unsigned int       localBlock = blockIdx - gatherIdx * blocksPerEntry;
+          unsigned int       intraIdx   = localBlock * 4u;
           size_t base = (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
 
           dftfe::utils::atomicAddWrapper(&dataArray[base], fblock[0]);
@@ -505,35 +480,35 @@ namespace dftfe
         const IndexType    *indices,
         unsigned int        gatherBlockSize,
         ValueType          *dataArray,
-        unsigned int        tot_blocks);
+        unsigned int        totBlocks);
 
       /* ---- 10 bpv: 5 x uint8_t per block ---- */
       template <typename ValueType>
       DFTFE_CREATE_KERNEL(
         void,
-        compress_10_kernel,
+        compress10Kernel,
         {
-          const unsigned int block_idx = (unsigned int)globalThreadId;
-          if (block_idx >= tot_blocks)
+          const unsigned int blockIdx = (unsigned int)globalThreadId;
+          if (blockIdx >= totBlocks)
             return;
-          unsigned int block_start = block_idx * 4u;
+          unsigned int blockStart = blockIdx * 4u;
           ValueType    fblock[4];
-          if (block_start + 4u <= dim)
+          if (blockStart + 4u <= dim)
             {
-              fblock[0] = data[block_start];
-              fblock[1] = data[block_start + 1];
-              fblock[2] = data[block_start + 2];
-              fblock[3] = data[block_start + 3];
+              fblock[0] = data[blockStart];
+              fblock[1] = data[blockStart + 1];
+              fblock[2] = data[blockStart + 2];
+              fblock[3] = data[blockStart + 3];
             }
           else
             {
-              unsigned int nx = dim - block_start;
+              unsigned int nx = dim - blockStart;
               for (unsigned int j = 0; j < nx; j++)
-                fblock[j] = data[block_start + j];
-              pad_block(fblock, nx);
+                fblock[j] = data[blockStart + j];
+              padBlock(fblock, nx);
             }
-          uint64 packed   = encode_block_40(fblock);
-          size_t out      = (size_t)block_idx * 5u;
+          uint64 packed   = encodeBlock40(fblock);
+          size_t out      = (size_t)blockIdx * 5u;
           stream[out]     = (uint8_t)(packed);
           stream[out + 1] = (uint8_t)(packed >> 8);
           stream[out + 2] = (uint8_t)(packed >> 16);
@@ -543,57 +518,56 @@ namespace dftfe
         const ValueType *data,
         uint8_t         *stream,
         unsigned int     dim,
-        unsigned int     tot_blocks);
+        unsigned int     totBlocks);
 
       template <typename ValueType>
       DFTFE_CREATE_KERNEL(
         void,
-        decompress_10_kernel,
+        decompress10Kernel,
         {
-          const unsigned int block_idx = (unsigned int)globalThreadId;
-          if (block_idx >= tot_blocks)
+          const unsigned int blockIdx = (unsigned int)globalThreadId;
+          if (blockIdx >= totBlocks)
             return;
-          size_t out    = (size_t)block_idx * 5u;
+          size_t out    = (size_t)blockIdx * 5u;
           uint64 packed = (uint64)stream[out] | ((uint64)stream[out + 1] << 8) |
                           ((uint64)stream[out + 2] << 16) |
                           ((uint64)stream[out + 3] << 24) |
                           ((uint64)stream[out + 4] << 32);
 
           ValueType fblock[4];
-          decode_block_40(packed, fblock);
-
-          unsigned int block_start = block_idx * 4u;
-          if (block_start + 4u <= dim)
+          decodeBlock40(packed, fblock);
+          unsigned int blockStart = blockIdx * 4u;
+          if (blockStart + 4u <= dim)
             {
-              data[block_start]     = fblock[0];
-              data[block_start + 1] = fblock[1];
-              data[block_start + 2] = fblock[2];
-              data[block_start + 3] = fblock[3];
+              data[blockStart]     = fblock[0];
+              data[blockStart + 1] = fblock[1];
+              data[blockStart + 2] = fblock[2];
+              data[blockStart + 3] = fblock[3];
             }
           else
             {
-              unsigned int nx = dim - block_start;
+              unsigned int nx = dim - blockStart;
               for (unsigned int j = 0; j < nx; j++)
-                data[block_start + j] = fblock[j];
+                data[blockStart + j] = fblock[j];
             }
         },
         const uint8_t *stream,
         ValueType     *data,
         unsigned int   dim,
-        unsigned int   tot_blocks);
+        unsigned int   totBlocks);
 
       template <typename ValueType, typename IndexType>
       DFTFE_CREATE_KERNEL(
         void,
-        compress_gather_10_kernel,
+        compressGather10Kernel,
         {
-          const unsigned int block_idx = (unsigned int)globalThreadId;
-          if (block_idx >= tot_blocks)
+          const unsigned int blockIdx = (unsigned int)globalThreadId;
+          if (blockIdx >= totBlocks)
             return;
-          const unsigned int blocks_per_entry = gatherBlockSize >> 2;
-          unsigned int       gatherIdx        = block_idx / blocks_per_entry;
-          unsigned int localBlock = block_idx - gatherIdx * blocks_per_entry;
-          unsigned int intraIdx   = localBlock * 4u;
+          const unsigned int blocksPerEntry = gatherBlockSize >> 2;
+          unsigned int       gatherIdx      = blockIdx / blocksPerEntry;
+          unsigned int       localBlock = blockIdx - gatherIdx * blocksPerEntry;
+          unsigned int       intraIdx   = localBlock * 4u;
           size_t base = (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
 
           ValueType fblock[4];
@@ -602,8 +576,8 @@ namespace dftfe
           fblock[2] = dataArray[base + 2];
           fblock[3] = dataArray[base + 3];
 
-          uint64 packed   = encode_block_40(fblock);
-          size_t out      = (size_t)block_idx * 5u;
+          uint64 packed   = encodeBlock40(fblock);
+          size_t out      = (size_t)blockIdx * 5u;
           stream[out]     = (uint8_t)(packed);
           stream[out + 1] = (uint8_t)(packed >> 8);
           stream[out + 2] = (uint8_t)(packed >> 16);
@@ -614,29 +588,29 @@ namespace dftfe
         const IndexType *indices,
         unsigned int     gatherBlockSize,
         uint8_t         *stream,
-        unsigned int     tot_blocks);
+        unsigned int     totBlocks);
 
       template <typename ValueType, typename IndexType>
       DFTFE_CREATE_KERNEL(
         void,
-        decompress_scatter_add_10_kernel,
+        decompressScatterAdd10Kernel,
         {
-          const unsigned int block_idx = (unsigned int)globalThreadId;
-          if (block_idx >= tot_blocks)
+          const unsigned int blockIdx = (unsigned int)globalThreadId;
+          if (blockIdx >= totBlocks)
             return;
-          size_t out    = (size_t)block_idx * 5u;
+          size_t out    = (size_t)blockIdx * 5u;
           uint64 packed = (uint64)stream[out] | ((uint64)stream[out + 1] << 8) |
                           ((uint64)stream[out + 2] << 16) |
                           ((uint64)stream[out + 3] << 24) |
                           ((uint64)stream[out + 4] << 32);
 
           ValueType fblock[4];
-          decode_block_40(packed, fblock);
+          decodeBlock40(packed, fblock);
 
-          const unsigned int blocks_per_entry = gatherBlockSize >> 2;
-          unsigned int       gatherIdx        = block_idx / blocks_per_entry;
-          unsigned int localBlock = block_idx - gatherIdx * blocks_per_entry;
-          unsigned int intraIdx   = localBlock * 4u;
+          const unsigned int blocksPerEntry = gatherBlockSize >> 2;
+          unsigned int       gatherIdx      = blockIdx / blocksPerEntry;
+          unsigned int       localBlock = blockIdx - gatherIdx * blocksPerEntry;
+          unsigned int       intraIdx   = localBlock * 4u;
           size_t base = (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
 
           dftfe::utils::atomicAddWrapper(&dataArray[base], fblock[0]);
@@ -648,35 +622,35 @@ namespace dftfe
         const IndexType *indices,
         unsigned int     gatherBlockSize,
         ValueType       *dataArray,
-        unsigned int     tot_blocks);
+        unsigned int     totBlocks);
 
       /* ---- 12 bpv: 3 x uint16_t per block ---- */
       template <typename ValueType>
       DFTFE_CREATE_KERNEL(
         void,
-        compress_12_kernel,
+        compress12Kernel,
         {
-          const unsigned int block_idx = (unsigned int)globalThreadId;
-          if (block_idx >= tot_blocks)
+          const unsigned int blockIdx = (unsigned int)globalThreadId;
+          if (blockIdx >= totBlocks)
             return;
-          unsigned int block_start = block_idx * 4u;
+          unsigned int blockStart = blockIdx * 4u;
           ValueType    fblock[4];
-          if (block_start + 4u <= dim)
+          if (blockStart + 4u <= dim)
             {
-              fblock[0] = data[block_start];
-              fblock[1] = data[block_start + 1];
-              fblock[2] = data[block_start + 2];
-              fblock[3] = data[block_start + 3];
+              fblock[0] = data[blockStart];
+              fblock[1] = data[blockStart + 1];
+              fblock[2] = data[blockStart + 2];
+              fblock[3] = data[blockStart + 3];
             }
           else
             {
-              unsigned int nx = dim - block_start;
+              unsigned int nx = dim - blockStart;
               for (unsigned int j = 0; j < nx; j++)
-                fblock[j] = data[block_start + j];
-              pad_block(fblock, nx);
+                fblock[j] = data[blockStart + j];
+              padBlock(fblock, nx);
             }
-          uint64 packed   = encode_block_48(fblock);
-          size_t out      = (size_t)block_idx * 3u;
+          uint64 packed   = encodeBlock48(fblock);
+          size_t out      = (size_t)blockIdx * 3u;
           stream[out]     = (uint16_t)(packed);
           stream[out + 1] = (uint16_t)(packed >> 16);
           stream[out + 2] = (uint16_t)(packed >> 32);
@@ -684,56 +658,56 @@ namespace dftfe
         const ValueType *data,
         uint16_t        *stream,
         unsigned int     dim,
-        unsigned int     tot_blocks);
+        unsigned int     totBlocks);
 
       template <typename ValueType>
       DFTFE_CREATE_KERNEL(
         void,
-        decompress_12_kernel,
+        decompress12Kernel,
         {
-          const unsigned int block_idx = (unsigned int)globalThreadId;
-          if (block_idx >= tot_blocks)
+          const unsigned int blockIdx = (unsigned int)globalThreadId;
+          if (blockIdx >= totBlocks)
             return;
-          size_t out    = (size_t)block_idx * 3u;
+          size_t out    = (size_t)blockIdx * 3u;
           uint64 packed = (uint64)stream[out] |
                           ((uint64)stream[out + 1] << 16) |
                           ((uint64)stream[out + 2] << 32);
 
           ValueType fblock[4];
-          decode_block_48(packed, fblock);
+          decodeBlock48(packed, fblock);
 
-          unsigned int block_start = block_idx * 4u;
-          if (block_start + 4u <= dim)
+          unsigned int blockStart = blockIdx * 4u;
+          if (blockStart + 4u <= dim)
             {
-              data[block_start]     = fblock[0];
-              data[block_start + 1] = fblock[1];
-              data[block_start + 2] = fblock[2];
-              data[block_start + 3] = fblock[3];
+              data[blockStart]     = fblock[0];
+              data[blockStart + 1] = fblock[1];
+              data[blockStart + 2] = fblock[2];
+              data[blockStart + 3] = fblock[3];
             }
           else
             {
-              unsigned int nx = dim - block_start;
+              unsigned int nx = dim - blockStart;
               for (unsigned int j = 0; j < nx; j++)
-                data[block_start + j] = fblock[j];
+                data[blockStart + j] = fblock[j];
             }
         },
         const uint16_t *stream,
         ValueType      *data,
         unsigned int    dim,
-        unsigned int    tot_blocks);
+        unsigned int    totBlocks);
 
       template <typename ValueType, typename IndexType>
       DFTFE_CREATE_KERNEL(
         void,
-        compress_gather_12_kernel,
+        compressGather12Kernel,
         {
-          const unsigned int block_idx = (unsigned int)globalThreadId;
-          if (block_idx >= tot_blocks)
+          const unsigned int blockIdx = (unsigned int)globalThreadId;
+          if (blockIdx >= totBlocks)
             return;
-          const unsigned int blocks_per_entry = gatherBlockSize >> 2;
-          unsigned int       gatherIdx        = block_idx / blocks_per_entry;
-          unsigned int localBlock = block_idx - gatherIdx * blocks_per_entry;
-          unsigned int intraIdx   = localBlock * 4u;
+          const unsigned int blocksPerEntry = gatherBlockSize >> 2;
+          unsigned int       gatherIdx      = blockIdx / blocksPerEntry;
+          unsigned int       localBlock = blockIdx - gatherIdx * blocksPerEntry;
+          unsigned int       intraIdx   = localBlock * 4u;
           size_t base = (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
 
           ValueType fblock[4];
@@ -742,8 +716,8 @@ namespace dftfe
           fblock[2] = dataArray[base + 2];
           fblock[3] = dataArray[base + 3];
 
-          uint64 packed   = encode_block_48(fblock);
-          size_t out      = (size_t)block_idx * 3u;
+          uint64 packed   = encodeBlock48(fblock);
+          size_t out      = (size_t)blockIdx * 3u;
           stream[out]     = (uint16_t)(packed);
           stream[out + 1] = (uint16_t)(packed >> 16);
           stream[out + 2] = (uint16_t)(packed >> 32);
@@ -752,28 +726,28 @@ namespace dftfe
         const IndexType *indices,
         unsigned int     gatherBlockSize,
         uint16_t        *stream,
-        unsigned int     tot_blocks);
+        unsigned int     totBlocks);
 
       template <typename ValueType, typename IndexType>
       DFTFE_CREATE_KERNEL(
         void,
-        decompress_scatter_add_12_kernel,
+        decompressScatterAdd12Kernel,
         {
-          const unsigned int block_idx = (unsigned int)globalThreadId;
-          if (block_idx >= tot_blocks)
+          const unsigned int blockIdx = (unsigned int)globalThreadId;
+          if (blockIdx >= totBlocks)
             return;
-          size_t out    = (size_t)block_idx * 3u;
+          size_t out    = (size_t)blockIdx * 3u;
           uint64 packed = (uint64)stream[out] |
                           ((uint64)stream[out + 1] << 16) |
                           ((uint64)stream[out + 2] << 32);
 
           ValueType fblock[4];
-          decode_block_48(packed, fblock);
+          decodeBlock48(packed, fblock);
 
-          const unsigned int blocks_per_entry = gatherBlockSize >> 2;
-          unsigned int       gatherIdx        = block_idx / blocks_per_entry;
-          unsigned int localBlock = block_idx - gatherIdx * blocks_per_entry;
-          unsigned int intraIdx   = localBlock * 4u;
+          const unsigned int blocksPerEntry = gatherBlockSize >> 2;
+          unsigned int       gatherIdx      = blockIdx / blocksPerEntry;
+          unsigned int       localBlock = blockIdx - gatherIdx * blocksPerEntry;
+          unsigned int       intraIdx   = localBlock * 4u;
           size_t base = (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
 
           dftfe::utils::atomicAddWrapper(&dataArray[base], fblock[0]);
@@ -785,112 +759,112 @@ namespace dftfe
         const IndexType *indices,
         unsigned int     gatherBlockSize,
         ValueType       *dataArray,
-        unsigned int     tot_blocks);
+        unsigned int     totBlocks);
 
       /* ---- 16 bpv: 1 x uint64 per block ---- */
       template <typename ValueType>
       DFTFE_CREATE_KERNEL(
         void,
-        compress_16_kernel,
+        compress16Kernel,
         {
-          const unsigned int block_idx = (unsigned int)globalThreadId;
-          if (block_idx >= tot_blocks)
+          const unsigned int blockIdx = (unsigned int)globalThreadId;
+          if (blockIdx >= totBlocks)
             return;
-          unsigned int block_start = block_idx * 4u;
+          unsigned int blockStart = blockIdx * 4u;
           ValueType    fblock[4];
-          if (block_start + 4u <= dim)
+          if (blockStart + 4u <= dim)
             {
-              fblock[0] = data[block_start];
-              fblock[1] = data[block_start + 1];
-              fblock[2] = data[block_start + 2];
-              fblock[3] = data[block_start + 3];
+              fblock[0] = data[blockStart];
+              fblock[1] = data[blockStart + 1];
+              fblock[2] = data[blockStart + 2];
+              fblock[3] = data[blockStart + 3];
             }
           else
             {
-              unsigned int nx = dim - block_start;
+              unsigned int nx = dim - blockStart;
               for (unsigned int j = 0; j < nx; j++)
-                fblock[j] = data[block_start + j];
-              pad_block(fblock, nx);
+                fblock[j] = data[blockStart + j];
+              padBlock(fblock, nx);
             }
-          stream[block_idx] = encode_block_64(fblock);
+          stream[blockIdx] = encodeBlock64(fblock);
         },
         const ValueType *data,
         uint64          *stream,
         unsigned int     dim,
-        unsigned int     tot_blocks);
+        unsigned int     totBlocks);
 
       template <typename ValueType>
       DFTFE_CREATE_KERNEL(
         void,
-        decompress_16_kernel,
+        decompress16Kernel,
         {
-          const unsigned int block_idx = (unsigned int)globalThreadId;
-          if (block_idx >= tot_blocks)
+          const unsigned int blockIdx = (unsigned int)globalThreadId;
+          if (blockIdx >= totBlocks)
             return;
           ValueType fblock[4];
-          decode_block_64(stream[block_idx], fblock);
-          unsigned int block_start = block_idx * 4u;
-          if (block_start + 4u <= dim)
+          decodeBlock64(stream[blockIdx], fblock);
+          unsigned int blockStart = blockIdx * 4u;
+          if (blockStart + 4u <= dim)
             {
-              data[block_start]     = fblock[0];
-              data[block_start + 1] = fblock[1];
-              data[block_start + 2] = fblock[2];
-              data[block_start + 3] = fblock[3];
+              data[blockStart]     = fblock[0];
+              data[blockStart + 1] = fblock[1];
+              data[blockStart + 2] = fblock[2];
+              data[blockStart + 3] = fblock[3];
             }
           else
             {
-              unsigned int nx = dim - block_start;
+              unsigned int nx = dim - blockStart;
               for (unsigned int j = 0; j < nx; j++)
-                data[block_start + j] = fblock[j];
+                data[blockStart + j] = fblock[j];
             }
         },
         const uint64 *stream,
         ValueType    *data,
         unsigned int  dim,
-        unsigned int  tot_blocks);
+        unsigned int  totBlocks);
 
       template <typename ValueType, typename IndexType>
       DFTFE_CREATE_KERNEL(
         void,
-        compress_gather_16_kernel,
+        compressGather16Kernel,
         {
-          const unsigned int block_idx = (unsigned int)globalThreadId;
-          if (block_idx >= tot_blocks)
+          const unsigned int blockIdx = (unsigned int)globalThreadId;
+          if (blockIdx >= totBlocks)
             return;
-          const unsigned int blocks_per_entry = gatherBlockSize >> 2;
-          unsigned int       gatherIdx        = block_idx / blocks_per_entry;
-          unsigned int localBlock = block_idx - gatherIdx * blocks_per_entry;
-          unsigned int intraIdx   = localBlock * 4u;
+          const unsigned int blocksPerEntry = gatherBlockSize >> 2;
+          unsigned int       gatherIdx      = blockIdx / blocksPerEntry;
+          unsigned int       localBlock = blockIdx - gatherIdx * blocksPerEntry;
+          unsigned int       intraIdx   = localBlock * 4u;
           size_t base = (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
 
           ValueType fblock[4];
-          fblock[0]         = dataArray[base];
-          fblock[1]         = dataArray[base + 1];
-          fblock[2]         = dataArray[base + 2];
-          fblock[3]         = dataArray[base + 3];
-          stream[block_idx] = encode_block_64(fblock);
+          fblock[0]        = dataArray[base];
+          fblock[1]        = dataArray[base + 1];
+          fblock[2]        = dataArray[base + 2];
+          fblock[3]        = dataArray[base + 3];
+          stream[blockIdx] = encodeBlock64(fblock);
         },
         const ValueType *dataArray,
         const IndexType *indices,
         unsigned int     gatherBlockSize,
         uint64          *stream,
-        unsigned int     tot_blocks);
+        unsigned int     totBlocks);
 
       template <typename ValueType, typename IndexType>
       DFTFE_CREATE_KERNEL(
         void,
-        decompress_scatter_add_16_kernel,
+        decompressScatterAdd16Kernel,
         {
-          const unsigned int block_idx = (unsigned int)globalThreadId;
-          if (block_idx >= tot_blocks)
+          const unsigned int blockIdx = (unsigned int)globalThreadId;
+          if (blockIdx >= totBlocks)
             return;
           ValueType fblock[4];
-          decode_block_64(stream[block_idx], fblock);
+          decodeBlock64(stream[blockIdx], fblock);
 
-          const unsigned int blocks_per_entry = gatherBlockSize >> 2;
-          unsigned int       gatherIdx        = block_idx / blocks_per_entry;
-          unsigned int localBlock = block_idx - gatherIdx * blocks_per_entry;
-          unsigned int intraIdx   = localBlock * 4u;
+          const unsigned int blocksPerEntry = gatherBlockSize >> 2;
+          unsigned int       gatherIdx      = blockIdx / blocksPerEntry;
+          unsigned int       localBlock = blockIdx - gatherIdx * blocksPerEntry;
+          unsigned int       intraIdx   = localBlock * 4u;
           size_t base = (size_t)indices[gatherIdx] * gatherBlockSize + intraIdx;
 
           dftfe::utils::atomicAddWrapper(&dataArray[base], fblock[0]);
@@ -902,437 +876,403 @@ namespace dftfe
         const IndexType *indices,
         unsigned int     gatherBlockSize,
         ValueType       *dataArray,
-        unsigned int     tot_blocks);
+        unsigned int     totBlocks);
 
-#  undef DFTFE_COMP_DEVICE_INLINE
+#  undef DFTFE_DEVICE_INLINE
 
       /* =====================================================================
          Internal dispatch: switches on bits_per_value, launches the matching
          specialised kernel via DFTFE_LAUNCH_KERNEL.
          ==================================================================== */
 
-#  define DFTFE_COMP_ASSERT_BPV(bpv)                                    \
-    assert(((bpv) == 8 || (bpv) == 10 || (bpv) == 12 || (bpv) == 16) && \
-           "bits_per_value must be 8, 10, 12, or 16")
-
       template <typename ValueType>
       void
-      compress_impl(const ValueType             *d_data,
-                    void                        *d_stream,
-                    size_t                       num_values,
-                    int                          bits_per_value,
-                    dftfe::utils::deviceStream_t stream)
+      compressWrapper(const ValueType             *dData,
+                      void                        *dStream,
+                      size_t                       numValues,
+                      int                          bitsPerValue,
+                      dftfe::utils::deviceStream_t stream)
       {
-        if (num_values == 0)
+        if (numValues == 0)
           return;
-        assert(num_values <= (size_t)UINT_MAX &&
-               "num_values exceeds 32-bit limit");
-        DFTFE_COMP_ASSERT_BPV(bits_per_value);
 
-        const unsigned int dim        = (unsigned int)num_values;
-        const unsigned int num_blocks = (dim + 3u) / 4u;
+        const unsigned int dim       = (unsigned int)numValues;
+        const unsigned int numBlocks = (dim + 3u) / 4u;
         const unsigned int grid =
-          (num_blocks + dftfe::utils::DEVICE_BLOCK_SIZE - 1) /
+          (numBlocks + dftfe::utils::DEVICE_BLOCK_SIZE - 1) /
           dftfe::utils::DEVICE_BLOCK_SIZE;
 
-        switch (bits_per_value)
+        switch (bitsPerValue)
           {
             case 8:
-              DFTFE_LAUNCH_KERNEL((compress_8_kernel<ValueType>),
+              DFTFE_LAUNCH_KERNEL((compress8Kernel<ValueType>),
                                   grid,
                                   dftfe::utils::DEVICE_BLOCK_SIZE,
                                   stream,
-                                  d_data,
-                                  reinterpret_cast<unsigned int *>(d_stream),
+                                  dData,
+                                  reinterpret_cast<unsigned int *>(dStream),
                                   dim,
-                                  num_blocks);
+                                  numBlocks);
               break;
             case 10:
-              DFTFE_LAUNCH_KERNEL((compress_10_kernel<ValueType>),
+              DFTFE_LAUNCH_KERNEL((compress10Kernel<ValueType>),
                                   grid,
                                   dftfe::utils::DEVICE_BLOCK_SIZE,
                                   stream,
-                                  d_data,
-                                  reinterpret_cast<uint8_t *>(d_stream),
+                                  dData,
+                                  reinterpret_cast<uint8_t *>(dStream),
                                   dim,
-                                  num_blocks);
+                                  numBlocks);
               break;
             case 12:
-              DFTFE_LAUNCH_KERNEL((compress_12_kernel<ValueType>),
+              DFTFE_LAUNCH_KERNEL((compress12Kernel<ValueType>),
                                   grid,
                                   dftfe::utils::DEVICE_BLOCK_SIZE,
                                   stream,
-                                  d_data,
-                                  reinterpret_cast<uint16_t *>(d_stream),
+                                  dData,
+                                  reinterpret_cast<uint16_t *>(dStream),
                                   dim,
-                                  num_blocks);
+                                  numBlocks);
               break;
             case 16:
-              DFTFE_LAUNCH_KERNEL((compress_16_kernel<ValueType>),
+              DFTFE_LAUNCH_KERNEL((compress16Kernel<ValueType>),
                                   grid,
                                   dftfe::utils::DEVICE_BLOCK_SIZE,
                                   stream,
-                                  d_data,
-                                  reinterpret_cast<uint64 *>(d_stream),
+                                  dData,
+                                  reinterpret_cast<uint64 *>(dStream),
                                   dim,
-                                  num_blocks);
+                                  numBlocks);
               break;
           }
       }
 
       template <typename ValueType>
       void
-      decompress_impl(const void                  *d_stream,
-                      ValueType                   *d_data,
-                      size_t                       num_values,
-                      int                          bits_per_value,
-                      dftfe::utils::deviceStream_t stream)
+      decompressWrapper(const void                  *dStream,
+                        ValueType                   *dData,
+                        size_t                       numValues,
+                        int                          bitsPerValue,
+                        dftfe::utils::deviceStream_t stream)
       {
-        if (num_values == 0)
+        if (numValues == 0)
           return;
-        assert(num_values <= (size_t)UINT_MAX &&
-               "num_values exceeds 32-bit limit");
-        DFTFE_COMP_ASSERT_BPV(bits_per_value);
 
-        const unsigned int dim        = (unsigned int)num_values;
-        const unsigned int num_blocks = (dim + 3u) / 4u;
+        const unsigned int dim       = (unsigned int)numValues;
+        const unsigned int numBlocks = (dim + 3u) / 4u;
         const unsigned int grid =
-          (num_blocks + dftfe::utils::DEVICE_BLOCK_SIZE - 1) /
+          (numBlocks + dftfe::utils::DEVICE_BLOCK_SIZE - 1) /
           dftfe::utils::DEVICE_BLOCK_SIZE;
 
-        switch (bits_per_value)
+        switch (bitsPerValue)
           {
             case 8:
-              DFTFE_LAUNCH_KERNEL((decompress_8_kernel<ValueType>),
+              DFTFE_LAUNCH_KERNEL((decompress8Kernel<ValueType>),
                                   grid,
                                   dftfe::utils::DEVICE_BLOCK_SIZE,
                                   stream,
                                   reinterpret_cast<const unsigned int *>(
-                                    d_stream),
-                                  d_data,
+                                    dStream),
+                                  dData,
                                   dim,
-                                  num_blocks);
+                                  numBlocks);
               break;
             case 10:
-              DFTFE_LAUNCH_KERNEL((decompress_10_kernel<ValueType>),
+              DFTFE_LAUNCH_KERNEL((decompress10Kernel<ValueType>),
                                   grid,
                                   dftfe::utils::DEVICE_BLOCK_SIZE,
                                   stream,
-                                  reinterpret_cast<const uint8_t *>(d_stream),
-                                  d_data,
+                                  reinterpret_cast<const uint8_t *>(dStream),
+                                  dData,
                                   dim,
-                                  num_blocks);
+                                  numBlocks);
               break;
             case 12:
-              DFTFE_LAUNCH_KERNEL((decompress_12_kernel<ValueType>),
+              DFTFE_LAUNCH_KERNEL((decompress12Kernel<ValueType>),
                                   grid,
                                   dftfe::utils::DEVICE_BLOCK_SIZE,
                                   stream,
-                                  reinterpret_cast<const uint16_t *>(d_stream),
-                                  d_data,
+                                  reinterpret_cast<const uint16_t *>(dStream),
+                                  dData,
                                   dim,
-                                  num_blocks);
+                                  numBlocks);
               break;
             case 16:
-              DFTFE_LAUNCH_KERNEL((decompress_16_kernel<ValueType>),
+              DFTFE_LAUNCH_KERNEL((decompress16Kernel<ValueType>),
                                   grid,
                                   dftfe::utils::DEVICE_BLOCK_SIZE,
                                   stream,
-                                  reinterpret_cast<const uint64 *>(d_stream),
-                                  d_data,
+                                  reinterpret_cast<const uint64 *>(dStream),
+                                  dData,
                                   dim,
-                                  num_blocks);
+                                  numBlocks);
               break;
           }
       }
 
       template <typename ValueType, typename IndexType>
       void
-      compress_gather_impl(const ValueType             *dataArray,
-                           const IndexType             *indices,
-                           size_t                       num_indices,
-                           unsigned int                 gather_block_size,
-                           void                        *d_stream,
-                           int                          bits_per_value,
-                           dftfe::utils::deviceStream_t stream)
+      compressGatherWrapper(const ValueType             *dataArray,
+                            const IndexType             *indices,
+                            size_t                       numIndices,
+                            unsigned int                 gatherBlockSize,
+                            void                        *dStream,
+                            int                          bitsPerValue,
+                            dftfe::utils::deviceStream_t stream)
       {
-        const size_t num_values = num_indices * gather_block_size;
-        if (num_values == 0)
+        const size_t numValues = numIndices * gatherBlockSize;
+        if (numValues == 0)
           return;
-        assert(num_values <= (size_t)UINT_MAX &&
-               "num_values exceeds 32-bit limit");
-        DFTFE_COMP_ASSERT_BPV(bits_per_value);
 
-        const unsigned int dim        = (unsigned int)num_values;
-        const unsigned int num_blocks = (dim + 3u) / 4u;
+        const unsigned int dim       = (unsigned int)numValues;
+        const unsigned int numBlocks = (dim + 3u) / 4u;
         const unsigned int grid =
-          (num_blocks + dftfe::utils::DEVICE_BLOCK_SIZE - 1) /
+          (numBlocks + dftfe::utils::DEVICE_BLOCK_SIZE - 1) /
           dftfe::utils::DEVICE_BLOCK_SIZE;
 
-        switch (bits_per_value)
+        switch (bitsPerValue)
           {
             case 8:
-              DFTFE_LAUNCH_KERNEL(
-                (compress_gather_8_kernel<ValueType, IndexType>),
-                grid,
-                dftfe::utils::DEVICE_BLOCK_SIZE,
-                stream,
-                dataArray,
-                indices,
-                gather_block_size,
-                reinterpret_cast<unsigned int *>(d_stream),
-                num_blocks);
+              DFTFE_LAUNCH_KERNEL((compressGather8Kernel<ValueType, IndexType>),
+                                  grid,
+                                  dftfe::utils::DEVICE_BLOCK_SIZE,
+                                  stream,
+                                  dataArray,
+                                  indices,
+                                  gatherBlockSize,
+                                  reinterpret_cast<unsigned int *>(dStream),
+                                  numBlocks);
               break;
             case 10:
               DFTFE_LAUNCH_KERNEL(
-                (compress_gather_10_kernel<ValueType, IndexType>),
+                (compressGather10Kernel<ValueType, IndexType>),
                 grid,
                 dftfe::utils::DEVICE_BLOCK_SIZE,
                 stream,
                 dataArray,
                 indices,
-                gather_block_size,
-                reinterpret_cast<uint8_t *>(d_stream),
-                num_blocks);
+                gatherBlockSize,
+                reinterpret_cast<uint8_t *>(dStream),
+                numBlocks);
               break;
             case 12:
               DFTFE_LAUNCH_KERNEL(
-                (compress_gather_12_kernel<ValueType, IndexType>),
+                (compressGather12Kernel<ValueType, IndexType>),
                 grid,
                 dftfe::utils::DEVICE_BLOCK_SIZE,
                 stream,
                 dataArray,
                 indices,
-                gather_block_size,
-                reinterpret_cast<uint16_t *>(d_stream),
-                num_blocks);
+                gatherBlockSize,
+                reinterpret_cast<uint16_t *>(dStream),
+                numBlocks);
               break;
             case 16:
               DFTFE_LAUNCH_KERNEL(
-                (compress_gather_16_kernel<ValueType, IndexType>),
+                (compressGather16Kernel<ValueType, IndexType>),
                 grid,
                 dftfe::utils::DEVICE_BLOCK_SIZE,
                 stream,
                 dataArray,
                 indices,
-                gather_block_size,
-                reinterpret_cast<uint64 *>(d_stream),
-                num_blocks);
+                gatherBlockSize,
+                reinterpret_cast<uint64 *>(dStream),
+                numBlocks);
               break;
           }
       }
 
       template <typename ValueType, typename IndexType>
       void
-      decompress_scatter_add_impl(const void      *d_stream,
-                                  const IndexType *indices,
-                                  size_t           num_indices,
-                                  unsigned int     gather_block_size,
-                                  ValueType       *dataArray,
-                                  int              bits_per_value,
+      decompressScatterAddWrapper(const void                  *dStream,
+                                  const IndexType             *indices,
+                                  size_t                       numIndices,
+                                  unsigned int                 gatherBlockSize,
+                                  ValueType                   *dataArray,
+                                  int                          bitsPerValue,
                                   dftfe::utils::deviceStream_t stream)
       {
-        const size_t num_values = num_indices * gather_block_size;
-        if (num_values == 0)
+        const size_t numValues = numIndices * gatherBlockSize;
+        if (numValues == 0)
           return;
-        assert(num_values <= (size_t)UINT_MAX &&
-               "num_values exceeds 32-bit limit");
-        DFTFE_COMP_ASSERT_BPV(bits_per_value);
 
-        const unsigned int dim        = (unsigned int)num_values;
-        const unsigned int num_blocks = (dim + 3u) / 4u;
+        const unsigned int dim       = (unsigned int)numValues;
+        const unsigned int numBlocks = (dim + 3u) / 4u;
         const unsigned int grid =
-          (num_blocks + dftfe::utils::DEVICE_BLOCK_SIZE - 1) /
+          (numBlocks + dftfe::utils::DEVICE_BLOCK_SIZE - 1) /
           dftfe::utils::DEVICE_BLOCK_SIZE;
 
-        switch (bits_per_value)
+        switch (bitsPerValue)
           {
             case 8:
               DFTFE_LAUNCH_KERNEL(
-                (decompress_scatter_add_8_kernel<ValueType, IndexType>),
+                (decompressScatterAdd8Kernel<ValueType, IndexType>),
                 grid,
                 dftfe::utils::DEVICE_BLOCK_SIZE,
                 stream,
-                reinterpret_cast<const unsigned int *>(d_stream),
+                reinterpret_cast<const unsigned int *>(dStream),
                 indices,
-                gather_block_size,
+                gatherBlockSize,
                 dataArray,
-                num_blocks);
+                numBlocks);
               break;
             case 10:
               DFTFE_LAUNCH_KERNEL(
-                (decompress_scatter_add_10_kernel<ValueType, IndexType>),
+                (decompressScatterAdd10Kernel<ValueType, IndexType>),
                 grid,
                 dftfe::utils::DEVICE_BLOCK_SIZE,
                 stream,
-                reinterpret_cast<const uint8_t *>(d_stream),
+                reinterpret_cast<const uint8_t *>(dStream),
                 indices,
-                gather_block_size,
+                gatherBlockSize,
                 dataArray,
-                num_blocks);
+                numBlocks);
               break;
             case 12:
               DFTFE_LAUNCH_KERNEL(
-                (decompress_scatter_add_12_kernel<ValueType, IndexType>),
+                (decompressScatterAdd12Kernel<ValueType, IndexType>),
                 grid,
                 dftfe::utils::DEVICE_BLOCK_SIZE,
                 stream,
-                reinterpret_cast<const uint16_t *>(d_stream),
+                reinterpret_cast<const uint16_t *>(dStream),
                 indices,
-                gather_block_size,
+                gatherBlockSize,
                 dataArray,
-                num_blocks);
+                numBlocks);
               break;
             case 16:
               DFTFE_LAUNCH_KERNEL(
-                (decompress_scatter_add_16_kernel<ValueType, IndexType>),
+                (decompressScatterAdd16Kernel<ValueType, IndexType>),
                 grid,
                 dftfe::utils::DEVICE_BLOCK_SIZE,
                 stream,
-                reinterpret_cast<const uint64 *>(d_stream),
+                reinterpret_cast<const uint64 *>(dStream),
                 indices,
-                gather_block_size,
+                gatherBlockSize,
                 dataArray,
-                num_blocks);
+                numBlocks);
               break;
           }
       }
-
-#  undef DFTFE_COMP_ASSERT_BPV
-
-    } // anonymous namespace
-
-    /* =======================================================================
-       Public API — non-templated overloads forward to the *_impl templates.
-       Complex<T> overloads are inline in compressionWrapper.h and forward
-       via reinterpret_cast to the real-T overloads here.
-
-       The double overloads exist only because MPICommunicatorP2P is
-       explicitly instantiated for ValueType = double / complex<double> and
-       its compress branch is a runtime if (d_commPrecision == compress);
-       those calls must resolve at instantiation time. At runtime the
-       COMPRESSED branch is only set on FP32 multivectors, so the double
-       overloads here link but are never executed.
-       ====================================================================== */
+    } // namespace
 
     void
-    compress(const double                *d_data,
-             void                        *d_compressed,
-             size_t                       num_values,
-             int                          bits_per_value,
+    compress(const double                *dData,
+             void                        *dCompressed,
+             size_t                       numValues,
+             int                          bitsPerValue,
              dftfe::utils::deviceStream_t stream)
     {
-      compress_impl<double>(
-        d_data, d_compressed, num_values, bits_per_value, stream);
+      compressWrapper<double>(
+        dData, dCompressed, numValues, bitsPerValue, stream);
     }
 
     void
-    compress(const float                 *d_data,
-             void                        *d_compressed,
-             size_t                       num_values,
-             int                          bits_per_value,
+    compress(const float                 *dData,
+             void                        *dCompressed,
+             size_t                       numValues,
+             int                          bitsPerValue,
              dftfe::utils::deviceStream_t stream)
     {
-      compress_impl<float>(
-        d_data, d_compressed, num_values, bits_per_value, stream);
+      compressWrapper<float>(
+        dData, dCompressed, numValues, bitsPerValue, stream);
     }
 
     void
-    decompress(const void                  *d_compressed,
-               double                      *d_data,
-               size_t                       num_values,
-               int                          bits_per_value,
+    decompress(const void                  *dCompressed,
+               double                      *dData,
+               size_t                       numValues,
+               int                          bitsPerValue,
                dftfe::utils::deviceStream_t stream)
     {
-      decompress_impl<double>(
-        d_compressed, d_data, num_values, bits_per_value, stream);
+      decompressWrapper<double>(
+        dCompressed, dData, numValues, bitsPerValue, stream);
     }
 
     void
-    decompress(const void                  *d_compressed,
-               float                       *d_data,
-               size_t                       num_values,
-               int                          bits_per_value,
+    decompress(const void                  *dCompressed,
+               float                       *dData,
+               size_t                       numValues,
+               int                          bitsPerValue,
                dftfe::utils::deviceStream_t stream)
     {
-      decompress_impl<float>(
-        d_compressed, d_data, num_values, bits_per_value, stream);
+      decompressWrapper<float>(
+        dCompressed, dData, numValues, bitsPerValue, stream);
     }
 
     void
-    compress_gather(const double                *dataArray,
-                    const dftfe::uInt           *indices,
-                    size_t                       num_indices,
-                    dftfe::uInt                  gather_block_size,
-                    void                        *d_compressed,
-                    int                          bits_per_value,
-                    dftfe::utils::deviceStream_t stream)
+    compressGather(const double                *dataArray,
+                   const dftfe::uInt           *indices,
+                   size_t                       numIndices,
+                   dftfe::uInt                  gatherBlockSize,
+                   void                        *dCompressed,
+                   int                          bitsPerValue,
+                   dftfe::utils::deviceStream_t stream)
     {
-      compress_gather_impl<double, dftfe::uInt>(dataArray,
+      compressGatherWrapper<double, dftfe::uInt>(dataArray,
+                                                 indices,
+                                                 numIndices,
+                                                 (unsigned int)gatherBlockSize,
+                                                 dCompressed,
+                                                 bitsPerValue,
+                                                 stream);
+    }
+
+    void
+    compressGather(const float                 *dataArray,
+                   const dftfe::uInt           *indices,
+                   size_t                       numIndices,
+                   dftfe::uInt                  gatherBlockSize,
+                   void                        *dCompressed,
+                   int                          bitsPerValue,
+                   dftfe::utils::deviceStream_t stream)
+    {
+      compressGatherWrapper<float, dftfe::uInt>(dataArray,
                                                 indices,
-                                                num_indices,
-                                                (unsigned int)gather_block_size,
-                                                d_compressed,
-                                                bits_per_value,
+                                                numIndices,
+                                                (unsigned int)gatherBlockSize,
+                                                dCompressed,
+                                                bitsPerValue,
                                                 stream);
     }
 
     void
-    compress_gather(const float                 *dataArray,
-                    const dftfe::uInt           *indices,
-                    size_t                       num_indices,
-                    dftfe::uInt                  gather_block_size,
-                    void                        *d_compressed,
-                    int                          bits_per_value,
-                    dftfe::utils::deviceStream_t stream)
+    decompressScatterAdd(const void                  *dCompressed,
+                         const dftfe::uInt           *indices,
+                         size_t                       numIndices,
+                         dftfe::uInt                  gatherBlockSize,
+                         double                      *dataArray,
+                         int                          bitsPerValue,
+                         dftfe::utils::deviceStream_t stream)
     {
-      compress_gather_impl<float, dftfe::uInt>(dataArray,
-                                               indices,
-                                               num_indices,
-                                               (unsigned int)gather_block_size,
-                                               d_compressed,
-                                               bits_per_value,
-                                               stream);
-    }
-
-    void
-    decompress_scatter_add(const void                  *d_compressed,
-                           const dftfe::uInt           *indices,
-                           size_t                       num_indices,
-                           dftfe::uInt                  gather_block_size,
-                           double                      *dataArray,
-                           int                          bits_per_value,
-                           dftfe::utils::deviceStream_t stream)
-    {
-      decompress_scatter_add_impl<double, dftfe::uInt>(d_compressed,
+      decompressScatterAddWrapper<double, dftfe::uInt>(dCompressed,
                                                        indices,
-                                                       num_indices,
+                                                       numIndices,
                                                        (unsigned int)
-                                                         gather_block_size,
+                                                         gatherBlockSize,
                                                        dataArray,
-                                                       bits_per_value,
+                                                       bitsPerValue,
                                                        stream);
     }
 
     void
-    decompress_scatter_add(const void                  *d_compressed,
-                           const dftfe::uInt           *indices,
-                           size_t                       num_indices,
-                           dftfe::uInt                  gather_block_size,
-                           float                       *dataArray,
-                           int                          bits_per_value,
-                           dftfe::utils::deviceStream_t stream)
+    decompressScatterAdd(const void                  *dCompressed,
+                         const dftfe::uInt           *indices,
+                         size_t                       numIndices,
+                         dftfe::uInt                  gatherBlockSize,
+                         float                       *dataArray,
+                         int                          bitsPerValue,
+                         dftfe::utils::deviceStream_t stream)
     {
-      decompress_scatter_add_impl<float, dftfe::uInt>(d_compressed,
+      decompressScatterAddWrapper<float, dftfe::uInt>(dCompressed,
                                                       indices,
-                                                      num_indices,
+                                                      numIndices,
                                                       (unsigned int)
-                                                        gather_block_size,
+                                                        gatherBlockSize,
                                                       dataArray,
-                                                      bits_per_value,
+                                                      bitsPerValue,
                                                       stream);
     }
-
   } // namespace compressionWrapper
 } // namespace dftfe
 

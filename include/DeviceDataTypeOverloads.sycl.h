@@ -241,6 +241,18 @@ namespace dftfe
       return sycl::ldexp(x, e);
     }
 
+    inline double
+    rint(double x)
+    {
+      return sycl::rint(x);
+    }
+
+    inline float
+    rint(float x)
+    {
+      return sycl::rint(x);
+    }
+
     //
     // min / max overloads
     //

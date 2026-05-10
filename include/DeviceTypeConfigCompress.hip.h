@@ -13,7 +13,9 @@
 // the top level of the DFT-FE distribution.
 //
 // ---------------------------------------------------------------------
-//
+
+// Not used directly; present for compilation requirements of deviceSetValue().
+
 #ifndef dftfeDeviceTypeConfigCompress_hiph
 #define dftfeDeviceTypeConfigCompress_hiph
 #include <complex>

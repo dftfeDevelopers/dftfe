@@ -231,6 +231,18 @@ namespace dftfe
       return ::ldexpf(x, e);
     }
 
+    __forceinline__ __device__ double
+    rint(double x)
+    {
+      return ::rint(x);
+    }
+
+    __forceinline__ __device__ float
+    rint(float x)
+    {
+      return ::rintf(x);
+    }
+
     //
     // min / max overloads
     //

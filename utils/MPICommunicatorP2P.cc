@@ -1027,7 +1027,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
               if constexpr (memorySpace == MemorySpace::DEVICE)
                 {
-                  dftfe::compressionWrapper::compress_gather(
+                  dftfe::compressionWrapper::compressGather(
                     dataArray.data(),
                     d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs()
                       .data(),
@@ -2234,7 +2234,7 @@ namespace dftfe
             // directly to scattered positions, eliminating intermediate buffer
             if constexpr (memorySpace == MemorySpace::DEVICE)
               {
-                dftfe::compressionWrapper::decompress_scatter_add(
+                dftfe::compressionWrapper::decompressScatterAdd(
                   d_sendRecvBufferCompress.data(),
                   d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().data(),
                   d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size(),
