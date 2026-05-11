@@ -127,16 +127,11 @@ namespace dftfe
         std::shared_ptr<const MPIPatternP2P<memorySpace>> d_mpiPatternP2P;
 
         dftfe::uInt d_blockSize;
-
         dftfe::uInt d_locallyOwnedSize;
-
         dftfe::uInt d_ghostSize;
-
-        dftfe::uInt d_compressBitsPerValue        = 16;
-        dftfe::uInt d_maxCompressedTargetBytes    = 0;
-        dftfe::uInt d_maxCompressedGhostBytes     = 0;
-        dftfe::uInt d_activeCompressedTargetBytes = 0;
-        dftfe::uInt d_activeCompressedGhostBytes  = 0;
+        dftfe::uInt d_compressBitsPerValue;
+        dftfe::uInt d_compressedTargetBytes;
+        dftfe::uInt d_compressedGhostBytes;
 
         MemoryStorage<ValueType, memorySpace> d_sendRecvBuffer;
 

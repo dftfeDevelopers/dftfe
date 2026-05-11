@@ -114,36 +114,36 @@ namespace dftfe
                     d_blockSize,
                   0.0);
 
+              // Pinned is allocated default max bpv (16)
               d_compressBitsPerValue = 16;
-
-              d_maxCompressedTargetBytes =
-                ((d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size() *
-                    d_blockSize * d_compressBitsPerValue / 8 +
-                  7) /
-                 8) *
+              d_compressedTargetBytes =
+                (d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size() *
+                 d_blockSize * d_compressBitsPerValue) /
                 8;
 
-              d_maxCompressedGhostBytes =
-                ((d_mpiPatternP2P->localGhostSize() * d_blockSize *
-                    d_compressBitsPerValue / 8 +
-                  7) /
-                 8) *
-                8;
-
-              d_activeCompressedTargetBytes = d_maxCompressedTargetBytes;
-              d_activeCompressedGhostBytes  = d_maxCompressedGhostBytes;
+              d_compressedGhostBytes = (d_mpiPatternP2P->localGhostSize() *
+                                        d_blockSize * d_compressBitsPerValue) /
+                                       8;
 
               d_ghostDataCopyCompressHostPinnedPtr =
                 std::make_shared<MemoryStorage<
                   typename dftfe::dataTypes::compressType<ValueType>::type,
-                  MemorySpace::HOST_PINNED>>(d_maxCompressedGhostBytes, 0);
+                  MemorySpace::HOST_PINNED>>(d_compressedGhostBytes, 0);
 
               d_sendRecvBufferCompressHostPinnedPtr =
                 std::make_shared<MemoryStorage<
                   typename dftfe::dataTypes::compressType<ValueType>::type,
-                  MemorySpace::HOST_PINNED>>(d_maxCompressedTargetBytes, 0);
+                  MemorySpace::HOST_PINNED>>(d_compressedTargetBytes, 0);
             }
 #endif
+      }
+
+      template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+      void
+      MPICommunicatorP2P<ValueType, memorySpace>::setCompressBitsPerValue(
+        dftfe::uInt bpv)
+      {
+        d_compressBitsPerValue = bpv;
       }
 
       template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
@@ -310,32 +310,20 @@ namespace dftfe
 
         else if (precision == communicationPrecision::compress)
           {
-            d_activeCompressedTargetBytes =
-              ((d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size() *
-                  d_blockSize * d_compressBitsPerValue / 8 +
-                7) /
-               8) *
+            d_compressedTargetBytes =
+              (d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size() *
+               d_blockSize * d_compressBitsPerValue) /
               8;
 
-            d_activeCompressedGhostBytes =
-              ((d_mpiPatternP2P->localGhostSize() * d_blockSize *
-                  d_compressBitsPerValue / 8 +
-                7) /
-               8) *
-              8;
+            d_compressedGhostBytes = (d_mpiPatternP2P->localGhostSize() *
+                                      d_blockSize * d_compressBitsPerValue) /
+                                     8;
 
-            // Keep max to avoid shrinking when bpv drops (16 -> 8)
-            d_maxCompressedTargetBytes =
-              std::max(d_maxCompressedTargetBytes,
-                       d_activeCompressedTargetBytes);
-            d_maxCompressedGhostBytes =
-              std::max(d_maxCompressedGhostBytes, d_activeCompressedGhostBytes);
+            if (d_sendRecvBufferCompress.size() != d_compressedTargetBytes)
+              d_sendRecvBufferCompress.resize(d_compressedTargetBytes, 0);
 
-            if (d_sendRecvBufferCompress.size() < d_maxCompressedTargetBytes)
-              d_sendRecvBufferCompress.resize(d_maxCompressedTargetBytes, 0);
-
-            if (d_ghostDataCopyCompress.size() < d_maxCompressedGhostBytes)
-              d_ghostDataCopyCompress.resize(d_maxCompressedGhostBytes, 0);
+            if (d_ghostDataCopyCompress.size() != d_compressedGhostBytes)
+              d_ghostDataCopyCompress.resize(d_compressedGhostBytes, 0);
 
 #ifdef DFTFE_WITH_DEVICE
             if constexpr (memorySpace == MemorySpace::DEVICE)
@@ -346,53 +334,38 @@ namespace dftfe
                       MemoryStorage<typename dftfe::dataTypes::compressType<
                                       ValueType>::type,
                                     MemorySpace::HOST_PINNED>>(
-                      d_maxCompressedGhostBytes, 0);
+                      d_compressedGhostBytes, 0);
 
                   if (!d_sendRecvBufferCompressHostPinnedPtr)
                     d_sendRecvBufferCompressHostPinnedPtr = std::make_shared<
                       MemoryStorage<typename dftfe::dataTypes::compressType<
                                       ValueType>::type,
                                     MemorySpace::HOST_PINNED>>(
-                      d_maxCompressedTargetBytes, 0);
+                      d_compressedTargetBytes, 0);
 
-                  if (d_ghostDataCopyCompressHostPinnedPtr->size() !=
-                      d_maxCompressedGhostBytes)
+                  // Pinned was constructor-allocated at the max bpv (16). Only
+                  // the active bytes (d_compressedXXXBytes) are read/written,
+                  // so a larger existing buffer is safe to reuse and avoids one
+                  // more pinned-reallocation.
+
+                  if (d_ghostDataCopyCompressHostPinnedPtr->size() <
+                      d_compressedGhostBytes)
                     d_ghostDataCopyCompressHostPinnedPtr = std::make_shared<
                       MemoryStorage<typename dftfe::dataTypes::compressType<
                                       ValueType>::type,
                                     MemorySpace::HOST_PINNED>>(
-                      d_maxCompressedGhostBytes, 0);
+                      d_compressedGhostBytes, 0);
 
-                  if (d_sendRecvBufferCompressHostPinnedPtr->size() !=
-                      d_maxCompressedTargetBytes)
+                  if (d_sendRecvBufferCompressHostPinnedPtr->size() <
+                      d_compressedTargetBytes)
                     d_sendRecvBufferCompressHostPinnedPtr = std::make_shared<
                       MemoryStorage<typename dftfe::dataTypes::compressType<
                                       ValueType>::type,
                                     MemorySpace::HOST_PINNED>>(
-                      d_maxCompressedTargetBytes, 0);
+                      d_compressedTargetBytes, 0);
                 }
 #endif
           }
-      }
-
-      template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
-      void
-      MPICommunicatorP2P<ValueType, memorySpace>::setCompressBitsPerValue(
-        dftfe::uInt bpv)
-      {
-#ifdef DFTFE_WITH_DEVICE
-        d_compressBitsPerValue = bpv;
-        d_activeCompressedTargetBytes =
-          ((d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size() *
-              d_blockSize * bpv / 8 +
-            7) /
-           8) *
-          8;
-        d_activeCompressedGhostBytes =
-          ((d_mpiPatternP2P->localGhostSize() * d_blockSize * bpv / 8 + 7) /
-           8) *
-          8;
-#endif
       }
 
       template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
@@ -1060,9 +1033,9 @@ namespace dftfe
                     MemoryTransfer<MemorySpace::HOST_PINNED, memorySpace>
                       memoryTransfer;
 
-                    if (d_activeCompressedTargetBytes > 0)
+                    if (d_compressedTargetBytes > 0)
                       memoryTransfer.copy(
-                        d_activeCompressedTargetBytes,
+                        d_compressedTargetBytes,
                         d_sendRecvBufferCompressHostPinnedPtr->begin(),
                         d_sendRecvBufferCompress.begin());
 
@@ -1293,9 +1266,9 @@ namespace dftfe
                 {
                   MemoryTransfer<memorySpace, MemorySpace::HOST_PINNED>
                     memoryTransfer;
-                  if (d_activeCompressedGhostBytes > 0)
+                  if (d_compressedGhostBytes > 0)
                     memoryTransfer.copy(
-                      d_activeCompressedGhostBytes,
+                      d_compressedGhostBytes,
                       d_ghostDataCopyCompress.data(),
                       d_ghostDataCopyCompressHostPinnedPtr->data());
                 }
@@ -1960,9 +1933,9 @@ namespace dftfe
                   {
                     MemoryTransfer<MemorySpace::HOST_PINNED, memorySpace>
                       memoryTransfer;
-                    if (d_activeCompressedGhostBytes > 0)
+                    if (d_compressedGhostBytes > 0)
                       memoryTransfer.copy(
-                        d_activeCompressedGhostBytes,
+                        d_compressedGhostBytes,
                         d_ghostDataCopyCompressHostPinnedPtr->begin(),
                         d_ghostDataCopyCompress.data());
 
@@ -2224,9 +2197,9 @@ namespace dftfe
                 {
                   MemoryTransfer<memorySpace, MemorySpace::HOST_PINNED>
                     memoryTransfer;
-                  if (d_activeCompressedTargetBytes > 0)
+                  if (d_compressedTargetBytes > 0)
                     memoryTransfer.copy(
-                      d_activeCompressedTargetBytes,
+                      d_compressedTargetBytes,
                       d_sendRecvBufferCompress.data(),
                       d_sendRecvBufferCompressHostPinnedPtr->data());
                 }

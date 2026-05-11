@@ -168,11 +168,6 @@ namespace dftfe
     deviceEventSynchronize(deviceEvent_t &event);
 
     deviceError_t
-    deviceEventElapsedTime(float         &milliseconds,
-                           deviceEvent_t &startEvent,
-                           deviceEvent_t &stopEvent);
-
-    deviceError_t
     deviceStreamWaitEvent(deviceStream_t &stream,
                           deviceEvent_t  &event,
                           unsigned int    flags = 0);
