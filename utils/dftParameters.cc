@@ -2039,18 +2039,13 @@ namespace dftfe
       {
         // BFP kernels lay out data in fixed-size 4-value blocks; the
         // MPICommunicatorP2P compressed buffer is sized assuming the per-rank
-        // total (num_indices * blockSize) is a multiple of 4. With block sizes
-        // that are not multiples of 4 the kernel would write past the buffer
-        // for bpv = 10 or 12 and lose trailing values for any bpv.
-        AssertThrow(
-          wfcBlockSize % 4 == 0,
-          dealii::ExcMessage(
-            "DFT-FE Error: WFC BLOCK SIZE must be a multiple of 4 when COMMUN PREC CHEBY = COMPRESSED."));
+        // total (num_indices * blockSize) is a multiple of 4.
         AssertThrow(
           chebyWfcBlockSize % 4 == 0,
           dealii::ExcMessage(
             "DFT-FE Error: CHEBY WFC BLOCK SIZE must be a multiple of 4 when COMMUN PREC CHEBY = COMPRESSED."));
       }
+
     if (XCType.substr(0, 4) == "MGGA")
       {
         AssertThrow(

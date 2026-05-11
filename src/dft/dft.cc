@@ -786,6 +786,22 @@ namespace dftfe
             d_dftParamsPtr->wfcBlockSize      = temp2[minElementIndex];
           }
 
+        if (d_dftParamsPtr->communPrecCheby == "COMPRESSED" &&
+            d_dftParamsPtr->chebyWfcBlockSize % 4 != 0)
+          {
+            const dftfe::uInt wfcToChebyratio =
+              d_dftParamsPtr->wfcBlockSize / d_dftParamsPtr->chebyWfcBlockSize;
+            d_dftParamsPtr->chebyWfcBlockSize =
+              ((d_dftParamsPtr->chebyWfcBlockSize + 3) / 4) * 4;
+            d_dftParamsPtr->wfcBlockSize =
+              wfcToChebyratio * d_dftParamsPtr->chebyWfcBlockSize;
+            d_numEigenValues =
+              static_cast<dftfe::uInt>(
+                std::ceil(eigenvaluesInBandGroup /
+                          static_cast<double>(d_dftParamsPtr->wfcBlockSize))) *
+              d_dftParamsPtr->wfcBlockSize * numberBandGroups;
+          }
+
         if (d_dftParamsPtr->algoType == "FAST")
           d_dftParamsPtr->numCoreWfcForMixedPrecRR =
             std::floor(d_dftParamsPtr->numCoreWfcForMixedPrecRR /
