@@ -44,7 +44,7 @@ withGPUAwareMPI=OFF #Please use this option with care
                    #to be fast
 
 #Option to link to DCCL library (Only for GPU compilation)
-withDCCL=ON
+withDCCL=OFF
 withMDI=OFF
 withTorch=OFF
 withCustomizedDealii=OFF
@@ -61,7 +61,7 @@ device_architectures="70" # set DCMAKE_CXX_CUDA_ARCHITECTURES
 
 #Option to compile with default or higher order quadrature for storing pseudopotential data
 #ON is recommended for MD simulations with hard pseudopotentials
-withHigherQuadPSP=ON
+withHigherQuadPSP=OFF
 
 # build type: "Release" or "Debug"
 build_type=Release

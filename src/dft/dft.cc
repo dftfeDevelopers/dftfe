@@ -652,7 +652,6 @@ namespace dftfe
         const dftfe::uInt numberBandGroups =
           dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
 
-
         d_numEigenValues =
           std::ceil(d_numEigenValues / (numberBandGroups * 1.0)) *
           numberBandGroups;
@@ -786,6 +785,7 @@ namespace dftfe
             d_dftParamsPtr->wfcBlockSize      = temp2[minElementIndex];
           }
 
+        // Compression requires chebyWfcBlockSize to be multiple of 4
         if (d_dftParamsPtr->communPrecCheby == "COMPRESSED" &&
             d_dftParamsPtr->chebyWfcBlockSize % 4 != 0)
           {

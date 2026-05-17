@@ -349,10 +349,8 @@ namespace dftfe
           }
       }
 
-      /* =====================================================================
-         GPU kernels — 1 thread per 4-value block.
-         Use DFTFE_CREATE_KERNEL so the same source covers CUDA / HIP / SYCL.
-         ==================================================================== */
+      /* GPU kernels — 1 thread per 4-value block.
+         Use DFTFE_CREATE_KERNEL so the same source covers CUDA / HIP / SYCL */
 
       /* ---- 8 bpv: 1 x uint32_t per block ---- */
       template <typename ValueType>
@@ -416,17 +414,8 @@ namespace dftfe
         unsigned int        dim,
         unsigned int        totBlocks);
 
-      // ---- gather/scatter invariant ----
-      // The fused compressGather / decompressScatterAdd kernels assume
-      // gatherBlockSize is a multiple of 4: blocksPerEntry truncates the
-      // divide-by-4, and there is no per-entry partial-block path (unlike
-      // the non-fused compress / decompress kernels which handle the
-      // single trailing block of the whole array). With non-multiple-of-4
-      // block sizes the kernel reads/writes past entry boundaries and the
-      // on-wire byte count in MPICommunicatorP2P also goes inconsistent.
-      // The invariant is enforced upstream in dftParameters.cc — see the
-      // "WFC BLOCK SIZE must be a multiple of 4" / "CHEBY WFC BLOCK SIZE
-      // must be a multiple of 4" AssertThrows under COMPRESSED.
+      /* gatherBlockSize must be a multiple of 4 (blocksPerEntry = size>>2, no
+         partial-block path) */
       template <typename ValueType, typename IndexType>
       DFTFE_CREATE_KERNEL(
         void,
@@ -880,10 +869,7 @@ namespace dftfe
 
 #  undef DFTFE_DEVICE_INLINE
 
-      /* =====================================================================
-         Internal dispatch: switches on bits_per_value, launches the matching
-         specialised kernel via DFTFE_LAUNCH_KERNEL.
-         ==================================================================== */
+      /* Internal dispatch: switch with bpv, launches the matching kernel */
 
       template <typename ValueType>
       void

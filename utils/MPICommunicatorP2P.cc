@@ -114,8 +114,11 @@ namespace dftfe
                     d_blockSize,
                   0.0);
 
-              // Pinned is allocated default max bpv (16)
+              // Allocate pinned buffers at max BPV so setCommunicationPrecision
+              // never reallocates.
               d_compressBitsPerValue = 16;
+              // Exact bytes: blockSize is a multiple of 4 and all supported
+              // BPVs are even.
               d_compressedTargetBytes =
                 (d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size() *
                  d_blockSize * d_compressBitsPerValue) /
@@ -343,11 +346,7 @@ namespace dftfe
                                     MemorySpace::HOST_PINNED>>(
                       d_compressedTargetBytes, 0);
 
-                  // Pinned was constructor-allocated at the max bpv (16). Only
-                  // the active bytes (d_compressedXXXBytes) are read/written,
-                  // so a larger existing buffer is safe to reuse and avoids one
-                  // more pinned-reallocation.
-
+                  // Pre-allocated at max 16 bpv; reuse if active bytes fit.
                   if (d_ghostDataCopyCompressHostPinnedPtr->size() <
                       d_compressedGhostBytes)
                     d_ghostDataCopyCompressHostPinnedPtr = std::make_shared<
@@ -993,8 +992,7 @@ namespace dftfe
                        .data()[2 * i]) *
                     d_blockSize * d_compressBitsPerValue / 8;
                 }
-            // fused gather+compress: reads scattered data and compresses
-            // directly, eliminating the intermediate full-precision buffer
+            // compressGather: fused gather+compress
             if ((d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size()) >
                 0)
 #ifdef DFTFE_WITH_DEVICE
@@ -1018,7 +1016,6 @@ namespace dftfe
                   throwException(false, errMsg);
                 }
 
-            // initiate non-blocking sends to target processors
             typename dftfe::dataTypes::compressType<ValueType>::type
               *sendArrayStartPtr = d_sendRecvBufferCompress.data();
 
@@ -1032,7 +1029,7 @@ namespace dftfe
                   {
                     MemoryTransfer<MemorySpace::HOST_PINNED, memorySpace>
                       memoryTransfer;
-
+                    // copies only active bytes
                     if (d_compressedTargetBytes > 0)
                       memoryTransfer.copy(
                         d_compressedTargetBytes,
@@ -1848,7 +1845,6 @@ namespace dftfe
 
         else if (d_commPrecision == communicationPrecision::compress)
           {
-            // initiate non-blocking receives from target processors
             typename dftfe::dataTypes::compressType<ValueType>::type
               *recvArrayStartPtr = d_sendRecvBufferCompress.data();
 #ifdef DFTFE_WITH_DEVICE
@@ -1899,7 +1895,6 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
             if constexpr (memorySpace == MemorySpace::DEVICE)
               {
-                // Begin Compression
                 if (d_mpiPatternP2P->localGhostSize() > 0)
                   {
                     dftfe::compressionWrapper::compress(
@@ -1910,7 +1905,6 @@ namespace dftfe
                       d_compressBitsPerValue,
                       dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
                   }
-                // End Compression
               }
             else
 #endif
@@ -1919,7 +1913,6 @@ namespace dftfe
                 throwException(false, errMsg);
               }
 
-            // initiate non-blocking sends to ghost processors
             typename dftfe::dataTypes::compressType<ValueType>::type
               *sendArrayStartPtr = d_ghostDataCopyCompress.data();
 
@@ -2203,8 +2196,7 @@ namespace dftfe
                       d_sendRecvBufferCompress.data(),
                       d_sendRecvBufferCompressHostPinnedPtr->data());
                 }
-            // Fused decompress+scatter_add: decompresses and atomicAdds
-            // directly to scattered positions, eliminating intermediate buffer
+            // decompressScatterAdd: fused decompress+scatter+atomicadd
             if constexpr (memorySpace == MemorySpace::DEVICE)
               {
                 dftfe::compressionWrapper::decompressScatterAdd(
