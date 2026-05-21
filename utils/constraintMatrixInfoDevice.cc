@@ -17,9 +17,10 @@
 // @author  Sambit Das, Phani Motamarri
 //
 
-#include <constraintMatrixInfo.h>
-#include <dftUtils.h>
-#include "constraintMatrixInfoDeviceKernels.h"
+#include <dftfe/config.h>
+#include <dftfe/constraintMatrixInfo.h>
+#include <dftfe/dftUtils.h>
+#include <dftfe/constraintMatrixInfoDeviceKernels.h>
 
 namespace dftfe
 {

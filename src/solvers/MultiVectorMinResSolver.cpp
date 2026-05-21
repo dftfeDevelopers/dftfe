@@ -17,8 +17,9 @@
 // @author Vishal Subramanian
 //
 
-#include "MultiVectorMinResSolver.h"
-#include "DeviceAPICalls.h"
+#include <dftfe/config.h>
+#include <dftfe/MultiVectorMinResSolver.h>
+#include <dftfe/DeviceAPICalls.h>
 namespace dftfe
 {
   // constructor

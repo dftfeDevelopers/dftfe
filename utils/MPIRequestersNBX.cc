@@ -19,11 +19,11 @@
  * @author Bikash Kanungo
  */
 
-#include <MPIRequestersNBX.h>
-#include <MPITags.h>
-#include <Exceptions.h>
+#include <dftfe/MPIRequestersNBX.h>
+#include <dftfe/MPITags.h>
+#include <dftfe/Exceptions.h>
 #include <string>
-#include <dftfeDataTypes.h>
+#include <dftfe/dftfeDataTypes.h>
 
 namespace dftfe
 {

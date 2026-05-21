@@ -17,7 +17,7 @@
 // @author  Phani Motamarri
 //
 
-#include "PeriodicTable.h"
+#include <dftfe/PeriodicTable.h>
 
 #include <cassert>
 namespace dftfe

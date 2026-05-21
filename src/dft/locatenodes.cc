@@ -16,7 +16,7 @@
 //
 // @author Shiva Rudraraju, Phani Motamarri, Sambit Das
 //
-#include <dft.h>
+#include <dftfe/dft.h>
 
 namespace dftfe
 {

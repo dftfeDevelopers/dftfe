@@ -17,13 +17,13 @@
 // @author Sambit Das
 //
 
-#include <cgPRPNonLinearSolver.h>
-#include <BFGSNonLinearSolver.h>
-#include <LBFGSNonLinearSolver.h>
-#include <dft.h>
-#include <dftUtils.h>
-#include <fileReaders.h>
-#include <geoOptCell.h>
+#include <dftfe/cgPRPNonLinearSolver.h>
+#include <dftfe/BFGSNonLinearSolver.h>
+#include <dftfe/LBFGSNonLinearSolver.h>
+#include <dftfe/dft.h>
+#include <dftfe/dftUtils.h>
+#include <dftfe/fileReaders.h>
+#include <dftfe/geoOptCell.h>
 #include <sys/stat.h>
 
 namespace dftfe

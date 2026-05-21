@@ -17,10 +17,11 @@
 // @author Sambit Das
 //
 
+#include <dftfe/config.h>
 #if defined(DFTFE_WITH_MDI)
-#  include "MDIEngine.h"
-#  include "libraryMDI.h"
-#  include "linearAlgebraOperations.h"
+#  include <dftfe/MDIEngine.h>
+#  include <dftfe/libraryMDI.h>
+#  include <dftfe/linearAlgebraOperations.h>
 
 #  include <deal.II/base/data_out_base.h>
 

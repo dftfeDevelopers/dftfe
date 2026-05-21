@@ -24,13 +24,13 @@
 #include <boost/random.hpp>
 #include <boost/random/normal_distribution.hpp>
 #include <boost/random/gamma_distribution.hpp>
-#include <headers.h>
-#include <dftUtils.h>
-#include <fileReaders.h>
+#include <dftfe/headers.h>
+#include <dftfe/dftUtils.h>
+#include <dftfe/fileReaders.h>
 #include <vector>
 #include <cmath>
 #include <ctime>
-#include <molecularDynamicsClass.h>
+#include <dftfe/molecularDynamicsClass.h>
 #include <fstream>
 #include <iomanip>
 #include <iostream>

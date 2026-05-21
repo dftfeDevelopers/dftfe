@@ -22,8 +22,8 @@
 //
 // compute total charge using quad point values
 //
-#include <dft.h>
-#include <feevaluationWrapper.h>
+#include <dftfe/dft.h>
+#include <dftfe/feevaluationWrapper.h>
 
 namespace dftfe
 {

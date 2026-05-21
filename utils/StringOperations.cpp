@@ -26,7 +26,7 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
-#include "StringOperations.h"
+#include <dftfe/StringOperations.h>
 namespace dftfe
 {
   namespace utils

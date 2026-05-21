@@ -14,10 +14,11 @@
 //
 // ---------------------------------------------------------------------
 //
-#include <FEBasisOperations.h>
-#include <FEBasisOperationsKernelsInternal.h>
-#include <dftUtils.h>
-#include <feevaluationWrapper.h>
+#include <dftfe/config.h>
+#include <dftfe/FEBasisOperations.h>
+#include <dftfe/FEBasisOperationsKernelsInternal.h>
+#include <dftfe/dftUtils.h>
+#include <dftfe/feevaluationWrapper.h>
 namespace dftfe
 {
   namespace basis

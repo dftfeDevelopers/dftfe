@@ -23,15 +23,16 @@
 //
 // source file for dft class initializations
 //
-#include <dft.h>
-#include <dftUtils.h>
-#include <vectorUtilities.h>
+#include <dftfe/config.h>
+#include <dftfe/dft.h>
+#include <dftfe/dftUtils.h>
+#include <dftfe/vectorUtilities.h>
 #ifdef USE_COMPLEX
 #  include "initkPointData.cc"
 #endif
-#include <AtomicBasis.h>
-#include <AuxDensityMatrixFE.h>
-#include <PeriodicTable.h>
+#include <dftfe/AtomicBasis.h>
+#include <dftfe/AuxDensityMatrixFE.h>
+#include <dftfe/PeriodicTable.h>
 
 
 namespace dftfe

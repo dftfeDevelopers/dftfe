@@ -16,8 +16,9 @@
 //
 // @author  Phani Motamarri, Sambit Das
 //
-#include <dft.h>
-#include <dftUtils.h>
+#include <dftfe/config.h>
+#include <dftfe/dft.h>
+#include <dftfe/dftUtils.h>
 
 namespace dftfe
 {

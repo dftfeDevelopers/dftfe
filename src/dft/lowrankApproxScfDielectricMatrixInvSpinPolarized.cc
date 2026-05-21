@@ -16,8 +16,8 @@
 //
 // @author Sambit Das
 //
-#include <dft.h>
-#include <linearAlgebraOperations.h>
+#include <dftfe/dft.h>
+#include <dftfe/linearAlgebraOperations.h>
 #include <random>
 
 namespace dftfe

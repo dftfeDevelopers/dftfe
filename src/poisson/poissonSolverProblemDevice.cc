@@ -20,9 +20,9 @@
  *
  */
 
-#include <poissonSolverProblemDevice.h>
-#include <MemoryTransfer.h>
-#include <feevaluationWrapper.h>
+#include <dftfe/poissonSolverProblemDevice.h>
+#include <dftfe/MemoryTransfer.h>
+#include <dftfe/feevaluationWrapper.h>
 namespace dftfe
 {
   //

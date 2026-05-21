@@ -17,10 +17,10 @@
 // @author Gourab Panigrahi
 //
 
-#include <constants.h>
-#include <kerkerSolverProblemDevice.h>
-#include <MemoryTransfer.h>
-#include <feevaluationWrapper.h>
+#include <dftfe/constants.h>
+#include <dftfe/kerkerSolverProblemDevice.h>
+#include <dftfe/MemoryTransfer.h>
+#include <dftfe/feevaluationWrapper.h>
 
 namespace dftfe
 {

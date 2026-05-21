@@ -17,13 +17,13 @@
 // @author Sambit Das and Phani Motamarri
 //
 
-#include <cgPRPNonLinearSolver.h>
-#include <BFGSNonLinearSolver.h>
-#include <LBFGSNonLinearSolver.h>
-#include <dft.h>
-#include <dftUtils.h>
-#include <fileReaders.h>
-#include <geoOptIon.h>
+#include <dftfe/cgPRPNonLinearSolver.h>
+#include <dftfe/BFGSNonLinearSolver.h>
+#include <dftfe/LBFGSNonLinearSolver.h>
+#include <dftfe/dft.h>
+#include <dftfe/dftUtils.h>
+#include <dftfe/fileReaders.h>
+#include <dftfe/geoOptIon.h>
 #include <sys/stat.h>
 
 

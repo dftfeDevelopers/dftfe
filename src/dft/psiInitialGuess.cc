@@ -16,9 +16,9 @@
 //
 // @author Shiva Rudraraju, Phani Motamarri, Sambit Das
 //
-#include <dft.h>
-#include <fileReaders.h>
-#include <vectorUtilities.h>
+#include <dftfe/dft.h>
+#include <dftfe/fileReaders.h>
+#include <dftfe/vectorUtilities.h>
 #include <random>
 #include <boost/math/distributions/normal.hpp>
 #include <boost/math/special_functions/spherical_harmonic.hpp>

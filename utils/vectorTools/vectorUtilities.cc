@@ -17,8 +17,9 @@
 // @author Phani Motamarri, Sambit Das
 //
 
-#include <dftUtils.h>
-#include <vectorUtilities.h>
+#include <dftfe/config.h>
+#include <dftfe/dftUtils.h>
+#include <dftfe/vectorUtilities.h>
 
 #include <exception>
 

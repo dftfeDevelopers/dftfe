@@ -17,6 +17,7 @@
 // @author Bikash Kanungo, Vishal Subramanian
 //
 
+#include <dftfe/config.h>
 #include <BFGSInverseDFTSolver.h>
 
 namespace dftfe

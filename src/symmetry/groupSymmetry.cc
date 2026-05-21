@@ -17,8 +17,8 @@
 //  @author Nikhil Kodali
 
 
-#include "groupSymmetry.h"
-#include "linearAlgebraOperations.h"
+#include <dftfe/groupSymmetry.h>
+#include <dftfe/linearAlgebraOperations.h>
 #include <spglib.h>
 
 namespace dftfe
