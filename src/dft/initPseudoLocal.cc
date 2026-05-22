@@ -208,35 +208,9 @@ namespace dftfe
     auto norm = [&](const std::array<double, 3> &a) {
       return std::sqrt(dot(a, a));
     };
-    auto periodicImageRadiusCap = [&]() {
-      if (!hasPeriodicDirection)
-        return std::numeric_limits<double>::max();
-
-      double minImageDistance = std::numeric_limits<double>::max();
-      for (dftfe::Int i0 = -2; i0 <= 2; ++i0)
-        for (dftfe::Int i1 = -2; i1 <= 2; ++i1)
-          for (dftfe::Int i2 = -2; i2 <= 2; ++i2)
-            {
-              if ((periodicDirection[0] ? i0 : 0) == 0 &&
-                  (periodicDirection[1] ? i1 : 0) == 0 &&
-                  (periodicDirection[2] ? i2 : 0) == 0)
-                continue;
-              const std::array<dftfe::Int, 3> imageIndex = {
-                periodicDirection[0] ? i0 : 0,
-                periodicDirection[1] ? i1 : 0,
-                periodicDirection[2] ? i2 : 0};
-              std::array<double, 3> imageVector = {0.0, 0.0, 0.0};
-              for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
-                for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
-                  imageVector[iDim] +=
-                    imageIndex[jDim] * latticeVectors[jDim][iDim];
-              const double distance = norm(imageVector);
-              if (distance > 0.0)
-                minImageDistance = std::min(minImageDistance, distance);
-            }
-      return 0.5 * minImageDistance;
-    };
-    const double periodicCap = periodicImageRadiusCap();
+    const double periodicCap =
+      hasPeriodicDirection ? 0.5 * d_pspCutOffTrunc :
+                             std::numeric_limits<double>::max();
 
     auto atomFractionalCoordinates = [&](const dftfe::uInt atomId) {
       std::array<double, 3> corner = {0.0, 0.0, 0.0};

@@ -201,6 +201,19 @@ namespace dftfe
 
 
     if (d_dftParamsPtr->floatingNuclearCharges)
+      {
+        const dftfe::uInt floatingDisplacementSize = numberGlobalAtoms * 3;
+        if (d_netFloatingDispSinceLastBinsUpdate.size() !=
+            floatingDisplacementSize)
+          d_netFloatingDispSinceLastBinsUpdate.assign(floatingDisplacementSize,
+                                                      0.0);
+        if (d_netFloatingDispSinceLastCheckForSmearedChargeOverlaps.size() !=
+            floatingDisplacementSize)
+          d_netFloatingDispSinceLastCheckForSmearedChargeOverlaps.assign(
+            floatingDisplacementSize, 0.0);
+      }
+
+    if (d_dftParamsPtr->floatingNuclearCharges)
       for (dftfe::uInt iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
         for (dftfe::uInt idim = 0; idim < 3; idim++)
           {
@@ -428,8 +441,7 @@ namespace dftfe
               }
             else
               {
-                const dftfe::Int atomId =
-                  d_imageIdsTrunc[iAtom - numberGlobalAtoms];
+                atomId = d_imageIdsTrunc[iAtom - numberGlobalAtoms];
                 d_gaussianMovementAtomsNetDisplacements.push_back(
                   d_gaussianMovementAtomsNetDisplacements[atomId]);
               }
