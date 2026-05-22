@@ -333,6 +333,12 @@ namespace dftfe
                         const bool isResizeTempStorageForIntegralEvaluations);
 
       /**
+       * @brief Clears the internal temporary storage.
+       */
+      void
+      clearTempStorage();
+
+      /**
        * @brief Number of quadrature points per cell for the quadratureID set in reinit.
        */
       dftfe::uInt

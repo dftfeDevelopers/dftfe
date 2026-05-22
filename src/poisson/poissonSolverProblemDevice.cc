@@ -245,10 +245,9 @@ namespace dftfe
     tempvec.update_ghost_values();
     d_constraintsInfo.distribute(tempvec);
 
-    dealii::FEEvaluation<3, FEOrderElectro, FEOrderElectro + 1> fe_eval(
-      *d_matrixFreeDataPtr,
-      d_matrixFreeVectorComponent,
-      d_matrixFreeQuadratureComponentAX);
+    FEEvaluationWrapperClass<1> fe_eval(*d_matrixFreeDataPtr,
+                                        d_matrixFreeVectorComponent,
+                                        d_matrixFreeQuadratureComponentAX);
 
     dftfe::Int isPerformStaticCondensation =
       (tempvec.linfty_norm() > 1e-10) ? 1 : 0;
@@ -345,7 +344,7 @@ namespace dftfe
         // const dftfe::uInt   num_quad_points_sc =
         // d_matrixFreeDataPtr->get_quadrature(d_smearedChargeQuadratureId).size();
 
-        dealii::FEEvaluation<3, -1> fe_eval_sc(*d_matrixFreeDataPtr,
+        FEEvaluationWrapperClass<1> fe_eval_sc(*d_matrixFreeDataPtr,
                                                d_matrixFreeVectorComponent,
                                                d_smearedChargeQuadratureId);
 
@@ -406,7 +405,7 @@ namespace dftfe
       }
     else if (d_smearedChargeValuesPtr != NULL && d_isGradSmearedChargeRhs)
       {
-        dealii::FEEvaluation<3, -1> fe_eval_sc2(*d_matrixFreeDataPtr,
+        FEEvaluationWrapperClass<1> fe_eval_sc2(*d_matrixFreeDataPtr,
                                                 d_matrixFreeVectorComponent,
                                                 d_smearedChargeQuadratureId);
 

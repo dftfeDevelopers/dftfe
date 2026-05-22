@@ -431,13 +431,14 @@ namespace dftfe
               dftfe::basis::update_quadpoints;
 
             dftfe::basis::UpdateFlags updateFlagsSmearedCharge =
-              dftfe::basis::update_quadpoints | dftfe::basis::update_values |
-              dftfe::basis::update_jxw;
+              dftfe::basis::update_jxw | dftfe::basis::update_quadpoints;
 
             dftfe::basis::UpdateFlags updateFlagsphiTotAX =
               d_dftParamsPtr->useDevice &&
-                  d_dftParamsPtr->finiteElementPolynomialOrder !=
-                    d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics ?
+                  (d_dftParamsPtr->finiteElementPolynomialOrder !=
+                   d_dftParamsPtr
+                     ->finiteElementPolynomialOrderElectrostatics) &&
+                  d_dftParamsPtr->vselfGPU ?
                 dftfe::basis::update_gradients :
                 dftfe::basis::update_default;
 
@@ -475,8 +476,9 @@ namespace dftfe
             d_basisOperationsPtrElectroDevice->clear();
             d_basisOperationsPtrElectroDevice->init(
               *d_basisOperationsPtrElectroHost);
-            if (d_dftParamsPtr->finiteElementPolynomialOrder !=
-                d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics)
+            if ((d_dftParamsPtr->finiteElementPolynomialOrder !=
+                 d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics) &&
+                d_dftParamsPtr->vselfGPU)
               d_basisOperationsPtrElectroDevice->computeCellStiffnessMatrix(
                 d_phiTotAXQuadratureIdElectro, 50, true, false);
           }
@@ -497,8 +499,9 @@ namespace dftfe
               d_phiTotDofHandlerIndexElectro,
               quadratureIndices,
               updateFlags);
-            if (d_dftParamsPtr->finiteElementPolynomialOrder !=
-                d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics)
+            if ((d_dftParamsPtr->finiteElementPolynomialOrder !=
+                 d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics) &&
+                d_dftParamsPtr->vselfGPU)
               d_basisOperationsPtrElectroDevice->computeCellStiffnessMatrix(
                 d_phiTotAXQuadratureIdElectro, 50, true, false);
           }
