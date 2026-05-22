@@ -67,76 +67,82 @@ namespace dftfe
     //
     computing_timer.enter_subsection("Nuclear self-potential solve");
     computingTimerStandard.enter_subsection("Nuclear self-potential solve");
-#ifdef DFTFE_WITH_DEVICE
-    if (d_dftParamsPtr->useDevice and d_dftParamsPtr->vselfGPU)
-      d_vselfBinsManager.solveVselfInBinsDevice(
-        d_basisOperationsPtrElectroHost,
-        d_baseDofHandlerIndexElectro,
-        d_phiTotAXQuadratureIdElectro,
-        d_binsStartDofHandlerIndexElectro,
-        d_dftParamsPtr->finiteElementPolynomialOrder ==
-            d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics ?
-          d_basisOperationsPtrDevice->cellStiffnessMatrixBasisData() :
-          d_basisOperationsPtrElectroDevice->cellStiffnessMatrixBasisData(),
-        d_BLASWrapperPtr,
-        d_constraintsPRefined,
-        d_imagePositionsTrunc,
-        d_imageIdsTrunc,
-        d_imageChargesTrunc,
-        d_localVselfs,
-        d_bQuadValuesAllAtoms,
-        d_bQuadAtomIdsAllAtoms,
-        d_bQuadAtomIdsAllAtomsImages,
-        d_bCellNonTrivialAtomIds,
-        d_bCellNonTrivialAtomIdsBins,
-        d_bCellNonTrivialAtomImageIds,
-        d_bCellNonTrivialAtomImageIdsBins,
-        d_smearedChargeWidths,
-        d_smearedChargeScaling,
-        d_smearedChargeQuadratureIdElectro,
-        d_dftParamsPtr->smearedNuclearCharges);
+    if (d_dftParamsPtr->smearedNuclearChargePathway == "ANALYTIC_SMEARED_LOAD")
+      initAnalyticSmearedLoadData();
     else
-      d_vselfBinsManager.solveVselfInBins(
-        d_basisOperationsPtrElectroHost,
-        d_binsStartDofHandlerIndexElectro,
-        d_phiTotAXQuadratureIdElectro,
-        d_constraintsPRefined,
-        d_imagePositionsTrunc,
-        d_imageIdsTrunc,
-        d_imageChargesTrunc,
-        d_localVselfs,
-        d_bQuadValuesAllAtoms,
-        d_bQuadAtomIdsAllAtoms,
-        d_bQuadAtomIdsAllAtomsImages,
-        d_bCellNonTrivialAtomIds,
-        d_bCellNonTrivialAtomIdsBins,
-        d_bCellNonTrivialAtomImageIds,
-        d_bCellNonTrivialAtomImageIdsBins,
-        d_smearedChargeWidths,
-        d_smearedChargeScaling,
-        d_smearedChargeQuadratureIdElectro,
-        d_dftParamsPtr->smearedNuclearCharges);
+      {
+#ifdef DFTFE_WITH_DEVICE
+        if (d_dftParamsPtr->useDevice and d_dftParamsPtr->vselfGPU)
+          d_vselfBinsManager.solveVselfInBinsDevice(
+            d_basisOperationsPtrElectroHost,
+            d_baseDofHandlerIndexElectro,
+            d_phiTotAXQuadratureIdElectro,
+            d_binsStartDofHandlerIndexElectro,
+            d_dftParamsPtr->finiteElementPolynomialOrder ==
+                d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics ?
+              d_basisOperationsPtrDevice->cellStiffnessMatrixBasisData() :
+              d_basisOperationsPtrElectroDevice->cellStiffnessMatrixBasisData(),
+            d_BLASWrapperPtr,
+            d_constraintsPRefined,
+            d_imagePositionsTrunc,
+            d_imageIdsTrunc,
+            d_imageChargesTrunc,
+            d_localVselfs,
+            d_bQuadValuesAllAtoms,
+            d_bQuadAtomIdsAllAtoms,
+            d_bQuadAtomIdsAllAtomsImages,
+            d_bCellNonTrivialAtomIds,
+            d_bCellNonTrivialAtomIdsBins,
+            d_bCellNonTrivialAtomImageIds,
+            d_bCellNonTrivialAtomImageIdsBins,
+            d_smearedChargeWidths,
+            d_smearedChargeScaling,
+            d_smearedChargeQuadratureIdElectro,
+            d_dftParamsPtr->smearedNuclearCharges);
+        else
+          d_vselfBinsManager.solveVselfInBins(
+            d_basisOperationsPtrElectroHost,
+            d_binsStartDofHandlerIndexElectro,
+            d_phiTotAXQuadratureIdElectro,
+            d_constraintsPRefined,
+            d_imagePositionsTrunc,
+            d_imageIdsTrunc,
+            d_imageChargesTrunc,
+            d_localVselfs,
+            d_bQuadValuesAllAtoms,
+            d_bQuadAtomIdsAllAtoms,
+            d_bQuadAtomIdsAllAtomsImages,
+            d_bCellNonTrivialAtomIds,
+            d_bCellNonTrivialAtomIdsBins,
+            d_bCellNonTrivialAtomImageIds,
+            d_bCellNonTrivialAtomImageIdsBins,
+            d_smearedChargeWidths,
+            d_smearedChargeScaling,
+            d_smearedChargeQuadratureIdElectro,
+            d_dftParamsPtr->smearedNuclearCharges);
 #else
-    d_vselfBinsManager.solveVselfInBins(d_basisOperationsPtrElectroHost,
-                                        d_binsStartDofHandlerIndexElectro,
-                                        d_phiTotAXQuadratureIdElectro,
-                                        d_constraintsPRefined,
-                                        d_imagePositionsTrunc,
-                                        d_imageIdsTrunc,
-                                        d_imageChargesTrunc,
-                                        d_localVselfs,
-                                        d_bQuadValuesAllAtoms,
-                                        d_bQuadAtomIdsAllAtoms,
-                                        d_bQuadAtomIdsAllAtomsImages,
-                                        d_bCellNonTrivialAtomIds,
-                                        d_bCellNonTrivialAtomIdsBins,
-                                        d_bCellNonTrivialAtomImageIds,
-                                        d_bCellNonTrivialAtomImageIdsBins,
-                                        d_smearedChargeWidths,
-                                        d_smearedChargeScaling,
-                                        d_smearedChargeQuadratureIdElectro,
-                                        d_dftParamsPtr->smearedNuclearCharges);
+        d_vselfBinsManager.solveVselfInBins(
+          d_basisOperationsPtrElectroHost,
+          d_binsStartDofHandlerIndexElectro,
+          d_phiTotAXQuadratureIdElectro,
+          d_constraintsPRefined,
+          d_imagePositionsTrunc,
+          d_imageIdsTrunc,
+          d_imageChargesTrunc,
+          d_localVselfs,
+          d_bQuadValuesAllAtoms,
+          d_bQuadAtomIdsAllAtoms,
+          d_bQuadAtomIdsAllAtomsImages,
+          d_bCellNonTrivialAtomIds,
+          d_bCellNonTrivialAtomIdsBins,
+          d_bCellNonTrivialAtomImageIds,
+          d_bCellNonTrivialAtomImageIdsBins,
+          d_smearedChargeWidths,
+          d_smearedChargeScaling,
+          d_smearedChargeQuadratureIdElectro,
+          d_dftParamsPtr->smearedNuclearCharges);
 #endif
+      }
     computingTimerStandard.leave_subsection("Nuclear self-potential solve");
     computing_timer.leave_subsection("Nuclear self-potential solve");
 

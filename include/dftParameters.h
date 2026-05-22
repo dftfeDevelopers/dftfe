@@ -172,6 +172,8 @@ namespace dftfe
     double      xlbomdKernelRankUpdateFDParameter;
     bool        smearedNuclearCharges;
     bool        floatingNuclearCharges;
+    std::string smearedNuclearChargePathway;
+    double      analyticSmearedLoadRadius;
     bool        multipoleBoundaryConditions;
     bool        nonLinearCoreCorrection;
     dftfe::uInt maxLineSearchIterCGPRP;

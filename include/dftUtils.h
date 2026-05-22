@@ -51,74 +51,490 @@ namespace dftfe
     inline double
     smearedCharge(double r, double rc)
     {
-      double val;
       if (r > rc)
-        {
-          val = 0.0;
-        }
-      else
-        {
-          val = -21.0 * pow(r - rc, 3.0) *
-                (6.0 * r * r + 3.0 * r * rc + rc * rc) /
-                (5.0 * M_PI * pow(rc, 8.0));
-        }
-      return val;
+        return 0.0;
+
+      const double rmrc = r - rc;
+      const double r2   = r * r;
+      const double rc2  = rc * rc;
+      const double rc4  = rc2 * rc2;
+      const double rc8  = rc4 * rc4;
+
+      return -21.0 * rmrc * rmrc * rmrc * (6.0 * r2 + 3.0 * r * rc + rc2) /
+             (5.0 * M_PI * rc8);
     }
 
     inline double
     smearedChargeDr(double r, double rc)
     {
-      double val;
       if (r > rc)
-        {
-          val = 0.0;
-        }
-      else
-        {
-          val =
-            (-63.0 * pow(r - rc, 2.0) * (6.0 * r * r + 3.0 * r * rc + rc * rc) -
-             63.0 * pow(r - rc, 3.0) * (4.0 * r + rc)) /
-            (5.0 * M_PI * pow(rc, 8.0));
-        }
-      return val;
+        return 0.0;
+
+      const double rmrc  = r - rc;
+      const double rmrc2 = rmrc * rmrc;
+      const double r2    = r * r;
+      const double rc2   = rc * rc;
+      const double rc4   = rc2 * rc2;
+      const double rc8   = rc4 * rc4;
+
+      return (-63.0 * rmrc2 * (6.0 * r2 + 3.0 * r * rc + rc2) -
+              63.0 * rmrc2 * rmrc * (4.0 * r + rc)) /
+             (5.0 * M_PI * rc8);
     }
 
     inline double
     smearedPot(double r, double rc)
     {
-      double val;
       if (r > rc)
-        {
-          val = 1.0 / r;
-        }
-      else
-        {
-          val = (9.0 * pow(r, 7.0) - 30.0 * pow(r, 6.0) * rc +
-                 28.0 * pow(r, 5.0) * pow(rc, 2.0) -
-                 14.0 * pow(r, 2.0) * pow(rc, 5) + 12.0 * pow(rc, 7)) /
-                (5.0 * pow(rc, 8.0));
-        }
-      return val;
+        return 1.0 / r;
+
+      const double r2  = r * r;
+      const double r4  = r2 * r2;
+      const double r5  = r4 * r;
+      const double r6  = r5 * r;
+      const double r7  = r6 * r;
+      const double rc2 = rc * rc;
+      const double rc4 = rc2 * rc2;
+      const double rc5 = rc4 * rc;
+      const double rc7 = rc5 * rc2;
+      const double rc8 = rc4 * rc4;
+
+      return (9.0 * r7 - 30.0 * r6 * rc + 28.0 * r5 * rc2 - 14.0 * r2 * rc5 +
+              12.0 * rc7) /
+             (5.0 * rc8);
     }
 
     // derivative w.r.t r
     inline double
     smearedPotDr(double r, double rc)
     {
-      double val;
       if (r > rc)
-        {
-          val = -1.0 / pow(r, 2.0);
-        }
-      else
-        {
-          val = (63.0 * pow(r, 6.0) - 180.0 * pow(r, 5.0) * rc +
-                 140.0 * pow(r, 4.0) * pow(rc, 2.0) -
-                 28.0 * pow(r, 1.0) * pow(rc, 5)) /
-                (5.0 * pow(rc, 8.0));
-        }
-      return val;
+        return -1.0 / (r * r);
+
+      const double r2  = r * r;
+      const double r4  = r2 * r2;
+      const double r5  = r4 * r;
+      const double r6  = r5 * r;
+      const double rc2 = rc * rc;
+      const double rc4 = rc2 * rc2;
+      const double rc5 = rc4 * rc;
+      const double rc8 = rc4 * rc4;
+
+      return (63.0 * r6 - 180.0 * r5 * rc + 140.0 * r4 * rc2 - 28.0 * r * rc5) /
+             (5.0 * rc8);
     }
+
+
+    inline double
+    smearedPairInteractionEqualRadius(const double radius,
+                                      const double separation)
+    {
+      if (radius <= 0.0)
+        return 0.0;
+
+      if (separation <= 1.0e-14)
+        return (31924.0 / 17875.0) / radius;
+
+      if (separation >= 2.0 * radius)
+        return 1.0 / separation;
+
+      const double s = separation / radius;
+      double       p;
+      if (s < 1.0)
+        {
+          p = 81.0;
+          p = p * s - 360.0;
+          p = p * s + 1035.0;
+          p = p * s - 4200.0;
+          p = p * s + 10920.0;
+          p = p * s - 6552.0;
+          p = p * s - 30030.0;
+          p = p * s + 62920.0;
+          p = p * s;
+          p = p * s - 102960.0;
+          p = p * s;
+          p = p * s + 196560.0;
+          p = p * s;
+          p = p * s - 299600.0;
+          p = p * s;
+          p = p * s + 383088.0;
+          return p / 214500.0 / radius;
+        }
+
+      p = 27.0;
+      p = p * s - 360.0;
+      p = p * s + 1845.0;
+      p = p * s - 4200.0;
+      p = p * s + 3640.0;
+      p = p * s - 6552.0;
+      p = p * s + 30030.0;
+      p = p * s + 62920.0;
+      p = p * s - 772200.0;
+      p = p * s + 2471040.0;
+      p = p * s - 4420416.0;
+      p = p * s + 5241600.0;
+      p = p * s - 4542720.0;
+      p = p * s + 2867200.0;
+      p = p * s - 944640.0;
+      p = p * s - 178176.0;
+      p = p * s - 19940.0;
+      return -p / (214500.0 * s * radius);
+    }
+
+    inline double
+    smearedPairInteractionDerEqualRadius(const double radius,
+                                         const double separation)
+    {
+      if (radius <= 0.0)
+        return 0.0;
+
+      if (separation <= 1.0e-12)
+        return 0.0;
+
+      if (separation >= 2.0 * radius)
+        return -1.0 / (separation * separation);
+
+      const double s = separation / radius;
+      double       p;
+      if (s < 1.0)
+        {
+          p = 243.0;
+          p = p * s - 1008.0;
+          p = p * s + 2691.0;
+          p = p * s - 10080.0;
+          p = p * s + 24024.0;
+          p = p * s - 13104.0;
+          p = p * s - 54054.0;
+          p = p * s + 100672.0;
+          p = p * s;
+          p = p * s - 123552.0;
+          p = p * s;
+          p = p * s + 157248.0;
+          p = p * s;
+          p = p * s - 119840.0;
+          return s * p / 42900.0 / (radius * radius);
+        }
+
+      p = 81.0;
+      p = p * s - 1008.0;
+      p = p * s + 4797.0;
+      p = p * s - 10080.0;
+      p = p * s + 8008.0;
+      p = p * s - 13104.0;
+      p = p * s + 54054.0;
+      p = p * s + 100672.0;
+      p = p * s - 1081080.0;
+      p = p * s + 2965248.0;
+      p = p * s - 4420416.0;
+      p = p * s + 4193280.0;
+      p = p * s - 2725632.0;
+      p = p * s + 1146880.0;
+      p = p * s - 188928.0;
+      p = p * s;
+      p = p * s + 3988.0;
+      return -p / (42900.0 * s * s * radius * radius);
+    }
+
+
+    template <typename Function>
+    inline double
+    gaussLegendre32Integrate(const Function &function,
+                             const double    lower,
+                             const double    upper)
+    {
+      if (upper <= lower)
+        return 0.0;
+
+      static constexpr double points[16]  = {0.0483076656877383162348126,
+                                             0.1444719615827964934851864,
+                                             0.2392873622521370745446032,
+                                             0.3318686022821276497799168,
+                                             0.4213512761306353453641194,
+                                             0.5068999089322293900237475,
+                                             0.5877157572407623290407455,
+                                             0.6630442669302152009751152,
+                                             0.7321821187402896803874267,
+                                             0.7944837959679424069630973,
+                                             0.8493676137325699701336930,
+                                             0.8963211557660521239653072,
+                                             0.9349060759377396891709191,
+                                             0.9647622555875064307738119,
+                                             0.9856115115452683354001750,
+                                             0.9972638618494815635449811};
+      static constexpr double weights[16] = {0.0965400885147278005667648,
+                                             0.0956387200792748594190820,
+                                             0.0938443990808045656391802,
+                                             0.0911738786957638847128686,
+                                             0.0876520930044038111427715,
+                                             0.0833119242269467552221991,
+                                             0.0781938957870703064717409,
+                                             0.0723457941088485062253994,
+                                             0.0658222227763618468376501,
+                                             0.0586840934785355471452836,
+                                             0.0509980592623761761961632,
+                                             0.0428358980222266806568786,
+                                             0.0342738629130214331026877,
+                                             0.0253920653092620594557526,
+                                             0.0162743947309056706051706,
+                                             0.0070186100094700966004071};
+
+      const double center = 0.5 * (lower + upper);
+      const double half   = 0.5 * (upper - lower);
+      double       result = 0.0;
+      for (dftfe::uInt i = 0; i < 16; ++i)
+        result += weights[i] * (function(center - half * points[i]) +
+                                function(center + half * points[i]));
+      return half * result;
+    }
+
+
+    inline void
+    addUniqueBreakpoint(std::vector<double> &breakpoints,
+                        const double         value,
+                        const double         lower,
+                        const double         upper)
+    {
+      if (value <= lower || value >= upper)
+        return;
+
+      const double tolerance =
+        1.0e-12 * std::max(1.0, std::max(std::abs(lower), std::abs(upper)));
+      for (const double breakpoint : breakpoints)
+        if (std::abs(value - breakpoint) <= tolerance)
+          return;
+
+      breakpoints.push_back(value);
+    }
+
+
+    inline double
+    smearedPotentialShellAveragePrimitive(const double r, const double radius)
+    {
+      if (r <= 0.0 || radius <= 0.0)
+        return 0.0;
+
+      if (r >= radius)
+        {
+          const double radiusPrimitive =
+            (1.0 - 15.0 / 4.0 + 4.0 - 7.0 / 2.0 + 6.0) * radius / 5.0;
+          return radiusPrimitive + (r - radius);
+        }
+
+      const double r2  = r * r;
+      const double r4  = r2 * r2;
+      const double r7  = r4 * r2 * r;
+      const double r8  = r4 * r4;
+      const double r9  = r8 * r;
+      const double rc2 = radius * radius;
+      const double rc4 = rc2 * rc2;
+      const double rc5 = rc4 * radius;
+      const double rc7 = rc5 * rc2;
+      const double rc8 = rc4 * rc4;
+
+      return (r9 - 15.0 / 4.0 * radius * r8 + 4.0 * rc2 * r7 -
+              7.0 / 2.0 * rc5 * r4 + 6.0 * rc7 * r2) /
+             (5.0 * rc8);
+    }
+
+    inline double
+    smearedPotentialShellAverage(const double shellRadius,
+                                 const double centerSeparation,
+                                 const double potentialRadius)
+    {
+      if (shellRadius <= 1.0e-14)
+        return smearedPot(centerSeparation, potentialRadius);
+      if (centerSeparation <= 1.0e-14)
+        return smearedPot(shellRadius, potentialRadius);
+
+      const double upper = centerSeparation + shellRadius;
+      const double lower = std::abs(centerSeparation - shellRadius);
+      return (smearedPotentialShellAveragePrimitive(upper, potentialRadius) -
+              smearedPotentialShellAveragePrimitive(lower, potentialRadius)) /
+             (2.0 * centerSeparation * shellRadius);
+    }
+
+    inline double
+    smearedPairInteraction(const double radiusA,
+                           const double radiusB,
+                           const double separation)
+    {
+      if (radiusA <= 0.0 || radiusB <= 0.0)
+        return 0.0;
+
+      if (radiusA > radiusB)
+        return smearedPairInteraction(radiusB, radiusA, separation);
+
+      const double radiusScale = std::max(radiusA, radiusB);
+      if (std::abs(radiusA - radiusB) <= 1.0e-13 * std::max(1.0, radiusScale))
+        return smearedPairInteractionEqualRadius(0.5 * (radiusA + radiusB),
+                                                 separation);
+
+      if (separation >= radiusA + radiusB)
+        return 1.0 / separation;
+
+      auto integrand = [&](const double r) {
+        return 4.0 * M_PI * r * r * smearedCharge(r, radiusA) *
+               smearedPotentialShellAverage(r, separation, radiusB);
+      };
+
+      std::vector<double> breakpoints;
+      breakpoints.reserve(5);
+      breakpoints.push_back(0.0);
+      addUniqueBreakpoint(breakpoints,
+                          std::abs(separation - radiusB),
+                          0.0,
+                          radiusA);
+      addUniqueBreakpoint(breakpoints, separation, 0.0, radiusA);
+      addUniqueBreakpoint(breakpoints, separation + radiusB, 0.0, radiusA);
+      breakpoints.push_back(radiusA);
+      std::sort(breakpoints.begin(), breakpoints.end());
+
+      double integral = 0.0;
+      for (dftfe::uInt iInterval = 0; iInterval + 1 < breakpoints.size();
+           ++iInterval)
+        integral += gaussLegendre32Integrate(integrand,
+                                             breakpoints[iInterval],
+                                             breakpoints[iInterval + 1]);
+      return integral;
+    }
+
+    inline double
+    smearedPairInteractionDer(const double radiusA,
+                              const double radiusB,
+                              const double separation)
+    {
+      if (radiusA <= 0.0 || radiusB <= 0.0)
+        return 0.0;
+
+      if (radiusA > radiusB)
+        return smearedPairInteractionDer(radiusB, radiusA, separation);
+
+      if (separation <= 1.0e-12)
+        return 0.0;
+
+      const double radiusScale = std::max(radiusA, radiusB);
+      if (std::abs(radiusA - radiusB) <= 1.0e-13 * std::max(1.0, radiusScale))
+        return smearedPairInteractionDerEqualRadius(0.5 * (radiusA + radiusB),
+                                                    separation);
+
+      if (separation >= radiusA + radiusB)
+        return -1.0 / (separation * separation);
+
+      double h = 1.0e-5 * std::max(1.0, std::max(separation, radiusScale));
+      if (h >= 0.5 * separation)
+        h = 0.5 * separation;
+
+      if (separation > 2.0 * h)
+        {
+          const double fPlusTwo =
+            smearedPairInteraction(radiusA, radiusB, separation + 2.0 * h);
+          const double fPlus =
+            smearedPairInteraction(radiusA, radiusB, separation + h);
+          const double fMinus =
+            smearedPairInteraction(radiusA, radiusB, separation - h);
+          const double fMinusTwo =
+            smearedPairInteraction(radiusA, radiusB, separation - 2.0 * h);
+          return (-fPlusTwo + 8.0 * fPlus - 8.0 * fMinus + fMinusTwo) /
+                 (12.0 * h);
+        }
+
+      const double fPlus =
+        smearedPairInteraction(radiusA, radiusB, separation + h);
+      const double fMinus =
+        smearedPairInteraction(radiusA, radiusB, separation - h);
+      return (fPlus - fMinus) / (2.0 * h);
+    }
+
+    inline double
+    smearedPairInteractionDifference(const double broadRadiusA,
+                                     const double broadRadiusB,
+                                     const double referenceRadiusA,
+                                     const double referenceRadiusB,
+                                     const double separation)
+    {
+      if (broadRadiusA <= 0.0 || broadRadiusB <= 0.0 ||
+          referenceRadiusA <= 0.0 || referenceRadiusB <= 0.0)
+        return 0.0;
+
+      const double broad =
+        smearedPairInteraction(broadRadiusA, broadRadiusB, separation);
+      const double reference =
+        smearedPairInteraction(referenceRadiusA, referenceRadiusB, separation);
+      return broad - reference;
+    }
+
+    inline double
+    smearedPairInteractionDerDifference(const double broadRadiusA,
+                                        const double broadRadiusB,
+                                        const double referenceRadiusA,
+                                        const double referenceRadiusB,
+                                        const double separation)
+    {
+      if (broadRadiusA <= 0.0 || broadRadiusB <= 0.0 ||
+          referenceRadiusA <= 0.0 || referenceRadiusB <= 0.0)
+        return 0.0;
+
+      if (separation <= 1.0e-12)
+        return 0.0;
+
+      const double maxBroad = std::max(broadRadiusA, broadRadiusB);
+      const double maxRef   = std::max(referenceRadiusA, referenceRadiusB);
+      if (std::abs(broadRadiusA - referenceRadiusA) <=
+            1.0e-13 * std::max(1.0, std::max(maxBroad, maxRef)) &&
+          std::abs(broadRadiusB - referenceRadiusB) <=
+            1.0e-13 * std::max(1.0, std::max(maxBroad, maxRef)))
+        return 0.0;
+
+      const double broad =
+        smearedPairInteractionDer(broadRadiusA, broadRadiusB, separation);
+      const double reference = smearedPairInteractionDer(referenceRadiusA,
+                                                         referenceRadiusB,
+                                                         separation);
+      return broad - reference;
+    }
+
+
+    inline double
+    smearedPairInteractionDifferenceEqualRadius(const double broadRadius,
+                                                const double referenceRadius,
+                                                const double separation)
+    {
+      if (broadRadius <= 0.0 || referenceRadius <= 0.0)
+        return 0.0;
+
+      if (std::abs(broadRadius - referenceRadius) <= 1.0e-14)
+        return 0.0;
+
+      const double maxRadius =
+        broadRadius > referenceRadius ? broadRadius : referenceRadius;
+      if (separation >= 2.0 * maxRadius)
+        return 0.0;
+
+      return smearedPairInteractionDifference(
+        broadRadius, broadRadius, referenceRadius, referenceRadius, separation);
+    }
+
+    inline double
+    smearedPairInteractionDerDifferenceEqualRadius(const double broadRadius,
+                                                   const double referenceRadius,
+                                                   const double separation)
+    {
+      if (broadRadius <= 0.0 || referenceRadius <= 0.0)
+        return 0.0;
+
+      if (separation <= 1.0e-12 ||
+          std::abs(broadRadius - referenceRadius) <= 1.0e-14)
+        return 0.0;
+
+      const double maxRadius =
+        broadRadius > referenceRadius ? broadRadius : referenceRadius;
+      if (separation >= 2.0 * maxRadius)
+        return 0.0;
+
+      return smearedPairInteractionDerDifference(
+        broadRadius, broadRadius, referenceRadius, referenceRadius, separation);
+    }
+
 
     inline std::vector<double>
     getFractionalCoordinates(

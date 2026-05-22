@@ -890,7 +890,6 @@ namespace dftfe
     const double allElectronElectrostaticEnergy =
       (totalelectrostaticEnergyPot + totalNuclearElectrostaticEnergy);
 
-
     double totalkineticEnergy = -totalpotentialTimesRho + bandEnergy;
 
     // output

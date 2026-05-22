@@ -271,53 +271,56 @@ namespace dftfe
     d_phiTotDofHandlerIndexElectro = d_constraintsVectorElectro.size() - 1;
 
     d_binsStartDofHandlerIndexElectro = d_constraintsVectorElectro.size();
-
-    double init_bins;
-    MPI_Barrier(d_mpiCommParent);
-    init_bins = MPI_Wtime();
-    //
-    // Dirichlet BC constraints on the boundary of fictitious ball
-    // used for computing self-potential (Vself) using Poisson problem
-    // with atoms belonging to a given bin
-    //
-    if (meshOnlyDeformed)
+    if (d_dftParamsPtr->smearedNuclearChargePathway != "ANALYTIC_SMEARED_LOAD")
       {
-        computing_timer.enter_subsection("Update atom bins bc");
-        d_vselfBinsManager.updateBinsBc(d_constraintsVectorElectro,
-                                        d_constraintsPRefinedOnlyHanging,
-                                        d_dofHandlerPRefined,
-                                        d_constraintsPRefined,
-                                        atomLocations,
-                                        d_imagePositionsTrunc,
-                                        d_imageIdsTrunc,
-                                        d_imageChargesTrunc,
-                                        vselfPerturbationUpdateForStress);
-        computing_timer.leave_subsection("Update atom bins bc");
-      }
-    else
-      {
-        computing_timer.enter_subsection("Create atom bins");
-        d_vselfBinsManager.createAtomBins(d_constraintsVectorElectro,
-                                          d_constraintsPRefinedOnlyHanging,
-                                          d_dofHandlerPRefined,
-                                          d_constraintsPRefined,
-                                          atomLocations,
-                                          d_imagePositionsTrunc,
-                                          d_imageIdsTrunc,
-                                          d_imageChargesTrunc,
-                                          d_dftParamsPtr->radiusAtomBall);
+        double init_bins;
+        MPI_Barrier(d_mpiCommParent);
+        init_bins = MPI_Wtime();
+        //
+        // Dirichlet BC constraints on the boundary of fictitious ball
+        // used for computing self-potential (Vself) using Poisson problem
+        // with atoms belonging to a given bin
+        //
+        if (meshOnlyDeformed)
+          {
+            computing_timer.enter_subsection("Update atom bins bc");
+            d_vselfBinsManager.updateBinsBc(d_constraintsVectorElectro,
+                                            d_constraintsPRefinedOnlyHanging,
+                                            d_dofHandlerPRefined,
+                                            d_constraintsPRefined,
+                                            atomLocations,
+                                            d_imagePositionsTrunc,
+                                            d_imageIdsTrunc,
+                                            d_imageChargesTrunc,
+                                            vselfPerturbationUpdateForStress);
+            computing_timer.leave_subsection("Update atom bins bc");
+          }
+        else
+          {
+            computing_timer.enter_subsection("Create atom bins");
+            d_vselfBinsManager.createAtomBins(d_constraintsVectorElectro,
+                                              d_constraintsPRefinedOnlyHanging,
+                                              d_dofHandlerPRefined,
+                                              d_constraintsPRefined,
+                                              atomLocations,
+                                              d_imagePositionsTrunc,
+                                              d_imageIdsTrunc,
+                                              d_imageChargesTrunc,
+                                              d_dftParamsPtr->radiusAtomBall);
 
-        d_netFloatingDispSinceLastBinsUpdate.clear();
-        d_netFloatingDispSinceLastBinsUpdate.resize(atomLocations.size() * 3,
-                                                    0.0);
-        computing_timer.leave_subsection("Create atom bins");
+            d_netFloatingDispSinceLastBinsUpdate.clear();
+            d_netFloatingDispSinceLastBinsUpdate.resize(atomLocations.size() *
+                                                          3,
+                                                        0.0);
+            computing_timer.leave_subsection("Create atom bins");
+          }
+        MPI_Barrier(d_mpiCommParent);
+        init_bins = MPI_Wtime() - init_bins;
+        if (d_dftParamsPtr->verbosity >= 4)
+          pcout
+            << "updateAtomPositionsAndMoveMesh: initBoundaryConditions: Time taken for bins update: "
+            << init_bins << std::endl;
       }
-    MPI_Barrier(d_mpiCommParent);
-    init_bins = MPI_Wtime() - init_bins;
-    if (d_dftParamsPtr->verbosity >= 4)
-      pcout
-        << "updateAtomPositionsAndMoveMesh: initBoundaryConditions: Time taken for bins update: "
-        << init_bins << std::endl;
 
     d_constraintsVectorElectro.push_back(&d_constraintsPRefinedOnlyHanging);
     d_phiExtDofHandlerIndexElectro = d_constraintsVectorElectro.size() - 1;

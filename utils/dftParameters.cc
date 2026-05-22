@@ -464,6 +464,18 @@ namespace dftfe
           "true",
           dealii::Patterns::Bool(),
           "[Developer] Nuclear charges are allowed to float independent of the FEM mesh nodal positions. Only allowed for pseudopotential calculations. Internally set to false for all-electron calculations.");
+
+        prm.declare_entry(
+          "SMEARED NUCLEAR CHARGE PATHWAY",
+          "LEGACY_VSELF",
+          dealii::Patterns::Selection("LEGACY_VSELF|ANALYTIC_SMEARED_LOAD"),
+          "[Developer] Selector for pseudopotential electrostatics charge handling. LEGACY_VSELF preserves the per-bin smeared nuclear self-potential solve. ANALYTIC_SMEARED_LOAD assembles the ionic Poisson load directly from the analytic smeared charge on quadrature points and uses the corresponding analytic self-potential in local-PSP energy, force, and stress terms.");
+
+        prm.declare_entry(
+          "ANALYTIC SMEARED LOAD RADIUS",
+          "0.0",
+          dealii::Patterns::Double(0.0),
+          "[Developer] Broad smeared-charge support radius R_g used by SMEARED NUCLEAR CHARGE PATHWAY=ANALYTIC_SMEARED_LOAD. Set to 0 to choose atom-type widths from the local pseudopotential tail radii.");
       }
       prm.leave_subsection();
 
@@ -1455,6 +1467,8 @@ namespace dftfe
     useDensityMatrixPerturbationRankUpdates        = false;
     smearedNuclearCharges                          = false;
     floatingNuclearCharges                         = false;
+    smearedNuclearChargePathway                    = "LEGACY_VSELF";
+    analyticSmearedLoadRadius                      = 0.0;
     multipoleBoundaryConditions                    = false;
     nonLinearCoreCorrection                        = false;
     maxLineSearchIterCGPRP                         = 5;
@@ -1656,6 +1670,9 @@ namespace dftfe
       pinnedNodeForPBC       = prm.get_bool("POINT WISE DIRICHLET CONSTRAINT");
       smearedNuclearCharges  = prm.get_bool("SMEARED NUCLEAR CHARGES");
       floatingNuclearCharges = prm.get_bool("FLOATING NUCLEAR CHARGES");
+      smearedNuclearChargePathway = prm.get("SMEARED NUCLEAR CHARGE PATHWAY");
+      analyticSmearedLoadRadius =
+        prm.get_double("ANALYTIC SMEARED LOAD RADIUS");
       multipoleBoundaryConditions =
         prm.get_bool("MULTIPOLE BOUNDARY CONDITIONS");
     }
@@ -1939,6 +1956,21 @@ namespace dftfe
         smearedNuclearCharges,
         dealii::ExcMessage(
           "DFT-FE Error: FLOATING NUCLEAR CHARGES can only be used if SMEARED NUCLEAR CHARGES is set to true."));
+    if (smearedNuclearChargePathway == "ANALYTIC_SMEARED_LOAD")
+      {
+        AssertThrow(
+          isPseudopotential,
+          dealii::ExcMessage(
+            "DFT-FE Error: the selected SMEARED NUCLEAR CHARGE PATHWAY is only supported for pseudopotential calculations."));
+        AssertThrow(
+          smearedNuclearCharges,
+          dealii::ExcMessage(
+            "DFT-FE Error: the selected SMEARED NUCLEAR CHARGE PATHWAY requires SMEARED NUCLEAR CHARGES=true."));
+        AssertThrow(
+          analyticSmearedLoadRadius >= 0.0,
+          dealii::ExcMessage(
+            "DFT-FE Error: ANALYTIC SMEARED LOAD RADIUS must be non-negative for ANALYTIC_SMEARED_LOAD."));
+      }
 #ifdef USE_COMPLEX
     if (solverMode == "BANDS")
       AssertThrow(

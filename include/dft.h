@@ -1040,7 +1040,8 @@ namespace dftfe
       std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
         &_pseudoValuesAtoms);
 
-
+    void
+    initAnalyticSmearedLoadData();
 
     /**
      *@brief Sets homegeneous dirichlet boundary conditions for total potential constraints on
