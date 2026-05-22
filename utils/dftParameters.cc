@@ -467,7 +467,7 @@ namespace dftfe
 
         prm.declare_entry(
           "SMEARED NUCLEAR CHARGE PATHWAY",
-          "LEGACY_VSELF",
+          "ANALYTIC_SMEARED_LOAD",
           dealii::Patterns::Selection("LEGACY_VSELF|ANALYTIC_SMEARED_LOAD"),
           "[Developer] Selector for pseudopotential electrostatics charge handling. LEGACY_VSELF preserves the per-bin smeared nuclear self-potential solve. ANALYTIC_SMEARED_LOAD assembles the ionic Poisson load directly from the analytic smeared charge on quadrature points and uses the corresponding analytic self-potential in local-PSP energy, force, and stress terms.");
 
