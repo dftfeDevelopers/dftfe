@@ -24,7 +24,6 @@
 #  include <dftfe/DeviceDataTypeOverloads.h>
 #  include <dftfe/DeviceKernelLauncherHelpers.h>
 #  include <dftfe/DeviceTypeConfigHalfPrec.h>
-#  include <dftfe/DeviceTypeConfigCompress.hip.h>
 #  include <dftfe/Exceptions.h>
 namespace dftfe
 {

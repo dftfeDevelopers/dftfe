@@ -19,13 +19,15 @@
 //  Specialised for bits_per_value in {8, 10, 12, 16} with a 1-thread-per-
 //  4-value-block design (no atomics, no cross-block packing).
 
+#include <dftfe/config.h>
+
 #ifdef DFTFE_WITH_DEVICE
 
-#  include <DeviceKernelLauncherHelpers.h>
-#  include <DeviceDataTypeOverloads.h>
-#  include <DeviceTypeConfig.h>
-#  include <TypeConfig.h>
-#  include <compressionWrapper.h>
+#  include <dftfe/DeviceKernelLauncherHelpers.h>
+#  include <dftfe/DeviceDataTypeOverloads.h>
+#  include <dftfe/DeviceTypeConfig.h>
+#  include <dftfe/TypeConfig.h>
+#  include <dftfe/compressionWrapper.h>
 #  include <climits>
 #  include <cmath>
 #  include <complex>

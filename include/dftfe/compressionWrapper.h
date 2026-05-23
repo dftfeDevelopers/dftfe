@@ -1,11 +1,13 @@
 #ifndef DFTFE_COMPRESSION_WRAPPER_H
 #define DFTFE_COMPRESSION_WRAPPER_H
 
+#include <dftfe/config.h>
+
 #ifdef DFTFE_WITH_DEVICE
 #  include <cstddef>
 #  include <complex>
-#  include <TypeConfig.h>
-#  include <DeviceTypeConfig.h>
+#  include <dftfe/TypeConfig.h>
+#  include <dftfe/DeviceTypeConfig.h>
 
 namespace dftfe
 {
