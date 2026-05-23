@@ -17,9 +17,9 @@
 // @author Gourab Panigrahi
 //
 
-#include <linearSolverCGDevice.h>
-#include <MemoryTransfer.h>
-#include "linearSolverCGDeviceKernels.h"
+#include <dftfe/linearSolverCGDevice.h>
+#include <dftfe/MemoryTransfer.h>
+#include <dftfe/linearSolverCGDeviceKernels.h>
 
 namespace dftfe
 {

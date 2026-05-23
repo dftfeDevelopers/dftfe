@@ -16,9 +16,10 @@
 //
 // @author Phani Motamarri, Sambit Das
 //
+#include <dftfe/config.h>
 #include <deal.II/base/data_out_base.h>
 #include <deal.II/base/parameter_handler.h>
-#include <dftParameters.h>
+#include <dftfe/dftParameters.h>
 #include <fstream>
 #include <iostream>
 

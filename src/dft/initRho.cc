@@ -20,11 +20,12 @@
 //
 // Initialize rho by reading in single-atom electron-density and fit a spline
 //
-#include <dftParameters.h>
-#include <dft.h>
-#include <dftUtils.h>
-#include <fileReaders.h>
-#include <vectorUtilities.h>
+#include <dftfe/config.h>
+#include <dftfe/dftParameters.h>
+#include <dftfe/dft.h>
+#include <dftfe/dftUtils.h>
+#include <dftfe/fileReaders.h>
+#include <dftfe/vectorUtilities.h>
 #include <cmath>
 
 namespace dftfe

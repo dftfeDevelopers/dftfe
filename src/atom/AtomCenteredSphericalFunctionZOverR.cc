@@ -15,7 +15,7 @@
 // ---------------------------------------------------------------------
 //
 
-#include "AtomCenteredSphericalFunctionZOverR.h"
+#include <dftfe/AtomCenteredSphericalFunctionZOverR.h>
 #include "vector"
 namespace dftfe
 {

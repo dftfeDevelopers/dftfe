@@ -17,8 +17,9 @@
 // @author Sambit Das
 //
 
-#include <dft.h>
-#include <densityFirstOrderResponseCalculator.h>
+#include <dftfe/config.h>
+#include <dftfe/dft.h>
+#include <dftfe/densityFirstOrderResponseCalculator.h>
 
 namespace dftfe
 {

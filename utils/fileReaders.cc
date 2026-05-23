@@ -16,8 +16,8 @@
 //
 // @author Shiva Rudraraju, Phani Motamarri, Sambit Das
 //
-#include <fileReaders.h>
-#include <headers.h>
+#include <dftfe/fileReaders.h>
+#include <dftfe/headers.h>
 
 #include <fstream>
 #include <iostream>

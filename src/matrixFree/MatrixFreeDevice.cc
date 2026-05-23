@@ -20,8 +20,9 @@
  *
  */
 
-#include <MatrixFreeDevice.h>
-#include "DeviceKernelLauncherHelpers.h"
+#include <dftfe/config.h>
+#include <dftfe/MatrixFreeDevice.h>
+#include <dftfe/DeviceKernelLauncherHelpers.h>
 
 namespace dftfe
 {

@@ -17,16 +17,17 @@
 // @author Nikhil Kodali
 //
 
-#include <KohnShamDFTBaseOperator.h>
-#include <KohnShamDFTOperatorKernels.h>
-#include <ExcDFTPlusU.h>
+#include <dftfe/config.h>
+#include <dftfe/KohnShamDFTBaseOperator.h>
+#include <dftfe/KohnShamDFTOperatorKernels.h>
+#include <dftfe/ExcDFTPlusU.h>
 #ifdef _OPENMP
 #  include <omp.h>
 #else
 #  define omp_get_thread_num() 0
 #endif
 #if defined(DFTFE_WITH_DEVICE)
-#  include <DeviceAPICalls.h>
+#  include <dftfe/DeviceAPICalls.h>
 #endif
 
 namespace dftfe

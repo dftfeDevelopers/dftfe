@@ -22,7 +22,7 @@
 //
 // @author Sambit Das (2018)
 //
-#include "../../include/nonLinearSolver.h"
+#include <dftfe/nonLinearSolver.h>
 
 namespace dftfe
 {

@@ -17,15 +17,16 @@
 // @author Vishal Subramanian
 //
 
-#include <excManager.h>
-#include <excDensityGGAClass.h>
-#include <excDensityLDAClass.h>
-#include <excDensityLLMGGAClass.h>
-#include <excTauMGGAClass.h>
-#include "ExcDFTPlusU.h"
-#include <excManagerKernels.h>
+#include <dftfe/config.h>
+#include <dftfe/excManager.h>
+#include <dftfe/excDensityGGAClass.h>
+#include <dftfe/excDensityLDAClass.h>
+#include <dftfe/excDensityLLMGGAClass.h>
+#include <dftfe/excTauMGGAClass.h>
+#include <dftfe/ExcDFTPlusU.h>
+#include <dftfe/excManagerKernels.h>
 #if defined(DFTFE_WITH_DEVICE)
-#  include <DeviceAPICalls.h>
+#  include <dftfe/DeviceAPICalls.h>
 #endif
 namespace dftfe
 {

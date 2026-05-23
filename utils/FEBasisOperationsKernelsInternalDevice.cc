@@ -15,7 +15,7 @@
 // ---------------------------------------------------------------------
 //
 
-#include <FEBasisOperationsKernelsInternal.h>
+#include <dftfe/FEBasisOperationsKernelsInternal.h>
 
 
 namespace dftfe

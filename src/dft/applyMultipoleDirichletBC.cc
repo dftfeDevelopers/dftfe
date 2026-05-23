@@ -16,7 +16,7 @@
 //
 // @author  Nikhil
 //
-#include <dft.h>
+#include <dftfe/dft.h>
 namespace dftfe
 {
   template <dftfe::utils::MemorySpace memorySpace>

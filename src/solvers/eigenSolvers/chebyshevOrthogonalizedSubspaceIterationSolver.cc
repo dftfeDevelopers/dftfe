@@ -16,11 +16,12 @@
 //
 // @author Phani Motamarri, Sambit Das
 
-#include <chebyshevOrthogonalizedSubspaceIterationSolver.h>
-#include <dftUtils.h>
-#include <linearAlgebraOperations.h>
-#include <linearAlgebraOperationsCPU.h>
-#include <vectorUtilities.h>
+#include <dftfe/config.h>
+#include <dftfe/chebyshevOrthogonalizedSubspaceIterationSolver.h>
+#include <dftfe/dftUtils.h>
+#include <dftfe/linearAlgebraOperations.h>
+#include <dftfe/linearAlgebraOperationsCPU.h>
+#include <dftfe/vectorUtilities.h>
 
 static const dftfe::uInt order_lookup[][2] = {
   {500, 24}, // <= 500 ~> chebyshevOrder = 24

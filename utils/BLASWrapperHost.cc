@@ -14,9 +14,9 @@
 //
 // ---------------------------------------------------------------------
 //
-#include <BLASWrapper.h>
-#include <linearAlgebraOperations.h>
-#include <dftUtils.h>
+#include <dftfe/BLASWrapper.h>
+#include <dftfe/linearAlgebraOperations.h>
+#include <dftfe/dftUtils.h>
 namespace dftfe
 {
   namespace linearAlgebra

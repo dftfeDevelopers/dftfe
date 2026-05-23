@@ -16,7 +16,7 @@
 //
 // @author Phani Motamarri
 
-#include <linearSolverProblemDevice.h>
+#include <dftfe/linearSolverProblemDevice.h>
 
 namespace dftfe
 {

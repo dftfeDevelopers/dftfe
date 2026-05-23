@@ -1,82 +1,131 @@
 ##
-#  CMakeList file for DFT-FE
+# CMakeLists.txt for DFT-FE
+#
+# DFT-FE is built as an installable shared library (libdftfeReal.so or
+# libdftfeComplex.so) plus a thin executable wrapper (dftfe).
+#
+# Downstream projects consume the library via:
+#   find_package(dftfe REQUIRED HINTS <prefix>/lib/cmake/dftfe)
+#   target_link_libraries(myapp PRIVATE dftfe::dftfeReal)
+#
+# --- Feature flag convention ---
+#
+# Build-time feature flags (USE_REAL, DFTFE_WITH_DEVICE, etc.) are propagated
+# through config.h, not through INTERFACE_COMPILE_DEFINITIONS. The pattern is:
+#
+#   1. Set a CMake variable when the feature is active (done in this file):
+#        set(DFTFE_WITH_MY_FEATURE 1)
+#
+#   2. Add a matching #cmakedefine to include/dftfe/config.h.in:
+#        #cmakedefine DFTFE_WITH_MY_FEATURE
+#
+#   3. Include config.h in any header/source that tests the flag:
+#        #include <dftfe/config.h>
+#        #ifdef DFTFE_WITH_MY_FEATURE ...
+#
+# configure_file() (called via dftfeGenerateConfig()) reads the CMake variables
+# and writes the corresponding #define / #undef lines into config.h at build
+# time. The installed config.h gives consumers the same flag values without
+# requiring any -D flags on their compiler command line.
+#
+# The sole exception is DFTFE_PATH (the runtime data directory), whose value
+# differs between the build tree and the install tree. It is expressed as a
+# generator expression and kept as a PRIVATE target_compile_definition.
 ##
-CMAKE_MINIMUM_REQUIRED(VERSION 3.17)
+
+# @author Bikash Kanungo
+
+cmake_minimum_required(VERSION 3.17)
+
+# ── Version ───────────────────────────────────────────────────────────────────
+set(DFTFE_VERSION "1.0-pre")
+
 set(CMAKE_CXX_STANDARD 17
     CACHE STRING "Minimum required C++ standard (default is 17)")
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-# Set the name of the project and target:
-SET(TARGET "dftfe_exe")
-IF (WITH_COMPLEX)
-  SET(TARGETLIB "dftfeComplex")
-ELSE()
-  SET(TARGETLIB "dftfeReal")
-ENDIF()
-OPTION(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 
-SET(TARGET_VERSION "1.0-pre") # used in docs/Doxyfile.in
-
-add_definitions(-w)
-
+# 64-bit integer workaround for Intel SYCL (must precede project())
 IF (USE_64BIT_INT)
   IF ("${GPU_VENDOR}" STREQUAL "intel")
     add_compile_options("-fno-sycl-id-queries-fit-in-int")
   ENDIF()
 ENDIF()
 
-PROJECT(${TARGET} LANGUAGES CXX)
+# ── Project ───────────────────────────────────────────────────────────────────
+project(dftfe VERSION 1.0 LANGUAGES CXX)
+
+# Enable GPU languages after project() so the host compiler is already known.
 IF (WITH_GPU)
     IF ("${GPU_LANG}" STREQUAL "cuda")
       enable_language(CUDA)
     ELSEIF ("${GPU_LANG}" STREQUAL "hip")
       enable_language(HIP)
     ELSEIF ("${GPU_LANG}" STREQUAL "sycl")
+      # SYCL uses icpx as the host compiler; no separate language keyword needed.
     ELSE ()
       MESSAGE(FATAL_ERROR "\n"
-    "*** Could not find valid GPU_LANG=cuda/hip ***\n\n"
+    "*** Could not find valid GPU_LANG=cuda/hip/sycl ***\n\n"
     )
     ENDIF()
 ENDIF()
 
+# Suppress all warnings (legacy behaviour; keeps existing build output clean)
+add_definitions(-w)
 
-ADD_EXECUTABLE(${TARGET}   src/main.cc)
-set_property(TARGET "dftfe_exe" PROPERTY OUTPUT_NAME "dftfe")
+# ── Target names ─────────────────────────────────────────────────────────────
+SET(TARGET "dftfe_exe")
+IF (WITH_COMPLEX)
+  SET(TARGETLIB "dftfeComplex")
+ELSE()
+  SET(TARGETLIB "dftfeReal")
+ENDIF()
 
+OPTION(BUILD_SHARED_LIBS "Build using shared libraries" ON)
+
+# ── Module path ──────────────────────────────────────────────────────────────
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
-# Retrieve the current Git commit hash
+# ── RPATH handling ────────────────────────────────────────────────────────────
+IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  set(CMAKE_MACOSX_RPATH ON)
+ENDIF()
+SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
+SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+LIST(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
+IF("${isSystemDir}" STREQUAL "-1")
+   SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+ENDIF("${isSystemDir}" STREQUAL "-1")
+SET(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
+
+# ── Git information ───────────────────────────────────────────────────────────
+# git_info.h is generated into the build tree (not the source tree) so that
+# the source directory is not modified during configuration.
 execute_process(
     COMMAND git rev-parse HEAD
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     OUTPUT_VARIABLE GIT_COMMIT
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
-
-# Retrieve the current Git branch name
 execute_process(
     COMMAND git rev-parse --abbrev-ref HEAD
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     OUTPUT_VARIABLE GIT_BRANCH
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
-
-# Configure the header file with the retrieved Git information
 configure_file(
-    ${CMAKE_SOURCE_DIR}/include/git_info.h.in
-    ${CMAKE_SOURCE_DIR}/include/git_info.h
+    ${CMAKE_SOURCE_DIR}/include/dftfe/git_info.h.in
+    ${CMAKE_BINARY_DIR}/include/dftfe/git_info.h
     @ONLY
 )
 
-if(ENABLE_MPI)
-  find_package(MPI REQUIRED)
-  include_directories(${MPI_CXX_INCLUDE_PATH})
-  set(DFTFE_MPI_LIBRARIES ${MPI_CXX_LIBRARIES})
-endif()
+# ── Executable wrapper ────────────────────────────────────────────────────────
+ADD_EXECUTABLE(${TARGET} src/main.cc)
+set_property(TARGET "dftfe_exe" PROPERTY OUTPUT_NAME "dftfe")
 
-
-# Declare all source files the target consists of:
+# ── Source lists ──────────────────────────────────────────────────────────────
 SET(TARGET_SRC
   ./src/dftfeWrapper.cc
   ./src/dft/dft.cc
@@ -284,24 +333,18 @@ SET(DEVICE_SRC
   ./src/excManager/exchangeCorrelationFunctionalEvaluatorDevice.cc
   ./src/force/configurationalForceKernels.cc
   )
-
 ENDIF()
-
 
 IF (WITH_GPU)
     IF ("${GPU_LANG}" STREQUAL "cuda")
        set_source_files_properties(${DEVICE_SRC} PROPERTIES LANGUAGE CUDA)
     ELSEIF ("${GPU_LANG}" STREQUAL "hip")
        set_source_files_properties(${DEVICE_SRC} PROPERTIES LANGUAGE HIP)
-       IF ("${GPU_VENDOR}" STREQUAL "amd")
-          ADD_DEFINITIONS(-D__HIP_PLATFORM_AMD__)
-       ELSEIF ("${GPU_VENDOR}" STREQUAL "nvidia")
-          ADD_DEFINITIONS(-D__HIP_PLATFORM_NVIDIA__)
-       ENDIF()
     ELSEIF ("${GPU_LANG}" STREQUAL "sycl")
       set_source_files_properties(${DEVICE_SRC} PROPERTIES COMPILE_FLAGS ${CMAKE_SYCL_FLAGS})
     ENDIF()
 ENDIF()
+
 IF (WITH_GPU)
   LIST(APPEND TARGET_SRC
   ./src/linAlg/linearAlgebraOperationsDevice.cc
@@ -319,98 +362,100 @@ IF (WITH_GPU)
   LIST(APPEND TARGET_SRC ${DEVICE_SRC})
 ENDIF()
 
-
+# ── Library target ───────────────────────────────────────────────────────────
 ADD_LIBRARY(${TARGETLIB} ${TARGET_SRC})
 
-#IF("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-#
-#target_compile_options(${TARGETLIB}
-#    PUBLIC
-#        -O2)
-#ENDIF()
+# ── Include directories ───────────────────────────────────────────────────────
+# Generator expressions keep paths portable across machines:
+#   BUILD_INTERFACE   — used when building within this source tree
+#   INSTALL_INTERFACE — used by consumers after installation (relative to prefix)
+# The build dir is also needed because config.h and git_info.h are generated there.
+target_include_directories(${TARGETLIB} PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/include>
+    $<INSTALL_INTERFACE:include>)
 
-#
-# RPATHS: https://cmake.org/Wiki/CMake_RPATH_handling#Mac_OS_X_and_the_RPATH
-#
-IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  ## cmake  --help-policy CMP0042
-  set(CMAKE_MACOSX_RPATH ON)
+# ── Feature flags ────────────────────────────────────────────────────────────
+# Set CMake variables that configure_file() reads when generating config.h.
+# Flags are propagated to consumers via #include <dftfe/config.h>, not via
+# INTERFACE_COMPILE_DEFINITIONS, so no target_compile_definitions calls are
+# needed here. The sole exception is DFTFE_PATH, which is a generator-
+# expression value and must stay as a PRIVATE target compile definition.
+
+# Real vs. complex arithmetic
+IF (WITH_COMPLEX)
+  set(USE_COMPLEX 1)
+  MESSAGE(STATUS "DFT-FE: complex arithmetic")
+ELSE()
+  set(USE_REAL 1)
+  MESSAGE(STATUS "DFT-FE: real arithmetic")
 ENDIF()
 
-# use, i.e. don't skip the full RPATH for the build tree
-SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
-
-# when building, don't use the install RPATH already
-# (but later on when installing)
-SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
-
-SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-
-# add the automatically determined parts of the RPATH
-# which point to directories outside the build tree to the install RPATH
-SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-
-# the RPATH to be used when installing, but only if it's not a system directory
-LIST(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
-IF("${isSystemDir}" STREQUAL "-1")
-   SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-ENDIF("${isSystemDir}" STREQUAL "-1")
-
-# make sure RPATHs are used on macOS
-SET(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
-
 IF (HIGHERQUAD_PSP)
-  ADD_DEFINITIONS(-DDFTFE_WITH_HIGHERQUAD_PSP)
+  set(DFTFE_WITH_HIGHERQUAD_PSP 1)
 ENDIF()
 
 IF (USE_64BIT_INT)
-  ADD_DEFINITIONS(-DDFTFE_WITH_64BIT_INT)
+  set(DFTFE_WITH_64BIT_INT 1)
 ENDIF()
 
-#
-#Set use complex/use real flag
-#
-IF (WITH_COMPLEX)
-   ADD_DEFINITIONS(-DUSE_COMPLEX)
-   MESSAGE(STATUS "Using complex")
-ELSE()
-   ADD_DEFINITIONS(-DUSE_REAL)
-   MESSAGE(STATUS "Using real")
+IF (WITH_CUSTOMIZED_DEALII)
+  set(DFTFE_WITH_CUSTOMIZED_DEALII 1)
+  MESSAGE(STATUS "DFT-FE: customised deal.II")
 ENDIF()
 
+OPTION(DISABLE_ASSERT "Disable runtime assertions" OFF)
+IF (DISABLE_ASSERT)
+  set(DFTFE_DISABLE_ASSERT 1)
+ENDIF()
 
+# Runtime data path: PRIVATE because it is an internal implementation detail.
+# BUILD_INTERFACE uses the source tree; INSTALL_INTERFACE uses the install prefix.
+target_compile_definitions(${TARGETLIB} PRIVATE
+    $<BUILD_INTERFACE:DFTFE_PATH="${CMAKE_SOURCE_DIR}">
+    $<INSTALL_INTERFACE:DFTFE_PATH="${CMAKE_INSTALL_PREFIX}/share/dftfe">)
 
+# ── MPI ──────────────────────────────────────────────────────────────────────
+if(ENABLE_MPI)
+  find_package(MPI REQUIRED)
+  target_include_directories(${TARGETLIB} PUBLIC ${MPI_CXX_INCLUDE_PATH})
+  target_link_libraries(${TARGETLIB} PUBLIC ${MPI_CXX_LIBRARIES})
+endif()
 
-#
-#Set GPU compilation flag
-#
+# ── GPU ───────────────────────────────────────────────────────────────────────
 IF (WITH_GPU)
-  ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE)
+  set(DFTFE_WITH_DEVICE 1)
 
   IF ("${GPU_VENDOR}" STREQUAL "nvidia")
-    ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE_NVIDIA)
+    set(DFTFE_WITH_DEVICE_NVIDIA 1)
   ELSEIF ("${GPU_VENDOR}" STREQUAL "amd")
-    ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE_AMD)
+    set(DFTFE_WITH_DEVICE_AMD 1)
   ELSEIF ("${GPU_VENDOR}" STREQUAL "intel")
-    ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE_INTEL)
-    ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE_MKL)
+    set(DFTFE_WITH_DEVICE_INTEL 1)
+    set(DFTFE_WITH_DEVICE_MKL 1)
   ENDIF()
 
   IF ("${GPU_LANG}" STREQUAL "cuda")
-    MESSAGE(STATUS "DFTFE with GPU LANG CUDA")
-    ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE_LANG_CUDA)
+    MESSAGE(STATUS "DFT-FE: GPU language = CUDA")
+    set(DFTFE_WITH_DEVICE_LANG_CUDA 1)
     find_package(CUDAToolkit REQUIRED)
+    # CUDA toolkit includes are PUBLIC because CUDA types appear in device headers
     target_include_directories(${TARGETLIB} PUBLIC ${CUDAToolkit_INCLUDE_DIRS})
     target_link_libraries(${TARGETLIB} PUBLIC CUDA::cudart)
     target_link_libraries(${TARGETLIB} PUBLIC CUDA::cublas)
   ELSEIF ("${GPU_LANG}" STREQUAL "hip")
-    MESSAGE(STATUS "DFTFE with GPU LANG HIP")
-    ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE_LANG_HIP)
+    MESSAGE(STATUS "DFT-FE: GPU language = HIP")
+    set(DFTFE_WITH_DEVICE_LANG_HIP 1)
+    IF ("${GPU_VENDOR}" STREQUAL "amd")
+      set(__HIP_PLATFORM_AMD__ 1)
+    ELSEIF ("${GPU_VENDOR}" STREQUAL "nvidia")
+      set(__HIP_PLATFORM_NVIDIA__ 1)
+    ENDIF()
     find_package(hipblas)
     target_link_libraries(${TARGETLIB} PUBLIC roc::hipblas)
   ELSEIF ("${GPU_LANG}" STREQUAL "sycl")
-    MESSAGE(STATUS "DFTFE with GPU LANG SYCL")
-    ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE_LANG_SYCL)
+    MESSAGE(STATUS "DFT-FE: GPU language = SYCL")
+    set(DFTFE_WITH_DEVICE_LANG_SYCL 1)
     find_program(MPI_BASE_CXX_COMPILER "icpx")
     get_filename_component(_REALPATH_SYCL_COMPILER "${MPI_BASE_CXX_COMPILER}" REALPATH)
     get_filename_component(SYCL_BIN_DIR "${_REALPATH_SYCL_COMPILER}" DIRECTORY)
@@ -421,6 +466,7 @@ IF (WITH_GPU)
     HINTS
     ${SYCL_PACKAGE_DIR}
     NO_DEFAULT_PATH)
+    # SYCL dirs are PRIVATE: internal compilation detail, not exposed in public headers
     target_include_directories(${TARGETLIB} PUBLIC ${SYCL_INCLUDE_DIR})
     target_include_directories(${TARGETLIB} PUBLIC ${SYCL_INCLUDE_DIR}/sycl)
     set(MKL_INTERFACE lp64)
@@ -437,18 +483,14 @@ IF (WITH_GPU)
     target_link_libraries(${TARGETLIB} PUBLIC ${mkl_sycl_libs})
     set_target_properties(${TARGETLIB} PROPERTIES LINK_FLAGS ${CMAKE_SYCL_FLAGS})
   ENDIF()
+
   IF (WITH_GPU_AWARE_MPI)
-    ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE_AWARE_MPI)
-    MESSAGE(STATUS "DFTFE with GPU Aware MPI")
+    set(DFTFE_WITH_DEVICE_AWARE_MPI 1)
+    MESSAGE(STATUS "DFT-FE: GPU-aware MPI")
   ENDIF()
 ENDIF()
 
-TARGET_LINK_LIBRARIES(${TARGETLIB} PUBLIC ${DFTFE_MPI_LIBRARIES})
-
-#
-#Dependencies
-#
-
+# ── deal.II ──────────────────────────────────────────────────────────────────
 FIND_PACKAGE(deal.II 9.5.1 REQUIRED
   HINTS ${deal.II_DIR} ${DEAL_II_DIR} ../ ../../ $ENV{DEAL_II_DIR}
   )
@@ -459,16 +501,6 @@ IF(NOT ${deal.II_FOUND})
     "or set an environment variable \"DEAL_II_DIR\" that contains this path."
     )
 ENDIF()
-
-#
-# Are all deal.II dependencies fullfilled?
-# DEAL_II_WITH_64BIT_INDICES is a requirement because of
-# the choice of the parallel storage data-structure for
-# wavefunctions in DFT-FE. The maximum global index of this
-# parallel storage data-structure is equal to
-# total number of dofs times total number of wavefunctions,
-# which can cross the 32 bit integer limits even for a moderate
-# problem size.
 IF(NOT DEAL_II_WITH_LAPACK OR
    NOT DEAL_II_WITH_P4EST OR
    NOT DEAL_II_WITH_64BIT_INDICES OR
@@ -483,33 +515,25 @@ which is required."
     )
 ENDIF()
 
-
-#DEAL_II_INITIALIZE_CACHED_VARIABLES()
-
-TARGET_INCLUDE_DIRECTORIES(${TARGETLIB} PUBLIC ${DEAL_II_INCLUDE_RELDIR})
+# deal.II is PUBLIC: its types appear in dftfe's public headers.
+# Include directories are carried by the imported target (dealii::dealii_release
+# / dealii::dealii_debug) via INTERFACE_INCLUDE_DIRECTORIES, so no explicit
+# TARGET_INCLUDE_DIRECTORIES call is needed. DEAL_II_INCLUDE_RELDIR is a
+# relative path and must not be used directly — it resolves to the source tree.
 IF("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
     TARGET_LINK_LIBRARIES (${TARGETLIB} PUBLIC dealii::dealii_release)
 ELSE()
    TARGET_LINK_LIBRARIES (${TARGETLIB} PUBLIC dealii::dealii_debug)
 ENDIF()
 
-IF (WITH_CUSTOMIZED_DEALII)
-ADD_DEFINITIONS(-DDFTFE_WITH_CUSTOMIZED_DEALII)
-MESSAGE(STATUS "Using customized dealii")
-ENDIF()
-
-
-#
-#Set use petsc and slepc flag
-#
+# PETSc/SLEPc (detected through deal.II configuration)
 IF (DEAL_II_WITH_PETSC AND DEAL_II_WITH_SLEPC)
-   ADD_DEFINITIONS(-DUSE_PETSC)
-   MESSAGE(STATUS "Using petsc and slepc")
+  set(USE_PETSC 1)
+  MESSAGE(STATUS "DFT-FE: PETSc and SLEPc (via deal.II)")
 ENDIF()
 
-#
-# Alglib. Set with -DALGLIB_DIR=/path/to/prefix
-#
+# ── AlgLib ───────────────────────────────────────────────────────────────────
+# PRIVATE: AlgLib types are not exposed in dftfe's public headers.
 IF (DEFINED ALGLIB_DIR)
   FIND_LIBRARY(ALGLIB_LIBRARY
     NAMES Alglib alglib
@@ -520,18 +544,15 @@ IF (DEFINED ALGLIB_DIR)
       MESSAGE(FATAL_ERROR "-- Alglib was not found in ${ALGLIB_DIR}")
   ENDIF()
   MESSAGE("-- Use Alglib from ${ALGLIB_DIR}")
-  TARGET_LINK_LIBRARIES(${TARGETLIB} PUBLIC "${ALGLIB_LIBRARY}"
-  )
-  TARGET_INCLUDE_DIRECTORIES (${TARGETLIB} PUBLIC "${ALGLIB_DIR}")
-  TARGET_INCLUDE_DIRECTORIES (${TARGETLIB} PUBLIC "${ALGLIB_DIR}/include")
+  TARGET_LINK_LIBRARIES(${TARGETLIB} PUBLIC "${ALGLIB_LIBRARY}")
+  TARGET_INCLUDE_DIRECTORIES(${TARGETLIB} PUBLIC "${ALGLIB_DIR}")
+  TARGET_INCLUDE_DIRECTORIES(${TARGETLIB} PUBLIC "${ALGLIB_DIR}/include")
 ELSE()
   MESSAGE(FATAL_ERROR "-- Provide path to AlgLIB: -DALGLIB_DIR=/path/to/prefix")
 ENDIF (DEFINED ALGLIB_DIR)
 
-
-#
-# LIBXC. Set with -DLIBXC_DIR=/path/to/prefix
-#
+# ── LibXC ────────────────────────────────────────────────────────────────────
+# PRIVATE: LibXC types are not exposed in dftfe's public headers.
 IF (DEFINED LIBXC_DIR)
   FIND_LIBRARY(LIBXC_LIBRARY
     NAMES xc
@@ -542,26 +563,21 @@ IF (DEFINED LIBXC_DIR)
       MESSAGE(FATAL_ERROR "-- LibXC was not found in ${LIBXC_DIR}")
   ENDIF()
   MESSAGE("-- Use LibXC from ${LIBXC_DIR}")
-  TARGET_LINK_LIBRARIES(${TARGETLIB}
-      PUBLIC "${LIBXC_LIBRARY}"
-  )
-  TARGET_INCLUDE_DIRECTORIES (${TARGETLIB} PUBLIC "${LIBXC_DIR}/include")
+  TARGET_LINK_LIBRARIES(${TARGETLIB} PUBLIC "${LIBXC_LIBRARY}")
+  TARGET_INCLUDE_DIRECTORIES(${TARGETLIB} PUBLIC "${LIBXC_DIR}/include")
 ELSE()
   MESSAGE(FATAL_ERROR "-- Provide path to prefix of LibXC: -DLIBXC_DIR=/path/to/prefix")
 ENDIF (DEFINED LIBXC_DIR)
 
+# ── LibTorch (optional) ───────────────────────────────────────────────────────
 IF (WITH_TORCH)
-#
-# TORCH. Set with -DTORCH_DIR=/path/to/prefix
-#
-FIND_PACKAGE(Torch PATHS ${TORCH_DIR} Required)
-target_link_libraries(${TARGETLIB} PUBLIC ${TORCH_LIBRARIES})
-ADD_DEFINITIONS(-DDFTFE_WITH_TORCH)
+  FIND_PACKAGE(Torch PATHS ${TORCH_DIR} REQUIRED)
+  target_link_libraries(${TARGETLIB} PUBLIC ${TORCH_LIBRARIES})
+  set(DFTFE_WITH_TORCH 1)
 ENDIF()
 
-#
-# XML. Set with -DXML_LIB_DIR and -DXML_INCLUDE_DIR
-#
+# ── LibXML2 ──────────────────────────────────────────────────────────────────
+# PRIVATE: XML types are not exposed in dftfe's public headers.
 IF (DEFINED XML_INCLUDE_DIR)
   FIND_LIBRARY(XML_LIBRARY
     NAMES xml2
@@ -572,19 +588,14 @@ IF (DEFINED XML_INCLUDE_DIR)
       MESSAGE(FATAL_ERROR "-- XML was not found in ${XML_LIB_DIR}")
   ENDIF()
   MESSAGE("-- Use Xml from ${XML_LIB_DIR}")
-  TARGET_LINK_LIBRARIES(${TARGETLIB} PUBLIC
-      "${XML_LIBRARY}"
-  )
-  TARGET_INCLUDE_DIRECTORIES (${TARGETLIB} PUBLIC "${XML_INCLUDE_DIR}")
+  TARGET_LINK_LIBRARIES(${TARGETLIB} PRIVATE "${XML_LIBRARY}")
+  TARGET_INCLUDE_DIRECTORIES(${TARGETLIB} PRIVATE "${XML_INCLUDE_DIR}")
 ELSE()
   MESSAGE(FATAL_ERROR "-- Provide path of XML: -DXML_LIB_DIR and -DXML_INCLUDE_DIR")
 ENDIF (DEFINED XML_INCLUDE_DIR)
 
-
-
-#
-# SPG. Set with -DSPGLIB_DIR=/path/to/prefix
-#
+# ── SPGLib ───────────────────────────────────────────────────────────────────
+# PRIVATE: SPGLib types are not exposed in dftfe's public headers.
 IF (DEFINED SPGLIB_DIR)
   FIND_LIBRARY(SPGLIB_LIBRARY
     NAMES symspg
@@ -595,39 +606,30 @@ IF (DEFINED SPGLIB_DIR)
       MESSAGE(FATAL_ERROR "-- SPGLib was not found in ${SPGLIB_DIR}")
   ENDIF()
   MESSAGE("-- Use SPGLib from ${SPGLIB_DIR}")
-  TARGET_LINK_LIBRARIES(${TARGETLIB} PUBLIC
-      "${SPGLIB_LIBRARY}"
-  )
-  TARGET_INCLUDE_DIRECTORIES (${TARGETLIB} PUBLIC "${SPGLIB_DIR}/include")
+  TARGET_LINK_LIBRARIES(${TARGETLIB} PRIVATE "${SPGLIB_LIBRARY}")
+  TARGET_INCLUDE_DIRECTORIES(${TARGETLIB} PRIVATE "${SPGLIB_DIR}/include")
 ELSE()
   MESSAGE(FATAL_ERROR "-- Provide path to prefix of SPGLIB: -DSPGLIB_DIR=/path/to/prefix")
 ENDIF (DEFINED SPGLIB_DIR)
 
-#
-# DFTD3. Pass path to -DCMAKE_PREFIX_PATH
-#
+# ── DFTD3 (optional) ──────────────────────────────────────────────────────────
 find_package(DFTD3)
 IF (DFTD3_FOUND)
-  MESSAGE(STATUS "Will Link With DFTD3 ${S-DFTD3}")
-  ADD_DEFINITIONS(-DDFTFE_WITH_DFTD3)
+  MESSAGE(STATUS "DFT-FE: DFTD3 enabled")
+  set(DFTFE_WITH_DFTD3 1)
   target_link_libraries(${TARGETLIB} PUBLIC DFTD3)
 ENDIF()
 
-
-#
-# DFTD4. Pass path to -DCMAKE_PREFIX_PATH
-#
+# ── DFTD4 (optional) ──────────────────────────────────────────────────────────
 find_package(DFTD4)
 IF (DFTD4_FOUND)
-  MESSAGE(STATUS "Will Link With DFTD4 ${DFTD4}")
-  ADD_DEFINITIONS(-DDFTFE_WITH_DFTD4)
+  MESSAGE(STATUS "DFT-FE: DFTD4 enabled")
+  set(DFTFE_WITH_DFTD4 1)
   target_link_libraries(${TARGETLIB} PUBLIC DFTD4)
 ENDIF()
 
-
-#
-# MDI.
-#
+# ── MDI (optional) ────────────────────────────────────────────────────────────
+# PRIVATE: MDI types are not exposed in dftfe's public headers.
 IF (WITH_MDI)
   find_library(MDI_LIBRARY
       NAMES mdi
@@ -635,57 +637,69 @@ IF (WITH_MDI)
       NO_DEFAULT_PATH
     )
   MESSAGE("-- Use MDI library from ${MDI_PATH}/lib64/mdi")
-  TARGET_LINK_LIBRARIES(${TARGETLIB} PUBLIC
-        "${MDI_LIBRARY}"
-    )
-  TARGET_INCLUDE_DIRECTORIES (${TARGETLIB} PUBLIC "${MDI_PATH}/include/mdi")
   IF(MDI_LIBRARY STREQUAL "MDI_LIBRARY-NOTFOUND")
     MESSAGE("-- MDI was not found in ${MDI_PATH}")
   ELSE()
-    ADD_DEFINITIONS(-DDFTFE_WITH_MDI)
+    set(DFTFE_WITH_MDI 1)
+    TARGET_LINK_LIBRARIES(${TARGETLIB} PRIVATE "${MDI_LIBRARY}")
+    TARGET_INCLUDE_DIRECTORIES(${TARGETLIB} PRIVATE "${MDI_PATH}/include/mdi")
   ENDIF()
 ENDIF()
 
-
-#
-# ELPA. Pass path to -DCMAKE_PREFIX_PATH
-#
+# ── ELPA ──────────────────────────────────────────────────────────────────────
+# PUBLIC: ELPA types may appear in dftfe public interfaces.
 find_package(ELPA 2023 REQUIRED)
-MESSAGE(STATUS "Will Link With ELPA")
+MESSAGE(STATUS "DFT-FE: ELPA enabled")
 target_link_libraries(${TARGETLIB} PUBLIC ELPA::ELPA)
 
-#
-# NCCL. Pass path to -DCMAKE_PREFIX_PATH
-#
+# ── NCCL (CUDA collective communication, optional) ────────────────────────────
 IF (WITH_GPU AND "${GPU_LANG}" STREQUAL "cuda")
  IF (WITH_DCCL)
    find_package(NCCL REQUIRED)
    IF (NCCL_FOUND)
-      MESSAGE(STATUS "Will Link With NCCL")
-      ADD_DEFINITIONS(-DDFTFE_WITH_CUDA_NCCL)
+      MESSAGE(STATUS "DFT-FE: NCCL enabled")
+      set(DFTFE_WITH_CUDA_NCCL 1)
       find_package(MPI REQUIRED)
       target_link_libraries(${TARGETLIB} PUBLIC NCCL MPI::MPI_CXX)
    ENDIF()
  ENDIF()
 ENDIF()
 
-#
-# RCCL. Pass path to -DCMAKE_PREFIX_PATH
-#
+# ── RCCL (HIP collective communication, optional) ─────────────────────────────
 IF (WITH_GPU AND "${GPU_LANG}" STREQUAL "hip")
  IF (WITH_DCCL)
    find_package(RCCL REQUIRED)
    IF (RCCL_FOUND)
-      MESSAGE(STATUS "Will Link With RCCL")
-      ADD_DEFINITIONS(-DDFTFE_WITH_HIP_RCCL)
+      MESSAGE(STATUS "DFT-FE: RCCL enabled")
+      set(DFTFE_WITH_HIP_RCCL 1)
       find_package(MPI REQUIRED)
       target_link_libraries(${TARGETLIB} PUBLIC RCCL MPI::MPI_CXX)
    ENDIF()
  ENDIF()
 ENDIF()
 
-TARGET_INCLUDE_DIRECTORIES(${TARGETLIB} PUBLIC ${CMAKE_SOURCE_DIR}/include)
+# ── Executable links against the library ─────────────────────────────────────
 TARGET_LINK_LIBRARIES(${TARGET} PUBLIC ${TARGETLIB})
+
+# ── Generate config.h ─────────────────────────────────────────────────────────
+# dftfeGenerateConfig() owns the full lifecycle of config.h: it processes
+# include/dftfe/config.h.in into ${CMAKE_BINARY_DIR}/include/dftfe/config.h
+# and registers the install rule that copies it to <prefix>/include/dftfe/.
+# See cmake/dftfeGenerateConfig.cmake for the feature-flag convention.
+include(dftfeGenerateConfig)
+dftfeGenerateConfig()
+
+# ── Package config files ──────────────────────────────────────────────────────
+# These files allow downstream projects to use find_package(dftfe).
+include(CMakePackageConfigHelpers)
+configure_package_config_file(
+    "${CMAKE_SOURCE_DIR}/cmake/dftfeConfig.cmake.in"
+    "${CMAKE_BINARY_DIR}/cmake/dftfeConfig.cmake"
+    INSTALL_DESTINATION "lib/cmake/dftfe")
+write_basic_package_version_file(
+    "${CMAKE_BINARY_DIR}/cmake/dftfeConfigVersion.cmake"
+    VERSION "${PROJECT_VERSION}"   # must be numeric; DFTFE_VERSION may have a suffix
+    COMPATIBILITY SameMajorVersion)
 
 #
 # Custom "debug" and "release" make targets:
@@ -702,22 +716,11 @@ COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target all
 COMMENT "Switch CMAKE_BUILD_TYPE to Release"
 )
 
-
-#
-# FIXME: that will not play well with installation
-#
-ADD_DEFINITIONS(-DDFTFE_PATH="${CMAKE_CURRENT_SOURCE_DIR}")
-
-# Enable testing and descent into tests/ subdirectory:
-# Make sure numdiff is in path before configuring, otherwise due to roundoff
-# errors many tests may fail.
-# Test will run in Debug or Release mode based on the way library is compiled.
+# ── Testing ───────────────────────────────────────────────────────────────────
 IF (WITH_TESTING)
   ENABLE_TESTING()
   INCLUDE(CTest)
-  # default 600sec is not enough for some tests, increase:
   SET (TEST_TIME_LIMIT 5000)
-  #
   IF (WITH_COMPLEX)
      ADD_SUBDIRECTORY(tests/dft/pseudopotential/complex)
      ADD_SUBDIRECTORY(tests/dft/allElectron/complex)
@@ -739,8 +742,8 @@ IF (WITH_TESTING)
   ENDIF()
 ENDIF()
 
-# Build documentation
-option(BUILD_DOCS "Build documentation (requires doxygen and sphinx)" OFF)
+# ── Documentation (optional) ─────────────────────────────────────────────────
+option(BUILD_DOCS "Build documentation (requires Doxygen and Sphinx)" OFF)
 if(BUILD_DOCS)
   find_package(Doxygen)
   find_package(Sphinx)
@@ -751,17 +754,44 @@ if(BUILD_DOCS)
   endif()
 endif()
 
-#
-# installation target.
-# use with -DCMAKE_INSTALL_PREFIX=/path/to/
-#
-SET(TARGETLIBEXPORT "femdftTargets")
-# 1. Install defined library target
-install (TARGETS ${TARGETLIB} EXPORT ${TARGETLIBEXPORT}
-         LIBRARY DESTINATION lib)
-# 2. Install the binary
-install (TARGETS ${TARGET}
-         RUNTIME DESTINATION bin)
-# 3. Install content of include dir
-install (DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
-         DESTINATION include)
+# ── Installation ──────────────────────────────────────────────────────────────
+
+# Library with export set so downstream projects can import the target
+install(TARGETS ${TARGETLIB}
+        EXPORT dftfeTargets
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib)
+
+# Executable
+install(TARGETS ${TARGET}
+        RUNTIME DESTINATION bin)
+
+# Public headers: install include/dftfe/* → <prefix>/include/dftfe/
+# Exclude .h.in template files (consumers only need the generated outputs)
+install(DIRECTORY "${CMAKE_SOURCE_DIR}/include/dftfe"
+        DESTINATION include
+        PATTERN "*.in" EXCLUDE)
+
+# Runtime data files (pseudopotential tables, etc.)
+install(DIRECTORY "${CMAKE_SOURCE_DIR}/data/"
+        DESTINATION share/dftfe/data)
+
+# Helper files (e.g. parameterFile.prm) referenced as DFTFE_PATH/helpers/
+install(DIRECTORY "${CMAKE_SOURCE_DIR}/helpers/"
+        DESTINATION share/dftfe/helpers)
+
+# Exported CMake targets file (defines dftfe::dftfeReal / dftfe::dftfeComplex)
+install(EXPORT dftfeTargets
+        FILE dftfeTargets.cmake
+        NAMESPACE dftfe::
+        DESTINATION lib/cmake/dftfe)
+
+# Package config and version files (entry point for find_package)
+install(FILES
+        "${CMAKE_BINARY_DIR}/cmake/dftfeConfig.cmake"
+        "${CMAKE_BINARY_DIR}/cmake/dftfeConfigVersion.cmake"
+        DESTINATION lib/cmake/dftfe)
+
+# Bundled Find modules referenced by dftfeConfig.cmake
+install(FILES "${CMAKE_SOURCE_DIR}/cmake/FindELPA.cmake"
+        DESTINATION lib/cmake/dftfe)

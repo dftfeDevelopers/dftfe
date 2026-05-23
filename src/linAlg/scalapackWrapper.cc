@@ -17,8 +17,9 @@
 // @author Sambit Das
 //
 
-#include "scalapackWrapper.h"
-#include "scalapack.templates.h"
+#include <dftfe/config.h>
+#include <dftfe/scalapackWrapper.h>
+#include <dftfe/scalapack.templates.h>
 
 namespace dftfe
 {

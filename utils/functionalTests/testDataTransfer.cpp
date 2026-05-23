@@ -15,12 +15,12 @@
 // @author Vishal Subramanian
 //
 
-#include "functionalTest.h"
-#include "dftParameters.h"
-#include "triangulationManager.h"
-#include "TransferBetweenMeshesIncompatiblePartitioning.h"
-#include "MPIPatternP2P.h"
-#include "vectorUtilities.h"
+#include <dftfe/functionalTest.h>
+#include <dftfe/dftParameters.h>
+#include <dftfe/triangulationManager.h>
+#include <dftfe/TransferBetweenMeshesIncompatiblePartitioning.h>
+#include <dftfe/MPIPatternP2P.h>
+#include <dftfe/vectorUtilities.h>
 
 namespace functionalTest
 {

@@ -16,7 +16,7 @@
 //
 // @author Sambit Das
 
-#include <linearSolver.h>
+#include <dftfe/linearSolver.h>
 
 namespace dftfe
 {

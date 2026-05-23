@@ -16,9 +16,9 @@
 //
 // @author Nikhil Kodali
 
-#include <LBFGSNonLinearSolver.h>
-#include <fileReaders.h>
-#include <nonlinearSolverProblem.h>
+#include <dftfe/LBFGSNonLinearSolver.h>
+#include <dftfe/fileReaders.h>
+#include <dftfe/nonlinearSolverProblem.h>
 
 namespace dftfe
 {

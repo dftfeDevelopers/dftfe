@@ -17,10 +17,10 @@
 // @author Shiva Rudraraju, Phani Motamarri, Sambit Das
 //
 
-#include <constants.h>
-#include <poissonSolverProblem.h>
-#include <vectorUtilities.h>
-#include <feevaluationWrapper.h>
+#include <dftfe/constants.h>
+#include <dftfe/poissonSolverProblem.h>
+#include <dftfe/vectorUtilities.h>
+#include <dftfe/feevaluationWrapper.h>
 namespace dftfe
 {
   //

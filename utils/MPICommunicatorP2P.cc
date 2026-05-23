@@ -18,13 +18,14 @@
 /*
  * @author Sambit Das.
  */
-#include <MPICommunicatorP2P.h>
-#include <MPICommunicatorP2PKernels.h>
-#include <MPITags.h>
-#include <Exceptions.h>
-#include <DeviceAPICalls.h>
-#include <deviceDirectCCLWrapper.h>
 
+#include <dftfe/config.h>
+#include <dftfe/MPICommunicatorP2P.h>
+#include <dftfe/MPICommunicatorP2PKernels.h>
+#include <dftfe/MPITags.h>
+#include <dftfe/Exceptions.h>
+#include <dftfe/DeviceAPICalls.h>
+#include <dftfe/deviceDirectCCLWrapper.h>
 namespace dftfe
 {
   namespace utils

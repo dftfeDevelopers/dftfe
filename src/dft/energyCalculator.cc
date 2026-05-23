@@ -19,9 +19,10 @@
 
 
 // source file for energy computations
-#include <constants.h>
-#include <dftUtils.h>
-#include <energyCalculator.h>
+#include <dftfe/config.h>
+#include <dftfe/constants.h>
+#include <dftfe/dftUtils.h>
+#include <dftfe/energyCalculator.h>
 
 namespace dftfe
 {

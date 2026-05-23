@@ -17,13 +17,13 @@
 
 
 
-#include <MemoryStorage.h>
-#include <dftUtils.h>
-#include <linearAlgebraOperationsDevice.h>
-#include <linearAlgebraOperationsInternal.h>
-#include <linearAlgebraOperations.h>
-#include <vectorUtilities.h>
-#include "linearAlgebraOperationsDeviceKernels.h"
+#include <dftfe/MemoryStorage.h>
+#include <dftfe/dftUtils.h>
+#include <dftfe/linearAlgebraOperationsDevice.h>
+#include <dftfe/linearAlgebraOperationsInternal.h>
+#include <dftfe/linearAlgebraOperations.h>
+#include <dftfe/vectorUtilities.h>
+#include <dftfe/linearAlgebraOperationsDeviceKernels.h>
 
 
 namespace dftfe

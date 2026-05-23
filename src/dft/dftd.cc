@@ -15,8 +15,9 @@
 // ---------------------------------------------------------------------
 //
 
-#include <fileReaders.h>
-#include <dftd.h>
+#include <dftfe/config.h>
+#include <dftfe/fileReaders.h>
+#include <dftfe/dftd.h>
 
 
 namespace dftfe
