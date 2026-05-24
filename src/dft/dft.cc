@@ -1582,7 +1582,8 @@ namespace dftfe
         if (d_dftParamsPtr->floatingNuclearCharges)
           {
             d_netFloatingDispSinceLastBinsUpdate.clear();
-            d_netFloatingDispSinceLastBinsUpdate.resize(atomLocations.size() * 3,
+            d_netFloatingDispSinceLastBinsUpdate.resize(atomLocations.size() *
+                                                          3,
                                                         0.0);
           }
       }

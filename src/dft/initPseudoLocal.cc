@@ -208,9 +208,9 @@ namespace dftfe
     auto norm = [&](const std::array<double, 3> &a) {
       return std::sqrt(dot(a, a));
     };
-    const double periodicCap =
-      hasPeriodicDirection ? 0.5 * d_pspCutOffTrunc :
-                             std::numeric_limits<double>::max();
+    const double periodicCap = hasPeriodicDirection ?
+                                 0.5 * d_pspCutOffTrunc :
+                                 std::numeric_limits<double>::max();
 
     auto atomFractionalCoordinates = [&](const dftfe::uInt atomId) {
       std::array<double, 3> corner = {0.0, 0.0, 0.0};
@@ -419,19 +419,13 @@ namespace dftfe
               << " " << *minMaxScaling.second << std::endl;
       }
 
-    std::vector<dftfe::Int> atomLowHighPlusOneIndices;
-    if (numberGlobalAtoms > 0)
-      dftUtils::createKpointParallelizationIndices(mpi_communicator,
-                                                   numberGlobalAtoms,
-                                                   atomLowHighPlusOneIndices);
-
     double            analyticCorrectionEnergy = 0.0;
     const dftfe::uInt mpiTaskId =
       dealii::Utilities::MPI::this_mpi_process(mpi_communicator);
-    const dftfe::uInt atomBegin =
-      numberGlobalAtoms > 0 ? atomLowHighPlusOneIndices[2 * mpiTaskId] : 0;
-    const dftfe::uInt atomEnd =
-      numberGlobalAtoms > 0 ? atomLowHighPlusOneIndices[2 * mpiTaskId + 1] : 0;
+    const dftfe::uInt nMpiTasks =
+      dealii::Utilities::MPI::n_mpi_processes(mpi_communicator);
+    const dftfe::uInt atomBegin = numberGlobalAtoms * mpiTaskId / nMpiTasks;
+    const dftfe::uInt atomEnd = numberGlobalAtoms * (mpiTaskId + 1) / nMpiTasks;
     for (dftfe::uInt iAtom = atomBegin; iAtom < atomEnd; ++iAtom)
       {
         const double           atomChargeI = atomCharges[iAtom];
