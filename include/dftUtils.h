@@ -22,6 +22,8 @@
 #include <headers.h>
 #include <mpi.h>
 
+#include <map>
+
 namespace dftfe
 {
   /**
@@ -236,58 +238,6 @@ namespace dftfe
     }
 
 
-    template <typename Function>
-    inline double
-    gaussLegendre32Integrate(const Function &function,
-                             const double    lower,
-                             const double    upper)
-    {
-      if (upper <= lower)
-        return 0.0;
-
-      static constexpr double points[16]  = {0.0483076656877383162348126,
-                                             0.1444719615827964934851864,
-                                             0.2392873622521370745446032,
-                                             0.3318686022821276497799168,
-                                             0.4213512761306353453641194,
-                                             0.5068999089322293900237475,
-                                             0.5877157572407623290407455,
-                                             0.6630442669302152009751152,
-                                             0.7321821187402896803874267,
-                                             0.7944837959679424069630973,
-                                             0.8493676137325699701336930,
-                                             0.8963211557660521239653072,
-                                             0.9349060759377396891709191,
-                                             0.9647622555875064307738119,
-                                             0.9856115115452683354001750,
-                                             0.9972638618494815635449811};
-      static constexpr double weights[16] = {0.0965400885147278005667648,
-                                             0.0956387200792748594190820,
-                                             0.0938443990808045656391802,
-                                             0.0911738786957638847128686,
-                                             0.0876520930044038111427715,
-                                             0.0833119242269467552221991,
-                                             0.0781938957870703064717409,
-                                             0.0723457941088485062253994,
-                                             0.0658222227763618468376501,
-                                             0.0586840934785355471452836,
-                                             0.0509980592623761761961632,
-                                             0.0428358980222266806568786,
-                                             0.0342738629130214331026877,
-                                             0.0253920653092620594557526,
-                                             0.0162743947309056706051706,
-                                             0.0070186100094700966004071};
-
-      const double center = 0.5 * (lower + upper);
-      const double half   = 0.5 * (upper - lower);
-      double       result = 0.0;
-      for (dftfe::uInt i = 0; i < 16; ++i)
-        result += weights[i] * (function(center - half * points[i]) +
-                                function(center + half * points[i]));
-      return half * result;
-    }
-
-
     inline void
     addUniqueBreakpoint(std::vector<double> &breakpoints,
                         const double         value,
@@ -307,50 +257,339 @@ namespace dftfe
     }
 
 
-    inline double
-    smearedPotentialShellAveragePrimitive(const double r, const double radius)
+    struct SmearedPairRadiusCoefficients
     {
-      if (r <= 0.0 || radius <= 0.0)
-        return 0.0;
+      explicit SmearedPairRadiusCoefficients(const double radius)
+      {
+        rgCharge.fill(0.0);
+        r2gCharge.fill(0.0);
+        primitiveInside.fill(0.0);
+        primitiveOutside.fill(0.0);
+        primitiveDerivativeInside.fill(0.0);
+        primitiveDerivativeOutside.fill(0.0);
+        potential.fill(0.0);
 
-      if (r >= radius)
-        {
-          const double radiusPrimitive =
-            (1.0 - 15.0 / 4.0 + 4.0 - 7.0 / 2.0 + 6.0) * radius / 5.0;
-          return radiusPrimitive + (r - radius);
-        }
+        const double r2 = radius * radius;
+        const double r3 = r2 * radius;
+        const double r6 = r3 * r3;
+        const double r7 = r6 * radius;
+        const double r8 = r7 * radius;
 
-      const double r2  = r * r;
-      const double r4  = r2 * r2;
-      const double r7  = r4 * r2 * r;
-      const double r8  = r4 * r4;
-      const double r9  = r8 * r;
-      const double rc2 = radius * radius;
-      const double rc4 = rc2 * rc2;
-      const double rc5 = rc4 * radius;
-      const double rc7 = rc5 * rc2;
-      const double rc8 = rc4 * rc4;
+        rgCharge[1] = 21.0 / (5.0 * M_PI * r3);
+        rgCharge[4] = -42.0 / (M_PI * r6);
+        rgCharge[5] = 63.0 / (M_PI * r7);
+        rgCharge[6] = -126.0 / (5.0 * M_PI * r8);
 
-      return (r9 - 15.0 / 4.0 * radius * r8 + 4.0 * rc2 * r7 -
-              7.0 / 2.0 * rc5 * r4 + 6.0 * rc7 * r2) /
-             (5.0 * rc8);
+        r2gCharge[2] = 21.0 / (5.0 * M_PI * r3);
+        r2gCharge[5] = -42.0 / (M_PI * r6);
+        r2gCharge[6] = 63.0 / (M_PI * r7);
+        r2gCharge[7] = -126.0 / (5.0 * M_PI * r8);
+
+        primitiveInside[2] = 6.0 / (5.0 * radius);
+        primitiveInside[4] = -7.0 / (10.0 * r3);
+        primitiveInside[7] = 4.0 / (5.0 * r6);
+        primitiveInside[8] = -3.0 / (4.0 * r7);
+        primitiveInside[9] = 1.0 / (5.0 * r8);
+
+        primitiveOutside[0] = -0.25 * radius;
+        primitiveOutside[1] = 1.0;
+
+        primitiveDerivativeInside[1] = 12.0 / (5.0 * radius);
+        primitiveDerivativeInside[3] = -14.0 / (5.0 * r3);
+        primitiveDerivativeInside[6] = 28.0 / (5.0 * r6);
+        primitiveDerivativeInside[7] = -6.0 / r7;
+        primitiveDerivativeInside[8] = 9.0 / (5.0 * r8);
+
+        primitiveDerivativeOutside[0] = 1.0;
+
+        potential[0] = 12.0 / (5.0 * radius);
+        potential[2] = -14.0 / (5.0 * r3);
+        potential[5] = 28.0 / (5.0 * r6);
+        potential[6] = -6.0 / r7;
+        potential[7] = 9.0 / (5.0 * r8);
+      }
+
+      std::array<double, 10> rgCharge;
+      std::array<double, 10> r2gCharge;
+      std::array<double, 10> primitiveInside;
+      std::array<double, 10> primitiveOutside;
+      std::array<double, 10> primitiveDerivativeInside;
+      std::array<double, 10> primitiveDerivativeOutside;
+      std::array<double, 10> potential;
+    };
+
+    inline const SmearedPairRadiusCoefficients &
+    smearedPairGetRadiusCoefficients(const double radius)
+    {
+      thread_local std::map<double, SmearedPairRadiusCoefficients> cache;
+      const auto iterator = cache.find(radius);
+      if (iterator != cache.end())
+        return iterator->second;
+
+      const auto insertion =
+        cache.emplace(radius, SmearedPairRadiusCoefficients(radius));
+      return insertion.first->second;
     }
 
     inline double
-    smearedPotentialShellAverage(const double shellRadius,
-                                 const double centerSeparation,
-                                 const double potentialRadius)
+    smearedPairShiftedPolynomialIntegral(
+      const std::array<double, 10> &radialCoefficients,
+      const std::array<double, 10> &shiftedCoefficients,
+      const double                  shift,
+      const double                  radialSign,
+      const double                  lower,
+      const double                  upper)
     {
-      if (shellRadius <= 1.0e-14)
-        return smearedPot(centerSeparation, potentialRadius);
-      if (centerSeparation <= 1.0e-14)
-        return smearedPot(shellRadius, potentialRadius);
+      if (upper <= lower)
+        return 0.0;
 
-      const double upper = centerSeparation + shellRadius;
-      const double lower = std::abs(centerSeparation - shellRadius);
-      return (smearedPotentialShellAveragePrimitive(upper, potentialRadius) -
-              smearedPotentialShellAveragePrimitive(lower, potentialRadius)) /
-             (2.0 * centerSeparation * shellRadius);
+      static constexpr double binomial[10][10] = {
+        {1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
+        {1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
+        {1.0, 2.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
+        {1.0, 3.0, 3.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
+        {1.0, 4.0, 6.0, 4.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0},
+        {1.0, 5.0, 10.0, 10.0, 5.0, 1.0, 0.0, 0.0, 0.0, 0.0},
+        {1.0, 6.0, 15.0, 20.0, 15.0, 6.0, 1.0, 0.0, 0.0, 0.0},
+        {1.0, 7.0, 21.0, 35.0, 35.0, 21.0, 7.0, 1.0, 0.0, 0.0},
+        {1.0, 8.0, 28.0, 56.0, 70.0, 56.0, 28.0, 8.0, 1.0, 0.0},
+        {1.0, 9.0, 36.0, 84.0, 126.0, 126.0, 84.0, 36.0, 9.0, 1.0}};
+
+      std::array<double, 17> lowerPowers;
+      std::array<double, 17> upperPowers;
+      lowerPowers[0] = 1.0;
+      upperPowers[0] = 1.0;
+      for (dftfe::uInt i = 1; i < lowerPowers.size(); ++i)
+        {
+          lowerPowers[i] = lowerPowers[i - 1] * lower;
+          upperPowers[i] = upperPowers[i - 1] * upper;
+        }
+
+      std::array<double, 10> shiftPowers;
+      shiftPowers[0] = 1.0;
+      for (dftfe::uInt i = 1; i < shiftPowers.size(); ++i)
+        shiftPowers[i] = shiftPowers[i - 1] * shift;
+
+      double integral = 0.0;
+      for (dftfe::uInt radialPower = 0; radialPower < radialCoefficients.size();
+           ++radialPower)
+        if (radialCoefficients[radialPower] != 0.0)
+          for (dftfe::uInt shiftedPower = 0;
+               shiftedPower < shiftedCoefficients.size();
+               ++shiftedPower)
+            if (shiftedCoefficients[shiftedPower] != 0.0)
+              for (dftfe::uInt k = 0; k <= shiftedPower; ++k)
+                {
+                  const dftfe::uInt power = radialPower + k;
+                  const double signFactor = (k % 2 == 0) ? 1.0 : radialSign;
+                  integral +=
+                    radialCoefficients[radialPower] *
+                    shiftedCoefficients[shiftedPower] *
+                    binomial[shiftedPower][k] * shiftPowers[shiftedPower - k] *
+                    signFactor *
+                    (upperPowers[power + 1] - lowerPowers[power + 1]) /
+                    static_cast<double>(power + 1);
+                }
+      return integral;
+    }
+
+    inline double
+    smearedPairInteractionAnalyticUnequalRadius(const double radiusA,
+                                                const double radiusB,
+                                                const double separation)
+    {
+      const SmearedPairRadiusCoefficients &coefficientsA =
+        smearedPairGetRadiusCoefficients(radiusA);
+      const SmearedPairRadiusCoefficients &coefficientsB =
+        smearedPairGetRadiusCoefficients(radiusB);
+
+      if (separation <= 1.0e-8 * std::max(1.0, std::max(radiusA, radiusB)))
+        {
+          std::array<double, 17> radiusPowers;
+          radiusPowers[0] = 1.0;
+          for (dftfe::uInt i = 1; i < radiusPowers.size(); ++i)
+            radiusPowers[i] = radiusPowers[i - 1] * radiusA;
+
+          double centeredIntegral = 0.0;
+          for (dftfe::uInt i = 0; i < coefficientsA.r2gCharge.size(); ++i)
+            if (coefficientsA.r2gCharge[i] != 0.0)
+              for (dftfe::uInt j = 0; j < coefficientsB.potential.size(); ++j)
+                if (coefficientsB.potential[j] != 0.0)
+                  {
+                    const dftfe::uInt power = i + j;
+                    centeredIntegral +=
+                      coefficientsA.r2gCharge[i] * coefficientsB.potential[j] *
+                      radiusPowers[power + 1] / static_cast<double>(power + 1);
+                  }
+          return 4.0 * M_PI * centeredIntegral;
+        }
+
+      std::vector<double> breakpoints;
+      breakpoints.reserve(5);
+      breakpoints.push_back(0.0);
+      addUniqueBreakpoint(breakpoints,
+                          std::abs(separation - radiusB),
+                          0.0,
+                          radiusA);
+      addUniqueBreakpoint(breakpoints, separation, 0.0, radiusA);
+      addUniqueBreakpoint(breakpoints, separation + radiusB, 0.0, radiusA);
+      breakpoints.push_back(radiusA);
+      std::sort(breakpoints.begin(), breakpoints.end());
+
+      double primitiveIntegral = 0.0;
+      for (dftfe::uInt iInterval = 0; iInterval + 1 < breakpoints.size();
+           ++iInterval)
+        {
+          const double lower = breakpoints[iInterval];
+          const double upper = breakpoints[iInterval + 1];
+          if (upper <= lower)
+            continue;
+
+          const double                  midpoint = 0.5 * (lower + upper);
+          const std::array<double, 10> &upperCoefficients =
+            separation + midpoint < radiusB ? coefficientsB.primitiveInside :
+                                              coefficientsB.primitiveOutside;
+          const std::array<double, 10> &lowerCoefficients =
+            std::abs(separation - midpoint) < radiusB ?
+              coefficientsB.primitiveInside :
+              coefficientsB.primitiveOutside;
+
+          primitiveIntegral +=
+            smearedPairShiftedPolynomialIntegral(coefficientsA.rgCharge,
+                                                 upperCoefficients,
+                                                 separation,
+                                                 1.0,
+                                                 lower,
+                                                 upper);
+
+          if (midpoint < separation)
+            primitiveIntegral -=
+              smearedPairShiftedPolynomialIntegral(coefficientsA.rgCharge,
+                                                   lowerCoefficients,
+                                                   separation,
+                                                   -1.0,
+                                                   lower,
+                                                   upper);
+          else
+            primitiveIntegral -=
+              smearedPairShiftedPolynomialIntegral(coefficientsA.rgCharge,
+                                                   lowerCoefficients,
+                                                   -separation,
+                                                   1.0,
+                                                   lower,
+                                                   upper);
+        }
+
+      return 2.0 * M_PI * primitiveIntegral / separation;
+    }
+
+    inline double
+    smearedPairInteractionDerAnalyticUnequalRadius(const double radiusA,
+                                                   const double radiusB,
+                                                   const double separation)
+    {
+      if (separation <= 1.0e-8 * std::max(1.0, std::max(radiusA, radiusB)))
+        return 0.0;
+
+      const SmearedPairRadiusCoefficients &coefficientsA =
+        smearedPairGetRadiusCoefficients(radiusA);
+      const SmearedPairRadiusCoefficients &coefficientsB =
+        smearedPairGetRadiusCoefficients(radiusB);
+
+      std::vector<double> breakpoints;
+      breakpoints.reserve(5);
+      breakpoints.push_back(0.0);
+      addUniqueBreakpoint(breakpoints,
+                          std::abs(separation - radiusB),
+                          0.0,
+                          radiusA);
+      addUniqueBreakpoint(breakpoints, separation, 0.0, radiusA);
+      addUniqueBreakpoint(breakpoints, separation + radiusB, 0.0, radiusA);
+      breakpoints.push_back(radiusA);
+      std::sort(breakpoints.begin(), breakpoints.end());
+
+      double primitiveIntegral           = 0.0;
+      double primitiveDerivativeIntegral = 0.0;
+      for (dftfe::uInt iInterval = 0; iInterval + 1 < breakpoints.size();
+           ++iInterval)
+        {
+          const double lower = breakpoints[iInterval];
+          const double upper = breakpoints[iInterval + 1];
+          if (upper <= lower)
+            continue;
+
+          const double midpoint    = 0.5 * (lower + upper);
+          const bool   upperInside = separation + midpoint < radiusB;
+          const bool   lowerInside = std::abs(separation - midpoint) < radiusB;
+          const std::array<double, 10> &upperCoefficients =
+            upperInside ? coefficientsB.primitiveInside :
+                          coefficientsB.primitiveOutside;
+          const std::array<double, 10> &lowerCoefficients =
+            lowerInside ? coefficientsB.primitiveInside :
+                          coefficientsB.primitiveOutside;
+          const std::array<double, 10> &upperDerivativeCoefficients =
+            upperInside ? coefficientsB.primitiveDerivativeInside :
+                          coefficientsB.primitiveDerivativeOutside;
+          const std::array<double, 10> &lowerDerivativeCoefficients =
+            lowerInside ? coefficientsB.primitiveDerivativeInside :
+                          coefficientsB.primitiveDerivativeOutside;
+
+          primitiveIntegral +=
+            smearedPairShiftedPolynomialIntegral(coefficientsA.rgCharge,
+                                                 upperCoefficients,
+                                                 separation,
+                                                 1.0,
+                                                 lower,
+                                                 upper);
+          primitiveDerivativeIntegral +=
+            smearedPairShiftedPolynomialIntegral(coefficientsA.rgCharge,
+                                                 upperDerivativeCoefficients,
+                                                 separation,
+                                                 1.0,
+                                                 lower,
+                                                 upper);
+
+          if (midpoint < separation)
+            {
+              primitiveIntegral -=
+                smearedPairShiftedPolynomialIntegral(coefficientsA.rgCharge,
+                                                     lowerCoefficients,
+                                                     separation,
+                                                     -1.0,
+                                                     lower,
+                                                     upper);
+              primitiveDerivativeIntegral -=
+                smearedPairShiftedPolynomialIntegral(
+                  coefficientsA.rgCharge,
+                  lowerDerivativeCoefficients,
+                  separation,
+                  -1.0,
+                  lower,
+                  upper);
+            }
+          else
+            {
+              primitiveIntegral -=
+                smearedPairShiftedPolynomialIntegral(coefficientsA.rgCharge,
+                                                     lowerCoefficients,
+                                                     -separation,
+                                                     1.0,
+                                                     lower,
+                                                     upper);
+              primitiveDerivativeIntegral +=
+                smearedPairShiftedPolynomialIntegral(
+                  coefficientsA.rgCharge,
+                  lowerDerivativeCoefficients,
+                  -separation,
+                  1.0,
+                  lower,
+                  upper);
+            }
+        }
+
+      return 2.0 * M_PI *
+             (primitiveDerivativeIntegral / separation -
+              primitiveIntegral / (separation * separation));
     }
 
     inline double
@@ -372,30 +611,9 @@ namespace dftfe
       if (separation >= radiusA + radiusB)
         return 1.0 / separation;
 
-      auto integrand = [&](const double r) {
-        return 4.0 * M_PI * r * r * smearedCharge(r, radiusA) *
-               smearedPotentialShellAverage(r, separation, radiusB);
-      };
-
-      std::vector<double> breakpoints;
-      breakpoints.reserve(5);
-      breakpoints.push_back(0.0);
-      addUniqueBreakpoint(breakpoints,
-                          std::abs(separation - radiusB),
-                          0.0,
-                          radiusA);
-      addUniqueBreakpoint(breakpoints, separation, 0.0, radiusA);
-      addUniqueBreakpoint(breakpoints, separation + radiusB, 0.0, radiusA);
-      breakpoints.push_back(radiusA);
-      std::sort(breakpoints.begin(), breakpoints.end());
-
-      double integral = 0.0;
-      for (dftfe::uInt iInterval = 0; iInterval + 1 < breakpoints.size();
-           ++iInterval)
-        integral += gaussLegendre32Integrate(integrand,
-                                             breakpoints[iInterval],
-                                             breakpoints[iInterval + 1]);
-      return integral;
+      return smearedPairInteractionAnalyticUnequalRadius(radiusA,
+                                                         radiusB,
+                                                         separation);
     }
 
     inline double
@@ -420,29 +638,9 @@ namespace dftfe
       if (separation >= radiusA + radiusB)
         return -1.0 / (separation * separation);
 
-      double h = 1.0e-5 * std::max(1.0, std::max(separation, radiusScale));
-      if (h >= 0.5 * separation)
-        h = 0.5 * separation;
-
-      if (separation > 2.0 * h)
-        {
-          const double fPlusTwo =
-            smearedPairInteraction(radiusA, radiusB, separation + 2.0 * h);
-          const double fPlus =
-            smearedPairInteraction(radiusA, radiusB, separation + h);
-          const double fMinus =
-            smearedPairInteraction(radiusA, radiusB, separation - h);
-          const double fMinusTwo =
-            smearedPairInteraction(radiusA, radiusB, separation - 2.0 * h);
-          return (-fPlusTwo + 8.0 * fPlus - 8.0 * fMinus + fMinusTwo) /
-                 (12.0 * h);
-        }
-
-      const double fPlus =
-        smearedPairInteraction(radiusA, radiusB, separation + h);
-      const double fMinus =
-        smearedPairInteraction(radiusA, radiusB, separation - h);
-      return (fPlus - fMinus) / (2.0 * h);
+      return smearedPairInteractionDerAnalyticUnequalRadius(radiusA,
+                                                            radiusB,
+                                                            separation);
     }
 
     inline double
@@ -456,10 +654,23 @@ namespace dftfe
           referenceRadiusA <= 0.0 || referenceRadiusB <= 0.0)
         return 0.0;
 
+      if (separation >= std::max(broadRadiusA + broadRadiusB,
+                                 referenceRadiusA + referenceRadiusB))
+        return 0.0;
+
       const double broad =
         smearedPairInteraction(broadRadiusA, broadRadiusB, separation);
+      const double maxReferenceRadius =
+        std::max(referenceRadiusA, referenceRadiusB);
       const double reference =
-        smearedPairInteraction(referenceRadiusA, referenceRadiusB, separation);
+        std::abs(referenceRadiusA - referenceRadiusB) <=
+            1.0e-13 * std::max(1.0, maxReferenceRadius) ?
+          smearedPairInteractionEqualRadius(0.5 * (referenceRadiusA +
+                                                   referenceRadiusB),
+                                            separation) :
+          smearedPairInteraction(referenceRadiusA,
+                                 referenceRadiusB,
+                                 separation);
       return broad - reference;
     }
 
@@ -477,6 +688,10 @@ namespace dftfe
       if (separation <= 1.0e-12)
         return 0.0;
 
+      if (separation >= std::max(broadRadiusA + broadRadiusB,
+                                 referenceRadiusA + referenceRadiusB))
+        return 0.0;
+
       const double maxBroad = std::max(broadRadiusA, broadRadiusB);
       const double maxRef   = std::max(referenceRadiusA, referenceRadiusB);
       if (std::abs(broadRadiusA - referenceRadiusA) <=
@@ -487,53 +702,18 @@ namespace dftfe
 
       const double broad =
         smearedPairInteractionDer(broadRadiusA, broadRadiusB, separation);
-      const double reference = smearedPairInteractionDer(referenceRadiusA,
-                                                         referenceRadiusB,
-                                                         separation);
+      const double reference =
+        std::abs(referenceRadiusA - referenceRadiusB) <=
+            1.0e-13 * std::max(1.0, maxRef) ?
+          smearedPairInteractionDerEqualRadius(0.5 * (referenceRadiusA +
+                                                      referenceRadiusB),
+                                               separation) :
+          smearedPairInteractionDer(referenceRadiusA,
+                                    referenceRadiusB,
+                                    separation);
       return broad - reference;
     }
 
-
-    inline double
-    smearedPairInteractionDifferenceEqualRadius(const double broadRadius,
-                                                const double referenceRadius,
-                                                const double separation)
-    {
-      if (broadRadius <= 0.0 || referenceRadius <= 0.0)
-        return 0.0;
-
-      if (std::abs(broadRadius - referenceRadius) <= 1.0e-14)
-        return 0.0;
-
-      const double maxRadius =
-        broadRadius > referenceRadius ? broadRadius : referenceRadius;
-      if (separation >= 2.0 * maxRadius)
-        return 0.0;
-
-      return smearedPairInteractionDifference(
-        broadRadius, broadRadius, referenceRadius, referenceRadius, separation);
-    }
-
-    inline double
-    smearedPairInteractionDerDifferenceEqualRadius(const double broadRadius,
-                                                   const double referenceRadius,
-                                                   const double separation)
-    {
-      if (broadRadius <= 0.0 || referenceRadius <= 0.0)
-        return 0.0;
-
-      if (separation <= 1.0e-12 ||
-          std::abs(broadRadius - referenceRadius) <= 1.0e-14)
-        return 0.0;
-
-      const double maxRadius =
-        broadRadius > referenceRadius ? broadRadius : referenceRadius;
-      if (separation >= 2.0 * maxRadius)
-        return 0.0;
-
-      return smearedPairInteractionDerDifference(
-        broadRadius, broadRadius, referenceRadius, referenceRadius, separation);
-    }
 
 
     inline std::vector<double>
