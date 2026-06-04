@@ -456,6 +456,7 @@ namespace dftfe
       const MPI_Comm                                  &interBandGroupComm,
       const dftfe::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
       const dftParameters                             &dftParams,
+      DeviceNumberScratchMemoryStorage                &scratchMemoryStorage,
       const bool                                       rotationMatTranspose,
       const bool                                       isRotationMatLowerTria)
     {
@@ -519,15 +520,12 @@ namespace dftfe
           dftfe::utils::deviceEventCreate(communEvents[i]);
         }
 
-      dftfe::utils::MemoryStorage<dataTypes::number,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        rotationMatBlock(vectorsBlockSize * N, dataTypes::number(0));
-      dftfe::utils::MemoryStorage<dataTypes::number,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        rotationMatBlockTemp(vectorsBlockSize * N, dataTypes::number(0));
-      dftfe::utils::MemoryStorage<dataTypes::number,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        rotatedVectorsMatBlock(N * dofsBlockSize, dataTypes::number(0));
+      auto rotationMatBlockScratch = scratchMemoryStorage.acquire(vectorsBlockSize * N, dataTypes::number(0));
+      auto &rotationMatBlock = *rotationMatBlockScratch;
+      auto rotationMatBlockTempScratch = scratchMemoryStorage.acquire(vectorsBlockSize * N, dataTypes::number(0));
+      auto &rotationMatBlockTemp = *rotationMatBlockTempScratch;
+      auto rotatedVectorsMatBlockScratch = scratchMemoryStorage.acquire(N * dofsBlockSize, dataTypes::number(0));
+      auto &rotatedVectorsMatBlock = *rotatedVectorsMatBlockScratch;
 
       dftfe::uInt blockCount = 0;
       for (dftfe::uInt idof = 0; idof < maxNumLocalDofs; idof += dofsBlockSize)
@@ -835,6 +833,7 @@ namespace dftfe
       const MPI_Comm                                  &interBandGroupComm,
       const dftfe::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
       const dftParameters                             &dftParams,
+      DeviceNumberScratchMemoryStorage                &scratchMemoryStorage,
       const bool                                       rotationMatTranspose)
     {
       const dftfe::uInt maxNumLocalDofs =
@@ -908,9 +907,8 @@ namespace dftfe
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,
                                   dftfe::utils::MemorySpace::DEVICE>
         rotationMatBlockSPTemp(vectorsBlockSize * N, dataTypes::numberFP32(0));
-      dftfe::utils::MemoryStorage<dataTypes::number,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        diagValues(N, dataTypes::number(0));
+      auto diagValuesScratch = scratchMemoryStorage.acquire(N, dataTypes::number(0));
+      auto &diagValues = *diagValuesScratch;
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,
                                   dftfe::utils::MemorySpace::DEVICE>
         rotatedVectorsMatBlockSP(vectorsBlockSize * dofsBlockSize,
@@ -1183,6 +1181,7 @@ namespace dftfe
       const MPI_Comm                                  &interBandGroupComm,
       const dftfe::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
       const dftParameters                             &dftParams,
+      DeviceNumberScratchMemoryStorage                &scratchMemoryStorage,
       const bool                                       rotationMatTranspose)
     {
       const dftfe::uInt maxNumLocalDofs =
@@ -1255,9 +1254,8 @@ namespace dftfe
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,
                                   dftfe::utils::MemorySpace::DEVICE>
         rotationMatBlockSPTemp(vectorsBlockSize * N, dataTypes::numberFP32(0));
-      dftfe::utils::MemoryStorage<dataTypes::number,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        diagValues(N, dataTypes::number(0));
+      auto diagValuesScratch = scratchMemoryStorage.acquire(N, dataTypes::number(0));
+      auto &diagValues = *diagValuesScratch;
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,
                                   dftfe::utils::MemorySpace::DEVICE>
         rotatedVectorsMatBlockSP(vectorsBlockSize * dofsBlockSize,
@@ -1514,7 +1512,8 @@ namespace dftfe
       const MPI_Comm                                  &interBandGroupComm,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number>       &overlapMatPar,
-      const dftParameters                             &dftParams)
+      const dftParameters                             &dftParams,
+      DeviceNumberScratchMemoryStorage                &scratchMemoryStorage)
     {
       // get global to local index maps for Scalapack matrix
       std::unordered_map<dftfe::uInt, dftfe::uInt> globalToLocalColumnIdMap;
@@ -1535,9 +1534,8 @@ namespace dftfe
 
       const dftfe::uInt vectorsBlockSize = std::min(dftParams.wfcBlockSize, N);
 
-      dftfe::utils::MemoryStorage<dataTypes::number,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        overlapMatrixBlock(N * vectorsBlockSize, dataTypes::number(0));
+      auto overlapMatrixBlockScratch = scratchMemoryStorage.acquire(N * vectorsBlockSize, dataTypes::number(0));
+      auto &overlapMatrixBlock = *overlapMatrixBlockScratch;
 
       dftfe::utils::MemoryStorage<dataTypes::number,
                                   dftfe::utils::MemorySpace::HOST_PINNED>
@@ -1546,9 +1544,8 @@ namespace dftfe
       std::memset(overlapMatrixBlockHost.begin(),
                   0,
                   vectorsBlockSize * N * sizeof(dataTypes::number));
-      dftfe::utils::MemoryStorage<dataTypes::number,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        OXBlockFull(vectorsBlockSize * M, dataTypes::number(0.0));
+      auto OXBlockFullScratch = scratchMemoryStorage.acquire(vectorsBlockSize * M, dataTypes::number(0.0));
+      auto &OXBlockFull = *OXBlockFullScratch;
       dftfe::utils::deviceStream_t streamDeviceCCL =
         dftfe::utils::defaultStream;
 
@@ -1714,7 +1711,8 @@ namespace dftfe
       const MPI_Comm                                  &interBandGroupComm,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number>       &overlapMatPar,
-      const dftParameters                             &dftParams)
+      const dftParameters                             &dftParams,
+      DeviceNumberScratchMemoryStorage                &scratchMemoryStorage)
     {
       // get global to local index maps for Scalapack matrix
       std::unordered_map<dftfe::uInt, dftfe::uInt> globalToLocalColumnIdMap;
@@ -1767,15 +1765,12 @@ namespace dftfe
                   vectorsBlockSize * N * sizeof(dataTypes::number));
 
       // allocate device vectors to be used later
-      dftfe::utils::MemoryStorage<dataTypes::number,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        OXBlockFull(vectorsBlockSize * M, dataTypes::number(0.0));
-      dftfe::utils::MemoryStorage<dataTypes::number,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        overlapMatrixBlock(N * vectorsBlockSize, dataTypes::number(0));
-      dftfe::utils::MemoryStorage<dataTypes::number,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        overlapMatrixBlockNext(N * vectorsBlockSize, dataTypes::number(0));
+      auto OXBlockFullScratch = scratchMemoryStorage.acquire(vectorsBlockSize * M, dataTypes::number(0.0));
+      auto &OXBlockFull = *OXBlockFullScratch;
+      auto overlapMatrixBlockScratch = scratchMemoryStorage.acquire(N * vectorsBlockSize, dataTypes::number(0));
+      auto &overlapMatrixBlock = *overlapMatrixBlockScratch;
+      auto overlapMatrixBlockNextScratch = scratchMemoryStorage.acquire(N * vectorsBlockSize, dataTypes::number(0));
+      auto &overlapMatrixBlockNext = *overlapMatrixBlockNextScratch;
 
       const dataTypes::number scalarCoeffAlpha = dataTypes::number(1.0);
       const dataTypes::number scalarCoeffBeta  = dataTypes::number(0);
@@ -2022,7 +2017,8 @@ namespace dftfe
       const MPI_Comm                                  &interBandGroupComm,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number>       &overlapMatPar,
-      const dftParameters                             &dftParams)
+      const dftParameters                             &dftParams,
+      DeviceNumberScratchMemoryStorage                &scratchMemoryStorage)
     {
       // get global to local index maps for Scalapack matrix
       std::unordered_map<dftfe::uInt, dftfe::uInt> globalToLocalColumnIdMap;
@@ -2048,9 +2044,8 @@ namespace dftfe
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,
                                   dftfe::utils::MemorySpace::DEVICE>
         overlapMatrixBlockSP(N * vectorsBlockSize, dataTypes::numberFP32(0));
-      dftfe::utils::MemoryStorage<dataTypes::number,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        overlapMatrixBlockDP(N * vectorsBlockSize, dataTypes::number(0));
+      auto overlapMatrixBlockDPScratch = scratchMemoryStorage.acquire(N * vectorsBlockSize, dataTypes::number(0));
+      auto &overlapMatrixBlockDP = *overlapMatrixBlockDPScratch;
 
       const dftfe::uInt MPadded = std::ceil(M * 1.0 / 8.0) * 8.0 + 0.5;
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,
@@ -2066,9 +2061,8 @@ namespace dftfe
       std::memset(overlapMatrixBlockHostDP.begin(),
                   0,
                   N * vectorsBlockSize * sizeof(dataTypes::number));
-      dftfe::utils::MemoryStorage<dataTypes::number,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        OXBlockFull(vectorsBlockSize * M, dataTypes::number(0.0));
+      auto OXBlockFullScratch = scratchMemoryStorage.acquire(vectorsBlockSize * M, dataTypes::number(0.0));
+      auto &OXBlockFull = *OXBlockFullScratch;
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,
                                   dftfe::utils::MemorySpace::DEVICE>
         OXBlockFullFP32(vectorsBlockSize * M, dataTypes::numberFP32(0.0));
@@ -2400,7 +2394,8 @@ namespace dftfe
       const MPI_Comm                                  &interBandGroupComm,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number>       &overlapMatPar,
-      const dftParameters                             &dftParams)
+      const dftParameters                             &dftParams,
+      DeviceNumberScratchMemoryStorage                &scratchMemoryStorage)
     {
       // get global to local index maps for Scalapack matrix
       std::unordered_map<dftfe::uInt, dftfe::uInt> globalToLocalColumnIdMap;
@@ -2447,16 +2442,14 @@ namespace dftfe
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,
                                   dftfe::utils::MemorySpace::DEVICE>
         overlapMatrixBlockSP(N * vectorsBlockSize, dataTypes::numberFP32(0));
-      dftfe::utils::MemoryStorage<dataTypes::number,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        overlapMatrixBlockDP(N * vectorsBlockSize, dataTypes::number(0));
+      auto overlapMatrixBlockDPScratch = scratchMemoryStorage.acquire(N * vectorsBlockSize, dataTypes::number(0));
+      auto &overlapMatrixBlockDP = *overlapMatrixBlockDPScratch;
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,
                                   dftfe::utils::MemorySpace::DEVICE>
         overlapMatrixBlockSPNext(N * vectorsBlockSize,
                                  dataTypes::numberFP32(0));
-      dftfe::utils::MemoryStorage<dataTypes::number,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        overlapMatrixBlockDPNext(N * vectorsBlockSize, dataTypes::number(0));
+      auto overlapMatrixBlockDPNextScratch = scratchMemoryStorage.acquire(N * vectorsBlockSize, dataTypes::number(0));
+      auto &overlapMatrixBlockDPNext = *overlapMatrixBlockDPNextScratch;
 
       const dftfe::uInt MPadded = std::ceil(M * 1.0 / 8.0) * 8.0 + 0.5;
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,
@@ -2488,9 +2481,8 @@ namespace dftfe
         dataTypes::numberFP32(1.0);
       const dataTypes::numberFP32 scalarCoeffBetaSP = dataTypes::numberFP32(0);
 
-      dftfe::utils::MemoryStorage<dataTypes::number,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        OXBlockFull(vectorsBlockSize * M, dataTypes::number(0.0));
+      auto OXBlockFullScratch = scratchMemoryStorage.acquire(vectorsBlockSize * M, dataTypes::number(0.0));
+      auto &OXBlockFull = *OXBlockFullScratch;
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,
                                   dftfe::utils::MemorySpace::DEVICE>
         OXBlockFullFP32(vectorsBlockSize * M, dataTypes::numberFP32(0.0));
@@ -2940,7 +2932,8 @@ namespace dftfe
       const MPI_Comm                                  &interBandGroupComm,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number>       &overlapMatPar,
-      const dftParameters                             &dftParams)
+      const dftParameters                             &dftParams,
+      DeviceNumberScratchMemoryStorage                &scratchMemoryStorage)
     {
       // get global to local index maps for Scalapack matrix
       std::unordered_map<dftfe::uInt, dftfe::uInt> globalToLocalColumnIdMap;
@@ -3002,22 +2995,17 @@ namespace dftfe
                   N * vectorsBlockSize * sizeof(dataTypes::numberFP32));
 
       // allocate device vectors to be used later
-      dftfe::utils::MemoryStorage<dataTypes::number,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        OXBlockFull(vectorsBlockSize * M, dataTypes::number(0.0));
+      auto OXBlockFullScratch = scratchMemoryStorage.acquire(vectorsBlockSize * M, dataTypes::number(0.0));
+      auto &OXBlockFull = *OXBlockFullScratch;
 
-      dftfe::utils::MemoryStorage<dataTypes::number,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        projOverlapMatrixBlock(N * vectorsBlockSize, dataTypes::number(0));
-      dftfe::utils::MemoryStorage<dataTypes::number,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        projOverlapMatrixBlockNext(N * vectorsBlockSize, dataTypes::number(0));
+      auto projOverlapMatrixBlockScratch = scratchMemoryStorage.acquire(N * vectorsBlockSize, dataTypes::number(0));
+      auto &projOverlapMatrixBlock = *projOverlapMatrixBlockScratch;
+      auto projOverlapMatrixBlockNextScratch = scratchMemoryStorage.acquire(N * vectorsBlockSize, dataTypes::number(0));
+      auto &projOverlapMatrixBlockNext = *projOverlapMatrixBlockNextScratch;
 
 
-      dftfe::utils::MemoryStorage<dataTypes::number,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        projOverlapMatrixBlockMove(vectorsBlockSize * vectorsBlockSize,
-                                   dataTypes::number(0));
+      auto projOverlapMatrixBlockMoveScratch = scratchMemoryStorage.acquire(vectorsBlockSize * vectorsBlockSize, dataTypes::number(0));
+      auto &projOverlapMatrixBlockMove = *projOverlapMatrixBlockMoveScratch;
 
 
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,
@@ -3547,6 +3535,7 @@ namespace dftfe
          const MPI_Comm          &mpiCommDomain,
          const MPI_Comm          &interBandGroupComm,
          const dftParameters     &dftParams,
+         DeviceNumberScratchMemoryStorage                &scratchMemoryStorage,
          const bool               onlyHPrimePartForFirstOrderDensityMatResponse)
     {
       std::unordered_map<dftfe::uInt, dftfe::uInt> globalToLocalColumnIdMap;
@@ -3578,12 +3567,10 @@ namespace dftfe
                   0,
                   vectorsBlockSize * N * sizeof(dataTypes::number));
 
-      dftfe::utils::MemoryStorage<dataTypes::number,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        HXBlockFull(vectorsBlockSize * M, dataTypes::number(0.0));
-      dftfe::utils::MemoryStorage<dataTypes::number,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        projHamBlock(vectorsBlockSize * N, dataTypes::number(0.0));
+      auto HXBlockFullScratch = scratchMemoryStorage.acquire(vectorsBlockSize * M, dataTypes::number(0.0));
+      auto &HXBlockFull = *HXBlockFullScratch;
+      auto projHamBlockScratch = scratchMemoryStorage.acquire(vectorsBlockSize * N, dataTypes::number(0.0));
+      auto &projHamBlock = *projHamBlockScratch;
 
       for (dftfe::uInt jvec = 0; jvec < N; jvec += vectorsBlockSize)
         {
@@ -3706,6 +3693,7 @@ namespace dftfe
       const MPI_Comm                                  &mpiCommDomain,
       const MPI_Comm                                  &interBandGroupComm,
       const dftParameters                             &dftParams,
+      DeviceNumberScratchMemoryStorage                &scratchMemoryStorage,
       const bool onlyHPrimePartForFirstOrderDensityMatResponse)
     {
       /////////////PSEUDO CODE for the implementation below for Overlapping
@@ -3787,15 +3775,12 @@ namespace dftfe
                   0,
                   vectorsBlockSize * N * sizeof(dataTypes::number));
 
-      dftfe::utils::MemoryStorage<dataTypes::number,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        HXBlockFull(vectorsBlockSize * M, dataTypes::number(0.0));
-      dftfe::utils::MemoryStorage<dataTypes::number,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        projHamBlock(vectorsBlockSize * N, dataTypes::number(0.0));
-      dftfe::utils::MemoryStorage<dataTypes::number,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        projHamBlockNext(vectorsBlockSize * N, dataTypes::number(0.0));
+      auto HXBlockFullScratch = scratchMemoryStorage.acquire(vectorsBlockSize * M, dataTypes::number(0.0));
+      auto &HXBlockFull = *HXBlockFullScratch;
+      auto projHamBlockScratch = scratchMemoryStorage.acquire(vectorsBlockSize * N, dataTypes::number(0.0));
+      auto &projHamBlock = *projHamBlockScratch;
+      auto projHamBlockNextScratch = scratchMemoryStorage.acquire(vectorsBlockSize * N, dataTypes::number(0.0));
+      auto &projHamBlockNext = *projHamBlockNextScratch;
 
       dftfe::uInt blockCount = 0;
       for (dftfe::uInt jvec = 0; jvec < N; jvec += vectorsBlockSize)
@@ -4067,6 +4052,7 @@ namespace dftfe
       const MPI_Comm                                  &mpiCommDomain,
       const MPI_Comm                                  &interBandGroupComm,
       const dftParameters                             &dftParams,
+      DeviceNumberScratchMemoryStorage                &scratchMemoryStorage,
       const bool onlyHPrimePartForFirstOrderDensityMatResponse)
     {
       std::unordered_map<dftfe::uInt, dftfe::uInt> globalToLocalColumnIdMap;
@@ -4133,21 +4119,18 @@ namespace dftfe
                   0,
                   vectorsBlockSize * N * sizeof(dataTypes::numberFP32));
 
-      dftfe::utils::MemoryStorage<dataTypes::number,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        HXBlockFull(vectorsBlockSize * M, dataTypes::number(0.0));
+      auto HXBlockFullScratch = scratchMemoryStorage.acquire(vectorsBlockSize * M, dataTypes::number(0.0));
+      auto &HXBlockFull = *HXBlockFullScratch;
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,
                                   dftfe::utils::MemorySpace::DEVICE>
         HXBlockFullFP32(vectorsBlockSize * M, dataTypes::numberFP32(0.0));
-      dftfe::utils::MemoryStorage<dataTypes::number,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        projHamBlock(vectorsBlockSize * N, dataTypes::number(0.0));
+      auto projHamBlockScratch = scratchMemoryStorage.acquire(vectorsBlockSize * N, dataTypes::number(0.0));
+      auto &projHamBlock = *projHamBlockScratch;
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,
                                   dftfe::utils::MemorySpace::DEVICE>
         projHamBlockFP32(vectorsBlockSize * N, dataTypes::numberFP32(0.0));
-      dftfe::utils::MemoryStorage<dataTypes::number,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        projHamBlockNext(vectorsBlockSize * N, dataTypes::number(0.0));
+      auto projHamBlockNextScratch = scratchMemoryStorage.acquire(vectorsBlockSize * N, dataTypes::number(0.0));
+      auto &projHamBlockNext = *projHamBlockNextScratch;
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,
                                   dftfe::utils::MemorySpace::DEVICE>
         projHamBlockFP32Next(vectorsBlockSize * N, dataTypes::numberFP32(0.0));
@@ -4611,6 +4594,7 @@ namespace dftfe
       const MPI_Comm                                  &mpiCommDomain,
       const MPI_Comm                                  &interBandGroupComm,
       const dftParameters                             &dftParams,
+      DeviceNumberScratchMemoryStorage                &scratchMemoryStorage,
       const bool onlyHPrimePartForFirstOrderDensityMatResponse)
     {
       /////////////PSEUDO CODE for the implementation below for Overlapping
@@ -4701,20 +4685,15 @@ namespace dftfe
                   0,
                   vectorsBlockSize * N * sizeof(dataTypes::numberFP32));
 
-      dftfe::utils::MemoryStorage<dataTypes::number,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        HXBlockFull(vectorsBlockSize * M, dataTypes::number(0.0));
-      dftfe::utils::MemoryStorage<dataTypes::number,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        projHamBlock(vectorsBlockSize * N, dataTypes::number(0.0));
-      dftfe::utils::MemoryStorage<dataTypes::number,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        projHamBlockNext(vectorsBlockSize * N, dataTypes::number(0.0));
+      auto HXBlockFullScratch = scratchMemoryStorage.acquire(vectorsBlockSize * M, dataTypes::number(0.0));
+      auto &HXBlockFull = *HXBlockFullScratch;
+      auto projHamBlockScratch = scratchMemoryStorage.acquire(vectorsBlockSize * N, dataTypes::number(0.0));
+      auto &projHamBlock = *projHamBlockScratch;
+      auto projHamBlockNextScratch = scratchMemoryStorage.acquire(vectorsBlockSize * N, dataTypes::number(0.0));
+      auto &projHamBlockNext = *projHamBlockNextScratch;
 
-      dftfe::utils::MemoryStorage<dataTypes::number,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        projHamBlockMove(vectorsBlockSize * vectorsBlockSize,
-                         dataTypes::number(0.0));
+      auto projHamBlockMoveScratch = scratchMemoryStorage.acquire(vectorsBlockSize * vectorsBlockSize, dataTypes::number(0.0));
+      auto &projHamBlockMove = *projHamBlockMoveScratch;
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,
                                   dftfe::utils::MemorySpace::DEVICE>
         projHamBlockFP32(vectorsBlockSize * N, dataTypes::numberFP32(0.0));
