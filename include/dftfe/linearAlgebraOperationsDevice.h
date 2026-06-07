@@ -271,10 +271,10 @@ namespace dftfe
       const MPI_Comm          &interBandGroupComm,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-                          &BLASWrapperPtr,
-      const dftParameters &dftParams,
-      DeviceNumberScratchMemoryStorage                &scratchMemoryStorage,
-      const bool           useMixedPrecOverall = false);
+                                       &BLASWrapperPtr,
+      const dftParameters              &dftParams,
+      DeviceNumberScratchMemoryStorage &scratchMemoryStorage,
+      const bool                        useMixedPrecOverall = false);
 
     void
     subspaceRotationScalapack(
@@ -348,10 +348,10 @@ namespace dftfe
       std::vector<double>     &eigenValues,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-                          &BLASWrapperPtr,
-      const dftParameters &dftParams,
-      DeviceNumberScratchMemoryStorage                &scratchMemoryStorage,
-      const bool           useMixedPrecOverall = false);
+                                       &BLASWrapperPtr,
+      const dftParameters              &dftParams,
+      DeviceNumberScratchMemoryStorage &scratchMemoryStorage,
+      const bool                        useMixedPrecOverall = false);
 
     void
     rayleighRitzGEP(
@@ -369,10 +369,10 @@ namespace dftfe
       std::vector<double>     &eigenValues,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-                          &BLASWrapperPtr,
-      const dftParameters &dftParams,
-      DeviceNumberScratchMemoryStorage                &scratchMemoryStorage,
-      const bool           useMixedPrecOverall = false);
+                                       &BLASWrapperPtr,
+      const dftParameters              &dftParams,
+      DeviceNumberScratchMemoryStorage &scratchMemoryStorage,
+      const bool                        useMixedPrecOverall = false);
 
 
 
@@ -394,9 +394,9 @@ namespace dftfe
       dftfe::elpaScalaManager   &elpaScala,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-                          &BLASWrapperPtr,
-      const dftParameters &dftParams,
-      DeviceNumberScratchMemoryStorage                &scratchMemoryStorage);
+                                       &BLASWrapperPtr,
+      const dftParameters              &dftParams,
+      DeviceNumberScratchMemoryStorage &scratchMemoryStorage);
 
     void
     computeEigenResidualNorm(
@@ -429,11 +429,11 @@ namespace dftfe
                                                          &BLASWrapperPtr,
          const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
          dftfe::ScaLAPACKMatrix<dataTypes::number>       &projHamPar,
-         utils::DeviceCCLWrapper &devicecclMpiCommDomain,
-         const MPI_Comm          &mpiCommDomain,
-         const MPI_Comm          &interBandGroupComm,
-         const dftParameters     &dftParams,
-         DeviceNumberScratchMemoryStorage                &scratchMemoryStorage,
+         utils::DeviceCCLWrapper          &devicecclMpiCommDomain,
+         const MPI_Comm                   &mpiCommDomain,
+         const MPI_Comm                   &interBandGroupComm,
+         const dftParameters              &dftParams,
+         DeviceNumberScratchMemoryStorage &scratchMemoryStorage,
          const bool onlyHPrimePartForFirstOrderDensityMatResponse = false);
 
     void

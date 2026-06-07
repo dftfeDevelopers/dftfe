@@ -43,10 +43,10 @@ namespace dftfe
       const MPI_Comm          &interBandGroupComm,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-                          &BLASWrapperPtr,
-      const dftParameters &dftParams,
+                                       &BLASWrapperPtr,
+      const dftParameters              &dftParams,
       DeviceNumberScratchMemoryStorage &scratchMemoryStorage,
-      const bool           useMixedPrecOverall)
+      const bool                        useMixedPrecOverall)
     {
       dealii::ConditionalOStream pcout(
         std::cout,
