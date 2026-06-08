@@ -326,6 +326,118 @@ namespace dftfe
     bool              tauNeededC,                                          \
     bool              enforceFHCC);
   } // namespace
+
+  // ============================================================
+  // r2SCAN split into per-output __noinline__ device helpers to
+  // cut register pressure (avoids ROCm spill miscompilation).
+  // ============================================================
+  static __device__ __attribute__((noinline)) double
+  mgga_c_r2scan_zk(double rho0, double rho1, double sigma0, double sigma1, double sigma2, double tau0, double tau1)
+  {
+    MGGA_C_R2SCAN_ZK
+    return tzk0;
+  }
+  static __device__ __attribute__((noinline)) double
+  mgga_c_r2scan_vrho0(double rho0, double rho1, double sigma0, double sigma1, double sigma2, double tau0, double tau1)
+  {
+    MGGA_C_R2SCAN_VRHO0
+    return tvrho0;
+  }
+  static __device__ __attribute__((noinline)) double
+  mgga_c_r2scan_vrho1(double rho0, double rho1, double sigma0, double sigma1, double sigma2, double tau0, double tau1)
+  {
+    MGGA_C_R2SCAN_VRHO1
+    return tvrho1;
+  }
+  static __device__ __attribute__((noinline)) double
+  mgga_c_r2scan_vsigma0(double rho0, double rho1, double sigma0, double sigma1, double sigma2, double tau0, double tau1)
+  {
+    MGGA_C_R2SCAN_VSIGMA0
+    return tvsigma0;
+  }
+  static __device__ __attribute__((noinline)) double
+  mgga_c_r2scan_vsigma1(double rho0, double rho1, double sigma0, double sigma1, double sigma2, double tau0, double tau1)
+  {
+    MGGA_C_R2SCAN_VSIGMA1
+    return tvsigma1;
+  }
+  static __device__ __attribute__((noinline)) double
+  mgga_c_r2scan_vtau0(double rho0, double rho1, double sigma0, double sigma1, double sigma2, double tau0, double tau1)
+  {
+    MGGA_C_R2SCAN_VTAU0
+    return tvtau0;
+  }
+  static __device__ __attribute__((noinline)) double
+  mgga_c_r2scan_vtau1(double rho0, double rho1, double sigma0, double sigma1, double sigma2, double tau0, double tau1)
+  {
+    MGGA_C_R2SCAN_VTAU1
+    return tvtau1;
+  }
+  static __device__ __attribute__((noinline)) double
+  mgga_x_r2scan_zk(double rho0, double rho1, double sigma0, double sigma1, double sigma2, double tau0, double tau1)
+  {
+    MGGA_X_R2SCAN_ZK
+    return tzk0;
+  }
+  static __device__ __attribute__((noinline)) double
+  mgga_x_r2scan_vrho0(double rho0, double rho1, double sigma0, double sigma1, double sigma2, double tau0, double tau1)
+  {
+    MGGA_X_R2SCAN_VRHO0
+    return tvrho0;
+  }
+  static __device__ __attribute__((noinline)) double
+  mgga_x_r2scan_vrho1(double rho0, double rho1, double sigma0, double sigma1, double sigma2, double tau0, double tau1)
+  {
+    MGGA_X_R2SCAN_VRHO1
+    return tvrho1;
+  }
+  static __device__ __attribute__((noinline)) double
+  mgga_x_r2scan_vsigma0(double rho0, double rho1, double sigma0, double sigma1, double sigma2, double tau0, double tau1)
+  {
+    MGGA_X_R2SCAN_VSIGMA0
+    return tvsigma0;
+  }
+  static __device__ __attribute__((noinline)) double
+  mgga_x_r2scan_vsigma2(double rho0, double rho1, double sigma0, double sigma1, double sigma2, double tau0, double tau1)
+  {
+    MGGA_X_R2SCAN_VSIGMA2
+    return tvsigma2;
+  }
+  static __device__ __attribute__((noinline)) double
+  mgga_x_r2scan_vtau0(double rho0, double rho1, double sigma0, double sigma1, double sigma2, double tau0, double tau1)
+  {
+    MGGA_X_R2SCAN_VTAU0
+    return tvtau0;
+  }
+  static __device__ __attribute__((noinline)) double
+  mgga_x_r2scan_vtau1(double rho0, double rho1, double sigma0, double sigma1, double sigma2, double tau0, double tau1)
+  {
+    MGGA_X_R2SCAN_VTAU1
+    return tvtau1;
+  }
+
+#undef MGGA_C_R2SCAN
+#define MGGA_C_R2SCAN                                                       \
+  tzk0     = mgga_c_r2scan_zk(rho0, rho1, sigma0, sigma1, sigma2, tau0, tau1);                                    \
+  tvrho0   = mgga_c_r2scan_vrho0(rho0, rho1, sigma0, sigma1, sigma2, tau0, tau1);                                 \
+  tvrho1   = mgga_c_r2scan_vrho1(rho0, rho1, sigma0, sigma1, sigma2, tau0, tau1);                                 \
+  tvsigma0 = mgga_c_r2scan_vsigma0(rho0, rho1, sigma0, sigma1, sigma2, tau0, tau1);                               \
+  tvsigma1 = mgga_c_r2scan_vsigma1(rho0, rho1, sigma0, sigma1, sigma2, tau0, tau1);                               \
+  tvsigma2 = tvsigma0;                                                      \
+  tvtau0   = mgga_c_r2scan_vtau0(rho0, rho1, sigma0, sigma1, sigma2, tau0, tau1);                                 \
+  tvtau1   = mgga_c_r2scan_vtau1(rho0, rho1, sigma0, sigma1, sigma2, tau0, tau1);
+
+#undef MGGA_X_R2SCAN
+#define MGGA_X_R2SCAN                                                       \
+  tzk0     = mgga_x_r2scan_zk(rho0, rho1, sigma0, sigma1, sigma2, tau0, tau1);                                    \
+  tvrho0   = mgga_x_r2scan_vrho0(rho0, rho1, sigma0, sigma1, sigma2, tau0, tau1);                                 \
+  tvrho1   = mgga_x_r2scan_vrho1(rho0, rho1, sigma0, sigma1, sigma2, tau0, tau1);                                 \
+  tvsigma0 = mgga_x_r2scan_vsigma0(rho0, rho1, sigma0, sigma1, sigma2, tau0, tau1);                               \
+  tvsigma1 = 0.0;                                                           \
+  tvsigma2 = mgga_x_r2scan_vsigma2(rho0, rho1, sigma0, sigma1, sigma2, tau0, tau1);                               \
+  tvtau0   = mgga_x_r2scan_vtau0(rho0, rho1, sigma0, sigma1, sigma2, tau0, tau1);                                 \
+  tvtau1   = mgga_x_r2scan_vtau1(rho0, rho1, sigma0, sigma1, sigma2, tau0, tau1);
+
 #include <dftfe/exchangeCorrelationFunctionalEvaluation.def>
 } // namespace dftfe
 
