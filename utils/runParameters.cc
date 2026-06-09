@@ -17,7 +17,8 @@
 // @author Phani Motamarri, Sambit Das
 //
 
-#include <runParameters.h>
+#include <dftfe/config.h>
+#include <dftfe/runParameters.h>
 
 
 

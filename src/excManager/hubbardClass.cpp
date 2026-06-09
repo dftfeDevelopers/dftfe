@@ -17,22 +17,23 @@
 // @author Vishal Subramanian
 //
 
-#include "hubbardClass.h"
-#include "AtomCenteredSphericalFunctionProjectorSpline.h"
-#include "dftParameters.h"
-#include "DataTypeOverloads.h"
-#include "constants.h"
-#include "BLASWrapper.h"
-#include "AtomCenteredPseudoWavefunctionSpline.h"
-#include "AuxDensityMatrixFE.h"
+#include <dftfe/config.h>
+#include <dftfe/hubbardClass.h>
+#include <dftfe/AtomCenteredSphericalFunctionProjectorSpline.h>
+#include <dftfe/dftParameters.h>
+#include <dftfe/DataTypeOverloads.h>
+#include <dftfe/constants.h>
+#include <dftfe/BLASWrapper.h>
+#include <dftfe/AtomCenteredPseudoWavefunctionSpline.h>
+#include <dftfe/AuxDensityMatrixFE.h>
 
-#include "CompositeData.h"
-#include "MPIWriteOnFile.h"
-#include "NodalData.h"
+#include <dftfe/CompositeData.h>
+#include <dftfe/MPIWriteOnFile.h>
+#include <dftfe/NodalData.h>
 
 
 #if defined(DFTFE_WITH_DEVICE)
-#  include "deviceKernelsGeneric.h"
+#  include <dftfe/deviceKernelsGeneric.h>
 #endif
 
 namespace dftfe

@@ -18,10 +18,10 @@
 //
 
 
-#include <deviceKernelsGeneric.h>
-#include <DeviceDataTypeOverloads.h>
-#include <DeviceKernelLauncherHelpers.h>
-#include <DeviceAPICalls.h>
+#include <dftfe/deviceKernelsGeneric.h>
+#include <dftfe/DeviceDataTypeOverloads.h>
+#include <dftfe/DeviceKernelLauncherHelpers.h>
+#include <dftfe/DeviceAPICalls.h>
 
 namespace dftfe
 {

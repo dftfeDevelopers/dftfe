@@ -1,11 +1,12 @@
+#include <dftfe/config.h>
 #ifdef DFTFE_WITH_TORCH
 #  include <torch/script.h>
-#  include <NNGGA.h>
+#  include <dftfe/NNGGA.h>
 #  include <iostream>
 #  include <vector>
 #  include <algorithm>
 #  include <iterator>
-#  include <Exceptions.h>
+#  include <dftfe/Exceptions.h>
 
 #  define GGA_CS 0.1616204596739955
 namespace dftfe

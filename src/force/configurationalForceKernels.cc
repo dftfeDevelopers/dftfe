@@ -15,7 +15,8 @@
 // ---------------------------------------------------------------------
 
 
-#include <configurationalForceKernels.h>
+#include <dftfe/config.h>
+#include <dftfe/configurationalForceKernels.h>
 
 DFTFE_CREATE_KERNEL(
   void,

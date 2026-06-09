@@ -21,12 +21,13 @@
  *
  */
 
-#include "dftParameters.h"
-#include "dftUtils.h"
-#include "linearAlgebraOperations.h"
-#include "linearAlgebraOperationsInternal.h"
-#include "constants.h"
-#include <DeviceAPICalls.h>
+#include <dftfe/config.h>
+#include <dftfe/dftParameters.h>
+#include <dftfe/dftUtils.h>
+#include <dftfe/linearAlgebraOperations.h>
+#include <dftfe/linearAlgebraOperationsInternal.h>
+#include <dftfe/constants.h>
+#include <dftfe/DeviceAPICalls.h>
 #include <random>
 
 namespace dftfe

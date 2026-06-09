@@ -15,6 +15,7 @@
 // ---------------------------------------------------------------------
 //
 
+#include <dftfe/config.h>
 namespace dftfe
 {
   struct quadData

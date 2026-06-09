@@ -16,11 +16,12 @@
 //
 // @author  Phani Motamarri, Sambit Das
 //
+#include <dftfe/config.h>
 #include <complex>
 #include <vector>
-#include <dft.h>
-#include <linearAlgebraOperations.h>
-#include <linearAlgebraOperationsCPU.h>
+#include <dftfe/dft.h>
+#include <dftfe/linearAlgebraOperations.h>
+#include <dftfe/linearAlgebraOperationsCPU.h>
 namespace dftfe
 {
   namespace internal

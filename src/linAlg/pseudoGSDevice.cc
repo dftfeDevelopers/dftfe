@@ -16,11 +16,12 @@
 // @author Sambit Das
 
 
-#include <dftUtils.h>
-#include <dftParameters.h>
-#include <linearAlgebraOperationsDevice.h>
-#include <linearAlgebraOperationsInternal.h>
-#include "linearAlgebraOperationsDeviceKernels.h"
+#include <dftfe/config.h>
+#include <dftfe/dftUtils.h>
+#include <dftfe/dftParameters.h>
+#include <dftfe/linearAlgebraOperationsDevice.h>
+#include <dftfe/linearAlgebraOperationsInternal.h>
+#include <dftfe/linearAlgebraOperationsDeviceKernels.h>
 
 
 namespace dftfe

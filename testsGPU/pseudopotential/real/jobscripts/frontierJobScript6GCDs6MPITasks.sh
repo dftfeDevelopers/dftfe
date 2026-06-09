@@ -27,6 +27,7 @@ srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileN2_2.prm > outputN2_2
 srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileN2_3.prm > outputN2_3
 srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileN2_4.prm > outputN2_4
 srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileN2_5.prm > outputN2_5
+srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFilePt.prm > outputPt
 srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileMg2x_8.prm > outputMg2x_8
 srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileMg2x_9.prm > outputMg2x_9
 srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileMg2x_10.prm > outputMg2x_10

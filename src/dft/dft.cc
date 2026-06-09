@@ -18,28 +18,29 @@
 //
 
 // Include header files
-#include <chebyshevOrthogonalizedSubspaceIterationSolver.h>
-#include <dealiiLinearSolver.h>
-#include <densityFirstOrderResponseCalculator.h>
-#include <dft.h>
-#include <dftParameters.h>
-#include <dftUtils.h>
-#include <energyCalculator.h>
-#include <fileReaders.h>
+#include <dftfe/config.h>
+#include <dftfe/chebyshevOrthogonalizedSubspaceIterationSolver.h>
+#include <dftfe/dealiiLinearSolver.h>
+#include <dftfe/densityFirstOrderResponseCalculator.h>
+#include <dftfe/dft.h>
+#include <dftfe/dftParameters.h>
+#include <dftfe/dftUtils.h>
+#include <dftfe/energyCalculator.h>
+#include <dftfe/fileReaders.h>
 #include <linalg.h>
-#include <linearAlgebraOperations.h>
-#include <linearAlgebraOperationsInternal.h>
-#include <meshMovementAffineTransform.h>
-#include <meshMovementGaussian.h>
-#include <poissonSolverProblem.h>
-#include <pseudoConverter.h>
-#include <pseudoUtils.h>
-#include <vectorUtilities.h>
-#include <MemoryTransfer.h>
-#include <QuadDataCompositeWrite.h>
-#include <MPIWriteOnFile.h>
-#include <functionalTest.h>
-#include <computeAuxProjectedDensityMatrixFromPSI.h>
+#include <dftfe/linearAlgebraOperations.h>
+#include <dftfe/linearAlgebraOperationsInternal.h>
+#include <dftfe/meshMovementAffineTransform.h>
+#include <dftfe/meshMovementGaussian.h>
+#include <dftfe/poissonSolverProblem.h>
+#include <dftfe/pseudoConverter.h>
+#include <dftfe/pseudoUtils.h>
+#include <dftfe/vectorUtilities.h>
+#include <dftfe/MemoryTransfer.h>
+#include <dftfe/QuadDataCompositeWrite.h>
+#include <dftfe/MPIWriteOnFile.h>
+#include <dftfe/functionalTest.h>
+#include <dftfe/computeAuxProjectedDensityMatrixFromPSI.h>
 
 #include <algorithm>
 #include <cmath>
@@ -59,15 +60,15 @@
 #include <ctime>
 
 #ifdef DFTFE_WITH_DEVICE
-#  include <linearAlgebraOperationsDevice.h>
+#  include <dftfe/linearAlgebraOperationsDevice.h>
 #endif
 
 #include <elpa/elpa.h>
-#include "AuxDensityMatrixFE.h"
+#include <dftfe/AuxDensityMatrixFE.h>
 
 
-#include "hubbardClass.h"
-#include "ExcDFTPlusU.h"
+#include <dftfe/hubbardClass.h>
+#include <dftfe/ExcDFTPlusU.h>
 namespace dftfe
 {
   //

@@ -16,8 +16,9 @@
 //
 // @author Shukan Parekh, Phani Motamarri
 //
-#include <headers.h>
-#include <pseudoConverter.h>
+#include <dftfe/config.h>
+#include <dftfe/headers.h>
+#include <dftfe/pseudoConverter.h>
 #include <sys/stat.h>
 
 #include <fstream>

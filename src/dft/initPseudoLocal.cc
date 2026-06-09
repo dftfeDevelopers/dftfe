@@ -16,11 +16,11 @@
 //
 // @author Shiva Rudraraju, Phani Motamarri, Sambit Das
 //
-#include <dft.h>
-#include <dftUtils.h>
-#include <fileReaders.h>
-#include <vectorUtilities.h>
-#include <feevaluationWrapper.h>
+#include <dftfe/dft.h>
+#include <dftfe/dftUtils.h>
+#include <dftfe/fileReaders.h>
+#include <dftfe/vectorUtilities.h>
+#include <dftfe/feevaluationWrapper.h>
 #include <algorithm>
 #include <array>
 #include <cmath>

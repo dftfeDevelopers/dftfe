@@ -16,7 +16,8 @@
 //
 // @author Kartick Ramakrishnan
 //
-#include <oncvClass.h>
+#include <dftfe/config.h>
+#include <dftfe/oncvClass.h>
 namespace dftfe
 {
   namespace internal

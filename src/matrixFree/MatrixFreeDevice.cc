@@ -20,8 +20,9 @@
  *
  */
 
-#include <MatrixFreeDevice.h>
-#include "DeviceKernelLauncherHelpers.h"
+#include <dftfe/config.h>
+#include <dftfe/MatrixFreeDevice.h>
+#include <dftfe/DeviceKernelLauncherHelpers.h>
 
 namespace dftfe
 {
@@ -144,7 +145,8 @@ namespace dftfe
                           const dftfe::uInt  inhomogenityListSize,
                           const dftfe::uInt  nBatch,
                           const dftfe::uInt  nOwnedDofs,
-                          const dftfe::uInt  nGhostDofs)
+                          const dftfe::uInt  nGhostDofs,
+                          const bool         applyInhomogenity)
   {
     constexpr int yThreads = 64;
 
@@ -153,42 +155,76 @@ namespace dftfe
     dim3 blocks(inhomogenityListSize, nBatch, 1);
     dim3 threads(batchSize, yThreads, 1);
 
-    constraintsDistributeKernel<double, nDofsPerDim, batchSize>
-      <<<blocks, threads>>>(src,
-                            constrainingNodeBuckets,
-                            constrainingNodeOffset,
-                            constrainedNodeBuckets,
-                            constrainedNodeOffset,
-                            weightMatrixList,
-                            weightMatrixOffset,
-                            inhomogenityList,
-                            ghostMap,
-                            nOwnedDofs,
-                            nGhostDofs);
+    if (applyInhomogenity)
+      constraintsDistributeKernel<double, nDofsPerDim, batchSize, true>
+        <<<blocks, threads>>>(src,
+                              constrainingNodeBuckets,
+                              constrainingNodeOffset,
+                              constrainedNodeBuckets,
+                              constrainedNodeOffset,
+                              weightMatrixList,
+                              weightMatrixOffset,
+                              inhomogenityList,
+                              ghostMap,
+                              nOwnedDofs,
+                              nGhostDofs);
+    else
+      constraintsDistributeKernel<double, nDofsPerDim, batchSize, false>
+        <<<blocks, threads>>>(src,
+                              constrainingNodeBuckets,
+                              constrainingNodeOffset,
+                              constrainedNodeBuckets,
+                              constrainedNodeOffset,
+                              weightMatrixList,
+                              weightMatrixOffset,
+                              inhomogenityList,
+                              ghostMap,
+                              nOwnedDofs,
+                              nGhostDofs);
 
 #elif DFTFE_WITH_DEVICE_LANG_HIP
 
     dim3 blocks(inhomogenityListSize, nBatch, 1);
     dim3 threads(batchSize, yThreads, 1);
 
-    hipLaunchKernelGGL(
-      HIP_KERNEL_NAME(
-        constraintsDistributeKernel<double, nDofsPerDim, batchSize>),
-      blocks,
-      threads,
-      0,
-      0,
-      src,
-      constrainingNodeBuckets,
-      constrainingNodeOffset,
-      constrainedNodeBuckets,
-      constrainedNodeOffset,
-      weightMatrixList,
-      weightMatrixOffset,
-      inhomogenityList,
-      ghostMap,
-      nOwnedDofs,
-      nGhostDofs);
+    if (applyInhomogenity)
+      hipLaunchKernelGGL(
+        HIP_KERNEL_NAME(
+          constraintsDistributeKernel<double, nDofsPerDim, batchSize, true>),
+        blocks,
+        threads,
+        0,
+        0,
+        src,
+        constrainingNodeBuckets,
+        constrainingNodeOffset,
+        constrainedNodeBuckets,
+        constrainedNodeOffset,
+        weightMatrixList,
+        weightMatrixOffset,
+        inhomogenityList,
+        ghostMap,
+        nOwnedDofs,
+        nGhostDofs);
+    else
+      hipLaunchKernelGGL(
+        HIP_KERNEL_NAME(
+          constraintsDistributeKernel<double, nDofsPerDim, batchSize, false>),
+        blocks,
+        threads,
+        0,
+        0,
+        src,
+        constrainingNodeBuckets,
+        constrainingNodeOffset,
+        constrainedNodeBuckets,
+        constrainedNodeOffset,
+        weightMatrixList,
+        weightMatrixOffset,
+        inhomogenityList,
+        ghostMap,
+        nOwnedDofs,
+        nGhostDofs);
 
 #elif DFTFE_WITH_DEVICE_LANG_SYCL
     sycl::queue &queue =
@@ -197,30 +233,56 @@ namespace dftfe
     constexpr std::size_t sharedMemSizeConstraints =
       batchSize * nDofsPerDim * nDofsPerDim;
 
-    queue.submit([&](sycl::handler &cgh) {
-      sycl::local_accessor<T, 1> sharedConstrainingData(
-        sharedMemSizeConstraints, cgh);
-      cgh.parallel_for(
-        sycl::nd_range<3>(sycl::range<3>(1, nBatch, inhomogenityListSize) *
-                            sycl::range<3>(1, yThreads, batchSize),
-                          sycl::range<3>(1, yThreads, batchSize)),
-        [=](sycl::nd_item<3> item) {
-          constraintsDistributeKernel<T, nDofsPerDim, batchSize>(
-            item,
-            src,
-            constrainingNodeBuckets,
-            constrainingNodeOffset,
-            constrainedNodeBuckets,
-            constrainedNodeOffset,
-            weightMatrixList,
-            weightMatrixOffset,
-            inhomogenityList,
-            ghostMap,
-            nOwnedDofs,
-            nGhostDofs,
-            sharedConstrainingData);
-        });
-    });
+    if (applyInhomogenity)
+      queue.submit([&](sycl::handler &cgh) {
+        sycl::local_accessor<T, 1> sharedConstrainingData(
+          sharedMemSizeConstraints, cgh);
+        cgh.parallel_for(
+          sycl::nd_range<3>(sycl::range<3>(1, nBatch, inhomogenityListSize) *
+                              sycl::range<3>(1, yThreads, batchSize),
+                            sycl::range<3>(1, yThreads, batchSize)),
+          [=](sycl::nd_item<3> item) {
+            constraintsDistributeKernel<T, nDofsPerDim, batchSize, true>(
+              item,
+              src,
+              constrainingNodeBuckets,
+              constrainingNodeOffset,
+              constrainedNodeBuckets,
+              constrainedNodeOffset,
+              weightMatrixList,
+              weightMatrixOffset,
+              inhomogenityList,
+              ghostMap,
+              nOwnedDofs,
+              nGhostDofs,
+              sharedConstrainingData);
+          });
+      });
+    else
+      queue.submit([&](sycl::handler &cgh) {
+        sycl::local_accessor<T, 1> sharedConstrainingData(
+          sharedMemSizeConstraints, cgh);
+        cgh.parallel_for(
+          sycl::nd_range<3>(sycl::range<3>(1, nBatch, inhomogenityListSize) *
+                              sycl::range<3>(1, yThreads, batchSize),
+                            sycl::range<3>(1, yThreads, batchSize)),
+          [=](sycl::nd_item<3> item) {
+            constraintsDistributeKernel<T, nDofsPerDim, batchSize, false>(
+              item,
+              src,
+              constrainingNodeBuckets,
+              constrainingNodeOffset,
+              constrainedNodeBuckets,
+              constrainedNodeOffset,
+              weightMatrixList,
+              weightMatrixOffset,
+              inhomogenityList,
+              ghostMap,
+              nOwnedDofs,
+              nGhostDofs,
+              sharedConstrainingData);
+          });
+      });
 #endif
   }
 

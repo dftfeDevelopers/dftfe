@@ -24,7 +24,8 @@
 // eigenvalues, eigenfunctions
 // using the self-consistent Hamiltonian)
 //
-#include <dft.h>
+#include <dftfe/config.h>
+#include <dftfe/dft.h>
 namespace dftfe
 {
   template <dftfe::utils::MemorySpace memorySpace>

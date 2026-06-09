@@ -16,9 +16,9 @@
 //
 // @author Sambit Das and Phani Motamarri
 
-#include <cgPRPNonLinearSolver.h>
-#include <fileReaders.h>
-#include <nonlinearSolverProblem.h>
+#include <dftfe/cgPRPNonLinearSolver.h>
+#include <dftfe/fileReaders.h>
+#include <dftfe/nonlinearSolverProblem.h>
 
 namespace dftfe
 {

@@ -27,10 +27,10 @@
 #include <boost/math/special_functions/spherical_harmonic.hpp>
 #include <boost/math/special_functions/factorials.hpp>
 
-#include "StringOperations.h"
-#include "SphericalFunctionUtil.h"
-#include "Exceptions.h"
-#include "SlaterBasis.h"
+#include <dftfe/StringOperations.h>
+#include <dftfe/SphericalFunctionUtil.h>
+#include <dftfe/Exceptions.h>
+#include <dftfe/SlaterBasis.h>
 
 namespace dftfe
 {

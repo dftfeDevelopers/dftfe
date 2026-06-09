@@ -19,7 +19,8 @@
  * @author Vishal Subramanian, Bikash Kanungo
  */
 
-#include "InterpolateFromCellToLocalPoints.h"
+#include <dftfe/config.h>
+#include <dftfe/InterpolateFromCellToLocalPoints.h>
 namespace dftfe
 {
   template <dftfe::utils::MemorySpace memorySpace>

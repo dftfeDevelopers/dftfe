@@ -16,13 +16,14 @@
 //
 // @author Kartick Ramakrishnan, Sambit Das, Phani Motamarri, Vishal Subramanian
 //
-#include <AtomicCenteredNonLocalOperator.h>
+#include <dftfe/config.h>
+#include <dftfe/AtomicCenteredNonLocalOperator.h>
 #if defined(DFTFE_WITH_DEVICE)
-#  include <AtomicCenteredNonLocalOperatorKernelsDevice.h>
-#  include <DeviceTypeConfig.h>
-#  include <DeviceKernelLauncherHelpers.h>
-#  include <DeviceAPICalls.h>
-#  include <DeviceDataTypeOverloads.h>
+#  include <dftfe/AtomicCenteredNonLocalOperatorKernelsDevice.h>
+#  include <dftfe/DeviceTypeConfig.h>
+#  include <dftfe/DeviceKernelLauncherHelpers.h>
+#  include <dftfe/DeviceAPICalls.h>
+#  include <dftfe/DeviceDataTypeOverloads.h>
 #endif
 namespace dftfe
 {

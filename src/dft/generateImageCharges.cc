@@ -24,10 +24,10 @@
 //
 // round a given fractional coordinate to zero or 1
 //
-#include <dft.h>
-#include <linearAlgebraOperations.h>
-#include <dftUtils.h>
-#include <vectorUtilities.h>
+#include <dftfe/dft.h>
+#include <dftfe/linearAlgebraOperations.h>
+#include <dftfe/dftUtils.h>
+#include <dftfe/vectorUtilities.h>
 
 namespace dftfe
 {

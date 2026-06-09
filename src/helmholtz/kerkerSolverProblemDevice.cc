@@ -17,10 +17,10 @@
 // @author Gourab Panigrahi
 //
 
-#include <constants.h>
-#include <kerkerSolverProblemDevice.h>
-#include <MemoryTransfer.h>
-#include <feevaluationWrapper.h>
+#include <dftfe/constants.h>
+#include <dftfe/kerkerSolverProblemDevice.h>
+#include <dftfe/MemoryTransfer.h>
+#include <dftfe/feevaluationWrapper.h>
 
 namespace dftfe
 {
@@ -319,7 +319,7 @@ namespace dftfe
 
     x.updateGhostValues();
 
-    d_matrixFreeWrapperDevice->constraintsDistribute(x.data());
+    d_matrixFreeWrapperDevice->constraintsDistribute(x.data(), false);
 
     d_matrixFreeWrapperDevice->computeAX(Ax.data(), x.data());
 

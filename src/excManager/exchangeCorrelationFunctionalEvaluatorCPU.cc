@@ -14,7 +14,7 @@
 //
 // ---------------------------------------------------------------------
 //
-#include <exchangeCorrelationFunctionalEvaluator.h>
+#include <dftfe/exchangeCorrelationFunctionalEvaluator.h>
 namespace dftfe
 {
 #define DFTFE_FUNCTIONALEVALUATOR_LDA_X(NAME, BODY)                            \
@@ -335,7 +335,7 @@ namespace dftfe
         pdecTau[2 * index + 1]     = tvtau1;                                   \
       }                                                                        \
   }
-#include <exchangeCorrelationFunctionalEvaluation.def>
+#include <dftfe/exchangeCorrelationFunctionalEvaluation.def>
 } // namespace dftfe
 
 

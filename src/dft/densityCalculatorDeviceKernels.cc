@@ -18,7 +18,7 @@
 //
 
 // source file for electron density related computations
-#include "densityCalculatorDeviceKernels.h"
+#include <dftfe/densityCalculatorDeviceKernels.h>
 
 namespace dftfe
 {

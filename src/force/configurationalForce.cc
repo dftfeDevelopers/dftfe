@@ -15,12 +15,13 @@
 // ---------------------------------------------------------------------
 
 
-#include <configurationalForce.h>
-#include <configurationalForceKernels.h>
-#include <constants.h>
-#include <ExcDFTPlusU.h>
-#include <feevaluationWrapper.h>
-#include <dftUtils.h>
+#include <dftfe/config.h>
+#include <dftfe/configurationalForce.h>
+#include <dftfe/configurationalForceKernels.h>
+#include <dftfe/constants.h>
+#include <dftfe/ExcDFTPlusU.h>
+#include <dftfe/feevaluationWrapper.h>
+#include <dftfe/dftUtils.h>
 #include <algorithm>
 #include <array>
 #include <set>

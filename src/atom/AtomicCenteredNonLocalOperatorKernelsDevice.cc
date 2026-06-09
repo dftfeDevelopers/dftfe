@@ -17,13 +17,13 @@
 // @author Kartick Ramakrishnan
 //
 
-#include <AtomicCenteredNonLocalOperatorKernelsDevice.h>
-#include <deviceKernelsGeneric.h>
-#include <DeviceAPICalls.h>
-#include <DeviceDataTypeOverloads.h>
-#include <DeviceTypeConfig.h>
-#include <DeviceKernelLauncherHelpers.h>
-#include <BLASWrapper.h>
+#include <dftfe/AtomicCenteredNonLocalOperatorKernelsDevice.h>
+#include <dftfe/deviceKernelsGeneric.h>
+#include <dftfe/DeviceAPICalls.h>
+#include <dftfe/DeviceDataTypeOverloads.h>
+#include <dftfe/DeviceTypeConfig.h>
+#include <dftfe/DeviceKernelLauncherHelpers.h>
+#include <dftfe/BLASWrapper.h>
 namespace dftfe
 {
   namespace

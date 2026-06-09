@@ -21,15 +21,15 @@
 
 //
 //
-#include <dft.h>
-#include <densityCalculator.h>
-#include <fileReaders.h>
-#include <dftUtils.h>
-#include <fileReaders.h>
-#include <vectorUtilities.h>
-#include <linearAlgebraOperations.h>
-#include <QuadDataCompositeWrite.h>
-#include <MPIWriteOnFile.h>
+#include <dftfe/dft.h>
+#include <dftfe/densityCalculator.h>
+#include <dftfe/fileReaders.h>
+#include <dftfe/dftUtils.h>
+#include <dftfe/fileReaders.h>
+#include <dftfe/vectorUtilities.h>
+#include <dftfe/linearAlgebraOperations.h>
+#include <dftfe/QuadDataCompositeWrite.h>
+#include <dftfe/MPIWriteOnFile.h>
 
 namespace dftfe
 {

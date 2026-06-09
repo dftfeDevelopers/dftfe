@@ -18,8 +18,9 @@
 //
 
 // source file for electron density related computations
-#include <dft.h>
-#include <densityCalculator.h>
+#include <dftfe/config.h>
+#include <dftfe/dft.h>
+#include <dftfe/densityCalculator.h>
 
 namespace dftfe
 {

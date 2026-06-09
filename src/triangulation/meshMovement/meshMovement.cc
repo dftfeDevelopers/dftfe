@@ -17,8 +17,8 @@
 // @author Sambit Das(2017)
 //
 //
-#include <meshMovement.h>
-#include <vectorUtilities.h>
+#include <dftfe/meshMovement.h>
+#include <dftfe/vectorUtilities.h>
 
 namespace dftfe
 {

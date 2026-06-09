@@ -17,11 +17,12 @@
 // @author Sambit Das
 //
 
+#include <dftfe/config.h>
 #ifdef DFTFE_WITH_DEVICE
-#  include <solveVselfInBinsDevice.h>
-#  include <vectorUtilities.h>
-#  include <MemoryStorage.h>
-#  include "solveVselfInBinsDeviceKernels.h"
+#  include <dftfe/solveVselfInBinsDevice.h>
+#  include <dftfe/vectorUtilities.h>
+#  include <dftfe/MemoryStorage.h>
+#  include <dftfe/solveVselfInBinsDeviceKernels.h>
 
 namespace dftfe
 {

@@ -13,9 +13,9 @@
 //
 // ---------------------------------------------------------------------
 
-#include "process_grid.h"
-#include "dftfeDataTypes.h"
-#include "scalapack.templates.h"
+#include <dftfe/process_grid.h>
+#include <dftfe/dftfeDataTypes.h>
+#include <dftfe/scalapack.templates.h>
 #include <deal.II/base/mpi.templates.h>
 
 namespace dftfe

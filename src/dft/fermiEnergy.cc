@@ -17,7 +17,8 @@
 // @author Shiva Rudraraju, Phani Motamarri
 //
 
-#include <dft.h>
+#include <dftfe/config.h>
+#include <dftfe/dft.h>
 
 namespace dftfe
 {

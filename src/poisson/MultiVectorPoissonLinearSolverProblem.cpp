@@ -17,10 +17,10 @@
 // @author Vishal Subramanian
 //
 
-#include "MultiVectorPoissonLinearSolverProblem.h"
-#include "dftUtils.h"
-#include "vectorUtilities.h"
-#include "poissonSolverProblem.h"
+#include <dftfe/MultiVectorPoissonLinearSolverProblem.h>
+#include <dftfe/dftUtils.h>
+#include <dftfe/vectorUtilities.h>
+#include <dftfe/poissonSolverProblem.h>
 
 namespace dftfe
 {

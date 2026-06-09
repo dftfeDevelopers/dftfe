@@ -21,10 +21,11 @@
 
 //
 //
-#include <dft.h>
-#include <fileReaders.h>
-#include <dftUtils.h>
-#include <linearAlgebraOperations.h>
+#include <dftfe/config.h>
+#include <dftfe/dft.h>
+#include <dftfe/fileReaders.h>
+#include <dftfe/dftUtils.h>
+#include <dftfe/linearAlgebraOperations.h>
 #include <sys/stat.h>
 
 namespace dftfe
