@@ -272,10 +272,10 @@ namespace dftfe
 #endif
         double hxNorm = 0.0;
         BLASWrapperPtr->xnrm2(local_size,
-                               hxDebug.data(),
-                               1,
-                               operatorMatrix.getMPICommunicatorDomain(),
-                               &hxNorm);
+                              hxDebug.data(),
+                              1,
+                              operatorMatrix.getMPICommunicatorDomain(),
+                              &hxNorm);
         if (this_mpi_process == 0)
           std::cout << "DEBUG H*ones L2norm = " << std::setprecision(14)
                     << hxNorm << "\n";
