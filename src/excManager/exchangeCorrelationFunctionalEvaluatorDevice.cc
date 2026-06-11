@@ -331,7 +331,7 @@ namespace dftfe
   // r2SCAN split into per-output __noinline__ device helpers to
   // cut register pressure (avoids ROCm spill miscompilation).
   // ============================================================
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_zk(double rho0,
                    double rho1,
                    double sigma0,
@@ -351,7 +351,7 @@ namespace dftfe
   // vs the original MGGA_C_R2SCAN_VRHO0/1 macros over 20000 random
   // density points. BUDGET=40 source-live-doubles/fn.
   // ============================================================
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0__t252(double rho0,
                             double rho1,
                             double sigma0,
@@ -500,7 +500,7 @@ namespace dftfe
     return t252;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0__t354(double rho0,
                             double rho1,
                             double sigma0,
@@ -577,7 +577,7 @@ namespace dftfe
     return t354;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0__t371(double rho0,
                             double rho1,
                             double sigma0,
@@ -625,7 +625,7 @@ namespace dftfe
     return t371;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0__t374(double rho0,
                             double rho1,
                             double sigma0,
@@ -788,7 +788,7 @@ namespace dftfe
     return t374;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0__t404(double rho0,
                             double rho1,
                             double sigma0,
@@ -846,7 +846,7 @@ namespace dftfe
     return t404;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0__t408(double rho0,
                             double rho1,
                             double sigma0,
@@ -929,7 +929,7 @@ namespace dftfe
     return t408;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0__t424(double rho0,
                             double rho1,
                             double sigma0,
@@ -963,7 +963,7 @@ namespace dftfe
     return t424;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0__t459(double rho0,
                             double rho1,
                             double sigma0,
@@ -1078,7 +1078,7 @@ namespace dftfe
     return t459;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0__t481(double rho0,
                             double rho1,
                             double sigma0,
@@ -1112,7 +1112,7 @@ namespace dftfe
     return t481;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0__t484(double rho0,
                             double rho1,
                             double sigma0,
@@ -1268,7 +1268,7 @@ namespace dftfe
     return t484;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0__t486(double rho0,
                             double rho1,
                             double sigma0,
@@ -1400,7 +1400,7 @@ namespace dftfe
     return t486;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0__t495(double rho0,
                             double rho1,
                             double sigma0,
@@ -1509,7 +1509,7 @@ namespace dftfe
     return t495;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0__t516(double rho0,
                             double rho1,
                             double sigma0,
@@ -1625,7 +1625,7 @@ namespace dftfe
     return t516;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0__t562(double rho0,
                             double rho1,
                             double sigma0,
@@ -1682,7 +1682,7 @@ namespace dftfe
     return t562;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0__t594(double rho0,
                             double rho1,
                             double sigma0,
@@ -1756,7 +1756,7 @@ namespace dftfe
     return t594;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0__t596(double rho0,
                             double rho1,
                             double sigma0,
@@ -1806,7 +1806,7 @@ namespace dftfe
     return t596;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0__t607(double rho0,
                             double rho1,
                             double sigma0,
@@ -1837,7 +1837,7 @@ namespace dftfe
     return t607;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0__t608(double rho0,
                             double rho1,
                             double sigma0,
@@ -1867,7 +1867,7 @@ namespace dftfe
     return t608;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0__t619(double rho0,
                             double rho1,
                             double sigma0,
@@ -1936,7 +1936,7 @@ namespace dftfe
     return t619;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0__t624(double rho0,
                             double rho1,
                             double sigma0,
@@ -1994,7 +1994,7 @@ namespace dftfe
     return t624;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0__t635(double rho0,
                             double rho1,
                             double sigma0,
@@ -2059,7 +2059,7 @@ namespace dftfe
     return t635;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0__t647(double rho0,
                             double rho1,
                             double sigma0,
@@ -2117,7 +2117,7 @@ namespace dftfe
     return t647;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0__t656(double rho0,
                             double rho1,
                             double sigma0,
@@ -2183,7 +2183,7 @@ namespace dftfe
     return t656;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0__t658(double rho0,
                             double rho1,
                             double sigma0,
@@ -2292,7 +2292,7 @@ namespace dftfe
     return t658;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0__t660(double rho0,
                             double rho1,
                             double sigma0,
@@ -2402,7 +2402,7 @@ namespace dftfe
     return t660;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0__t661(double rho0,
                             double rho1,
                             double sigma0,
@@ -2486,7 +2486,7 @@ namespace dftfe
     return t661;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0__t695(double rho0,
                             double rho1,
                             double sigma0,
@@ -2531,7 +2531,7 @@ namespace dftfe
     return t695;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0__t725(double rho0,
                             double rho1,
                             double sigma0,
@@ -2675,7 +2675,7 @@ namespace dftfe
     return t725;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0__t727(double rho0,
                             double rho1,
                             double sigma0,
@@ -2718,7 +2718,7 @@ namespace dftfe
     return t727;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0__t747(double rho0,
                             double rho1,
                             double sigma0,
@@ -2796,7 +2796,7 @@ namespace dftfe
     return t747;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0__t753(double rho0,
                             double rho1,
                             double sigma0,
@@ -2956,7 +2956,7 @@ namespace dftfe
     return t753;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0__t771(double rho0,
                             double rho1,
                             double sigma0,
@@ -3107,7 +3107,7 @@ namespace dftfe
     return t771;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0__t774(double rho0,
                             double rho1,
                             double sigma0,
@@ -3242,7 +3242,7 @@ namespace dftfe
     return t774;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0__t775(double rho0,
                             double rho1,
                             double sigma0,
@@ -3347,7 +3347,7 @@ namespace dftfe
     return t775;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0__t776(double rho0,
                             double rho1,
                             double sigma0,
@@ -3386,7 +3386,7 @@ namespace dftfe
     return t776;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0__t791(double rho0,
                             double rho1,
                             double sigma0,
@@ -3516,7 +3516,7 @@ namespace dftfe
     return t791;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0__t792(double rho0,
                             double rho1,
                             double sigma0,
@@ -3725,7 +3725,7 @@ namespace dftfe
     return t792;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0__t795(double rho0,
                             double rho1,
                             double sigma0,
@@ -3881,7 +3881,7 @@ namespace dftfe
     return t795;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0__t799(double rho0,
                             double rho1,
                             double sigma0,
@@ -4035,7 +4035,7 @@ namespace dftfe
     return t799;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0__t861(double rho0,
                             double rho1,
                             double sigma0,
@@ -4154,7 +4154,7 @@ namespace dftfe
     return t861;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0__t880(double rho0,
                             double rho1,
                             double sigma0,
@@ -4255,7 +4255,7 @@ namespace dftfe
     return t880;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0__t887(double rho0,
                             double rho1,
                             double sigma0,
@@ -4411,7 +4411,7 @@ namespace dftfe
     return t887;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho0(double rho0,
                       double rho1,
                       double sigma0,
@@ -4571,7 +4571,7 @@ namespace dftfe
     return tvrho0;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t252(double rho0,
                             double rho1,
                             double sigma0,
@@ -4720,7 +4720,7 @@ namespace dftfe
     return t252;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t371(double rho0,
                             double rho1,
                             double sigma0,
@@ -4768,7 +4768,7 @@ namespace dftfe
     return t371;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t374(double rho0,
                             double rho1,
                             double sigma0,
@@ -4931,7 +4931,7 @@ namespace dftfe
     return t374;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t1040(double rho0,
                              double rho1,
                              double sigma0,
@@ -5050,7 +5050,7 @@ namespace dftfe
     return t1040;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t354(double rho0,
                             double rho1,
                             double sigma0,
@@ -5127,7 +5127,7 @@ namespace dftfe
     return t354;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t404(double rho0,
                             double rho1,
                             double sigma0,
@@ -5185,7 +5185,7 @@ namespace dftfe
     return t404;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t408(double rho0,
                             double rho1,
                             double sigma0,
@@ -5268,7 +5268,7 @@ namespace dftfe
     return t408;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t459(double rho0,
                             double rho1,
                             double sigma0,
@@ -5383,7 +5383,7 @@ namespace dftfe
     return t459;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t880(double rho0,
                             double rho1,
                             double sigma0,
@@ -5484,7 +5484,7 @@ namespace dftfe
     return t880;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t898(double rho0,
                             double rho1,
                             double sigma0,
@@ -5518,7 +5518,7 @@ namespace dftfe
     return t898;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t910(double rho0,
                             double rho1,
                             double sigma0,
@@ -5552,7 +5552,7 @@ namespace dftfe
     return t910;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t913(double rho0,
                             double rho1,
                             double sigma0,
@@ -5708,7 +5708,7 @@ namespace dftfe
     return t913;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t955(double rho0,
                             double rho1,
                             double sigma0,
@@ -5739,7 +5739,7 @@ namespace dftfe
     return t955;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t915(double rho0,
                             double rho1,
                             double sigma0,
@@ -5871,7 +5871,7 @@ namespace dftfe
     return t915;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t921(double rho0,
                             double rho1,
                             double sigma0,
@@ -5980,7 +5980,7 @@ namespace dftfe
     return t921;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t516(double rho0,
                             double rho1,
                             double sigma0,
@@ -6096,7 +6096,7 @@ namespace dftfe
     return t516;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t791(double rho0,
                             double rho1,
                             double sigma0,
@@ -6226,7 +6226,7 @@ namespace dftfe
     return t791;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t940(double rho0,
                             double rho1,
                             double sigma0,
@@ -6283,7 +6283,7 @@ namespace dftfe
     return t940;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t594(double rho0,
                             double rho1,
                             double sigma0,
@@ -6357,7 +6357,7 @@ namespace dftfe
     return t594;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t619(double rho0,
                             double rho1,
                             double sigma0,
@@ -6426,7 +6426,7 @@ namespace dftfe
     return t619;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t624(double rho0,
                             double rho1,
                             double sigma0,
@@ -6484,7 +6484,7 @@ namespace dftfe
     return t624;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t635(double rho0,
                             double rho1,
                             double sigma0,
@@ -6549,7 +6549,7 @@ namespace dftfe
     return t635;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t647(double rho0,
                             double rho1,
                             double sigma0,
@@ -6607,7 +6607,7 @@ namespace dftfe
     return t647;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t656(double rho0,
                             double rho1,
                             double sigma0,
@@ -6673,7 +6673,7 @@ namespace dftfe
     return t656;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t658(double rho0,
                             double rho1,
                             double sigma0,
@@ -6782,7 +6782,7 @@ namespace dftfe
     return t658;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t660(double rho0,
                             double rho1,
                             double sigma0,
@@ -6892,7 +6892,7 @@ namespace dftfe
     return t660;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t695(double rho0,
                             double rho1,
                             double sigma0,
@@ -6937,7 +6937,7 @@ namespace dftfe
     return t695;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t725(double rho0,
                             double rho1,
                             double sigma0,
@@ -7081,7 +7081,7 @@ namespace dftfe
     return t725;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t727(double rho0,
                             double rho1,
                             double sigma0,
@@ -7124,7 +7124,7 @@ namespace dftfe
     return t727;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t747(double rho0,
                             double rho1,
                             double sigma0,
@@ -7202,7 +7202,7 @@ namespace dftfe
     return t747;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t951(double rho0,
                             double rho1,
                             double sigma0,
@@ -7252,7 +7252,7 @@ namespace dftfe
     return t951;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t956(double rho0,
                             double rho1,
                             double sigma0,
@@ -7282,7 +7282,7 @@ namespace dftfe
     return t956;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t959(double rho0,
                             double rho1,
                             double sigma0,
@@ -7366,7 +7366,7 @@ namespace dftfe
     return t959;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t966(double rho0,
                             double rho1,
                             double sigma0,
@@ -7526,7 +7526,7 @@ namespace dftfe
     return t966;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t975(double rho0,
                             double rho1,
                             double sigma0,
@@ -7677,7 +7677,7 @@ namespace dftfe
     return t975;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t978(double rho0,
                             double rho1,
                             double sigma0,
@@ -7812,7 +7812,7 @@ namespace dftfe
     return t978;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t979(double rho0,
                             double rho1,
                             double sigma0,
@@ -7917,7 +7917,7 @@ namespace dftfe
     return t979;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t980(double rho0,
                             double rho1,
                             double sigma0,
@@ -7956,7 +7956,7 @@ namespace dftfe
     return t980;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t983(double rho0,
                             double rho1,
                             double sigma0,
@@ -8165,7 +8165,7 @@ namespace dftfe
     return t983;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t986(double rho0,
                             double rho1,
                             double sigma0,
@@ -8320,7 +8320,7 @@ namespace dftfe
     return t986;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t989(double rho0,
                             double rho1,
                             double sigma0,
@@ -8474,7 +8474,7 @@ namespace dftfe
     return t989;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t1046(double rho0,
                              double rho1,
                              double sigma0,
@@ -8630,7 +8630,7 @@ namespace dftfe
     return t1046;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1__t1046v(double rho0,
                               double rho1,
                               double sigma0,
@@ -8645,7 +8645,7 @@ namespace dftfe
     return t1046v;
   }
 
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vrho1(double rho0,
                       double rho1,
                       double sigma0,
@@ -8804,7 +8804,7 @@ namespace dftfe
     double tvrho1 = t8 * t1046v + t290 - t34 + t375 + t90 + t92;
     return tvrho1;
   }
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vsigma0(double rho0,
                         double rho1,
                         double sigma0,
@@ -8816,7 +8816,7 @@ namespace dftfe
     MGGA_C_R2SCAN_VSIGMA0
     return tvsigma0;
   }
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vsigma1(double rho0,
                         double rho1,
                         double sigma0,
@@ -8828,7 +8828,7 @@ namespace dftfe
     MGGA_C_R2SCAN_VSIGMA1
     return tvsigma1;
   }
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vtau0(double rho0,
                       double rho1,
                       double sigma0,
@@ -8840,7 +8840,7 @@ namespace dftfe
     MGGA_C_R2SCAN_VTAU0
     return tvtau0;
   }
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_c_r2scan_vtau1(double rho0,
                       double rho1,
                       double sigma0,
@@ -8852,7 +8852,7 @@ namespace dftfe
     MGGA_C_R2SCAN_VTAU1
     return tvtau1;
   }
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_x_r2scan_zk(double rho0,
                    double rho1,
                    double sigma0,
@@ -8864,7 +8864,7 @@ namespace dftfe
     MGGA_X_R2SCAN_ZK
     return tzk0;
   }
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_x_r2scan_vrho0(double rho0,
                       double rho1,
                       double sigma0,
@@ -8876,7 +8876,7 @@ namespace dftfe
     MGGA_X_R2SCAN_VRHO0
     return tvrho0;
   }
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_x_r2scan_vrho1(double rho0,
                       double rho1,
                       double sigma0,
@@ -8888,7 +8888,7 @@ namespace dftfe
     MGGA_X_R2SCAN_VRHO1
     return tvrho1;
   }
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_x_r2scan_vsigma0(double rho0,
                         double rho1,
                         double sigma0,
@@ -8900,7 +8900,7 @@ namespace dftfe
     MGGA_X_R2SCAN_VSIGMA0
     return tvsigma0;
   }
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_x_r2scan_vsigma2(double rho0,
                         double rho1,
                         double sigma0,
@@ -8912,7 +8912,7 @@ namespace dftfe
     MGGA_X_R2SCAN_VSIGMA2
     return tvsigma2;
   }
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_x_r2scan_vtau0(double rho0,
                       double rho1,
                       double sigma0,
@@ -8924,7 +8924,7 @@ namespace dftfe
     MGGA_X_R2SCAN_VTAU0
     return tvtau0;
   }
-  static __device__ __attribute__((noinline)) double
+  DFTFE_DEVICE_NOINLINE double
   mgga_x_r2scan_vtau1(double rho0,
                       double rho1,
                       double sigma0,
