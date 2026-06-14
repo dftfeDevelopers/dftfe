@@ -29,7 +29,6 @@
 #include <dftfe/constants.h>
 #include <dftfe/DeviceAPICalls.h>
 #include <random>
-#include <iomanip>
 
 namespace dftfe
 {
@@ -256,34 +255,6 @@ namespace dftfe
       Z.setValue(T(0.0));
       tempVec.setValue(T(0.0));
       const dftfe::uInt local_size = X.locallyOwnedSize() * X.numVectors();
-
-      // DEBUG: H*ones test — compare ||H*1|| across compilers/platforms
-      {
-        dftfe::linearAlgebra::MultiVector<T, memorySpace> xDebug(X, T(1.0));
-        dftfe::linearAlgebra::MultiVector<T, memorySpace> hxDebug(X, T(0.0));
-        operatorMatrix.getOverloadedConstraintMatrix()->set_zero(xDebug);
-        xDebug.zeroOutGhosts();
-#if defined(DFTFE_WITH_DEVICE)
-        dftfe::utils::deviceSynchronize();
-#endif
-        operatorMatrix.HX(xDebug, 1.0, 0.0, 0.0, hxDebug);
-#if defined(DFTFE_WITH_DEVICE)
-        dftfe::utils::deviceSynchronize();
-#endif
-        double hxNorm = 0.0;
-        BLASWrapperPtr->xnrm2(local_size,
-                              hxDebug.data(),
-                              1,
-                              operatorMatrix.getMPICommunicatorDomain(),
-                              &hxNorm);
-        if (this_mpi_process == 0)
-          std::cout << "DEBUG H*ones L2norm = " << std::setprecision(14)
-                    << hxNorm << "\n";
-      }
-      // END DEBUG
-      MPI_Barrier(MPI_COMM_WORLD);
-      exit(-1);
-
 #if defined(DFTFE_WITH_DEVICE)
       dftfe::utils::MemoryStorage<T, dftfe::utils::MemorySpace::HOST> XHost(
         local_size, T(0.0));

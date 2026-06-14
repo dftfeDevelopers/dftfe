@@ -657,34 +657,6 @@ namespace dftfe
 #endif
       }
 
-    // DEBUG: check XC outputs for NaN right after R2SCAN evaluation
-    if (d_XCType == "MGGA-R2SCAN")
-      {
-        for (std::size_t i = 0; i < ecValues.size(); i++)
-          if (std::isnan(ecValues[i]) || std::isinf(ecValues[i]))
-            {
-              std::cout << "DEBUG excTauMGGA: NaN/Inf in ecValues at i=" << i
-                        << " (rho0=" << densityValues[2 * (i % nquad) + 0]
-                        << " rho1=" << densityValues[2 * (i % nquad) + 1]
-                        << " tau0=" << tauValues[2 * (i % nquad) + 0]
-                        << " tau1=" << tauValues[2 * (i % nquad) + 1] << ")\n";
-              break;
-            }
-        for (std::size_t i = 0; i < pdecDensityValuesNonNN.size(); i++)
-          if (std::isnan(pdecDensityValuesNonNN[i]) ||
-              std::isinf(pdecDensityValuesNonNN[i]))
-            {
-              std::cout << "DEBUG excTauMGGA: NaN/Inf in pdecDensity at i=" << i
-                        << " (rho0=" << densityValues[2 * (i / 2 % nquad) + 0]
-                        << " rho1=" << densityValues[2 * (i / 2 % nquad) + 1]
-                        << " tau0=" << tauValues[2 * (i / 2 % nquad) + 0]
-                        << " tau1=" << tauValues[2 * (i / 2 % nquad) + 1]
-                        << ")\n";
-              break;
-            }
-      }
-    // END DEBUG
-
     for (size_t i = 0; i < nquad; i++)
       {
         if (std::abs(densityValues[2 * i + 0] + densityValues[2 * i + 1]) <=
