@@ -474,7 +474,7 @@
 
 // ===================================================================
 // Per-output (cone-pruned) macros, generated to mirror the r2SCAN split.
-// Each computes exactly one output; bit-identical to the monolithic macro.
+// Each computes exactly one output.
 // ===================================================================
 #define MGGA_X_SCAN_ZK                                                        \
   double tzk0, t2, t3, t4, t6, t7, t8, t11;                                   \

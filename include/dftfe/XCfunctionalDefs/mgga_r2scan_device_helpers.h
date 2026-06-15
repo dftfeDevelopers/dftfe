@@ -13,7 +13,7 @@
 #define DFTFE_MGGA_R2SCAN_DEVICE_HELPERS_H
 // ============================================================
 // r2SCAN split into per-output __noinline__ device helpers to
-// cut register pressure (avoids ROCm spill miscompilation).
+// cut register pressure.
 // ============================================================
 DFTFE_DEVICE_NOINLINE double
 mgga_c_r2scan_zk(double rho0,
@@ -30,10 +30,7 @@ mgga_c_r2scan_zk(double rho0,
 // ============================================================
 // r2SCAN correlation vrho0/vrho1: decomposed into __noinline__
 // sub-helpers (each recomputes its own cone, returns a scalar) to
-// keep every function's register footprint well under the A100
-// 255-register cap (no spill). Auto-generated; verified bit-exact
-// vs the original MGGA_C_R2SCAN_VRHO0/1 macros over 20000 random
-// density points. BUDGET=40 source-live-doubles/fn.
+// keep every function's register footprint small.
 // ============================================================
 DFTFE_DEVICE_NOINLINE double
 mgga_c_r2scan_vrho0__t252(double rho0,

@@ -14,8 +14,6 @@
 
 // ============================================================
 // SCAN split into per-output __noinline__ device helpers
-// (mirrors the r2SCAN decomposition; bit-identical to the
-// monolithic MGGA_X_SCAN / MGGA_C_SCAN macros).
 // ============================================================
 DFTFE_DEVICE_NOINLINE double
 mgga_c_scan_zk(double rho0,

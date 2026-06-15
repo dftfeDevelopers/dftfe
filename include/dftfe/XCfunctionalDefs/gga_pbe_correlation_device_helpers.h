@@ -1,20 +1,6 @@
 // ============================================================
 // PBE correlation split into per-output __noinline__ device helpers to
-// cut register pressure / scratch spill on GPU (mirrors the r2SCAN/SCAN
-// decomposition; bit-identical to the monolithic GGA_C_PBE).
-//
-// NOT a standalone header. It is #included INSIDE `namespace dftfe`
-// by exchangeCorrelationFunctionalEvaluatorDevice.cc (and is reusable by
-// the CPU evaluator TU). It depends on, and must be included after:
-//   - DFTFE_DEVICE_NOINLINE              (qualifier macro)
-//   - the monolithic GGA_C_PBE macro     (XCfunctionalDefs/gga_c_pbe.h)
-//   - the tzk0/tvrho0/... locals provided by the evaluator BODY macro
-//
-// Each helper embeds the full GGA_C_PBE and returns a single output; the
-// -O3 dead-code eliminator prunes the other outputs' exclusive cones, so
-// each helper's live-register peak is bounded by its own output's cone
-// rather than the (wider) combined peak of all six outputs.
-//
+// cut register pressure / scratch spill on GPU.
 // The trailing GGA_C_PBE redefinition remaps the macro to call the helpers
 // and must be in effect before the .def is included.
 // ============================================================
