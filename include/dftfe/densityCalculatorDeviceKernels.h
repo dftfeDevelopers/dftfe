@@ -70,6 +70,20 @@ namespace dftfe
 
   template <typename NumberType>
   void
+  computeLDOSFromInterpolatedValues(
+    std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+                                             &BLASWrapperPtr,
+    const std::pair<dftfe::uInt, dftfe::uInt> cellRange,
+    const std::pair<dftfe::uInt, dftfe::uInt> vecRange,
+    const dftfe::uInt                         nQuadsPerCell,
+    double                                   *ldosOccupVec,
+    NumberType                               *wfcQuadPointData,
+    double                                   *ldosCellsWfcContributions,
+    double                                   *ldos);
+
+  template <typename NumberType>
+  void
   computeRhoResponseFromInterpolatedValues(
     std::shared_ptr<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>

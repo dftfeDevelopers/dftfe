@@ -360,6 +360,43 @@ namespace dftfe
                                            sigmaThresholdMgga,
                                            tauThresholdMgga);
 
+
+
+    {
+      const double sixPiSqTwoThirds = std::pow(6.0 * M_PI * M_PI, 2.0 / 3.0);
+
+
+      for (dftfe::uInt i = 0; i < nquad; ++i)
+
+        {
+          double rhoUp = densityValues[2 * i + 0];
+
+          double sig0 = sigmaValues[3 * i + 0];
+
+          double tauUp = tauValues[2 * i + 0];
+
+          double tauW = sig0 / (8.0 * rhoUp);
+
+          double tauUnif =
+
+            (3.0 / 10.0) * sixPiSqTwoThirds * std::pow(rhoUp, 5.0 / 3.0);
+
+          double alpha = 0.0;
+
+          if (tauUnif > 1e-20)
+
+            alpha = (tauUp - tauW) / tauUnif;
+
+          if (alpha < 0)
+
+            {
+              tauValues[2 * i] = tauW + 1e-20;
+
+              tauValues[2 * i + 1] = tauW + 1e-20;
+            }
+        }
+    }
+
     if (d_useLibxc)
       {
         // Allocate laplacian-related arrays only when using libxc

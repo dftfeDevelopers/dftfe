@@ -2271,18 +2271,29 @@ namespace dftfe
 #endif
 
     //
-    // set up solver functions for Helmholtz to be used only when Kerker mixing
-    // is on use higher polynomial order dofHandler
+    // set up solver functions for Helmholtz, Ldos to be used only when Kerker
+    // mixing is on use higher polynomial order dofHandler
     //
     kerkerSolverProblemWrapperClass kerkerPreconditionedResidualSolverProblem(
       d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal,
       d_mpiCommParent,
       mpi_communicator);
 
-    // set up solver functions for Helmholtz Device
+    ldosSolverProblemWrapperClass ldosPreconditionedResidualSolverProblem(
+      d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal,
+      d_mpiCommParent,
+      mpi_communicator);
+
+    // set up solver functions for Helmholtz, Ldos Device
 #ifdef DFTFE_WITH_DEVICE
     kerkerSolverProblemDeviceWrapperClass
       kerkerPreconditionedResidualSolverProblemDevice(
+        d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal,
+        d_mpiCommParent,
+        mpi_communicator);
+
+    ldosSolverProblemDeviceWrapperClass
+      ldosPreconditionedResidualSolverProblemDevice(
         d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal,
         d_mpiCommParent,
         mpi_communicator);
@@ -2319,6 +2330,38 @@ namespace dftfe
             d_densityDofHandlerIndexElectro,
             d_densityQuadratureIdElectro,
             d_kerkerAXQuadratureIdElectro);
+      }
+    else if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_LDOS")
+      {
+        if (d_dftParamsPtr->useDevice and d_dftParamsPtr->poissonGPU and
+            d_dftParamsPtr->floatingNuclearCharges)
+          {
+#ifdef DFTFE_WITH_DEVICE
+            ldosPreconditionedResidualSolverProblemDevice.init(
+              d_basisOperationsPtrElectroHost,
+              d_constraintsRhoNodal,
+              d_preCondTotalDensityResidualVector,
+              d_densityDofHandlerIndexElectro,
+              d_densityQuadratureIdElectro,
+              d_kerkerAXQuadratureIdElectro);
+            ldosPreconditionedResidualSolverProblemDevice.setBLASWrapperPtr(
+              d_BLASWrapperPtr);
+#endif
+          }
+        else
+          {
+            ldosPreconditionedResidualSolverProblem.init(
+              d_basisOperationsPtrElectroHost,
+              d_constraintsRhoNodal,
+              d_preCondTotalDensityResidualVector,
+              d_densityDofHandlerIndexElectro,
+              d_densityQuadratureIdElectro,
+              d_kerkerAXQuadratureIdElectro);
+          }
+        // CHECK if this is needed !!!
+        d_matrixFreeDataPRefined.initialize_dof_vector(
+          d_ldosNodalValues, d_densityDofHandlerIndexElectro);
+        d_ldosNodalValues = 0.0;
       }
 
     // FIXME: Check if this call can be removed
@@ -2439,7 +2482,8 @@ namespace dftfe
       d_dftParamsPtr->restrictToOnePass ?
         1e+4 :
         (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
-             d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA" ?
+             d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA" ||
+             d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_LDOS" ?
            1e-2 :
            2e-2);
 
@@ -2495,6 +2539,7 @@ namespace dftfe
     // initialise the variables in the mixing scheme
     if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
         d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA" ||
+        d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_LDOS" ||
         d_dftParamsPtr->useSymm)
       {
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
@@ -2665,6 +2710,7 @@ namespace dftfe
               }
             else if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
                      d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA" ||
+                     d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_LDOS" ||
                      d_dftParamsPtr->useSymm)
               {
                 // Fill in New Kerker framework here
@@ -2783,6 +2829,24 @@ namespace dftfe
                       CGSolverDevice,
 #endif
                       kerkerPreconditionedResidualSolverProblem,
+                      CGSolver,
+                      d_densityResidualNodalValues[0],
+                      d_preCondTotalDensityResidualVector);
+
+                    d_mixingScheme.mixPreconditionedResidual(
+                      mixingVariables[0],
+                      d_preCondTotalDensityResidualVector.begin(),
+                      d_densityInNodalValues[0].begin(),
+                      d_densityInNodalValues[0].locally_owned_size());
+                  }
+                else if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_LDOS")
+                  {
+                    applyLdosPreconditionerToTotalDensityResidual(
+#ifdef DFTFE_WITH_DEVICE
+                      ldosPreconditionedResidualSolverProblemDevice,
+                      CGSolverDevice,
+#endif
+                      ldosPreconditionedResidualSolverProblem,
                       CGSolver,
                       d_densityResidualNodalValues[0],
                       d_preCondTotalDensityResidualVector);
@@ -3475,6 +3539,12 @@ namespace dftfe
 
         compute_rhoOut(scfConverged ||
                        (scfIter == (d_dftParamsPtr->numSCFIterations - 1)));
+
+        if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_LDOS")
+          {
+            compute_ldosOut();
+          }
+
         computing_timer.leave_subsection("compute rho");
 
         //

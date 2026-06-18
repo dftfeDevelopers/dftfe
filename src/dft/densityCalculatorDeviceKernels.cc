@@ -573,4 +573,110 @@ namespace dftfe
     double    *tau,
     const bool isNonCollin,
     const bool hasSOC);
+
+  namespace
+  {
+    DFTFE_CREATE_KERNEL(
+      void,
+      computeLDOSFromInterpolatedValues,
+      {
+        const dftfe::uInt numEntriesPerCell = numVectors * nQuadsPerCell;
+        const dftfe::uInt numberEntries     = numEntriesPerCell * numCells;
+
+        for (dftfe::uInt index = globalThreadId; index < numberEntries;
+             index += nThreadsPerBlock * nThreadBlock)
+          {
+            const double psi                 = wfcContributions[index];
+            ldosCellsWfcContributions[index] = psi * psi;
+          }
+      },
+      const dftfe::uInt numVectors,
+      const dftfe::uInt numCells,
+      const dftfe::uInt nQuadsPerCell,
+      double           *wfcContributions,
+      double           *ldosCellsWfcContributions);
+
+    DFTFE_CREATE_KERNEL(
+      void,
+      computeLDOSFromInterpolatedValues,
+      {
+        const dftfe::uInt numEntriesPerCell = numVectors * nQuadsPerCell;
+        const dftfe::uInt numberEntries     = numEntriesPerCell * numCells;
+
+        for (dftfe::uInt index = globalThreadId; index < numberEntries;
+             index += nThreadsPerBlock * nThreadBlock)
+          {
+            const dftfe::utils::deviceDoubleComplex psi =
+              wfcContributions[index];
+            ldosCellsWfcContributions[index] =
+              dftfe::utils::realPartDevice(psi) *
+                dftfe::utils::realPartDevice(psi) +
+              dftfe::utils::imagPartDevice(psi) *
+                dftfe::utils::imagPartDevice(psi);
+          }
+      },
+      const dftfe::uInt                  numVectors,
+      const dftfe::uInt                  numCells,
+      const dftfe::uInt                  nQuadsPerCell,
+      dftfe::utils::deviceDoubleComplex *wfcContributions,
+      double                            *ldosCellsWfcContributions);
+  } // namespace
+
+  template <typename NumberType>
+  void
+  computeLDOSFromInterpolatedValues(
+    std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+                                             &BLASWrapperPtr,
+    const std::pair<dftfe::uInt, dftfe::uInt> cellRange,
+    const std::pair<dftfe::uInt, dftfe::uInt> vecRange,
+    const dftfe::uInt                         nQuadsPerCell,
+    double                                   *ldosOccupVec,
+    NumberType                               *wfcQuadPointData,
+    double                                   *ldosCellsWfcContributions,
+    double                                   *ldos)
+  {
+    const dftfe::uInt cellsBlockSize   = cellRange.second - cellRange.first;
+    const dftfe::uInt vectorsBlockSize = vecRange.second - vecRange.first;
+    const double      scalarCoeffAlpha = 1.0;
+    const double      scalarCoeffBeta  = 1.0;
+
+    DFTFE_LAUNCH_KERNEL(
+      computeLDOSFromInterpolatedValues,
+      (vectorsBlockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+        dftfe::utils::DEVICE_BLOCK_SIZE * nQuadsPerCell * cellsBlockSize,
+      dftfe::utils::DEVICE_BLOCK_SIZE,
+      dftfe::utils::defaultStream,
+      vectorsBlockSize,
+      cellsBlockSize,
+      nQuadsPerCell,
+      dftfe::utils::makeDataTypeDeviceCompatible(wfcQuadPointData),
+      dftfe::utils::makeDataTypeDeviceCompatible(ldosCellsWfcContributions));
+
+    BLASWrapperPtr->xgemv('T',
+                          vectorsBlockSize,
+                          cellsBlockSize * nQuadsPerCell,
+                          &scalarCoeffAlpha,
+                          ldosCellsWfcContributions,
+                          vectorsBlockSize,
+                          ldosOccupVec,
+                          1,
+                          &scalarCoeffBeta,
+                          ldos + cellRange.first * nQuadsPerCell,
+                          1);
+  }
+
+  template void
+  computeLDOSFromInterpolatedValues(
+    std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+                                             &BLASWrapperPtr,
+    const std::pair<dftfe::uInt, dftfe::uInt> cellRange,
+    const std::pair<dftfe::uInt, dftfe::uInt> vecRange,
+    const dftfe::uInt                         nQuadsPerCell,
+    double                                   *ldosOccupVec,
+    dataTypes::number                        *wfcQuadPointData,
+    double                                   *ldosCellsWfcContributions,
+    double                                   *ldos);
+
 } // namespace dftfe

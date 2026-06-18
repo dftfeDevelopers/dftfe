@@ -24,6 +24,9 @@
 #include <dftfe/dftUtils.h>
 #include <dftfe/vectorUtilities.h>
 #include <dftfe/MemoryStorage.h>
+#if defined(DFTFE_WITH_DEVICE)
+#  include <dftfe/densityCalculatorDeviceKernels.h>
+#endif
 
 
 namespace dftfe
@@ -62,6 +65,8 @@ namespace dftfe
   {
     int this_process;
     MPI_Comm_rank(mpiCommParent, &this_process);
+    if (this_process == 0 && dftParams.verbosity >= 2)
+      std::cout << "DEBUG: computeRhoFromPSI start" << std::endl;
 #if defined(DFTFE_WITH_DEVICE)
     if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
       dftfe::utils::deviceSynchronize();
@@ -888,6 +893,344 @@ namespace dftfe
                         &tauValues,
     const bool           isEvaluateGradRho,
     const bool           isEvaluateTau,
+    const MPI_Comm      &mpiCommParent,
+    const MPI_Comm      &interpoolcomm,
+    const MPI_Comm      &interBandGroupComm,
+    const dftParameters &dftParams);
+
+
+  template <typename NumberType, dftfe::utils::MemorySpace memorySpace>
+  void
+  computeLDOSFromPSI(
+    const dftfe::utils::MemoryStorage<NumberType, memorySpace> *X,
+    const dftfe::uInt                       totalNumWaveFunctions,
+    const std::vector<std::vector<double>> &ldosOccupancies,
+    std::shared_ptr<
+      dftfe::basis::FEBasisOperations<NumberType, double, memorySpace>>
+      &basisOperationsPtr,
+    std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
+                              &BLASWrapperPtr,
+    const dftfe::uInt          matrixFreeDofhandlerIndex,
+    const dftfe::uInt          quadratureIndex,
+    const std::vector<double> &kPointWeights,
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+                        &ldosQuadValues,
+    const MPI_Comm      &mpiCommParent,
+    const MPI_Comm      &interpoolcomm,
+    const MPI_Comm      &interBandGroupComm,
+    const dftParameters &dftParams)
+  {
+    int this_process;
+    MPI_Comm_rank(mpiCommParent, &this_process);
+    if (this_process == 0 && dftParams.verbosity >= 2)
+      std::cout << "DEBUG: computeLDOSFromPSI start" << std::endl;
+#if defined(DFTFE_WITH_DEVICE)
+    if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
+      dftfe::utils::deviceSynchronize();
+#endif
+    MPI_Barrier(mpiCommParent);
+
+    const dftfe::uInt numKPoints             = kPointWeights.size();
+    const dftfe::uInt numLocalDofs           = basisOperationsPtr->nOwnedDofs();
+    const dftfe::uInt totalLocallyOwnedCells = basisOperationsPtr->nCells();
+    const dftfe::uInt numNodesPerElement = basisOperationsPtr->nDofsPerCell();
+
+    // band-group parallelisation
+    const dftfe::uInt numberBandGroups =
+      dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
+    const dftfe::uInt bandGroupTaskId =
+      dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
+    std::vector<dftfe::uInt> bandGroupLowHighPlusOneIndices;
+    dftUtils::createBandParallelizationIndices(interBandGroupComm,
+                                               totalNumWaveFunctions,
+                                               bandGroupLowHighPlusOneIndices);
+
+    const dftfe::uInt BVec =
+      std::min(dftParams.chebyWfcBlockSize, bandGroupLowHighPlusOneIndices[1]);
+
+    // spin factor: 2 for non-spin-polarised, 1 otherwise
+    const double spinPolarizedFactor =
+      (dftParams.spinPolarized == 1 || dftParams.noncolin || dftParams.hasSOC) ?
+        1.0 :
+        2.0;
+    const dftfe::uInt numSpinComponents =
+      (dftParams.spinPolarized == 1) ? 2 : 1;
+
+    const dftfe::uInt numWfnSpinors =
+      (dftParams.noncolin || dftParams.hasSOC) ? 2 : 1;
+
+    const NumberType zero = 0;
+
+    const dftfe::uInt cellsBlockSize =
+      memorySpace == dftfe::utils::MemorySpace::DEVICE ? 50 : 1;
+    const dftfe::uInt numCellBlocks = totalLocallyOwnedCells / cellsBlockSize;
+    const dftfe::uInt remCellBlockSize =
+      totalLocallyOwnedCells - numCellBlocks * cellsBlockSize;
+
+    const dftfe::uInt numQuadsQuadratureIndex =
+      basisOperationsPtr->d_matrixFreeDataPtr->get_quadrature(quadratureIndex)
+        .size();
+
+    // reinit basis operations for the chosen quadrature (no intermediate quad)
+    basisOperationsPtr->reinit(BVec * numWfnSpinors,
+                               cellsBlockSize,
+                               quadratureIndex);
+    const dftfe::uInt numQuadPoints = basisOperationsPtr->nQuadsPerCell();
+
+    // allocate wfc interpolation and LDOS accumulation buffers
+    dftfe::utils::MemoryStorage<NumberType, memorySpace> wfcQuadPointData;
+    dftfe::utils::MemoryStorage<double, memorySpace>     ldos; // D_loc at quads
+    dftfe::utils::MemoryStorage<double, memorySpace>     ldosWfcContributions;
+
+    ldos.resize(totalLocallyOwnedCells * numQuadPoints, 0.0);
+    wfcQuadPointData.resize(cellsBlockSize * numQuadPoints * BVec *
+                              numWfnSpinors,
+                            zero);
+    if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
+      ldosWfcContributions.resize(cellsBlockSize * numQuadPoints * BVec, 0.0);
+
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      ldosOccupVecHost(BVec, 0.0);
+#if defined(DFTFE_WITH_DEVICE)
+    dftfe::utils::MemoryStorage<double, memorySpace> ldosOccupVec(
+      ldosOccupVecHost.size());
+#else
+    auto &ldosOccupVec    = ldosOccupVecHost;
+#endif
+
+    dftfe::linearAlgebra::MultiVector<NumberType, memorySpace>
+      *flattenedArrayBlock;
+
+    for (dftfe::uInt kPoint = 0; kPoint < kPointWeights.size(); ++kPoint)
+      {
+        for (dftfe::uInt spinIndex = 0; spinIndex < numSpinComponents;
+             ++spinIndex)
+          {
+            wfcQuadPointData.setValue(zero);
+            for (dftfe::uInt jvec = 0; jvec < totalNumWaveFunctions;
+                 jvec += BVec)
+              {
+                const dftfe::uInt currentBlockSize =
+                  std::min(BVec, totalNumWaveFunctions - jvec);
+                flattenedArrayBlock = &(basisOperationsPtr->getMultiVector(
+                  currentBlockSize * numWfnSpinors, 0));
+
+                if ((jvec + currentBlockSize) <=
+                      bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
+                    (jvec + currentBlockSize) >
+                      bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
+                  {
+                    for (dftfe::uInt iEigenVec = 0;
+                         iEigenVec < currentBlockSize;
+                         ++iEigenVec)
+                      *(ldosOccupVecHost.begin() + iEigenVec) =
+                        ldosOccupancies[kPoint]
+                                       [totalNumWaveFunctions * spinIndex +
+                                        jvec + iEigenVec] *
+                        kPointWeights[kPoint] * spinPolarizedFactor;
+
+#if defined(DFTFE_WITH_DEVICE)
+                    ldosOccupVec.copyFrom(ldosOccupVecHost);
+#endif
+
+                    // copy wfc block into flattenedArrayBlock
+                    if (memorySpace == dftfe::utils::MemorySpace::HOST)
+                      for (dftfe::uInt iNode = 0;
+                           iNode < numLocalDofs * numWfnSpinors;
+                           ++iNode)
+                        std::memcpy(flattenedArrayBlock->data() +
+                                      iNode * currentBlockSize,
+                                    X->data() +
+                                      numLocalDofs * totalNumWaveFunctions *
+                                        numWfnSpinors *
+                                        (numSpinComponents * kPoint +
+                                         spinIndex) +
+                                      iNode * totalNumWaveFunctions + jvec,
+                                    currentBlockSize * sizeof(NumberType));
+#if defined(DFTFE_WITH_DEVICE)
+                    else if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
+                      BLASWrapperPtr->stridedCopyToBlockConstantStride(
+                        currentBlockSize,
+                        totalNumWaveFunctions,
+                        numLocalDofs * numWfnSpinors,
+                        jvec,
+                        X->data() + numLocalDofs * numWfnSpinors *
+                                      totalNumWaveFunctions *
+                                      (numSpinComponents * kPoint + spinIndex),
+                        flattenedArrayBlock->data());
+#endif
+
+                    basisOperationsPtr->reinit(currentBlockSize * numWfnSpinors,
+                                               cellsBlockSize,
+                                               quadratureIndex,
+                                               false);
+
+                    flattenedArrayBlock->updateGhostValues();
+                    basisOperationsPtr->distribute(*(flattenedArrayBlock));
+
+                    // cell-block loop: interpolate wfc, accumulate D_loc
+                    for (dftfe::Int iblock = 0; iblock < (numCellBlocks + 1);
+                         iblock++)
+                      {
+                        const dftfe::uInt currentCellsBlockSize =
+                          (iblock == numCellBlocks) ? remCellBlockSize :
+                                                      cellsBlockSize;
+                        if (currentCellsBlockSize > 0)
+                          {
+                            const dftfe::uInt startingCellId =
+                              iblock * cellsBlockSize;
+
+                            // interpolate wavefunctions to quadrature points
+                            basisOperationsPtr->interpolateKernel(
+                              *(flattenedArrayBlock),
+                              wfcQuadPointData.data(),
+                              NULL, // no gradients needed
+                              std::pair<dftfe::uInt, dftfe::uInt>(
+                                startingCellId,
+                                startingCellId + currentCellsBlockSize));
+
+#if defined(DFTFE_WITH_DEVICE)
+                            if constexpr (memorySpace ==
+                                          dftfe::utils::MemorySpace::DEVICE)
+                              {
+                                ldosWfcContributions.setValue(0.0);
+                                computeLDOSFromInterpolatedValues(
+                                  BLASWrapperPtr,
+                                  std::pair<dftfe::uInt, dftfe::uInt>(
+                                    startingCellId,
+                                    startingCellId + currentCellsBlockSize),
+                                  std::pair<dftfe::uInt, dftfe::uInt>(
+                                    jvec, jvec + currentBlockSize),
+                                  numQuadPoints,
+                                  ldosOccupVec.data(),
+                                  wfcQuadPointData.data(),
+                                  ldosWfcContributions.data(),
+                                  ldos.data());
+                              }
+                            else
+#endif
+                              {
+                                const dftfe::uInt vectorsBlockSize =
+                                  currentBlockSize;
+                                for (dftfe::uInt iCell = startingCellId;
+                                     iCell <
+                                     startingCellId + currentCellsBlockSize;
+                                     ++iCell)
+                                  for (dftfe::uInt iQuad = 0;
+                                       iQuad < numQuadPoints;
+                                       ++iQuad)
+                                    for (dftfe::uInt iWave = 0;
+                                         iWave < vectorsBlockSize;
+                                         ++iWave)
+                                      {
+                                        const NumberType psi = wfcQuadPointData
+                                          [(iCell - startingCellId) *
+                                             numQuadPoints * vectorsBlockSize +
+                                           iQuad * vectorsBlockSize + iWave];
+                                        ldos[iCell * numQuadPoints + iQuad] +=
+                                          ldosOccupVecHost[iWave] *
+                                          std::abs(psi) * std::abs(psi);
+                                      }
+                              }
+                          }
+                      } // cell block loop
+                  }
+              } // wfc loop
+          }     // spin loop
+      }         // kPoint loop
+
+    if (this_process == 0 && dftParams.verbosity >= 2)
+      std::cout << "DEBUG: computeLDOSFromPSI step 2 (MPI reductions)"
+                << std::endl;
+      // -------------------------------------------------------------------
+      // MPI reductions across k-point and band-group communicators
+      // (mirrors the pattern in computeRhoFromPSI)
+      // -------------------------------------------------------------------
+#if defined(DFTFE_WITH_DEVICE)
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      ldosHost;
+    ldosHost.resize(ldos.size());
+    ldosHost.copyFrom(ldos);
+#else
+    auto &ldosHost        = ldos;
+#endif
+
+    int size;
+    MPI_Comm_size(interpoolcomm, &size);
+    if (size > 1)
+      MPI_Allreduce(MPI_IN_PLACE,
+                    ldosHost.data(),
+                    ldosHost.size(),
+                    dataTypes::mpi_type_id(ldosHost.data()),
+                    MPI_SUM,
+                    interpoolcomm);
+
+    MPI_Comm_size(interBandGroupComm, &size);
+    if (size > 1)
+      MPI_Allreduce(MPI_IN_PLACE,
+                    ldosHost.data(),
+                    ldosHost.size(),
+                    dataTypes::mpi_type_id(ldosHost.data()),
+                    MPI_SUM,
+                    interBandGroupComm);
+
+    // write final result into output argument
+    ldosQuadValues = ldosHost;
+
+#if defined(DFTFE_WITH_DEVICE)
+    if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
+      dftfe::utils::deviceSynchronize();
+#endif
+    MPI_Barrier(mpiCommParent);
+  }
+
+
+#if defined(DFTFE_WITH_DEVICE)
+  template void
+  computeLDOSFromPSI(
+    const dftfe::utils::MemoryStorage<dataTypes::number,
+                                      dftfe::utils::MemorySpace::DEVICE> *X,
+    const dftfe::uInt                       totalNumWaveFunctions,
+    const std::vector<std::vector<double>> &ldosOccupancies,
+    std::shared_ptr<
+      dftfe::basis::FEBasisOperations<dataTypes::number,
+                                      double,
+                                      dftfe::utils::MemorySpace::DEVICE>>
+      &basisOperationsPtr,
+    std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+                              &BLASWrapperPtr,
+    const dftfe::uInt          matrixFreeDofhandlerIndex,
+    const dftfe::uInt          quadratureIndex,
+    const std::vector<double> &kPointWeights,
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+                        &ldosQuadValues,
+    const MPI_Comm      &mpiCommParent,
+    const MPI_Comm      &interpoolcomm,
+    const MPI_Comm      &interBandGroupComm,
+    const dftParameters &dftParams);
+#endif
+
+  // explicit instantiation — HOST
+  template void
+  computeLDOSFromPSI(
+    const dftfe::utils::MemoryStorage<dataTypes::number,
+                                      dftfe::utils::MemorySpace::HOST> *X,
+    const dftfe::uInt                       totalNumWaveFunctions,
+    const std::vector<std::vector<double>> &ldosOccupancies,
+    std::shared_ptr<
+      dftfe::basis::FEBasisOperations<dataTypes::number,
+                                      double,
+                                      dftfe::utils::MemorySpace::HOST>>
+      &basisOperationsPtr,
+    std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+                              &BLASWrapperPtr,
+    const dftfe::uInt          matrixFreeDofhandlerIndex,
+    const dftfe::uInt          quadratureIndex,
+    const std::vector<double> &kPointWeights,
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+                        &ldosQuadValues,
     const MPI_Comm      &mpiCommParent,
     const MPI_Comm      &interpoolcomm,
     const MPI_Comm      &interBandGroupComm,

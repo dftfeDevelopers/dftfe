@@ -852,6 +852,12 @@ namespace dftfe
           "[Standard] Fermi-Dirac smearing temperature (in Kelvin).");
 
         prm.declare_entry(
+          "LDOS TEMPERATURE",
+          "10000.0",
+          dealii::Patterns::Double(1e-5),
+          "[Standard] Temperature for LDOS calculation (in Kelvin).");
+
+        prm.declare_entry(
           "MAXIMUM ITERATIONS",
           "200",
           dealii::Patterns::Integer(1, 1000),
@@ -921,7 +927,7 @@ namespace dftfe
           "MIXING METHOD",
           "ANDERSON",
           dealii::Patterns::Selection(
-            "ANDERSON|ANDERSON_WITH_KERKER|ANDERSON_WITH_RESTA|LOW_RANK_DIELECM_PRECOND"),
+            "ANDERSON|ANDERSON_WITH_KERKER|ANDERSON_WITH_RESTA|LOW_RANK_DIELECM_PRECOND|ANDERSON_WITH_LDOS"),
           "[Standard] Method for density mixing. ANDERSON is the default option.");
 
 
@@ -1343,6 +1349,7 @@ namespace dftfe
     absLinearSolverTolerance                 = 1e-10;
     selfConsistentSolverTolerance            = 1e-10;
     TVal                                     = 500;
+    LDOSTemperature                          = 10000.0;
     tot_magnetization                        = 0.0;
     useAtomicMagnetizationGuessConstraintMag = false;
     absLinearSolverToleranceHelmholtz        = 1e-10;
@@ -1778,6 +1785,7 @@ namespace dftfe
     prm.enter_subsection("SCF parameters");
     {
       TVal                          = prm.get_double("TEMPERATURE");
+      LDOSTemperature               = prm.get_double("LDOS TEMPERATURE");
       numSCFIterations              = prm.get_integer("MAXIMUM ITERATIONS");
       selfConsistentSolverTolerance = prm.get_double("TOLERANCE");
       selfConsistentSolverEnergyTolerance = prm.get_double("ENERGY TOLERANCE");
@@ -2302,7 +2310,8 @@ namespace dftfe
         else if (mixingMethod == "LOW_RANK_DIELECM_PRECOND")
           chebyshevTolerance = 2.0e-3;
         else if (mixingMethod == "ANDERSON_WITH_KERKER" ||
-                 mixingMethod == "ANDERSON_WITH_RESTA")
+                 mixingMethod == "ANDERSON_WITH_RESTA" ||
+                 mixingMethod == "ANDERSON_WITH_LDOS")
           chebyshevTolerance = 1.0e-2;
         else if (solverMode != "NSCF" && solverMode != "BANDS")
           chebyshevTolerance = 5.0e-2;
@@ -2315,7 +2324,8 @@ namespace dftfe
         if (mixingMethod == "LOW_RANK_DIELECM_PRECOND")
           mixingParameter = 0.5;
         else if (mixingMethod == "ANDERSON_WITH_KERKER" ||
-                 mixingMethod == "ANDERSON_WITH_RESTA")
+                 mixingMethod == "ANDERSON_WITH_RESTA" ||
+                 mixingMethod == "ANDERSON_WITH_LDOS")
           mixingParameter = 0.5;
         else
           mixingParameter = 0.2;
