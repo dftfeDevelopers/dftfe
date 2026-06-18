@@ -81,6 +81,16 @@ namespace dftfe
     initOperatorCoeffs(T coeffHelmholtz);
 
     /**
+     * @brief Initialize Helmholtz operator coefficient as a per-(cell,
+     * quadrature-point) field. nQuadTotal must equal
+     * nCells * nQuadPointsPerDim^3 and the source pointer must live in
+     * @p memorySpace.
+     *
+     */
+    inline void
+    initOperatorCoeffs(const T *coeffHelmholtz, dftfe::uInt nQuadTotal);
+
+    /**
      * @brief Compute Laplace operator multipled by X
      *
      */
@@ -123,7 +133,9 @@ namespace dftfe
       d_localBlockSize, d_localSize, d_ghostBlockSize, d_ghostSize,
       d_nOMPThreads;
 
-    T d_coeffHelmholtz;
+    T    d_coeffHelmholtz;
+    bool d_coeffHelmholtzIsPointer = false;
+    dftfe::utils::MemoryStorage<T, memorySpace> d_coeffHelmholtzVec;
 
     static constexpr std::uint32_t d_quadODim = nQuadPointsPerDim / 2;
     static constexpr std::uint32_t d_quadEDim =

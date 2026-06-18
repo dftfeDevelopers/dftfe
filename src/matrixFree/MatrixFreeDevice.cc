@@ -94,10 +94,26 @@ namespace dftfe
             sharedMemSize));
 
         if constexpr (operatorID == dftfe::operatorList::Helmholtz)
-          DEVICE_API_CHECK(cudaFuncSetAttribute(
-            HelmholtzKernel<T, nDofsPerDim, nQuadPointsPerDim, batchSize, dim>,
-            cudaFuncAttributeMaxDynamicSharedMemorySize,
-            sharedMemSize));
+          {
+            DEVICE_API_CHECK(
+              cudaFuncSetAttribute(HelmholtzKernel<T,
+                                                   nDofsPerDim,
+                                                   nQuadPointsPerDim,
+                                                   batchSize,
+                                                   dim,
+                                                   HelmholtzScalarCoeff<T>>,
+                                   cudaFuncAttributeMaxDynamicSharedMemorySize,
+                                   sharedMemSize));
+            DEVICE_API_CHECK(
+              cudaFuncSetAttribute(HelmholtzKernel<T,
+                                                   nDofsPerDim,
+                                                   nQuadPointsPerDim,
+                                                   batchSize,
+                                                   dim,
+                                                   HelmholtzPointerCoeff<T>>,
+                                   cudaFuncAttributeMaxDynamicSharedMemorySize,
+                                   sharedMemSize));
+          }
       }
 
 #elif DFTFE_WITH_DEVICE_LANG_HIP
@@ -472,16 +488,17 @@ namespace dftfe
             std::uint32_t       nDofsPerDim,
             std::uint32_t       nQuadPointsPerDim,
             std::uint32_t       batchSize>
+  template <typename CoeffOp>
   inline void
   MatrixFreeDevice<T, operatorID, nDofsPerDim, nQuadPointsPerDim, batchSize>::
-    computeHelmholtzX(T           *dst,
-                      T           *src,
-                      T           *jacobianFactor,
-                      dftfe::uInt *map,
-                      T           *shapeBuffer,
-                      T            coeffHelmholtz,
-                      dftfe::uInt  nCells,
-                      dftfe::uInt  nBatch)
+    computeHelmholtzXImpl(T           *dst,
+                          T           *src,
+                          T           *jacobianFactor,
+                          dftfe::uInt *map,
+                          T           *shapeBuffer,
+                          CoeffOp      coeffHelmholtz,
+                          dftfe::uInt  nCells,
+                          dftfe::uInt  nBatch)
   {
     constexpr std::uint32_t dim = 3;
     constexpr std::uint32_t yThreads =
@@ -497,7 +514,7 @@ namespace dftfe
     const dim3 blocks(nCells, nBatch, 1);
     const dim3 threads(batchSize, yThreads, 1);
 
-    HelmholtzKernel<T, nDofsPerDim, nQuadPointsPerDim, batchSize, dim>
+    HelmholtzKernel<T, nDofsPerDim, nQuadPointsPerDim, batchSize, dim, CoeffOp>
       <<<blocks, threads, sharedMemSize>>>(
         dst, src, jacobianFactor, map, coeffHelmholtz);
 
@@ -506,18 +523,21 @@ namespace dftfe
     const dim3 blocks(nCells, nBatch, 1);
     const dim3 threads(batchSize, yThreads, 1);
 
-    hipLaunchKernelGGL(
-      HIP_KERNEL_NAME(
-        HelmholtzKernel<T, nDofsPerDim, nQuadPointsPerDim, batchSize, dim>),
-      blocks,
-      threads,
-      sharedMemSize,
-      0,
-      dst,
-      src,
-      jacobianFactor,
-      map,
-      coeffHelmholtz);
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(HelmholtzKernel<T,
+                                                       nDofsPerDim,
+                                                       nQuadPointsPerDim,
+                                                       batchSize,
+                                                       dim,
+                                                       CoeffOp>),
+                       blocks,
+                       threads,
+                       sharedMemSize,
+                       0,
+                       dst,
+                       src,
+                       jacobianFactor,
+                       map,
+                       coeffHelmholtz);
 
 #elif DFTFE_WITH_DEVICE_LANG_SYCL
     sycl::queue &queue =
@@ -555,6 +575,63 @@ namespace dftfe
         });
     });
 #endif
+  }
+
+
+  template <typename T,
+            dftfe::operatorList operatorID,
+            std::uint32_t       nDofsPerDim,
+            std::uint32_t       nQuadPointsPerDim,
+            std::uint32_t       batchSize>
+  inline void
+  MatrixFreeDevice<T, operatorID, nDofsPerDim, nQuadPointsPerDim, batchSize>::
+    computeHelmholtzX(T           *dst,
+                      T           *src,
+                      T           *jacobianFactor,
+                      dftfe::uInt *map,
+                      T           *shapeBuffer,
+                      T            coeffHelmholtz,
+                      dftfe::uInt  nCells,
+                      dftfe::uInt  nBatch)
+  {
+    computeHelmholtzXImpl(dst,
+                          src,
+                          jacobianFactor,
+                          map,
+                          shapeBuffer,
+                          HelmholtzScalarCoeff<T>{coeffHelmholtz},
+                          nCells,
+                          nBatch);
+  }
+
+
+  template <typename T,
+            dftfe::operatorList operatorID,
+            std::uint32_t       nDofsPerDim,
+            std::uint32_t       nQuadPointsPerDim,
+            std::uint32_t       batchSize>
+  inline void
+  MatrixFreeDevice<T, operatorID, nDofsPerDim, nQuadPointsPerDim, batchSize>::
+    computeHelmholtzX(T           *dst,
+                      T           *src,
+                      T           *jacobianFactor,
+                      dftfe::uInt *map,
+                      T           *shapeBuffer,
+                      T           *coeffHelmholtz,
+                      dftfe::uInt  nCells,
+                      dftfe::uInt  nBatch)
+  {
+    constexpr dftfe::uInt nQuadPerCell =
+      nQuadPointsPerDim * nQuadPointsPerDim * nQuadPointsPerDim;
+    computeHelmholtzXImpl(dst,
+                          src,
+                          jacobianFactor,
+                          map,
+                          shapeBuffer,
+                          HelmholtzPointerCoeff<T>{coeffHelmholtz,
+                                                   nQuadPerCell},
+                          nCells,
+                          nBatch);
   }
 
 #include "MatrixFreeDevice.inst.cc"
