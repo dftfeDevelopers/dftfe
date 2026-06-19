@@ -31,8 +31,8 @@ mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileMg2x_4.prm > outputMg2x_
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileMg2x_5.prm > outputMg2x_5
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileMg2x_6.prm > outputMg2x_6
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileMg2x_7.prm > outputMg2x_7
-mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileMg2x_8.prm > outputMg2x_8
-mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileMg2x_9.prm > outputMg2x_9
+mpirun -n 6  $DFTFE_PATH/dftfe parameterFileMg2x_8.prm > outputMg2x_8
+mpirun -n 6  $DFTFE_PATH/dftfe parameterFileMg2x_9.prm > outputMg2x_9
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileMg2x_10.prm > outputMg2x_10
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileBe.prm     > outputBe
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileTiAl.prm > outputTiAl_hubbard
@@ -43,8 +43,8 @@ mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileBccFe_scf.prm > outputBc
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileBccFe_scfConstraintMag.prm > outputBccFe_scfConstraintMag
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileBccFe_pdos.prm > outputBccFe_pdos
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileBccFe_relax.prm > outputBccFe_relax
-mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileGaAs.prm > outputGaAs
-mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileGaAs_BANDS.prm > outputGaAs_bands
+mpirun -n 6  $DFTFE_PATH/dftfe parameterFileGaAs.prm > outputGaAs
+mpirun -n 6  $DFTFE_PATH/dftfe parameterFileGaAs_BANDS.prm > outputGaAs_bands
 mpirun -n 6  $DFTFE_PATH/dftfe parameterFileBccFe_relaxFullMassMatrix.prm > outputBccFe_relaxFullMassMatrix
 mpirun -n 6  $DFTFE_PATH/dftfe parameterFileBccFe_scan.prm > outputBccFe_scan
 mpirun -n 6  $DFTFE_PATH/dftfe parameterFileBccFe_scan_kerker.prm > outputBccFe_scan_kerker
