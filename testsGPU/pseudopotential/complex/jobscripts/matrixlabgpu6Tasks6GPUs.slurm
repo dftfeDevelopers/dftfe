@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=GPUcTestComplex          # Job name
-#SBATCH --ntasks-per-node=18                # Number of tasks per node
+#SBATCH --ntasks-per-node=6                # Number of tasks per node
 #SBATCH --nodes=1
 #SBATCH --gres=gpu:6
 #SBATCH --time=24:00:00                     # Time limit hrs:min:sec
@@ -31,22 +31,22 @@ mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileMg2x_4.prm > outputMg2x_
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileMg2x_5.prm > outputMg2x_5
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileMg2x_6.prm > outputMg2x_6
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileMg2x_7.prm > outputMg2x_7
-mpirun -n 6  $DFTFE_PATH/dftfe parameterFileMg2x_8.prm > outputMg2x_8
-mpirun -n 6  $DFTFE_PATH/dftfe parameterFileMg2x_9.prm > outputMg2x_9
+mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileMg2x_8.prm > outputMg2x_8
+mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileMg2x_9.prm > outputMg2x_9
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileMg2x_10.prm > outputMg2x_10
-mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileBe.prm     > outputBe
-mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileTiAl.prm > outputTiAl_hubbard
+mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileBe.prm > outputBe
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileTiAl_mixedPrec.prm > outputTiAl_hubbard_mixedPrec_mpi6
+mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileTiAl.prm > outputTiAl_hubbard
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileFeCuPt2_scf.prm > outputFeCuPt2_scf
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileFeCuPt2_pdos.prm > outputFeCuPt2_pdos
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileBccFe_scf.prm > outputBccFe_scf
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileBccFe_scfConstraintMag.prm > outputBccFe_scfConstraintMag
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileBccFe_pdos.prm > outputBccFe_pdos
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileBccFe_relax.prm > outputBccFe_relax
-mpirun -n 6  $DFTFE_PATH/dftfe parameterFileGaAs.prm > outputGaAs
-mpirun -n 6  $DFTFE_PATH/dftfe parameterFileGaAs_BANDS.prm > outputGaAs_bands
-mpirun -n 6  $DFTFE_PATH/dftfe parameterFileBccFe_relaxFullMassMatrix.prm > outputBccFe_relaxFullMassMatrix
-mpirun -n 6  $DFTFE_PATH/dftfe parameterFileBccFe_scan.prm > outputBccFe_scan
-mpirun -n 6  $DFTFE_PATH/dftfe parameterFileBccFe_scan_kerker.prm > outputBccFe_scan_kerker
-mpirun -n 6  $DFTFE_PATH/dftfe parameterFileBccFe_scan_useLibxcFalse.prm > outputBccFe_scan_useLibxcFalse
-mpirun -n 6  $DFTFE_PATH/dftfe parameterFileFeCuPt2_scf_interMediateQuadRule.prm > outputFeCuPt2_scf_interMediateQuadRule
+mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileGaAs.prm > outputGaAs
+mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileGaAs_BANDS.prm > outputGaAs_bands
+mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileBccFe_relaxFullMassMatrix.prm > outputBccFe_relaxFullMassMatrix
+mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileBccFe_scan.prm > outputBccFe_scan
+mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileBccFe_scan_kerker.prm > outputBccFe_scan_kerker
+mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileBccFe_scan_useLibxcFalse.prm > outputBccFe_scan_useLibxcFalse
+mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileFeCuPt2_scf_interMediateQuadRule.prm > outputFeCuPt2_scf_interMediateQuadRule
