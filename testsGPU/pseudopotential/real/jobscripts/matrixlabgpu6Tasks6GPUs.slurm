@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=GPUcTestReal             # Job name
-#SBATCH --ntasks-per-node=18                # Number of tasks per node
+#SBATCH --ntasks-per-node=6                # Number of tasks per node
 #SBATCH --nodes=1
 #SBATCH --gres=gpu:6
 #SBATCH --time=24:00:00                     # Time limit hrs:min:sec
