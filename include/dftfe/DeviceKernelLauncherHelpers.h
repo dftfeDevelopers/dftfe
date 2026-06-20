@@ -266,5 +266,20 @@ namespace dftfe
         "No device backend defined (DFTFE_WITH_DEVICE_LANG_CUDA or DFTFE_WITH_DEVICE_LANG_HIP or DFTFE_WITH_DEVICE_LANG_SYCL)"
 #    endif
 
+// Portable qualifier for a translation-unit-local, non-inlined device helper
+// function. On CUDA/HIP this is `static __device__ __attribute__((noinline))`;
+// on SYCL there is no `__device__` keyword (device functions called from a
+// kernel are ordinary functions), so it drops to `static
+// __attribute__((noinline))`.
+#    if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || \
+      defined(DFTFE_WITH_DEVICE_LANG_HIP)
+#      define DFTFE_DEVICE_NOINLINE static __device__ __attribute__((noinline))
+#    elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+#      define DFTFE_DEVICE_NOINLINE static __attribute__((noinline))
+#    else
+#      error \
+        "No device backend defined (DFTFE_WITH_DEVICE_LANG_CUDA or DFTFE_WITH_DEVICE_LANG_HIP or DFTFE_WITH_DEVICE_LANG_SYCL)"
+#    endif
+
 #  endif // dftfeDeviceKernelLauncherHelpers_h
 #endif   // DFTFE_WITH_DEVICE

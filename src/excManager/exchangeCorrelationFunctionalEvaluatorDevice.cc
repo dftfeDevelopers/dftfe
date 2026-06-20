@@ -326,6 +326,11 @@ namespace dftfe
     bool              tauNeededC,                                          \
     bool              enforceFHCC);
   } // namespace
+
+#include <dftfe/XCfunctionalDefs/gga_pbe_correlation_device_helpers.h>
+#include <dftfe/XCfunctionalDefs/mgga_r2scan_device_helpers.h>
+#include <dftfe/XCfunctionalDefs/mgga_scan_device_helpers.h>
+
 #include <dftfe/exchangeCorrelationFunctionalEvaluation.def>
 } // namespace dftfe
 
