@@ -318,8 +318,7 @@ namespace dftfe
     Ax.compress(dealii::VectorOperation::add);
 
     double globalInner = d_dlocMassVector * x;
-    // Undo comment below afterwards
-    // This is the comment that needs to be done before sanity check
+    // This is the comment that needs to be undone after sanity check
     Ax.add(-(4.0 * M_PI / d_totalDOS) * globalInner, d_dlocMassVector);
   }
 

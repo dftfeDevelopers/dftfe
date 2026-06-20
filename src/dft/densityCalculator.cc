@@ -65,8 +65,6 @@ namespace dftfe
   {
     int this_process;
     MPI_Comm_rank(mpiCommParent, &this_process);
-    if (this_process == 0 && dftParams.verbosity >= 2)
-      std::cout << "DEBUG: computeRhoFromPSI start" << std::endl;
 #if defined(DFTFE_WITH_DEVICE)
     if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
       dftfe::utils::deviceSynchronize();
@@ -922,8 +920,6 @@ namespace dftfe
   {
     int this_process;
     MPI_Comm_rank(mpiCommParent, &this_process);
-    if (this_process == 0 && dftParams.verbosity >= 2)
-      std::cout << "DEBUG: computeLDOSFromPSI start" << std::endl;
 #if defined(DFTFE_WITH_DEVICE)
     if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
       dftfe::utils::deviceSynchronize();
@@ -935,7 +931,6 @@ namespace dftfe
     const dftfe::uInt totalLocallyOwnedCells = basisOperationsPtr->nCells();
     const dftfe::uInt numNodesPerElement = basisOperationsPtr->nDofsPerCell();
 
-    // band-group parallelisation
     const dftfe::uInt numberBandGroups =
       dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
     const dftfe::uInt bandGroupTaskId =
@@ -948,7 +943,6 @@ namespace dftfe
     const dftfe::uInt BVec =
       std::min(dftParams.chebyWfcBlockSize, bandGroupLowHighPlusOneIndices[1]);
 
-    // spin factor: 2 for non-spin-polarised, 1 otherwise
     const double spinPolarizedFactor =
       (dftParams.spinPolarized == 1 || dftParams.noncolin || dftParams.hasSOC) ?
         1.0 :
@@ -971,15 +965,13 @@ namespace dftfe
       basisOperationsPtr->d_matrixFreeDataPtr->get_quadrature(quadratureIndex)
         .size();
 
-    // reinit basis operations for the chosen quadrature (no intermediate quad)
     basisOperationsPtr->reinit(BVec * numWfnSpinors,
                                cellsBlockSize,
                                quadratureIndex);
     const dftfe::uInt numQuadPoints = basisOperationsPtr->nQuadsPerCell();
 
-    // allocate wfc interpolation and LDOS accumulation buffers
     dftfe::utils::MemoryStorage<NumberType, memorySpace> wfcQuadPointData;
-    dftfe::utils::MemoryStorage<double, memorySpace>     ldos; // D_loc at quads
+    dftfe::utils::MemoryStorage<double, memorySpace>     ldos; 
     dftfe::utils::MemoryStorage<double, memorySpace>     ldosWfcContributions;
 
     ldos.resize(totalLocallyOwnedCells * numQuadPoints, 0.0);
@@ -1033,7 +1025,6 @@ namespace dftfe
                     ldosOccupVec.copyFrom(ldosOccupVecHost);
 #endif
 
-                    // copy wfc block into flattenedArrayBlock
                     if (memorySpace == dftfe::utils::MemorySpace::HOST)
                       for (dftfe::uInt iNode = 0;
                            iNode < numLocalDofs * numWfnSpinors;
@@ -1068,7 +1059,6 @@ namespace dftfe
                     flattenedArrayBlock->updateGhostValues();
                     basisOperationsPtr->distribute(*(flattenedArrayBlock));
 
-                    // cell-block loop: interpolate wfc, accumulate D_loc
                     for (dftfe::Int iblock = 0; iblock < (numCellBlocks + 1);
                          iblock++)
                       {
@@ -1080,11 +1070,10 @@ namespace dftfe
                             const dftfe::uInt startingCellId =
                               iblock * cellsBlockSize;
 
-                            // interpolate wavefunctions to quadrature points
                             basisOperationsPtr->interpolateKernel(
                               *(flattenedArrayBlock),
                               wfcQuadPointData.data(),
-                              NULL, // no gradients needed
+                              NULL,
                               std::pair<dftfe::uInt, dftfe::uInt>(
                                 startingCellId,
                                 startingCellId + currentCellsBlockSize));
@@ -1138,14 +1127,6 @@ namespace dftfe
               } // wfc loop
           }     // spin loop
       }         // kPoint loop
-
-    if (this_process == 0 && dftParams.verbosity >= 2)
-      std::cout << "DEBUG: computeLDOSFromPSI step 2 (MPI reductions)"
-                << std::endl;
-      // -------------------------------------------------------------------
-      // MPI reductions across k-point and band-group communicators
-      // (mirrors the pattern in computeRhoFromPSI)
-      // -------------------------------------------------------------------
 #if defined(DFTFE_WITH_DEVICE)
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       ldosHost;
@@ -1174,7 +1155,6 @@ namespace dftfe
                     MPI_SUM,
                     interBandGroupComm);
 
-    // write final result into output argument
     ldosQuadValues = ldosHost;
 
 #if defined(DFTFE_WITH_DEVICE)

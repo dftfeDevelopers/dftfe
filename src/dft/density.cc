@@ -433,7 +433,7 @@ namespace dftfe
 
     // Interpolate LDOS nodal field to two quadrature sets:
     // 1) d_ldosQuadValuesElectro  — used by computeRhs and
-    //   computeProjectedQuadToNodalField, index - 0
+    //   computeProjectedQuadToNodalField
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> dummy;
     d_basisOperationsPtrElectroHost->interpolate(
       d_ldosNodalValues,
@@ -443,7 +443,7 @@ namespace dftfe
       dummy,
       dummy,
       false);
-    // 2) d_ldosAxQuadValuesElectro — used by AX and computeDiagonalA, index - 4
+    // 2) d_ldosAxQuadValuesElectro — used by AX and computeDiagonalA
     d_basisOperationsPtrElectroHost->interpolate(
       d_ldosNodalValues,
       d_densityDofHandlerIndexElectro,

@@ -767,7 +767,7 @@ namespace dftfe
               neg_fprime * d_kPointWeights[kPoint] * spinPolarizedFactor;
           }
 
-    // Reduce d_totalDOS across k-point pools (each pool owns a disjoint k-pt)
+    // Reduce d_totalDOS across k-points
     int size;
     MPI_Comm_size(interpoolcomm, &size);
     if (size > 1)
