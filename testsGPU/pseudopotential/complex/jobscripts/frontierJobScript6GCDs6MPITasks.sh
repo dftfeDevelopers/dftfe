@@ -22,6 +22,7 @@ export LD_LIBRARY_PATH=$CRAY_LD_LIBRARY_PATH:$LD_LIBRARY_PATH
 export BASE=$WD/src/dftfeDebug/build/release/complex
 
 srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileMg2x_1.prm > outputMg2x_1
+srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileMg2x_1_compressed.prm > outputMg2x_1_compressed
 srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileMg2x_2.prm > outputMg2x_2
 srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileMg2x_3.prm > outputMg2x_3
 srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileMg2x_4.prm > outputMg2x_4
