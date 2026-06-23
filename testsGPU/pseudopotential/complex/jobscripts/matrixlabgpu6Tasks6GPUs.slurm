@@ -25,6 +25,7 @@ export DEAL_II_NUM_THREADS=1
 export ELPA_DEFAULT_omp_threads=1
 
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileMg2x_1.prm > outputMg2x_1
+mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileMg2x_1_compressed.prm > outputMg2x_1_compressed
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileMg2x_2.prm > outputMg2x_2
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileMg2x_3.prm > outputMg2x_3
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileMg2x_4.prm > outputMg2x_4

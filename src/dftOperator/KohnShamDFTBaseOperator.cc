@@ -1748,6 +1748,15 @@ namespace dftfe
           d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec
             .setCommunicationPrecision(
               dftfe::utils::mpi::communicationPrecision::half);
+
+        else if (d_dftParamsPtr->communPrecCheby == "COMPRESSED")
+          {
+            d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec
+              .setCompressBitsPerValue(d_dftParamsPtr->compressBitsPerValue);
+            d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec
+              .setCommunicationPrecision(
+                dftfe::utils::mpi::communicationPrecision::compress);
+          }
       }
 
     d_basisOperationsPtr->reinit(numWaveFunctions,

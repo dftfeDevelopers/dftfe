@@ -20,6 +20,7 @@
 
 #include <sycl/sycl.hpp>
 #include <complex>
+#include <cstdint>
 #include <dftfe/TypeConfig.h>
 
 namespace dftfe
@@ -205,6 +206,93 @@ namespace dftfe
     abs(std::complex<float> a)
     {
       return std::abs(a);
+    }
+
+    //
+    // frexp / ldexp overloads (used by BFP compression)
+    //
+
+    inline double
+    frexp(double x, int *e)
+    {
+      int    exp_val;
+      double result = sycl::frexp(x, &exp_val);
+      *e            = exp_val;
+      return result;
+    }
+
+    inline float
+    frexp(float x, int *e)
+    {
+      int   exp_val;
+      float result = sycl::frexp(x, &exp_val);
+      *e           = exp_val;
+      return result;
+    }
+
+    inline double
+    ldexp(double x, int e)
+    {
+      return sycl::ldexp(x, e);
+    }
+
+    inline float
+    ldexp(float x, int e)
+    {
+      return sycl::ldexp(x, e);
+    }
+
+    inline double
+    rint(double x)
+    {
+      return sycl::rint(x);
+    }
+
+    inline float
+    rint(float x)
+    {
+      return sycl::rint(x);
+    }
+
+    //
+    // min / max overloads
+    //
+
+    inline int
+    min(int a, int b)
+    {
+      return a < b ? a : b;
+    }
+
+    inline unsigned int
+    min(unsigned int a, unsigned int b)
+    {
+      return a < b ? a : b;
+    }
+
+    inline int
+    max(int a, int b)
+    {
+      return a > b ? a : b;
+    }
+
+    inline unsigned int
+    max(unsigned int a, unsigned int b)
+    {
+      return a > b ? a : b;
+    }
+
+    // NaN-safe: returns the non-NaN argument when one input is NaN.
+    inline double
+    max(double a, double b)
+    {
+      return sycl::fmax(a, b);
+    }
+
+    inline float
+    max(float a, float b)
+    {
+      return sycl::fmax(a, b);
     }
 
     //
@@ -768,6 +856,57 @@ namespace dftfe
     makeDataTypeDeviceCompatible(bool *a)
     {
       return a;
+    }
+
+    // ComplexU8 + uint8_t overloads: needed only to satisfy deviceSetValue()
+    // template instantiations on the BFP-compressed byte stream buffers;
+    // no use.
+    struct ComplexU8
+    {
+      uint8_t real;
+      uint8_t imag;
+
+      inline constexpr ComplexU8(uint8_t r = 0, uint8_t i = 0)
+        : real(r)
+        , imag(i)
+      {}
+    };
+
+    inline uint8_t
+    makeDataTypeDeviceCompatible(uint8_t a)
+    {
+      return a;
+    }
+
+    inline uint8_t *
+    makeDataTypeDeviceCompatible(uint8_t *a)
+    {
+      return a;
+    }
+
+    inline const uint8_t *
+    makeDataTypeDeviceCompatible(const uint8_t *a)
+    {
+      return a;
+    }
+
+    inline ComplexU8
+    makeDataTypeDeviceCompatible(std::complex<uint8_t> a)
+    {
+      return ComplexU8{static_cast<uint8_t>(a.real()),
+                       static_cast<uint8_t>(a.imag())};
+    }
+
+    inline ComplexU8 *
+    makeDataTypeDeviceCompatible(std::complex<uint8_t> *a)
+    {
+      return reinterpret_cast<ComplexU8 *>(a);
+    }
+
+    inline const ComplexU8 *
+    makeDataTypeDeviceCompatible(const std::complex<uint8_t> *a)
+    {
+      return reinterpret_cast<const ComplexU8 *>(a);
     }
 
   } // namespace utils

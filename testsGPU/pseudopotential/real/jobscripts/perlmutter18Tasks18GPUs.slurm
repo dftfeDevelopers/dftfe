@@ -29,6 +29,7 @@ srun  ./dftfe Input_MD_0.prm > output_MD_0
 srun  ./dftfe Input_MD_1.prm > output_MD_1
 srun  ./dftfe Input_MD_2.prm > output_MD_2
 srun  ./dftfe parameterFileMg2x_1.prm > outputMg2x_1
+srun  ./dftfe parameterFileMg2x_1_compressed.prm > outputMg2x_1_compressed
 srun  ./dftfe parameterFileMg2x_1_spingpu.prm > outputMg2x_1_spin_gpu
 srun  ./dftfe parameterFileMg2x_2.prm > outputMg2x_2
 srun  ./dftfe parameterFileMg2x_3.prm > outputMg2x_3
