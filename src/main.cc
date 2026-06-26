@@ -31,7 +31,6 @@
 
 #include <dftfe/dftUtils.h>
 
-
 //
 // C++ headers
 //
@@ -49,7 +48,6 @@
 int
 main(int argc, char *argv[])
 {
-  //
   MPI_Init(&argc, &argv);
 
 #if defined(DFTFE_WITH_MDI)

@@ -1,3 +1,4 @@
+template class poissonSolverProblemDevice<1>;
 template class poissonSolverProblemDevice<2>;
 template class poissonSolverProblemDevice<3>;
 template class poissonSolverProblemDevice<4>;

@@ -28,7 +28,6 @@ ELPA_PATH="/storage/dftfeDependenciesNoMKL/elpa/install"
 dftdpath="/storage/dftfeDependenciesNoMKL/dftd/install"
 numdiffdir="/storage/dftfeDependenciesNoMKL/numdiff/install"
 
-
 #Paths for optional external libraries
 # path for NCCL/RCCL libraries
 DCCL_PATH="/apps/softwares/spack/opt/spack/linux-ubuntu24.04-cascadelake/gcc-13.3.0/nccl-2.23.4-1-xyspmp23glxb4slgne4xpemahjrkuyrj"
@@ -88,7 +87,7 @@ function cmake_configure() {
     -DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDir \
     -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
     -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
-    -DXML_INCLUDE_DIR=$xmlIncludeDir\
+    -DXML_INCLUDE_DIR=$xmlIncludeDir \
     -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath -DWITH_TORCH=$withTorch -DTORCH_DIR=$torchDir\
     -DWITH_CUSTOMIZED_DEALII=$withCustomizedDealii\
     -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH;$dftdpath;$numdiffdir"\

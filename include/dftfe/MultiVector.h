@@ -483,6 +483,8 @@ namespace dftfe
       setCommunicationPrecision(
         utils::mpi::communicationPrecision commPrecision);
 
+      void
+      setCompressBitsPerValue(dftfe::uInt bpv);
 
       dftfe::uInt
       globalSize() const;
