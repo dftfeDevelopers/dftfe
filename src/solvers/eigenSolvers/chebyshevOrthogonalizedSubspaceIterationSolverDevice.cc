@@ -769,6 +769,7 @@ namespace dftfe
             interBandGroupComm,
             BLASWrapperPtr,
             d_dftParams,
+            d_deviceScratchMemoryStorage,
             useMixedPrecOverall);
 
 
@@ -787,6 +788,7 @@ namespace dftfe
             eigenValues,
             BLASWrapperPtr,
             d_dftParams,
+            d_deviceScratchMemoryStorage,
             useMixedPrecOverall);
         }
       else
@@ -806,6 +808,7 @@ namespace dftfe
             eigenValues,
             BLASWrapperPtr,
             d_dftParams,
+            d_deviceScratchMemoryStorage,
             useMixedPrecOverall);
         }
     }
@@ -918,7 +921,8 @@ namespace dftfe
       densityMatDerFermiEnergy,
       elpaScala,
       BLASWrapperPtr,
-      d_dftParams);
+      d_dftParams,
+      d_deviceScratchMemoryStorage);
 
 
     dftfe::utils::deviceSynchronize();
