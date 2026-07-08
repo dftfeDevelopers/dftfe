@@ -166,10 +166,10 @@ cd $out
 
 echo -e "${Blu}Building Real executable ($out) in $build_type mode...${RCol}"
 cmake_real "$SRC" && (cd real && make -j8)
-cd ..
 
 echo -e "${Blu}Building Complex executable ($out) in $build_type mode...${RCol}"
 cmake_cplx "$SRC" && (cd complex && make -j8)
+
 cd ..
 
 echo -e "${Blu}Build complete.${RCol}"
