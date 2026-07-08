@@ -19,7 +19,7 @@ if [ -s CMakeLists.txt ]; then
 fi
 
 # Path to project source
-SRC=`dirname $0` # location of source directory
+SRC=$(cd "$(dirname "$0")/../.." && pwd) # dftfe repo root (this script lives at helpers/NERSCPerlmutter/)
 
 ########################################################################
 #Provide paths below for external libraries, compiler options and flags,
