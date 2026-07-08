@@ -9,6 +9,10 @@
 # own build directory (see BUILD_ROOT below) since re-running cmake with a
 # different WITH_GPU value in the same tree only reconfigures, it does not
 # separate the two binaries.
+#
+# Usage example (run from an empty build directory):
+#   ENV2=/pscratch/sd/x/username/install_DFTFE/env2 withGPU=OFF \
+#     /path/to/dftfe/helpers/NERSCPerlmutter/setupUserPerlmutterEnv2.sh
 
 set -e
 set -o pipefail
@@ -25,7 +29,16 @@ SRC=$(cd "$(dirname "$0")/../.." && pwd) # dftfe repo root (this script lives at
 #Provide paths below for external libraries, compiler options and flags,
 # and optimization flag
 
-ENV2="/pscratch/sd/r/rezgar/install_DFTFE/env2"
+#Point this at your own personal dependency install (deal.II, ALGLIB, libxc,
+#spglib, ELPA, numdiff), built following BUILD_INSTRUCTIONS.md, e.g.:
+#   ENV2=/path/to/your/env2 ./setupUserPerlmutterEnv2.sh
+#No default is provided since this is a personal/pscratch-style install,
+#not a shared path everyone on the project can use.
+if [ -z "$ENV2" ]; then
+  echo "Set ENV2 to your personal dependency install, e.g.:"
+  echo "  ENV2=/pscratch/sd/x/username/install_DFTFE/env2 $0"
+  exit 1
+fi
 
 #Paths for required external libraries (single dealii install serves both
 #real and complex builds)
