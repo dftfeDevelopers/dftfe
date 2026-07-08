@@ -66,8 +66,9 @@ device_architectures="80" # set DCMAKE_CXX_CUDA/HIP_ARCHITECTURES
                            #(only applicable for withGPU=ON)
 
 #Option to compile with default or higher order quadrature for storing pseudopotential data
-#ON is recommended for MD simulations with hard pseudopotentials
-withHigherQuadPSP=ON
+#ON is recommended for MD simulations with hard pseudopotentials.
+#Must be OFF to match the checked-in ctest reference outputs.
+withHigherQuadPSP=OFF
 
 # build type: "Release" or "Debug"
 build_type=Release

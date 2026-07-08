@@ -17,7 +17,6 @@
 #ifndef dftfeDeviceExceptions_cuh
 #define dftfeDeviceExceptions_cuh
 
-#include <execinfo.h>
 
 #define DEVICE_API_CHECK(cmd)                       \
   do                                                \
@@ -29,12 +28,6 @@
                  __FILE__,                          \
                  __LINE__,                          \
                  cudaGetErrorString(e));            \
-          void *dftfeBacktraceBuf[32];              \
-          int   dftfeBacktraceSize =                \
-            backtrace(dftfeBacktraceBuf, 32);       \
-          backtrace_symbols_fd(dftfeBacktraceBuf,   \
-                                dftfeBacktraceSize,  \
-                                2);                  \
           exit(EXIT_FAILURE);                       \
         }                                           \
   } while (0)

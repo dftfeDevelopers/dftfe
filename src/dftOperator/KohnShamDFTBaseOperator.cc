@@ -1514,7 +1514,8 @@ namespace dftfe
         d_BeffzJxW.resize(d_BeffzJxWHost.size());
         d_BeffzJxW.copyFrom(d_BeffzJxWHost);
       }
-    dftfe::utils::deviceSynchronize();
+    if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
+      dftfe::utils::deviceSynchronize();
 #endif
   }
 
