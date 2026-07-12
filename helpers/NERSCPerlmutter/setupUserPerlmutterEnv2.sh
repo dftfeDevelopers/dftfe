@@ -40,9 +40,12 @@ if [ -z "$ENV2" ]; then
   exit 1
 fi
 
-#Paths for required external libraries (single dealii install serves both
-#real and complex builds)
-dealiiDir="$ENV2/dealii"
+#Paths for required external libraries. deal.II is built separately for
+#real and complex (each linked against its own PETSc/SLEPc build, see
+#install_dealii_real/install_dealii_complex in dftfe2.rc), so real and
+#complex each need their own DEAL_II_DIR.
+dealiiDirReal="$ENV2/dealii_real"
+dealiiDirComplex="$ENV2/dealii_complex"
 alglibDir="$ENV2/lib/alglib"
 libxcDir="$ENV2"
 spglibDir="$ENV2"
@@ -107,7 +110,7 @@ function cmake_real() {
     cmake -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_COMPILER=$cxx_compiler\
     -DCMAKE_CXX_FLAGS="$cxx_flags"\
     -DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
-    -DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDir \
+    -DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDirReal \
     -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
     -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
     -DXML_INCLUDE_DIR=$xmlIncludeDir\
@@ -121,7 +124,7 @@ function cmake_real() {
     cmake -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_COMPILER=$cxx_compiler\
     -DCMAKE_CXX_FLAGS="$cxx_flags"\
     -DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
-    -DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDir \
+    -DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDirReal \
     -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
     -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
     -DXML_INCLUDE_DIR=$xmlIncludeDir\
@@ -140,7 +143,7 @@ function cmake_cplx() {
     cmake -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_COMPILER=$cxx_compiler\
     -DCMAKE_CXX_FLAGS="$cxx_flags"\
     -DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
-    -DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDir \
+    -DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDirComplex \
     -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
     -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
     -DXML_INCLUDE_DIR=$xmlIncludeDir\
@@ -154,7 +157,7 @@ function cmake_cplx() {
     cmake -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_COMPILER=$cxx_compiler\
     -DCMAKE_CXX_FLAGS="$cxx_flags"\
     -DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
-    -DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDir \
+    -DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDirComplex \
     -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
     -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
     -DXML_INCLUDE_DIR=$xmlIncludeDir\
