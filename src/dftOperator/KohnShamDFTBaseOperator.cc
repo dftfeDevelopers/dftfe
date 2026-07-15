@@ -1368,6 +1368,97 @@ namespace dftfe
           }     // TauMGGA
       }         // cell loop
 
+    // GGA gradient correction to the noncollinear effective magnetic field.
+    // Pure host BLAS/loop computation with no device dependency - must run
+    // regardless of DFTFE_WITH_DEVICE, unlike the device-copy steps below.
+    if (d_dftParamsPtr->noncolin && isGGA)
+      {
+        const double scalarCoeffOne  = 1.0;
+        const double scalarCoeffZero = 0.0;
+        d_BLASWrapperPtrHost->xgemm(
+          'T',
+          'N',
+          numberQuadraturePointsPerCell,
+          totalLocallyOwnedCells,
+          3 * numberQuadraturePointsPerCell,
+          &scalarCoeffOne,
+          d_basisOperationsPtrHost->collocationShapeFunctionGradientBasisData()
+            .data(),
+          3 * numberQuadraturePointsPerCell,
+          d_invJacderExcWithSigmaTimesGradRhoJxWHost.data(),
+          3 * numberQuadraturePointsPerCell,
+          &scalarCoeffOne,
+          d_VeffJxWHost.data(),
+          numberQuadraturePointsPerCell);
+        d_BLASWrapperPtrHost->xgemm(
+          'T',
+          'N',
+          numberQuadraturePointsPerCell,
+          totalLocallyOwnedCells,
+          3 * numberQuadraturePointsPerCell,
+          &scalarCoeffOne,
+          d_basisOperationsPtrHost->collocationShapeFunctionGradientBasisData()
+            .data(),
+          3 * numberQuadraturePointsPerCell,
+          d_invJacderExcWithSigmaTimesMagXTimesGradRhoJxWHost.data(),
+          3 * numberQuadraturePointsPerCell,
+          &scalarCoeffZero,
+          d_BeffxGGA.data(),
+          numberQuadraturePointsPerCell);
+        d_BLASWrapperPtrHost->xgemm(
+          'T',
+          'N',
+          numberQuadraturePointsPerCell,
+          totalLocallyOwnedCells,
+          3 * numberQuadraturePointsPerCell,
+          &scalarCoeffOne,
+          d_basisOperationsPtrHost->collocationShapeFunctionGradientBasisData()
+            .data(),
+          3 * numberQuadraturePointsPerCell,
+          d_invJacderExcWithSigmaTimesMagYTimesGradRhoJxWHost.data(),
+          3 * numberQuadraturePointsPerCell,
+          &scalarCoeffZero,
+          d_BeffyGGA.data(),
+          numberQuadraturePointsPerCell);
+        d_BLASWrapperPtrHost->xgemm(
+          'T',
+          'N',
+          numberQuadraturePointsPerCell,
+          totalLocallyOwnedCells,
+          3 * numberQuadraturePointsPerCell,
+          &scalarCoeffOne,
+          d_basisOperationsPtrHost->collocationShapeFunctionGradientBasisData()
+            .data(),
+          3 * numberQuadraturePointsPerCell,
+          d_invJacderExcWithSigmaTimesMagZTimesGradRhoJxWHost.data(),
+          3 * numberQuadraturePointsPerCell,
+          &scalarCoeffZero,
+          d_BeffzGGA.data(),
+          numberQuadraturePointsPerCell);
+
+        std::unordered_map<
+          DensityDescriptorDataAttributes,
+          dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+          densityData;
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          &magAxis = densityData[DensityDescriptorDataAttributes::magAxisValues];
+        auxDensityXCRepresentation->applyLocalOperations(
+          std::make_pair(0,
+                         totalLocallyOwnedCells * numberQuadraturePointsPerCell),
+          densityData);
+
+        for (dftfe::uInt iQuad = 0;
+             iQuad < totalLocallyOwnedCells * numberQuadraturePointsPerCell;
+             ++iQuad)
+          {
+            const double temp = magAxis[3 * iQuad + 0] * d_BeffxGGA[iQuad] +
+                                magAxis[3 * iQuad + 1] * d_BeffyGGA[iQuad] +
+                                magAxis[3 * iQuad + 2] * d_BeffzGGA[iQuad];
+            d_BeffxJxWHost[iQuad] += temp * magAxis[3 * iQuad + 0];
+            d_BeffyJxWHost[iQuad] += temp * magAxis[3 * iQuad + 1];
+            d_BeffzJxWHost[iQuad] += temp * magAxis[3 * iQuad + 2];
+          }
+      }
 
 #if defined(DFTFE_WITH_DEVICE)
     if (isTauMGGA)
@@ -1410,101 +1501,6 @@ namespace dftfe
       }
     else
       {
-        if (isGGA)
-          {
-            const double scalarCoeffOne  = 1.0;
-            const double scalarCoeffZero = 0.0;
-            d_BLASWrapperPtrHost->xgemm(
-              'T',
-              'N',
-              numberQuadraturePointsPerCell,
-              totalLocallyOwnedCells,
-              3 * numberQuadraturePointsPerCell,
-              &scalarCoeffOne,
-              d_basisOperationsPtrHost
-                ->collocationShapeFunctionGradientBasisData()
-                .data(),
-              3 * numberQuadraturePointsPerCell,
-              d_invJacderExcWithSigmaTimesGradRhoJxWHost.data(),
-              3 * numberQuadraturePointsPerCell,
-              &scalarCoeffOne,
-              d_VeffJxWHost.data(),
-              numberQuadraturePointsPerCell);
-            d_BLASWrapperPtrHost->xgemm(
-              'T',
-              'N',
-              numberQuadraturePointsPerCell,
-              totalLocallyOwnedCells,
-              3 * numberQuadraturePointsPerCell,
-              &scalarCoeffOne,
-              d_basisOperationsPtrHost
-                ->collocationShapeFunctionGradientBasisData()
-                .data(),
-              3 * numberQuadraturePointsPerCell,
-              d_invJacderExcWithSigmaTimesMagXTimesGradRhoJxWHost.data(),
-              3 * numberQuadraturePointsPerCell,
-              &scalarCoeffZero,
-              d_BeffxGGA.data(),
-              numberQuadraturePointsPerCell);
-            d_BLASWrapperPtrHost->xgemm(
-              'T',
-              'N',
-              numberQuadraturePointsPerCell,
-              totalLocallyOwnedCells,
-              3 * numberQuadraturePointsPerCell,
-              &scalarCoeffOne,
-              d_basisOperationsPtrHost
-                ->collocationShapeFunctionGradientBasisData()
-                .data(),
-              3 * numberQuadraturePointsPerCell,
-              d_invJacderExcWithSigmaTimesMagYTimesGradRhoJxWHost.data(),
-              3 * numberQuadraturePointsPerCell,
-              &scalarCoeffZero,
-              d_BeffyGGA.data(),
-              numberQuadraturePointsPerCell);
-            d_BLASWrapperPtrHost->xgemm(
-              'T',
-              'N',
-              numberQuadraturePointsPerCell,
-              totalLocallyOwnedCells,
-              3 * numberQuadraturePointsPerCell,
-              &scalarCoeffOne,
-              d_basisOperationsPtrHost
-                ->collocationShapeFunctionGradientBasisData()
-                .data(),
-              3 * numberQuadraturePointsPerCell,
-              d_invJacderExcWithSigmaTimesMagZTimesGradRhoJxWHost.data(),
-              3 * numberQuadraturePointsPerCell,
-              &scalarCoeffZero,
-              d_BeffzGGA.data(),
-              numberQuadraturePointsPerCell);
-
-            std::unordered_map<
-              DensityDescriptorDataAttributes,
-              dftfe::utils::MemoryStorage<double,
-                                          dftfe::utils::MemorySpace::HOST>>
-              densityData;
-            dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-              &magAxis =
-                densityData[DensityDescriptorDataAttributes::magAxisValues];
-            auxDensityXCRepresentation->applyLocalOperations(
-              std::make_pair(0,
-                             totalLocallyOwnedCells *
-                               numberQuadraturePointsPerCell),
-              densityData);
-
-            for (dftfe::uInt iQuad = 0;
-                 iQuad < totalLocallyOwnedCells * numberQuadraturePointsPerCell;
-                 ++iQuad)
-              {
-                const double temp = magAxis[3 * iQuad + 0] * d_BeffxGGA[iQuad] +
-                                    magAxis[3 * iQuad + 1] * d_BeffyGGA[iQuad] +
-                                    magAxis[3 * iQuad + 2] * d_BeffzGGA[iQuad];
-                d_BeffxJxWHost[iQuad] += temp * magAxis[3 * iQuad + 0];
-                d_BeffyJxWHost[iQuad] += temp * magAxis[3 * iQuad + 1];
-                d_BeffzJxWHost[iQuad] += temp * magAxis[3 * iQuad + 2];
-              }
-          }
         d_VeffJxW.resize(d_VeffJxWHost.size());
         d_VeffJxW.copyFrom(d_VeffJxWHost);
         d_BeffxJxW.resize(d_BeffxJxWHost.size());
