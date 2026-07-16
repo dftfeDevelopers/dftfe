@@ -275,28 +275,46 @@ namespace dftfe
       singleVectorGlobalToLocalMap(d_nDofsPerCell * d_nCells);
 
     // Construct singleVectorGlobalToLocalMap with matrix-free cell ordering
-    for (dftfe::uInt iCell = 0; iCell < d_nCells; iCell++)
-      {
-        auto checkExpr = dofInfo.row_starts[iCell].second ==
-                           dofInfo.row_starts[iCell + 1].second &&
-                         dofInfo.row_starts_plain_indices[iCell] ==
-                           dealii::numbers::invalid_unsigned_int;
+    //
+    // FIX (poissonGPUNCCLDebug): dofInfo.row_starts and
+    // dofInfo.row_starts_plain_indices are indexed by the lane-inclusive cell
+    // index (iCellBatch * vectorization_length + iLane), which counts the
+    // empty padding lanes of partially filled cell batches. The previous code
+    // indexed them with the compressed physical-cell counter, so on any rank
+    // whose traversal contains a partially filled batch before the end
+    // (partition dependent), every subsequent cell silently picked up another
+    // cell's dof indices, corrupting the device operator while keeping it
+    // deterministic and symmetric.
+    const dftfe::uInt vecLen = dofInfo.vectorization_length;
+    for (dftfe::uInt iCellBatch = 0, cellCount = 0;
+         iCellBatch < dofInfo.n_vectorization_lanes_filled[2].size();
+         iCellBatch++)
+      for (dftfe::uInt iLane = 0;
+           iLane < dofInfo.n_vectorization_lanes_filled[2][iCellBatch];
+           iLane++, cellCount++)
+        {
+          const dftfe::uInt laneIdx = iCellBatch * vecLen + iLane;
 
-        auto trueClause =
-          dofInfo.dof_indices.data() + dofInfo.row_starts[iCell].first;
+          auto checkExpr = dofInfo.row_starts[laneIdx].second ==
+                             dofInfo.row_starts[laneIdx + 1].second &&
+                           dofInfo.row_starts_plain_indices[laneIdx] ==
+                             dealii::numbers::invalid_unsigned_int;
 
-        auto falseClause = dofInfo.plain_dof_indices.data() +
-                           dofInfo.row_starts_plain_indices[iCell];
+          auto trueClause =
+            dofInfo.dof_indices.data() + dofInfo.row_starts[laneIdx].first;
 
-        std::transform(checkExpr ? trueClause : falseClause,
-                       checkExpr ? trueClause + d_nDofsPerCell :
-                                   falseClause + d_nDofsPerCell,
-                       singleVectorGlobalToLocalMapTemp.data() +
-                         iCell * d_nDofsPerCell,
-                       [](unsigned int &v) {
-                         return static_cast<dftfe::uInt>(v);
-                       });
-      }
+          auto falseClause = dofInfo.plain_dof_indices.data() +
+                             dofInfo.row_starts_plain_indices[laneIdx];
+
+          std::transform(checkExpr ? trueClause : falseClause,
+                         checkExpr ? trueClause + d_nDofsPerCell :
+                                     falseClause + d_nDofsPerCell,
+                         singleVectorGlobalToLocalMapTemp.data() +
+                           cellCount * d_nDofsPerCell,
+                         [](unsigned int &v) {
+                           return static_cast<dftfe::uInt>(v);
+                         });
+        }
 
     // Reorder cell numbering to cell-matrix order
     for (dftfe::uInt iCell = 0; iCell < d_nCells; iCell++)
