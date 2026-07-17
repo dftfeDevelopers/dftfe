@@ -1,6 +1,9 @@
 #include <dftfe/dft.h>
 #include <dftfe/linearAlgebraOperations.h>
 
+#include <cmath>
+#include <limits>
+
 namespace dftfe
 {
   // implement nodal anderson mixing scheme with LDOS
@@ -19,6 +22,12 @@ namespace dftfe
   {
     preCondTotalDensityResidualVector = 0.0;
     double I                          = 0.0;
+
+    AssertThrow(std::isfinite(d_totalDOS) &&
+                  d_totalDOS > 100.0 * std::numeric_limits<double>::epsilon(),
+                dealii::ExcMessage(
+                  "LDOS total DOS is too small for the LDOS preconditioner. "
+                  "Increase LDOS TEMPERATURE or use another mixing method."));
 
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> dummy;
     d_densityResidualQuadValues.resize(1);

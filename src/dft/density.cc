@@ -317,39 +317,6 @@ namespace dftfe
   void
   dftClass<memorySpace>::compute_ldosOut()
   {
-    compute_ldosOccupanciesAndTotalDOS();
-
-#ifdef DFTFE_WITH_DEVICE
-    if (d_dftParamsPtr->useDevice)
-      computeLDOSFromPSI(&d_eigenVectorsFlattenedDevice,
-                         d_numEigenValues,
-                         d_ldosOccupancies,
-                         d_basisOperationsPtrDevice,
-                         d_BLASWrapperPtr,
-                         d_densityDofHandlerIndex,
-                         d_gllQuadratureId,
-                         d_kPointWeights,
-                         d_ldosQuadValues,
-                         d_mpiCommParent,
-                         interpoolcomm,
-                         interBandGroupComm,
-                         *d_dftParamsPtr);
-#endif
-    if (!d_dftParamsPtr->useDevice)
-      computeLDOSFromPSI(&d_eigenVectorsFlattenedHost,
-                         d_numEigenValues,
-                         d_ldosOccupancies,
-                         d_basisOperationsPtrHost,
-                         d_BLASWrapperPtrHost,
-                         d_densityDofHandlerIndex,
-                         d_gllQuadratureId,
-                         d_kPointWeights,
-                         d_ldosQuadValues,
-                         d_mpiCommParent,
-                         interpoolcomm,
-                         interBandGroupComm,
-                         *d_dftParamsPtr);
-
     // Map 1p GLL points to 2p nodal mesh
     d_matrixFreeDataPRefined.initialize_dof_vector(
       d_ldosNodalValues, d_densityDofHandlerIndexElectro);
@@ -536,6 +503,11 @@ namespace dftfe
   void
   dftClass<memorySpace>::computeRhoNodalFromPSI()
   {
+    const bool computeLDOS =
+      d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_LDOS";
+    if (computeLDOS)
+      compute_ldosOccupanciesAndTotalDOS();
+
     std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       densityPRefinedNodalData;
@@ -612,7 +584,9 @@ namespace dftfe
                         d_mpiCommParent,
                         interpoolcomm,
                         interBandGroupComm,
-                        *d_dftParamsPtr);
+                        *d_dftParamsPtr,
+                        computeLDOS ? &d_ldosOccupancies : nullptr,
+                        computeLDOS ? &d_ldosQuadValues : nullptr);
 #endif
     if (!d_dftParamsPtr->useDevice)
       computeRhoFromPSI(&d_eigenVectorsFlattenedHost,
@@ -633,7 +607,9 @@ namespace dftfe
                         d_mpiCommParent,
                         interpoolcomm,
                         interBandGroupComm,
-                        *d_dftParamsPtr);
+                        *d_dftParamsPtr,
+                        computeLDOS ? &d_ldosOccupancies : nullptr,
+                        computeLDOS ? &d_ldosQuadValues : nullptr);
 
     // copy Lobatto quadrature data to fill in 2p DoFHandler nodal data
     for (dftfe::uInt iComp = 0; iComp < densityPRefinedNodalData.size();

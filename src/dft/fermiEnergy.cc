@@ -741,8 +741,14 @@ namespace dftfe
             const double eps =
               eigenValues[kPoint][d_numEigenValues * spinIndex + iEigenVec];
 
+            const double fermiEnergySpinIndex =
+              d_dftParamsPtr->constraintMagnetization &&
+                  d_dftParamsPtr->spinPolarized == 1 ?
+                (spinIndex == 0 ? fermiEnergyUp : fermiEnergyDown) :
+                fermiEnergy;
+
             // Numerically stable -f'_i = -(df/dε_i)  ≥ 0
-            const double temp1 = (eps - fermiEnergy) / kBT;
+            const double temp1 = (eps - fermiEnergySpinIndex) / kBT;
             double       neg_fprime;
 
             if (temp1 <= 0.0)

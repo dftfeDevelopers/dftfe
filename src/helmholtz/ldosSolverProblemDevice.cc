@@ -448,9 +448,8 @@ namespace dftfe
       if (d_diagonalA.in_local_range(i))
         if (!d_constraintMatrixPRefinedPtr->is_constrained(i))
           {
-            // d_diagonalA(i) -= (4.0 * M_PI / d_totalDOS) * d_dlocMassVector(i)
-            // *
-            //                   d_dlocMassVector(i);
+            d_diagonalA(i) -= (4.0 * M_PI / d_totalDOS) * d_dlocMassVector(i) *
+                              d_dlocMassVector(i);
             d_diagonalA(i) = 1.0 / d_diagonalA(i);
           }
 

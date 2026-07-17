@@ -48,13 +48,16 @@ namespace dftfe
       &gradDensityValues,
     std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-                        &tauValues,
-    const bool           isEvaluateGradRho,
-    const bool           isEvaluateTau,
-    const MPI_Comm      &mpiCommParent,
-    const MPI_Comm      &interpoolcomm,
-    const MPI_Comm      &interBandGroupComm,
-    const dftParameters &dftParams);
+                                           &tauValues,
+    const bool                              isEvaluateGradRho,
+    const bool                              isEvaluateTau,
+    const MPI_Comm                         &mpiCommParent,
+    const MPI_Comm                         &interpoolcomm,
+    const MPI_Comm                         &interBandGroupComm,
+    const dftParameters                    &dftParams,
+    const std::vector<std::vector<double>> *ldosOccupancies = nullptr,
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      *ldosQuadValues = nullptr);
 
 
   template <typename NumberType>
@@ -95,28 +98,5 @@ namespace dftfe
     double    *tau,
     const bool isNonCollin,
     const bool hasSOC);
-
-
-  template <typename NumberType, dftfe::utils::MemorySpace memorySpace>
-  void
-  computeLDOSFromPSI(
-    const dftfe::utils::MemoryStorage<NumberType, memorySpace> *X,
-    const dftfe::uInt                       totalNumWaveFunctions,
-    const std::vector<std::vector<double>> &ldosOccupancies,
-    std::shared_ptr<
-      dftfe::basis::FEBasisOperations<NumberType, double, memorySpace>>
-      &basisOperationsPtr,
-    std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
-                              &BLASWrapperPtr,
-    const dftfe::uInt          matrixFreeDofhandlerIndex,
-    const dftfe::uInt          quadratureIndex,
-    const std::vector<double> &kPointWeights,
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-                        &ldosQuadValues,
-    const MPI_Comm      &mpiCommParent,
-    const MPI_Comm      &interpoolcomm,
-    const MPI_Comm      &interBandGroupComm,
-    const dftParameters &dftParams);
-
 } // namespace dftfe
 #endif
