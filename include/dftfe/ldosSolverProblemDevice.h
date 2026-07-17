@@ -31,7 +31,8 @@ namespace dftfe
          distributedCPUVec<double>         &x,
          const dftfe::uInt                  matrixFreeVectorComponent,
          const dftfe::uInt                  matrixFreeQuadratureComponent,
-         const dftfe::uInt                  matrixFreeAxQuadratureComponent);
+         const dftfe::uInt                  matrixFreeAxQuadratureComponent,
+         const bool                         isComputeMeanValueConstraint);
 
     /**
      * @brief Reinitialize for a new SCF iteration.
@@ -114,6 +115,23 @@ namespace dftfe
     }
 
   private:
+    void
+    computeMeanValueConstraint();
+
+    void
+    meanValueConstraintDistribute(distributedDeviceVec<double> &vec) const;
+
+    void
+    meanValueConstraintDistributeSlaveToMaster(
+      distributedDeviceVec<double> &vec) const;
+
+    void
+    meanValueConstraintDistributeSlaveToMaster(
+      distributedCPUVec<double> &vec) const;
+
+    void
+    meanValueConstraintSetZero(distributedCPUVec<double> &vec) const;
+
     /**
      * @brief Project quad-point values to nodal field (HOST).
      */
@@ -141,6 +159,13 @@ namespace dftfe
 
     distributedCPUVec<double>    d_dlocMassVector;
     distributedDeviceVec<double> d_dlocMassVectorDevice;
+    distributedCPUVec<double>    d_meanValueConstraintVec;
+    distributedDeviceVec<double> d_meanValueConstraintDeviceVec;
+
+    bool d_isMeanValueConstraintComputed;
+    dealii::types::global_dof_index d_meanValueConstraintNodeId;
+    dealii::types::global_dof_index d_meanValueConstraintNodeIdLocal;
+    dftfe::uInt                     d_meanValueConstraintProcId;
 
     /// Pointer to HOST x vector
     distributedCPUVec<double> *d_xPtr;

@@ -19,6 +19,7 @@ namespace dftfe
         dealii::Utilities::MPI::this_mpi_process(mpi_comm_domain))
     , pcout(std::cout,
             (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
+    , d_isMeanValueConstraintComputed(false)
   {}
 
 
@@ -33,7 +34,8 @@ namespace dftfe
     distributedCPUVec<double>         &x,
     const dftfe::uInt                  matrixFreeVectorComponent,
     const dftfe::uInt                  matrixFreeQuadratureComponent,
-    const dftfe::uInt                  matrixFreeAxQuadratureComponent)
+    const dftfe::uInt                  matrixFreeAxQuadratureComponent,
+    const bool                         isComputeMeanValueConstraint)
   {
     d_basisOperationsPtr              = basisOperationsPtr;
     d_matrixFreeDataPRefinedPtr       = &(basisOperationsPtr->matrixFreeData());
@@ -55,6 +57,9 @@ namespace dftfe
     // pcout << "Entering the Device problem" << std::endl;
     // computeDiagonalA();
     setupConstraints();
+    d_isMeanValueConstraintComputed = isComputeMeanValueConstraint;
+    if (d_isMeanValueConstraintComputed)
+      computeMeanValueConstraint();
 
     // Construct cellIndexToMacroCellSubCellIndexMap
     {
@@ -301,9 +306,201 @@ namespace dftfe
 
   template <dftfe::uInt FEOrderElectro>
   void
+  ldosSolverProblemDevice<FEOrderElectro>::meanValueConstraintDistribute(
+    distributedDeviceVec<double> &vec) const
+  {
+    double constrainedNodeValue = 0.0;
+    d_BLASWrapperPtr->xdot(d_xLocalDof,
+                           d_meanValueConstraintDeviceVec.begin(),
+                           1,
+                           vec.begin(),
+                           1,
+                           mpi_communicator,
+                           &constrainedNodeValue);
+    if (this_mpi_process == d_meanValueConstraintProcId)
+      dftfe::utils::deviceSetValue(vec.begin() +
+                                     d_meanValueConstraintNodeIdLocal,
+                                   constrainedNodeValue,
+                                   1);
+  }
+
+
+  template <dftfe::uInt FEOrderElectro>
+  void
+  ldosSolverProblemDevice<FEOrderElectro>::
+    meanValueConstraintDistributeSlaveToMaster(
+      distributedDeviceVec<double> &vec) const
+  {
+    double constrainedNodeValue = 0.0;
+    if (this_mpi_process == d_meanValueConstraintProcId)
+      dftfe::utils::MemoryTransfer<dftfe::utils::MemorySpace::HOST,
+                                   dftfe::utils::MemorySpace::DEVICE>::copy(
+        1,
+        &constrainedNodeValue,
+        vec.begin() + d_meanValueConstraintNodeIdLocal);
+
+    MPI_Bcast(&constrainedNodeValue,
+              1,
+              MPI_DOUBLE,
+              d_meanValueConstraintProcId,
+              mpi_communicator);
+    d_BLASWrapperPtr->xaxpy(d_xLocalDof,
+                            &constrainedNodeValue,
+                            d_meanValueConstraintDeviceVec.begin(),
+                            1,
+                            vec.begin(),
+                            1);
+    if (this_mpi_process == d_meanValueConstraintProcId)
+      dftfe::utils::deviceMemset(vec.begin() +
+                                   d_meanValueConstraintNodeIdLocal,
+                                 0,
+                                 sizeof(double));
+  }
+
+
+  template <dftfe::uInt FEOrderElectro>
+  void
+  ldosSolverProblemDevice<FEOrderElectro>::
+    meanValueConstraintDistributeSlaveToMaster(
+      distributedCPUVec<double> &vec) const
+  {
+    double constrainedNodeValue = 0.0;
+    if (this_mpi_process == d_meanValueConstraintProcId)
+      constrainedNodeValue = vec[d_meanValueConstraintNodeIdLocal];
+
+    MPI_Bcast(&constrainedNodeValue,
+              1,
+              MPI_DOUBLE,
+              d_meanValueConstraintProcId,
+              mpi_communicator);
+    vec.add(constrainedNodeValue, d_meanValueConstraintVec);
+    meanValueConstraintSetZero(vec);
+  }
+
+
+  template <dftfe::uInt FEOrderElectro>
+  void
+  ldosSolverProblemDevice<FEOrderElectro>::meanValueConstraintSetZero(
+    distributedCPUVec<double> &vec) const
+  {
+    if (this_mpi_process == d_meanValueConstraintProcId)
+      vec[d_meanValueConstraintNodeIdLocal] = 0.0;
+  }
+
+
+  template <dftfe::uInt FEOrderElectro>
+  void
+  ldosSolverProblemDevice<FEOrderElectro>::computeMeanValueConstraint()
+  {
+    d_meanValueConstraintVec.reinit(*d_xPtr);
+    d_meanValueConstraintVec = 0.0;
+    dftfe::linearAlgebra::createMultiVectorFromDealiiPartitioner(
+      d_meanValueConstraintVec.get_partitioner(),
+      1,
+      d_meanValueConstraintDeviceVec);
+
+    const dealii::DoFHandler<3> &dofHandler =
+      d_matrixFreeDataPRefinedPtr->get_dof_handler(d_matrixFreeVectorComponent);
+    const dealii::Quadrature<3> &quadrature =
+      d_matrixFreeDataPRefinedPtr->get_quadrature(
+        d_matrixFreeAxQuadratureComponent);
+    dealii::FEValues<3> feValues(dofHandler.get_fe(),
+                                  quadrature,
+                                  dealii::update_values |
+                                    dealii::update_JxW_values);
+    const dftfe::uInt dofsPerCell = dofHandler.get_fe().dofs_per_cell;
+    dealii::Vector<double> elementalValues(dofsPerCell);
+    std::vector<dealii::types::global_dof_index> localDofIndices(dofsPerCell);
+
+    for (auto cell = dofHandler.begin_active(); cell != dofHandler.end();
+         ++cell)
+      if (cell->is_locally_owned())
+        {
+          feValues.reinit(cell);
+          cell->get_dof_indices(localDofIndices);
+          elementalValues = 0.0;
+          for (dftfe::uInt i = 0; i < dofsPerCell; ++i)
+            for (dftfe::uInt q = 0; q < quadrature.size(); ++q)
+              elementalValues(i) +=
+                feValues.shape_value(i, q) * feValues.JxW(q);
+          d_constraintMatrixPRefinedPtr->distribute_local_to_global(
+            elementalValues, localDofIndices, d_meanValueConstraintVec);
+        }
+    d_meanValueConstraintVec.compress(dealii::VectorOperation::add);
+
+    dealii::IndexSet candidateDofs =
+      d_meanValueConstraintVec.locally_owned_elements();
+    dealii::IndexSet constrainedDofs(d_meanValueConstraintVec.size());
+    const auto locallyRelevantDofs = d_constraintMatrixPRefinedPtr->get_local_lines();
+    std::vector<dealii::types::global_dof_index> touchedDofs;
+    for (auto i = locallyRelevantDofs.begin(); i < locallyRelevantDofs.end();
+         ++i)
+      if (d_constraintMatrixPRefinedPtr->is_constrained(*i))
+        {
+          touchedDofs.push_back(*i);
+          const auto *entries =
+            d_constraintMatrixPRefinedPtr->get_constraint_entries(*i);
+          for (const auto &entry : *entries)
+            touchedDofs.push_back(entry.first);
+        }
+    constrainedDofs.add_indices(touchedDofs.begin(), touchedDofs.end());
+    candidateDofs.subtract_set(constrainedDofs);
+
+    const dftfe::uInt localNumberCandidates = candidateDofs.n_elements();
+    std::vector<dftfe::uInt> numberCandidates(n_mpi_processes, 0);
+    MPI_Allgather(&localNumberCandidates,
+                  1,
+                  dftfe::dataTypes::mpi_type_id(&localNumberCandidates),
+                  numberCandidates.data(),
+                  1,
+                  dftfe::dataTypes::mpi_type_id(numberCandidates.data()),
+                  mpi_communicator);
+    d_meanValueConstraintProcId = 0;
+    while (numberCandidates[d_meanValueConstraintProcId] == 0)
+      ++d_meanValueConstraintProcId;
+
+    double constrainedNodeWeight = 0.0;
+    if (this_mpi_process == d_meanValueConstraintProcId)
+      {
+        AssertThrow(candidateDofs.n_elements() > 0,
+                    dealii::ExcMessage(
+                      "DFT-FE Error: no unconstrained DoF for the LDOS "
+                      "mean-value constraint."));
+        d_meanValueConstraintNodeId = *candidateDofs.begin();
+        constrainedNodeWeight =
+          d_meanValueConstraintVec[d_meanValueConstraintNodeId];
+      }
+    MPI_Bcast(&constrainedNodeWeight,
+              1,
+              MPI_DOUBLE,
+              d_meanValueConstraintProcId,
+              mpi_communicator);
+    AssertThrow(std::abs(constrainedNodeWeight) >
+                  100.0 * std::numeric_limits<double>::epsilon(),
+                dealii::ExcMessage(
+                  "DFT-FE Error: invalid LDOS mean-value constraint."));
+    d_meanValueConstraintVec /= -constrainedNodeWeight;
+    if (this_mpi_process == d_meanValueConstraintProcId)
+      d_meanValueConstraintVec[d_meanValueConstraintNodeId] = 0.0;
+
+    d_meanValueConstraintNodeIdLocal =
+      d_meanValueConstraintVec.get_partitioner()->global_to_local(
+        d_meanValueConstraintNodeId);
+    dftfe::utils::MemoryTransfer<dftfe::utils::MemorySpace::DEVICE,
+                                 dftfe::utils::MemorySpace::HOST>::copy(
+      d_xLocalDof,
+      d_meanValueConstraintDeviceVec.begin(),
+      d_meanValueConstraintVec.begin());
+  }
+
+
+  template <dftfe::uInt FEOrderElectro>
+  void
   ldosSolverProblemDevice<FEOrderElectro>::distributeX()
   {
     d_constraintsTotalPotentialInfo.distribute(d_xDevice);
+    if (d_isMeanValueConstraintComputed)
+      meanValueConstraintDistribute(d_xDevice);
   }
 
 
@@ -386,6 +583,8 @@ namespace dftfe
       }
 
     rhs.compress(dealii::VectorOperation::add);
+    if (d_isMeanValueConstraintComputed)
+      meanValueConstraintDistributeSlaveToMaster(rhs);
     d_constraintMatrixPRefinedPtr->set_zero(rhs);
   }
 
@@ -482,8 +681,9 @@ namespace dftfe
   {
     dftfe::utils::deviceMemset(Ax.begin(), 0, d_xLen * sizeof(double));
 
-    // Compute globalInner = d_dlocMassVectorDevice · x BEFORE x is modified by
-    // constraints!
+    if (d_isMeanValueConstraintComputed)
+      meanValueConstraintDistribute(x);
+
     double globalInner = 0.0;
     d_BLASWrapperPtr->xdot(d_xLocalDof,
                            d_dlocMassVectorDevice.data(),
@@ -508,6 +708,8 @@ namespace dftfe
     const double alpha = -(4.0 * M_PI / d_totalDOS) * globalInner;
     d_BLASWrapperPtr->xaxpy(
       d_xLocalDof, &alpha, d_dlocMassVectorDevice.data(), 1, Ax.data(), 1);
+    if (d_isMeanValueConstraintComputed)
+      meanValueConstraintDistributeSlaveToMaster(Ax);
   }
 
 

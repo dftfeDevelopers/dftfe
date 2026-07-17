@@ -28,7 +28,8 @@ namespace dftfe
          distributedCPUVec<double>         &x,
          const dftfe::uInt                  matrixFreeVectorComponent,
          const dftfe::uInt                  matrixFreeQuadratureComponent,
-         const dftfe::uInt                  matrixFreeAxQuadratureComponent);
+         const dftfe::uInt                  matrixFreeAxQuadratureComponent,
+         const bool                         isComputeMeanValueConstraint);
 
     /**
      * @brief reinitialize data structures .
@@ -108,6 +109,19 @@ namespace dftfe
     getTotalDOS() const;
 
   private:
+    void
+    computeMeanValueConstraint();
+
+    void
+    meanValueConstraintDistribute(distributedCPUVec<double> &vec) const;
+
+    void
+    meanValueConstraintDistributeSlaveToMaster(
+      distributedCPUVec<double> &vec) const;
+
+    void
+    meanValueConstraintSetZero(distributedCPUVec<double> &vec) const;
+
     /**
      * @brief required for the cell_loop operation in dealii's MatrixFree class
      *
@@ -134,6 +148,11 @@ namespace dftfe
     /// storage for diagonal of the A matrix
     distributedCPUVec<double> d_diagonalA;
     distributedCPUVec<double> d_dlocMassVector;
+    distributedCPUVec<double> d_meanValueConstraintVec;
+
+    bool d_isMeanValueConstraintComputed;
+    dealii::types::global_dof_index d_meanValueConstraintNodeId;
+    dftfe::uInt                     d_meanValueConstraintProcId;
 
     /// pointer to the x vector being solved for
     distributedCPUVec<double> *d_xPtr;

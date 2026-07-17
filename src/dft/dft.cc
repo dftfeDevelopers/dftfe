@@ -2355,11 +2355,13 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
             ldosPreconditionedResidualSolverProblemDevice.init(
               d_basisOperationsPtrElectroHost,
-              d_constraintsRhoNodal,
+              d_constraintsForHelmholtzRhoNodal,
               d_preCondTotalDensityResidualVector,
-              d_densityDofHandlerIndexElectro,
+              d_helmholtzDofHandlerIndexElectro,
               d_densityQuadratureIdElectro,
-              d_kerkerAXQuadratureIdElectro);
+              d_kerkerAXQuadratureIdElectro,
+              d_dftParamsPtr->periodicX && d_dftParamsPtr->periodicY &&
+                d_dftParamsPtr->periodicZ);
             ldosPreconditionedResidualSolverProblemDevice.setBLASWrapperPtr(
               d_BLASWrapperPtr);
 #endif
@@ -2368,11 +2370,13 @@ namespace dftfe
           {
             ldosPreconditionedResidualSolverProblem.init(
               d_basisOperationsPtrElectroHost,
-              d_constraintsRhoNodal,
+              d_constraintsForHelmholtzRhoNodal,
               d_preCondTotalDensityResidualVector,
-              d_densityDofHandlerIndexElectro,
+              d_helmholtzDofHandlerIndexElectro,
               d_densityQuadratureIdElectro,
-              d_kerkerAXQuadratureIdElectro);
+              d_kerkerAXQuadratureIdElectro,
+              d_dftParamsPtr->periodicX && d_dftParamsPtr->periodicY &&
+                d_dftParamsPtr->periodicZ);
           }
         // CHECK if this is needed !!!
         d_matrixFreeDataPRefined.initialize_dof_vector(

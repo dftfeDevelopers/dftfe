@@ -86,7 +86,7 @@ namespace dftfe
                        d_dftParamsPtr->absLinearSolverToleranceHelmholtz,
                        d_dftParamsPtr->maxLinearSolverIterationsHelmholtz,
                        d_dftParamsPtr->verbosity,
-                       false);
+                       true);
 
         I = 4.0 * M_PI *
             ldosPreconditionedResidualSolverProblem.computeDlocIntegral(
