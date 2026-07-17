@@ -223,7 +223,6 @@ namespace dftfe
     }
 
     // Rebuild diagonal preconditioner
-    pcout << "Entering the Device problem" << std::endl;
     computeDiagonalA();
   }
 

@@ -971,7 +971,7 @@ namespace dftfe
     const dftfe::uInt numQuadPoints = basisOperationsPtr->nQuadsPerCell();
 
     dftfe::utils::MemoryStorage<NumberType, memorySpace> wfcQuadPointData;
-    dftfe::utils::MemoryStorage<double, memorySpace>     ldos; 
+    dftfe::utils::MemoryStorage<double, memorySpace>     ldos;
     dftfe::utils::MemoryStorage<double, memorySpace>     ldosWfcContributions;
 
     ldos.resize(totalLocallyOwnedCells * numQuadPoints, 0.0);

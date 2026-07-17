@@ -256,26 +256,6 @@ namespace dftfe
       tempVec.setValue(T(0.0));
       const dftfe::uInt local_size = X.locallyOwnedSize() * X.numVectors();
 
-      {
-        tempVec.setValue(T(0.0));
-        dftfe::linearAlgebra::MultiVector<T, memorySpace> ytemp(Y, T(0.0));
-        tempVec.setValue(T(1.0));
-        tempVec.updateGhostValues();
-        operatorMatrix.HX(tempVec, 1.0, 0.0, 0.0, ytemp);
-
-        double H_norm = 0.0;
-        BLASWrapperPtr->xnrm2(local_size,
-                              ytemp.data(),
-                              1,
-                              operatorMatrix.getMPICommunicatorDomain(),
-                              &H_norm);
-
-        if (this_mpi_process == 0)
-          {
-            std::cout << "Hamiltonian norm with tempVec=1: " << H_norm
-                      << std::endl;
-          }
-      }
 #if defined(DFTFE_WITH_DEVICE)
       dftfe::utils::MemoryStorage<T, dftfe::utils::MemorySpace::HOST> XHost(
         local_size, T(0.0));
