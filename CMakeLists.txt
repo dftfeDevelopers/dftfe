@@ -279,6 +279,7 @@ SET(DEVICE_SRC
   ./utils/DeviceAPICalls.cu.cc
   ./utils/BLASWrapperDevice.cc
   ./utils/MPICommunicatorP2PKernelsDevice.cc
+  ./utils/compressionWrapperDevice.cc
   ./src/solvers/linearSolverCGDeviceKernels.cc
   ./src/matrixFree/MatrixFreeDevice.cc
   ./utils/FEBasisOperationsKernelsInternalDevice.cc
@@ -301,6 +302,7 @@ SET(DEVICE_SRC
   ./utils/DeviceAPICalls.hip.cc
   ./utils/BLASWrapperDevice.cc
   ./utils/MPICommunicatorP2PKernelsDevice.cc
+  ./utils/compressionWrapperDevice.cc
   ./src/solvers/linearSolverCGDeviceKernels.cc
   ./src/matrixFree/MatrixFreeDevice.cc
   ./utils/FEBasisOperationsKernelsInternalDevice.cc
@@ -323,6 +325,7 @@ SET(DEVICE_SRC
   ./utils/DeviceAPICalls.sycl.cc
   ./utils/BLASWrapperDevice.cc
   ./utils/MPICommunicatorP2PKernelsDevice.cc
+  ./utils/compressionWrapperDevice.cc
   ./src/solvers/linearSolverCGDeviceKernels.cc
   ./src/matrixFree/MatrixFreeDevice.cc
   ./utils/FEBasisOperationsKernelsInternalDevice.cc

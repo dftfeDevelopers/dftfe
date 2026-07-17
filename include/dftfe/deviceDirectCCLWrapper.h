@@ -52,6 +52,7 @@ namespace dftfe
               }                                           \
         } while (0)
 #    endif
+
     /**
      *  @brief Wrapper class for Device Direct collective communications library.
      *  Adapted from
@@ -75,13 +76,11 @@ namespace dftfe
                                    dftfe::Int      size,
                                    deviceStream_t &stream);
 
-
       dftfe::Int
       deviceDirectAllReduceWrapper(const double   *send,
                                    double         *recv,
                                    dftfe::Int      size,
                                    deviceStream_t &stream);
-
 
       dftfe::Int
       deviceDirectAllReduceWrapper(const std::complex<double> *send,
@@ -94,7 +93,6 @@ namespace dftfe
                                    std::complex<float>       *recv,
                                    dftfe::Int                 size,
                                    deviceStream_t            &stream);
-
 
       dftfe::Int
       deviceDirectAllReduceMixedPrecGroupWrapper(const double   *send1,
@@ -116,10 +114,11 @@ namespace dftfe
         deviceStream_t             &stream);
 
 #    if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
-      inline static ncclUniqueId *ncclIdPtr;
-      inline static ncclComm_t   *ncclCommPtr;
+      inline static ncclUniqueId *dcclIdPtr;
+      inline static ncclComm_t   *dcclCommPtr;
 #    endif
-      inline static bool                         ncclCommInit;
+
+      inline static bool                         dcclCommInit;
       inline static dftfe::utils::deviceStream_t d_deviceCommStream;
       inline static bool                         commStreamCreated;
       inline static dftfe::Int d_deviceDirectDCCLInstanceCounter;

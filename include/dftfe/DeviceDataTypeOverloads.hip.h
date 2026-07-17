@@ -19,6 +19,7 @@
 #define dftfeDeviceDataTypeOverloads_hiph
 
 #include <complex>
+#include <cstdint>
 #include <hip/hip_complex.h>
 #include <hip/hip_runtime.h>
 #include <dftfe/TypeConfig.h>
@@ -201,6 +202,87 @@ namespace dftfe
     abs(hipFloatComplex a)
     {
       return hipCabsf(a);
+    }
+
+    //
+    // frexp / ldexp overloads (used by BFP compression)
+    //
+
+    __forceinline__ __device__ double
+    frexp(double x, int *e)
+    {
+      return ::frexp(x, e);
+    }
+
+    __forceinline__ __device__ float
+    frexp(float x, int *e)
+    {
+      return ::frexpf(x, e);
+    }
+
+    __forceinline__ __device__ double
+    ldexp(double x, int e)
+    {
+      return ::ldexp(x, e);
+    }
+
+    __forceinline__ __device__ float
+    ldexp(float x, int e)
+    {
+      return ::ldexpf(x, e);
+    }
+
+    __forceinline__ __device__ double
+    rint(double x)
+    {
+      return ::rint(x);
+    }
+
+    __forceinline__ __device__ float
+    rint(float x)
+    {
+      return ::rintf(x);
+    }
+
+    //
+    // min / max overloads
+    //
+
+    __forceinline__ __device__ int
+    min(int a, int b)
+    {
+      return a < b ? a : b;
+    }
+
+    __forceinline__ __device__ unsigned int
+    min(unsigned int a, unsigned int b)
+    {
+      return a < b ? a : b;
+    }
+
+    __forceinline__ __device__ int
+    max(int a, int b)
+    {
+      return a > b ? a : b;
+    }
+
+    __forceinline__ __device__ unsigned int
+    max(unsigned int a, unsigned int b)
+    {
+      return a > b ? a : b;
+    }
+
+    // NaN-safe: returns the non-NaN argument when one input is NaN.
+    __forceinline__ __device__ double
+    max(double a, double b)
+    {
+      return ::fmax(a, b);
+    }
+
+    __forceinline__ __device__ float
+    max(float a, float b)
+    {
+      return ::fmaxf(a, b);
     }
 
     //
@@ -760,6 +842,57 @@ namespace dftfe
     makeDataTypeDeviceCompatible(bool *a)
     {
       return a;
+    }
+
+    // ComplexU8 + uint8_t overloads: needed only to satisfy deviceSetValue()
+    // template instantiations on the BFP-compressed byte stream buffers;
+    // no use.
+    struct ComplexU8
+    {
+      uint8_t real;
+      uint8_t imag;
+
+      __forceinline__ __host__ constexpr ComplexU8(uint8_t r = 0, uint8_t i = 0)
+        : real(r)
+        , imag(i)
+      {}
+    };
+
+    inline uint8_t
+    makeDataTypeDeviceCompatible(uint8_t a)
+    {
+      return a;
+    }
+
+    inline uint8_t *
+    makeDataTypeDeviceCompatible(uint8_t *a)
+    {
+      return a;
+    }
+
+    inline const uint8_t *
+    makeDataTypeDeviceCompatible(const uint8_t *a)
+    {
+      return a;
+    }
+
+    inline ComplexU8
+    makeDataTypeDeviceCompatible(std::complex<uint8_t> a)
+    {
+      return ComplexU8{static_cast<uint8_t>(a.real()),
+                       static_cast<uint8_t>(a.imag())};
+    }
+
+    inline ComplexU8 *
+    makeDataTypeDeviceCompatible(std::complex<uint8_t> *a)
+    {
+      return reinterpret_cast<ComplexU8 *>(a);
+    }
+
+    inline const ComplexU8 *
+    makeDataTypeDeviceCompatible(const std::complex<uint8_t> *a)
+    {
+      return reinterpret_cast<const ComplexU8 *>(a);
     }
   } // namespace utils
 

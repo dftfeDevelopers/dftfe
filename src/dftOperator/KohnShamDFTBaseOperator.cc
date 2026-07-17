@@ -1514,7 +1514,8 @@ namespace dftfe
         d_BeffzJxW.resize(d_BeffzJxWHost.size());
         d_BeffzJxW.copyFrom(d_BeffzJxWHost);
       }
-    dftfe::utils::deviceSynchronize();
+    if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
+      dftfe::utils::deviceSynchronize();
 #endif
   }
 
@@ -1748,6 +1749,15 @@ namespace dftfe
           d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec
             .setCommunicationPrecision(
               dftfe::utils::mpi::communicationPrecision::half);
+
+        else if (d_dftParamsPtr->communPrecCheby == "COMPRESSED")
+          {
+            d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec
+              .setCompressBitsPerValue(d_dftParamsPtr->compressBitsPerValue);
+            d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec
+              .setCommunicationPrecision(
+                dftfe::utils::mpi::communicationPrecision::compress);
+          }
       }
 
     d_basisOperationsPtr->reinit(numWaveFunctions,

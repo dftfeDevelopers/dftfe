@@ -26,6 +26,7 @@
 #    include <dftfe/operator.h>
 #    include <dftfe/elpaScalaManager.h>
 #    include <dftfe/dftParameters.h>
+#    include <dftfe/ScratchMemoryStorage.h>
 #    include <dftfe/BLASWrapper.h>
 
 namespace dftfe
@@ -130,6 +131,9 @@ namespace dftfe
     //
     dealii::ConditionalOStream pcout;
     dealii::TimerOutput        computing_timer;
+    dftfe::utils::ScratchMemoryStorage<dataTypes::number,
+                                       dftfe::utils::MemorySpace::DEVICE>
+      d_deviceScratchMemoryStorage;
   };
 } // namespace dftfe
 #  endif

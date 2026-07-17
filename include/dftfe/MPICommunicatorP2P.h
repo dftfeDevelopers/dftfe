@@ -29,6 +29,7 @@
 #include <dftfe/MemoryStorage.h>
 #include <dftfe/DataTypeOverloads.h>
 #include <dftfe/dftfeDataTypes.h>
+#include <dftfe/compressionWrapper.h>
 #ifdef DFTFE_WITH_DEVICE
 #  include <dftfe/DeviceTypeConfig.h>
 #  if defined(DFTFE_WITH_CUDA_NCCL)
@@ -49,14 +50,15 @@ namespace dftfe
       {
         mpiHost,
         mpiDevice,
-        nccl
+        dccl
       };
 
       enum class communicationPrecision
       {
-        half,    // explicitly BF16
-        single,  // explicitly FP32
-        standard // same as valueType
+        compress, // compressed
+        half,     // explicitly BF16
+        single,   // explicitly FP32
+        standard  // same as valueType
       };
 
       template <typename ValueType, MemorySpace memorySpace>
@@ -119,14 +121,18 @@ namespace dftfe
         void
         setCommunicationPrecision(communicationPrecision precision);
 
+        void
+        setCompressBitsPerValue(dftfe::uInt bpv);
+
       private:
         std::shared_ptr<const MPIPatternP2P<memorySpace>> d_mpiPatternP2P;
 
         dftfe::uInt d_blockSize;
-
         dftfe::uInt d_locallyOwnedSize;
-
         dftfe::uInt d_ghostSize;
+        dftfe::uInt d_compressBitsPerValue;
+        dftfe::uInt d_compressedTargetBytes;
+        dftfe::uInt d_compressedGhostBytes;
 
         MemoryStorage<ValueType, memorySpace> d_sendRecvBuffer;
 
@@ -147,6 +153,14 @@ namespace dftfe
         MemoryStorage<typename dftfe::dataTypes::halfPrecType<ValueType>::type,
                       memorySpace>
           d_ghostDataCopyHalfPrec;
+
+        MemoryStorage<typename dftfe::dataTypes::compressType<ValueType>::type,
+                      memorySpace>
+          d_sendRecvBufferCompress;
+
+        MemoryStorage<typename dftfe::dataTypes::compressType<ValueType>::type,
+                      memorySpace>
+          d_ghostDataCopyCompress;
 
 #ifdef DFTFE_WITH_DEVICE
         std::shared_ptr<MemoryStorage<ValueType, MemorySpace::HOST_PINNED>>
@@ -174,6 +188,17 @@ namespace dftfe
           typename dftfe::dataTypes::halfPrecType<ValueType>::type,
           MemorySpace::HOST_PINNED>>
           d_sendRecvBufferHalfPrecHostPinnedPtr;
+
+        std::shared_ptr<MemoryStorage<
+          typename dftfe::dataTypes::compressType<ValueType>::type,
+          MemorySpace::HOST_PINNED>>
+          d_ghostDataCopyCompressHostPinnedPtr;
+
+        std::shared_ptr<MemoryStorage<
+          typename dftfe::dataTypes::compressType<ValueType>::type,
+          MemorySpace::HOST_PINNED>>
+          d_sendRecvBufferCompressHostPinnedPtr;
+
 
 #endif // DFTFE_WITH_DEVICE
 

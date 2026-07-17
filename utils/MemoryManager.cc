@@ -98,7 +98,6 @@ namespace dftfe
         std::fill(ptr, ptr + size, val);
     }
 
-
     template <typename ValueType>
     void
     MemoryManager<ValueType, MemorySpace::DEVICE>::allocate(std::size_t size,
@@ -129,46 +128,43 @@ namespace dftfe
     }
 
     template class MemoryManager<int, dftfe::utils::MemorySpace::DEVICE>;
-
     template class MemoryManager<unsigned int,
                                  dftfe::utils::MemorySpace::DEVICE>;
-
     template class MemoryManager<long int, dftfe::utils::MemorySpace::DEVICE>;
-
     template class MemoryManager<unsigned long int,
                                  dftfe::utils::MemorySpace::DEVICE>;
-
     template class MemoryManager<bool, dftfe::utils::MemorySpace::DEVICE>;
-
     template class MemoryManager<double, dftfe::utils::MemorySpace::DEVICE>;
     template class MemoryManager<float, dftfe::utils::MemorySpace::DEVICE>;
     template class MemoryManager<std::complex<double>,
                                  dftfe::utils::MemorySpace::DEVICE>;
     template class MemoryManager<std::complex<float>,
                                  dftfe::utils::MemorySpace::DEVICE>;
+    template class MemoryManager<uint8_t, dftfe::utils::MemorySpace::DEVICE>;
+    template class MemoryManager<std::complex<uint8_t>,
+                                 dftfe::utils::MemorySpace::DEVICE>;
     template class MemoryManager<uint16_t, dftfe::utils::MemorySpace::DEVICE>;
     template class MemoryManager<std::complex<uint16_t>,
                                  dftfe::utils::MemorySpace::DEVICE>;
-    template class MemoryManager<int, dftfe::utils::MemorySpace::HOST_PINNED>;
 
+    template class MemoryManager<int, dftfe::utils::MemorySpace::HOST_PINNED>;
     template class MemoryManager<unsigned int,
                                  dftfe::utils::MemorySpace::HOST_PINNED>;
-
     template class MemoryManager<long int,
                                  dftfe::utils::MemorySpace::HOST_PINNED>;
-
     template class MemoryManager<unsigned long int,
                                  dftfe::utils::MemorySpace::HOST_PINNED>;
-
     template class MemoryManager<bool, dftfe::utils::MemorySpace::HOST_PINNED>;
-
-
     template class MemoryManager<double,
                                  dftfe::utils::MemorySpace::HOST_PINNED>;
     template class MemoryManager<float, dftfe::utils::MemorySpace::HOST_PINNED>;
     template class MemoryManager<std::complex<double>,
                                  dftfe::utils::MemorySpace::HOST_PINNED>;
     template class MemoryManager<std::complex<float>,
+                                 dftfe::utils::MemorySpace::HOST_PINNED>;
+    template class MemoryManager<uint8_t,
+                                 dftfe::utils::MemorySpace::HOST_PINNED>;
+    template class MemoryManager<std::complex<uint8_t>,
                                  dftfe::utils::MemorySpace::HOST_PINNED>;
     template class MemoryManager<uint16_t,
                                  dftfe::utils::MemorySpace::HOST_PINNED>;
@@ -177,22 +173,19 @@ namespace dftfe
 #endif // DFTFE_WITH_DEVICE
 
     template class MemoryManager<int, dftfe::utils::MemorySpace::HOST>;
-
     template class MemoryManager<unsigned int, dftfe::utils::MemorySpace::HOST>;
-
     template class MemoryManager<long int, dftfe::utils::MemorySpace::HOST>;
-
     template class MemoryManager<unsigned long int,
                                  dftfe::utils::MemorySpace::HOST>;
-
     template class MemoryManager<bool, dftfe::utils::MemorySpace::HOST>;
-
-
     template class MemoryManager<double, dftfe::utils::MemorySpace::HOST>;
     template class MemoryManager<float, dftfe::utils::MemorySpace::HOST>;
     template class MemoryManager<std::complex<double>,
                                  dftfe::utils::MemorySpace::HOST>;
     template class MemoryManager<std::complex<float>,
+                                 dftfe::utils::MemorySpace::HOST>;
+    template class MemoryManager<uint8_t, dftfe::utils::MemorySpace::HOST>;
+    template class MemoryManager<std::complex<uint8_t>,
                                  dftfe::utils::MemorySpace::HOST>;
     template class MemoryManager<uint16_t, dftfe::utils::MemorySpace::HOST>;
     template class MemoryManager<std::complex<uint16_t>,
