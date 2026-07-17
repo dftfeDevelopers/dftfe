@@ -42,10 +42,7 @@ namespace dftfe
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &residualQuadValues,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-        &ldosQuadValues,
-      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-            &ldosAxQuadValues,
-      double totalDOS);
+            &ldosAxQuadValues);
 
     /**
      * @brief Return the device x vector.
@@ -110,6 +107,12 @@ namespace dftfe
       return d_dlocMassVector * phi;
     }
 
+    double
+    getTotalDOS() const
+    {
+      return d_totalDOS;
+    }
+
   private:
     /**
      * @brief Project quad-point values to nodal field (HOST).
@@ -145,7 +148,7 @@ namespace dftfe
     /// Device x vector
     distributedDeviceVec<double> d_xDevice;
 
-    /// Total integrated density of states
+    /// Integral of the discrete LDOS field used in the Helmholtz operator.
     double d_totalDOS;
 
     dftfe::Int d_nLocalCells, d_xLocalDof, d_xLen;
@@ -167,9 +170,7 @@ namespace dftfe
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       *d_residualQuadValuesPtr;
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      *d_ldosQuadValuesPtr;
-    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      *d_ldosAxQuadValuesPtr;
+                                            *d_ldosAxQuadValuesPtr;
 
     const dealii::DoFHandler<3>             *d_dofHandlerPRefinedPtr;
     const dealii::AffineConstraints<double> *d_constraintMatrixPRefinedPtr;

@@ -40,10 +40,7 @@ namespace dftfe
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &residualQuadValues,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-        &ldosQuadValues,
-      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-            &ldosAxQuadValues,
-      double totalDOS);
+            &ldosAxQuadValues);
 
     /**
      * @brief get the reference to x field
@@ -107,6 +104,9 @@ namespace dftfe
     double
     computeDlocIntegral(const distributedCPUVec<double> &phi) const;
 
+    double
+    getTotalDOS() const;
+
   private:
     /**
      * @brief required for the cell_loop operation in dealii's MatrixFree class
@@ -138,6 +138,7 @@ namespace dftfe
     /// pointer to the x vector being solved for
     distributedCPUVec<double> *d_xPtr;
 
+    /// Integral of the discrete LDOS field used in the Helmholtz operator.
     double d_totalDOS;
 
     /// matrix free index required to access the DofHandler and
@@ -151,8 +152,6 @@ namespace dftfe
     /// pointer to electron density cell and grad residual data
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       *d_residualQuadValuesPtr;
-    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      *d_ldosQuadValuesPtr;
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
                                             *d_ldosAxQuadValuesPtr;
     const dealii::DoFHandler<3>             *d_dofHandlerPRefinedPtr;

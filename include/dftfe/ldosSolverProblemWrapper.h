@@ -143,6 +143,13 @@ namespace dftfe
         d_ldosSolverProblemObject);
     }
 
+    double
+    getTotalDOS() const
+    {
+      return std::visit([](auto const &t) { return t->getTotalDOS(); },
+                        d_ldosSolverProblemObject);
+    }
+
   private:
     ldosSolverProblemObject d_ldosSolverProblemObject;
   };
@@ -278,6 +285,13 @@ namespace dftfe
       return std::visit(
         [&](auto const &t) { return t->computeDlocIntegral(phi); },
         d_ldosSolverProblemObject);
+    }
+
+    double
+    getTotalDOS() const
+    {
+      return std::visit([](auto const &t) { return t->getTotalDOS(); },
+                        d_ldosSolverProblemObject);
     }
 
   private:

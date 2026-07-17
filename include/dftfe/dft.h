@@ -1688,8 +1688,6 @@ namespace dftfe
                               d_ldosQuadValues;
     distributedCPUVec<double> d_ldosNodalValues;
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      d_ldosQuadValuesElectro;
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       d_ldosAxQuadValuesElectro;
 
     /**

@@ -398,19 +398,9 @@ namespace dftfe
         d_ldosNodalValues.zero_out_ghost_values();
       }
 
-    // Interpolate LDOS nodal field to two quadrature sets:
-    // 1) d_ldosQuadValuesElectro  — used by computeRhs and
-    //   computeProjectedQuadToNodalField
+    // Interpolate LDOS nodal field to the quadrature used by the Helmholtz
+    // operator and its low-rank correction.
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> dummy;
-    d_basisOperationsPtrElectroHost->interpolate(
-      d_ldosNodalValues,
-      d_densityDofHandlerIndexElectro,
-      d_densityQuadratureIdElectro,
-      d_ldosQuadValuesElectro,
-      dummy,
-      dummy,
-      false);
-    // 2) d_ldosAxQuadValuesElectro — used by AX and computeDiagonalA
     d_basisOperationsPtrElectroHost->interpolate(
       d_ldosNodalValues,
       d_densityDofHandlerIndexElectro,

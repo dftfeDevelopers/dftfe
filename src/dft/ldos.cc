@@ -22,6 +22,7 @@ namespace dftfe
   {
     preCondTotalDensityResidualVector = 0.0;
     double I                          = 0.0;
+    double totalDOS                   = 0.0;
 
     AssertThrow(std::isfinite(d_totalDOS) &&
                   d_totalDOS > 100.0 * std::numeric_limits<double>::epsilon(),
@@ -52,18 +53,18 @@ namespace dftfe
         ldosPreconditionedResidualSolverProblemDevice.reinit(
           preCondTotalDensityResidualVector,
           d_densityResidualQuadValues[0],
-          d_ldosQuadValuesElectro,
-          d_ldosAxQuadValuesElectro,
-          d_totalDOS);
+          d_ldosAxQuadValuesElectro);
+        totalDOS = ldosPreconditionedResidualSolverProblemDevice.getTotalDOS();
 #endif
       }
     else
       ldosPreconditionedResidualSolverProblem.reinit(
         preCondTotalDensityResidualVector,
         d_densityResidualQuadValues[0],
-        d_ldosQuadValuesElectro,
-        d_ldosAxQuadValuesElectro,
-        d_totalDOS);
+        d_ldosAxQuadValuesElectro);
+    if (!(d_dftParamsPtr->useDevice and d_dftParamsPtr->poissonGPU and
+          d_dftParamsPtr->floatingNuclearCharges))
+      totalDOS = ldosPreconditionedResidualSolverProblem.getTotalDOS();
 
     if (d_dftParamsPtr->useDevice and d_dftParamsPtr->poissonGPU and
         d_dftParamsPtr->floatingNuclearCharges)
@@ -94,7 +95,7 @@ namespace dftfe
     preCondTotalDensityResidualVector.scale(d_ldosNodalValues);
     preCondTotalDensityResidualVector *= (4.0 * M_PI);
     preCondTotalDensityResidualVector.add(1.0, residualRho);
-    preCondTotalDensityResidualVector.add(-(I / d_totalDOS), d_ldosNodalValues);
+    preCondTotalDensityResidualVector.add(-(I / totalDOS), d_ldosNodalValues);
   }
 #include "dft.inst.cc"
 } // namespace dftfe

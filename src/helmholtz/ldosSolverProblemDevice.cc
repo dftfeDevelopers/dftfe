@@ -3,6 +3,9 @@
 #include <dftfe/MemoryTransfer.h>
 #include <dftfe/feevaluationWrapper.h>
 
+#include <cmath>
+#include <limits>
+
 namespace dftfe
 {
   template <dftfe::uInt FEOrderElectro>
@@ -133,16 +136,11 @@ namespace dftfe
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       &residualQuadValues,
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      &ldosQuadValues,
-    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-          &ldosAxQuadValues,
-    double totalDOS)
+          &ldosAxQuadValues)
   {
     d_xPtr                  = &x;
     d_residualQuadValuesPtr = &residualQuadValues;
-    d_ldosQuadValuesPtr     = &ldosQuadValues;
     d_ldosAxQuadValuesPtr   = &ldosAxQuadValues;
-    d_totalDOS              = totalDOS;
 
     dftfe::utils::MemoryTransfer<
       dftfe::utils::MemorySpace::DEVICE,
@@ -150,7 +148,18 @@ namespace dftfe
                                              d_xDevice.begin(),
                                              d_xPtr->begin());
 
-    computeProjectedQuadToNodalField(ldosQuadValues, d_dlocMassVector);
+    computeProjectedQuadToNodalField(ldosAxQuadValues, d_dlocMassVector);
+    const auto &locallyOwnedDofs = d_dlocMassVector.locally_owned_elements();
+    d_totalDOS                   = 0.0;
+    for (auto i = locallyOwnedDofs.begin(); i < locallyOwnedDofs.end();
+         ++i)
+      d_totalDOS += d_dlocMassVector(*i);
+    d_totalDOS = dealii::Utilities::MPI::sum(d_totalDOS, mpi_communicator);
+    AssertThrow(std::isfinite(d_totalDOS) &&
+                  d_totalDOS > 100.0 * std::numeric_limits<double>::epsilon(),
+                dealii::ExcMessage(
+                  "Discrete LDOS integral is too small for the LDOS "
+                  "preconditioner."));
 
     // Mirror d_dlocMassVector to device
     dftfe::linearAlgebra::createMultiVectorFromDealiiPartitioner(
@@ -241,7 +250,7 @@ namespace dftfe
     dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
     FEEvaluationWrapperClass<1>     fe_eval(*d_matrixFreeDataPRefinedPtr,
                                         d_matrixFreeVectorComponent,
-                                        d_matrixFreeQuadratureComponent);
+                                        d_matrixFreeAxQuadratureComponent);
     dealii::VectorizedArray<double> zeroVec = 0.0;
     dealii::AlignedVector<dealii::VectorizedArray<double>> quadVals(
       fe_eval.n_q_points, zeroVec);
