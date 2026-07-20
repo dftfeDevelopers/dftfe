@@ -2952,9 +2952,10 @@ namespace dftfe
       invSqrtMassVector = 0.0;
 
       // Round to the nearest integer to avoid roundoff errors
-      dealii::QGaussLobatto<3> quadrature(std::lround(std::cbrt(d_nDofsPerCell)));
-      dftfe::uInt              nQuadsPerCell = quadrature.size();
-      dealii::FEValues<3>      fe_values(
+      dealii::QGaussLobatto<3> quadrature(
+        std::lround(std::cbrt(d_nDofsPerCell)));
+      dftfe::uInt         nQuadsPerCell = quadrature.size();
+      dealii::FEValues<3> fe_values(
         d_matrixFreeDataPtr->get_dof_handler(d_dofHandlerID).get_fe(),
         quadrature,
         dealii::update_values | dealii::update_JxW_values);
@@ -3263,9 +3264,10 @@ namespace dftfe
       dealii::types::global_dof_index sizeVectemp = stiffnessVector.size();
 
       //      std::cout<<" dof handler id = "<<d_dofHandlerID<<"\n";
-      // Round to the nearest integer before adding offset to avoid roundoff errors
-      dealii::QGauss<3>   quadrature(std::lround(std::cbrt(d_nDofsPerCell)) + 1);
-      dftfe::uInt         nQuadsPerCell = quadrature.size();
+      // Round to the nearest integer before adding offset to avoid roundoff
+      // errors
+      dealii::QGauss<3> quadrature(std::lround(std::cbrt(d_nDofsPerCell)) + 1);
+      dftfe::uInt       nQuadsPerCell = quadrature.size();
       dealii::FEValues<3> fe_values(
         d_matrixFreeDataPtr->get_dof_handler(d_dofHandlerID).get_fe(),
         quadrature,
