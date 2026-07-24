@@ -466,6 +466,8 @@ namespace dftfe
 
         dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
           projectorMatrices;
+        dftfe::uInt kptBatch               = 1;
+        dftfe::uInt projectorMatrixSizeOld = 0;
 #if defined(DFTFE_WITH_DEVICE)
         dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
           sphericalFunctionBasisTimesJxW,
@@ -484,20 +486,10 @@ namespace dftfe
         if (d_computeIonForces)
           gradientProjectorMatricesHost.resize(3 * m * n, 0.0);
 
-#else
-        auto &sphericalFunctionBasisTimesJxW =
-          sphericalFunctionBasisTimesJxWHost;
-        auto &sphericalFunctionBasisWithDistanceTimesJxW =
-          sphericalFunctionBasisWithDistanceTimesJxWHost;
-        auto &projectorMatricesHost         = projectorMatrices;
-        auto &projectorTimesXMatricesHost   = projectorTimesXMatrices;
-        auto &gradientProjectorMatricesHost = gradientProjectorMatrices;
-        auto &gradientProjectorDyadicXMatricesHost =
-          gradientProjectorDyadicXMatrices;
-#endif
-        dftfe::uInt kptBatch               = 1;
-        dftfe::uInt projectorMatrixSizeOld = 0;
-
+        // sphericalFunctionBasisTimesJxW(WithDistance) are separate
+        // device-resident staging buffers here, refilled per k-point batch
+        // via copyFrom from the full *Host buffers below, so they are sized
+        // to a single k-point batch's worth of data.
         sphericalFunctionBasisTimesJxW.resize(nCellsPerBatch *
                                                 numberQuadraturePoints *
                                                 kptBatch *
@@ -508,6 +500,23 @@ namespace dftfe
             3 * nCellsPerBatch * numberQuadraturePoints * kptBatch *
               NumTotalSphericalFunctions,
             0.0);
+#else
+        auto &sphericalFunctionBasisTimesJxW =
+          sphericalFunctionBasisTimesJxWHost;
+        auto &sphericalFunctionBasisWithDistanceTimesJxW =
+          sphericalFunctionBasisWithDistanceTimesJxWHost;
+        auto &projectorMatricesHost         = projectorMatrices;
+        auto &projectorTimesXMatricesHost   = projectorTimesXMatrices;
+        auto &gradientProjectorMatricesHost = gradientProjectorMatrices;
+        auto &gradientProjectorDyadicXMatricesHost =
+          gradientProjectorDyadicXMatrices;
+        // sphericalFunctionBasisTimesJxW(WithDistance) alias the *Host
+        // buffers here, which are already sized to hold all maxkPoints'
+        // worth of data (see their construction above) — do NOT resize them
+        // down to a single k-point batch like the device path above, or the
+        // later copyFrom calls will index past the aliased buffer's actual
+        // size for any iKpt > 0.
+#endif
         for (dftfe::Int iElemComp = 0;
              iElemComp < numberElementsInAtomCompactSupport;
              iElemComp += nCellsPerBatch)
