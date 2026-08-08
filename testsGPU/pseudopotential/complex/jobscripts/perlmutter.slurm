@@ -26,6 +26,7 @@ LD_LIBRARY_PATH = $LD_LIBRARY_PATH:$WD/env2/lib
 LD_LIBRARY_PATH = $LD_LIBRARY_PATH:$WD/env2/lib64
 
 srun ./dftfe parameterFileMg2x_1.prm > outputMg2x_1
+srun ./dftfe parameterFileMg2x_1_compressed.prm > outputMg2x_1_compressed
 srun ./dftfe parameterFileMg2x_2.prm > outputMg2x_2
 srun ./dftfe parameterFileMg2x_3.prm > outputMg2x_3
 srun ./dftfe parameterFileMg2x_4.prm > outputMg2x_4

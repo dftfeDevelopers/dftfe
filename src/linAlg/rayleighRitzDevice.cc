@@ -42,9 +42,10 @@ namespace dftfe
       std::vector<double>     &eigenValues,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-                          &BLASWrapperPtr,
-      const dftParameters &dftParams,
-      const bool           useMixedPrecOverall)
+                                       &BLASWrapperPtr,
+      const dftParameters              &dftParams,
+      DeviceNumberScratchMemoryStorage &scratchMemoryStorage,
+      const bool                        useMixedPrecOverall)
     {
       dealii::ConditionalOStream pcout(
         std::cout,
@@ -104,7 +105,8 @@ namespace dftfe
               devicecclMpiCommDomain,
               mpiCommDomain,
               interBandGroupComm,
-              dftParams);
+              dftParams,
+              scratchMemoryStorage);
           else
             XtHXMixedPrecOverlapComputeCommun(
               operatorMatrix,
@@ -120,7 +122,8 @@ namespace dftfe
               devicecclMpiCommDomain,
               mpiCommDomain,
               interBandGroupComm,
-              dftParams);
+              dftParams,
+              scratchMemoryStorage);
         }
       else
         {
@@ -137,7 +140,8 @@ namespace dftfe
                                      devicecclMpiCommDomain,
                                      mpiCommDomain,
                                      interBandGroupComm,
-                                     dftParams);
+                                     dftParams,
+                                     scratchMemoryStorage);
           else
             XtHX(operatorMatrix,
                  X,
@@ -151,7 +155,8 @@ namespace dftfe
                  devicecclMpiCommDomain,
                  mpiCommDomain,
                  interBandGroupComm,
-                 dftParams);
+                 dftParams,
+                 scratchMemoryStorage);
         }
 
       if (dftParams.deviceFineGrainedTimings)
@@ -287,6 +292,7 @@ namespace dftfe
                                              interBandGroupComm,
                                              projHamParCopy,
                                              dftParams,
+                                             scratchMemoryStorage,
                                              false);
       else
         subspaceRotationScalapack(X,
@@ -299,6 +305,7 @@ namespace dftfe
                                   interBandGroupComm,
                                   projHamParCopy,
                                   dftParams,
+                                  scratchMemoryStorage,
                                   false);
       if (dftParams.deviceFineGrainedTimings)
         {
@@ -328,9 +335,10 @@ namespace dftfe
       std::vector<double>     &eigenValues,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-                          &BLASWrapperPtr,
-      const dftParameters &dftParams,
-      const bool           useMixedPrecOverall)
+                                       &BLASWrapperPtr,
+      const dftParameters              &dftParams,
+      DeviceNumberScratchMemoryStorage &scratchMemoryStorage,
+      const bool                        useMixedPrecOverall)
     {
       dealii::ConditionalOStream pcout(
         std::cout,
@@ -392,7 +400,8 @@ namespace dftfe
                 interBandGroupComm,
                 processGrid,
                 overlapMatPar,
-                dftParams);
+                dftParams,
+                scratchMemoryStorage);
           else
             linearAlgebraOperationsDevice::
               fillParallelOverlapMatMixedPrecScalapack(
@@ -409,7 +418,8 @@ namespace dftfe
                 interBandGroupComm,
                 processGrid,
                 overlapMatPar,
-                dftParams);
+                dftParams,
+                scratchMemoryStorage);
         }
       else
         {
@@ -428,7 +438,8 @@ namespace dftfe
                 interBandGroupComm,
                 processGrid,
                 overlapMatPar,
-                dftParams);
+                dftParams,
+                scratchMemoryStorage);
           else
             linearAlgebraOperationsDevice::fillParallelOverlapMatScalapack(
               operatorMatrix,
@@ -443,7 +454,8 @@ namespace dftfe
               interBandGroupComm,
               processGrid,
               overlapMatPar,
-              dftParams);
+              dftParams,
+              scratchMemoryStorage);
         }
 
       if (dftParams.deviceFineGrainedTimings)
@@ -494,7 +506,8 @@ namespace dftfe
               devicecclMpiCommDomain,
               mpiCommDomain,
               interBandGroupComm,
-              dftParams);
+              dftParams,
+              scratchMemoryStorage);
           else
             XtHXMixedPrecOverlapComputeCommun(
               operatorMatrix,
@@ -510,7 +523,8 @@ namespace dftfe
               devicecclMpiCommDomain,
               mpiCommDomain,
               interBandGroupComm,
-              dftParams);
+              dftParams,
+              scratchMemoryStorage);
         }
       else
         {
@@ -527,7 +541,8 @@ namespace dftfe
                                      devicecclMpiCommDomain,
                                      mpiCommDomain,
                                      interBandGroupComm,
-                                     dftParams);
+                                     dftParams,
+                                     scratchMemoryStorage);
           else
             XtHX(operatorMatrix,
                  X,
@@ -541,7 +556,8 @@ namespace dftfe
                  devicecclMpiCommDomain,
                  mpiCommDomain,
                  interBandGroupComm,
-                 dftParams);
+                 dftParams,
+                 scratchMemoryStorage);
         }
       // Construct the full HConjProj matrix
       dftfe::ScaLAPACKMatrix<dataTypes::number> projHamParConjTrans(
@@ -752,6 +768,7 @@ namespace dftfe
                                              interBandGroupComm,
                                              projHamPar,
                                              dftParams,
+                                             scratchMemoryStorage,
                                              false);
       else
         subspaceRotationScalapack(X,
@@ -764,6 +781,7 @@ namespace dftfe
                                   interBandGroupComm,
                                   projHamPar,
                                   dftParams,
+                                  scratchMemoryStorage,
                                   false);
 
       if (dftParams.deviceFineGrainedTimings)
@@ -798,8 +816,9 @@ namespace dftfe
       dftfe::elpaScalaManager   &elpaScala,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-                          &BLASWrapperPtr,
-      const dftParameters &dftParams)
+                                       &BLASWrapperPtr,
+      const dftParameters              &dftParams,
+      DeviceNumberScratchMemoryStorage &scratchMemoryStorage)
     {
       dealii::ConditionalOStream pcout(
         std::cout,
@@ -849,6 +868,7 @@ namespace dftfe
                                           mpiCommDomain,
                                           interBandGroupComm,
                                           dftParams,
+                                          scratchMemoryStorage,
                                           true);
       else if (dftParams.overlapComputeCommunOrthoRR)
         XtHXOverlapComputeCommun(operatorMatrix,
@@ -864,6 +884,7 @@ namespace dftfe
                                  mpiCommDomain,
                                  interBandGroupComm,
                                  dftParams,
+                                 scratchMemoryStorage,
                                  true);
       else
         XtHX(operatorMatrix,
@@ -879,6 +900,7 @@ namespace dftfe
              mpiCommDomain,
              interBandGroupComm,
              dftParams,
+             scratchMemoryStorage,
              true);
 
       if (dftParams.deviceFineGrainedTimings)
@@ -1034,6 +1056,7 @@ namespace dftfe
                                              interBandGroupComm,
                                              densityMatPrimeParConjTrans,
                                              dftParams,
+                                             scratchMemoryStorage,
                                              false);
       else
         subspaceRotationScalapack(X,
@@ -1046,6 +1069,7 @@ namespace dftfe
                                   interBandGroupComm,
                                   densityMatPrimeParConjTrans,
                                   dftParams,
+                                  scratchMemoryStorage,
                                   false);
 
       if (dftParams.deviceFineGrainedTimings)

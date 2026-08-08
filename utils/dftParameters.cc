@@ -23,8 +23,6 @@
 #include <fstream>
 #include <iostream>
 
-
-
 namespace dftfe
 {
   namespace internalDftParameters
@@ -83,13 +81,13 @@ namespace dftfe
           "USE GPUDIRECT MPI ALL REDUCE",
           "false",
           dealii::Patterns::Bool(),
-          R"([Adavanced] Use GPUDIRECT MPI\_Allreduce. This route will only work if DFT-FE is either compiled with NVIDIA NCCL library or withGPUAwareMPI=ON. Both these routes require GPU Aware MPI library to be available as well relevant hardware. If both NVIDIA NCCL library and withGPUAwareMPI modes are toggled on, the NCCL mode takes precedence. Also note that one MPI rank per GPU can be used when using this option. Default: false.)");
+          R"([Advanced] Use GPUDIRECT MPI\_Allreduce. This route will only work if DFT-FE is compiled with a device collective communications library (NVIDIA NCCL or AMD RCCL) or withGPUAwareMPI=ON. If a DCCL library and withGPUAwareMPI modes are both enabled, the DCCL mode takes precedence. Also note that one MPI rank per GPU can be used when using this option. Default: false.)");
 
         prm.declare_entry(
           "USE DCCL",
           "false",
           dealii::Patterns::Bool(),
-          R"([Adavanced] Use NCCL/RCCL for GPUDIRECT communications. Default: false.)");
+          R"([Advanced] Use device collective communications library (NVIDIA NCCL or AMD RCCL) for GPU-direct allreduce. Default: false.)");
 
         prm.declare_entry(
           "USE ELPA GPU KERNEL",
@@ -111,7 +109,7 @@ namespace dftfe
           "PRINT KINETIC ENERGY",
           "false",
           dealii::Patterns::Bool(),
-          R"([Standard] Prints the Kinetic energy of the electrons.  Default: false.)");
+          R"([Standard] Prints the Kinetic energy of the electrons. Default: false.)");
 
         prm.declare_entry(
           "WRITE DENSITY FE MESH",
@@ -1060,9 +1058,9 @@ namespace dftfe
 
           prm.declare_entry(
             "CHEBY WFC BLOCK SIZE",
-            "200",
+            "400",
             dealii::Patterns::Integer(1),
-            "[Advanced] Chebyshev filtering procedure involves the matrix-matrix multiplication where one matrix corresponds to the discretized Hamiltonian and the other matrix corresponds to the wavefunction matrix. The matrix-matrix multiplication is accomplished in a loop over the number of blocks of the wavefunction matrix to reduce the memory footprint of the code. This parameter specifies the block size of the wavefunction matrix to be used in the matrix-matrix multiplication. The optimum value is dependent on the computing architecture. For optimum work sharing during band parallelization (NPBAND > 1), we recommend adjusting CHEBY WFC BLOCK SIZE and NUMBER OF KOHN-SHAM WAVEFUNCTIONS such that NUMBER OF KOHN-SHAM WAVEFUNCTIONS/NPBAND/CHEBY WFC BLOCK SIZE equals an integer value. Default value is 200.");
+            "[Advanced] Chebyshev filtering procedure involves the matrix-matrix multiplication where one matrix corresponds to the discretized Hamiltonian and the other matrix corresponds to the wavefunction matrix. The matrix-matrix multiplication is accomplished in a loop over the number of blocks of the wavefunction matrix to reduce the memory footprint of the code. This parameter specifies the block size of the wavefunction matrix to be used in the matrix-matrix multiplication. The optimum value is dependent on the computing architecture. For optimum work sharing during band parallelization (NPBAND > 1), we recommend adjusting CHEBY WFC BLOCK SIZE and NUMBER OF KOHN-SHAM WAVEFUNCTIONS such that NUMBER OF KOHN-SHAM WAVEFUNCTIONS/NPBAND/CHEBY WFC BLOCK SIZE equals an integer value. Default value is 400.");
 
           prm.declare_entry(
             "WFC BLOCK SIZE",
@@ -1142,8 +1140,14 @@ namespace dftfe
           prm.declare_entry(
             "COMMUN PREC CHEBY",
             "STANDARD",
-            dealii::Patterns::Selection("STANDARD|FP32|BF16"),
-            "[Advanced] Sets communication precision for residual based Chebyshev filtering. Default setting is STANDARD. FP32 and BF16 are ignored if USE SINGLE PREC CHEBY and USE GPU are false.");
+            dealii::Patterns::Selection("STANDARD|FP32|BF16|COMPRESSED"),
+            "[Advanced] Sets communication precision for residual based Chebyshev filtering. Default setting is STANDARD. FP32, BF16 and COMPRESSED are ignored if USE SINGLE PREC CHEBY and USE GPU are false.");
+
+          prm.declare_entry(
+            "COMPRESS BITS PER VALUE",
+            "16",
+            dealii::Patterns::Selection("8|10|12|16"),
+            "[Advanced] Bits per value for compression. Allowed values: 8, 10, 12, 16. Default 16");
 
           prm.declare_entry(
             "USE MIXED PREC COMMUN ONLY XTOX XTHX",
@@ -1764,6 +1768,7 @@ namespace dftfe
         dc_d3cutoff3                = prm.get_double("THREE BODY CUTOFF");
         dc_d3cutoffCN               = prm.get_double("CN CUTOFF");
       }
+
       prm.leave_subsection();
       isPseudopotential   = prm.get_bool("PSEUDOPOTENTIAL CALCULATION");
       pseudoTestsFlag     = prm.get_bool("PSEUDO TESTS FLAG");
@@ -1856,7 +1861,10 @@ namespace dftfe
           prm.get_bool("USE MIXED PREC COMMUN ONLY XTOX XTHX");
         communPrecCheby    = prm.get("COMMUN PREC CHEBY");
         useSinglePrecCheby = prm.get_bool("USE SINGLE PREC CHEBY");
-        tensorOpType       = prm.get("TENSOR OP TYPE SINGLE PREC CHEBY");
+
+        compressBitsPerValue = prm.get_integer("COMPRESS BITS PER VALUE");
+
+        tensorOpType = prm.get("TENSOR OP TYPE SINGLE PREC CHEBY");
         overlapComputeCommunCheby =
           prm.get_bool("OVERLAP COMPUTE COMMUN CHEBY");
         overlapComputeCommunOrthoRR =
@@ -1877,7 +1885,6 @@ namespace dftfe
       prm.leave_subsection();
     }
     prm.leave_subsection();
-
 
     prm.enter_subsection("Poisson problem parameters");
     {
@@ -1909,10 +1916,7 @@ namespace dftfe
       startingTempBOMD            = prm.get_double("STARTING TEMPERATURE");
       thermostatTimeConstantBOMD  = prm.get_double("THERMOSTAT TIME CONSTANT");
       MaxWallTime                 = prm.get_double("MAX WALL TIME");
-
-
-
-      tempControllerTypeBOMD = prm.get("TEMPERATURE CONTROLLER TYPE");
+      tempControllerTypeBOMD      = prm.get("TEMPERATURE CONTROLLER TYPE");
     }
     prm.leave_subsection();
 
@@ -1936,8 +1940,6 @@ namespace dftfe
     //
     setAutoParameters(mpi_comm_parent);
   }
-
-
 
   void
   dftParameters::check_parameters(const MPI_Comm &mpi_comm_parent) const
@@ -2065,6 +2067,18 @@ namespace dftfe
         wfcBlockSize == chebyWfcBlockSize,
         dealii::ExcMessage(
           "DFT-FE Error: WFC BLOCK SIZE and CHEBY WFC BLOCK SIZE must be same for band parallelization."));
+
+    if (communPrecCheby == "COMPRESSED")
+      {
+        // BFP kernels lay out data in fixed-size 4-value blocks; the
+        // MPICommunicatorP2P compressed buffer is sized assuming the per-rank
+        // total (num_indices * blockSize) is a multiple of 4.
+        AssertThrow(
+          chebyWfcBlockSize % 4 == 0,
+          dealii::ExcMessage(
+            "DFT-FE Error: CHEBY WFC BLOCK SIZE must be a multiple of 4 when COMMUN PREC CHEBY = COMPRESSED."));
+      }
+
     if (XCType.substr(0, 4) == "MGGA")
       {
         AssertThrow(
@@ -2132,7 +2146,6 @@ namespace dftfe
                     dealii::ExcMessage(std::string(
                       "D4 MBD has not been parametrized for this functional.")));
               }
-
             else if (XCType == "MGGA-SCAN")
               {
                 if (dc_dispersioncorrectiontype == 1)
@@ -2152,14 +2165,12 @@ namespace dftfe
       }
   }
 
-
   void
   dftParameters::setAutoParameters(const MPI_Comm &mpi_comm_parent)
   {
     //
     // Automated choice of mesh related parameters
     //
-
     if (isBOMD)
       isIonForce = true;
 
@@ -2219,7 +2230,6 @@ namespace dftfe
       {
         gaussianOrderMoveMeshToAtoms = 4.0;
       }
-
     //
     // Automated choice of eigensolver parameters
     //
@@ -2278,7 +2288,6 @@ namespace dftfe
             "DFT-FE Error: GS is not implemented on GPUs. Use Auto option."));
       }
 
-
     if (algoType == "FAST")
       {
         useMixedPrecXtOX                    = true;
@@ -2294,7 +2303,6 @@ namespace dftfe
         overlapComputeCommunCheby = false;
       }
 #endif
-
 
 #ifndef DFTFE_WITH_DEVICE
     useDevice           = false;
@@ -2400,6 +2408,4 @@ namespace dftfe
           }
       }
   }
-
-
 } // namespace dftfe

@@ -25,6 +25,7 @@ srun -n 18 -c 7 --gpu-bind closest $BASE/dftfe Input_MD_0.prm > output_MD_0
 srun -n 18 -c 7 --gpu-bind closest $BASE/dftfe Input_MD_1.prm > output_MD_1
 srun -n 18 -c 7 --gpu-bind closest $BASE/dftfe Input_MD_2.prm > output_MD_2
 srun -n 18 -c 7 --gpu-bind closest $BASE/dftfe parameterFileMg2x_1.prm > outputMg2x_1
+srun -n 18 -c 7 --gpu-bind closest $BASE/dftfe parameterFileMg2x_1_compressed.prm > outputMg2x_1_compressed
 srun -n 18 -c 7 --gpu-bind closest $BASE/dftfe parameterFileMg2x_1_spingpu.prm > outputMg2x_1_spin_gpu
 srun -n 18 -c 7 --gpu-bind closest $BASE/dftfe parameterFileMg2x_2_spingpu.prm > outputMg2x_2_spin_gpu
 srun -n 18 -c 7 --gpu-bind closest $BASE/dftfe parameterFileMg2x_2.prm > outputMg2x_2

@@ -19,6 +19,7 @@
 #include <dftfe/FEBasisOperationsKernelsInternal.h>
 #include <dftfe/dftUtils.h>
 #include <dftfe/feevaluationWrapper.h>
+#include <cstdlib>
 namespace dftfe
 {
   namespace basis
@@ -2640,8 +2641,19 @@ namespace dftfe
                     (ValueTypeBasisCoeff **)deviceTempCellGradientDataPointers,
                     nDofsPerCell,
                     numberOfElements * nQuadsPerCell);
+
+                  dftfe::utils::deviceFree(
+                    (void *)deviceInverseJacobianEntriesPointers);
+                  dftfe::utils::deviceFree(
+                    (void *)deviceTempCellGradientsBlockPointers);
+                  dftfe::utils::deviceFree(
+                    (void *)deviceTempCellGradientDataPointers);
                 }
 #endif
+
+              free((void *)inverseJacobianEntriesPointers);
+              free((void *)tempCellGradientsBlockPointers);
+              free((void *)tempCellGradientDataPointers);
             }
           else
             {
@@ -2870,8 +2882,19 @@ namespace dftfe
                     (ValueTypeBasisCoeff **)deviceTempCellGradientDataPointers,
                     nDofsPerCell,
                     numberOfElements * nQuadsPerCell);
+
+                  dftfe::utils::deviceFree(
+                    (void *)deviceInverseJacobianEntriesPointers);
+                  dftfe::utils::deviceFree(
+                    (void *)deviceTempCellGradientsBlockPointers);
+                  dftfe::utils::deviceFree(
+                    (void *)deviceTempCellGradientDataPointers);
                 }
 #endif
+
+              free((void *)inverseJacobianEntriesPointers);
+              free((void *)tempCellGradientsBlockPointers);
+              free((void *)tempCellGradientDataPointers);
             }
           else
             {
@@ -2948,10 +2971,11 @@ namespace dftfe
       invMassVector     = 0.0;
       invSqrtMassVector = 0.0;
 
-      // FIXME : check for roundoff errors
-      dealii::QGaussLobatto<3> quadrature(std::cbrt(d_nDofsPerCell));
-      dftfe::uInt              nQuadsPerCell = quadrature.size();
-      dealii::FEValues<3>      fe_values(
+      // Round to the nearest integer to avoid roundoff errors
+      dealii::QGaussLobatto<3> quadrature(
+        std::lround(std::cbrt(d_nDofsPerCell)));
+      dftfe::uInt         nQuadsPerCell = quadrature.size();
+      dealii::FEValues<3> fe_values(
         d_matrixFreeDataPtr->get_dof_handler(d_dofHandlerID).get_fe(),
         quadrature,
         dealii::update_values | dealii::update_JxW_values);
@@ -3260,9 +3284,10 @@ namespace dftfe
       dealii::types::global_dof_index sizeVectemp = stiffnessVector.size();
 
       //      std::cout<<" dof handler id = "<<d_dofHandlerID<<"\n";
-      // FIXME : check for roundoff errors
-      dealii::QGauss<3>   quadrature(std::cbrt(d_nDofsPerCell) + 1);
-      dftfe::uInt         nQuadsPerCell = quadrature.size();
+      // Round to the nearest integer before adding offset to avoid roundoff
+      // errors
+      dealii::QGauss<3> quadrature(std::lround(std::cbrt(d_nDofsPerCell)) + 1);
+      dftfe::uInt       nQuadsPerCell = quadrature.size();
       dealii::FEValues<3> fe_values(
         d_matrixFreeDataPtr->get_dof_handler(d_dofHandlerID).get_fe(),
         quadrature,
