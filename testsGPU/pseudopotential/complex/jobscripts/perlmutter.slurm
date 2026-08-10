@@ -36,6 +36,7 @@ srun ./dftfe parameterFileMg2x_7.prm > outputMg2x_7
 srun ./dftfe parameterFileMg2x_8.prm > outputMg2x_8
 srun ./dftfe parameterFileMg2x_9.prm > outputMg2x_9
 srun ./dftfe parameterFileMg2x_10.prm > outputMg2x_10
+srun ./dftfe parameterFileMg2x_ldos.prm > outputMg2x_ldos
 srun ./dftfe parameterFileBe.prm > outputBe
 srun ./dftfe parameterFileTiAl.prm > outputTiAl_hubbard
 srun ./dftfe parameterFileTiAl_mixedPrec.prm > outputTiAl_hubbard_mixedPrec_mpi6

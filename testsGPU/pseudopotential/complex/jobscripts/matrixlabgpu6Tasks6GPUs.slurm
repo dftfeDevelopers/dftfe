@@ -35,6 +35,7 @@ mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileMg2x_7.prm > outputMg2x_
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileMg2x_8.prm > outputMg2x_8
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileMg2x_9.prm > outputMg2x_9
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileMg2x_10.prm > outputMg2x_10
+mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileMg2x_ldos.prm > outputMg2x_ldos
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileBe.prm > outputBe
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileTiAl_mixedPrec.prm > outputTiAl_hubbard_mixedPrec_mpi6
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileTiAl.prm > outputTiAl_hubbard
