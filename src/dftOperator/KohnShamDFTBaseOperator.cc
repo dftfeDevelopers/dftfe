@@ -1440,11 +1440,12 @@ namespace dftfe
           DensityDescriptorDataAttributes,
           dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
           densityData;
-        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-          &magAxis = densityData[DensityDescriptorDataAttributes::magAxisValues];
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> &
+          magAxis = densityData[DensityDescriptorDataAttributes::magAxisValues];
         auxDensityXCRepresentation->applyLocalOperations(
           std::make_pair(0,
-                         totalLocallyOwnedCells * numberQuadraturePointsPerCell),
+                         totalLocallyOwnedCells *
+                           numberQuadraturePointsPerCell),
           densityData);
 
         for (dftfe::uInt iQuad = 0;
