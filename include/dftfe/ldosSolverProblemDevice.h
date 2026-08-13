@@ -43,7 +43,7 @@ namespace dftfe
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &residualQuadValues,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-            &ldosAxQuadValues);
+        &ldosAxQuadValues);
 
     /**
      * @brief Return the device x vector.
@@ -162,7 +162,7 @@ namespace dftfe
     distributedCPUVec<double>    d_meanValueConstraintVec;
     distributedDeviceVec<double> d_meanValueConstraintDeviceVec;
 
-    bool d_isMeanValueConstraintComputed;
+    bool                            d_isMeanValueConstraintComputed;
     dealii::types::global_dof_index d_meanValueConstraintNodeId;
     dealii::types::global_dof_index d_meanValueConstraintNodeIdLocal;
     dftfe::uInt                     d_meanValueConstraintProcId;
@@ -195,7 +195,7 @@ namespace dftfe
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       *d_residualQuadValuesPtr;
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-                                            *d_ldosAxQuadValuesPtr;
+      *d_ldosAxQuadValuesPtr;
 
     const dealii::DoFHandler<3>             *d_dofHandlerPRefinedPtr;
     const dealii::AffineConstraints<double> *d_constraintMatrixPRefinedPtr;

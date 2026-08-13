@@ -43,7 +43,7 @@ namespace dftfe
     d_matrixFreeAxQuadratureComponent = matrixFreeAxQuadratureComponent;
     d_matrixFreeDataPRefinedPtr->initialize_dof_vector(
       x, d_matrixFreeVectorComponent);
-    d_xPtr = &x;
+    d_xPtr                          = &x;
     d_isMeanValueConstraintComputed = isComputeMeanValueConstraint;
     if (d_isMeanValueConstraintComputed)
       computeMeanValueConstraint();
@@ -102,11 +102,11 @@ namespace dftfe
     const dealii::Quadrature<3> &quadrature =
       d_matrixFreeDataPRefinedPtr->get_quadrature(
         d_matrixFreeAxQuadratureComponent);
-    dealii::FEValues<3> feValues(dofHandler.get_fe(),
-                                  quadrature,
-                                  dealii::update_values |
-                                    dealii::update_JxW_values);
-    const dftfe::uInt dofsPerCell = dofHandler.get_fe().dofs_per_cell;
+    dealii::FEValues<3>    feValues(dofHandler.get_fe(),
+                                 quadrature,
+                                 dealii::update_values |
+                                   dealii::update_JxW_values);
+    const dftfe::uInt      dofsPerCell = dofHandler.get_fe().dofs_per_cell;
     dealii::Vector<double> elementalValues(dofsPerCell);
     std::vector<dealii::types::global_dof_index> localDofIndices(dofsPerCell);
 
@@ -129,7 +129,8 @@ namespace dftfe
     dealii::IndexSet candidateDofs =
       d_meanValueConstraintVec.locally_owned_elements();
     dealii::IndexSet constrainedDofs(d_meanValueConstraintVec.size());
-    const auto locallyRelevantDofs = d_constraintMatrixPRefinedPtr->get_local_lines();
+    const auto       locallyRelevantDofs =
+      d_constraintMatrixPRefinedPtr->get_local_lines();
     std::vector<dealii::types::global_dof_index> touchedDofs;
     for (auto i = locallyRelevantDofs.begin(); i < locallyRelevantDofs.end();
          ++i)
@@ -144,7 +145,7 @@ namespace dftfe
     constrainedDofs.add_indices(touchedDofs.begin(), touchedDofs.end());
     candidateDofs.subtract_set(constrainedDofs);
 
-    const dftfe::uInt localNumberCandidates = candidateDofs.n_elements();
+    const dftfe::uInt        localNumberCandidates = candidateDofs.n_elements();
     std::vector<dftfe::uInt> numberCandidates(n_mpi_processes, 0);
     MPI_Allgather(&localNumberCandidates,
                   1,
@@ -239,7 +240,7 @@ namespace dftfe
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       &residualQuadValues,
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-          &ldosAxQuadValues)
+      &ldosAxQuadValues)
   {
     d_xPtr                  = &x;
     d_residualQuadValuesPtr = &residualQuadValues;
@@ -248,8 +249,7 @@ namespace dftfe
     computeProjectedQuadToNodalField(ldosAxQuadValues, d_dlocMassVector);
     const auto &locallyOwnedDofs = d_dlocMassVector.locally_owned_elements();
     d_totalDOS                   = 0.0;
-    for (auto i = locallyOwnedDofs.begin(); i < locallyOwnedDofs.end();
-         ++i)
+    for (auto i = locallyOwnedDofs.begin(); i < locallyOwnedDofs.end(); ++i)
       d_totalDOS += d_dlocMassVector(*i);
     d_totalDOS = dealii::Utilities::MPI::sum(d_totalDOS, mpi_communicator);
     AssertThrow(std::isfinite(d_totalDOS) &&

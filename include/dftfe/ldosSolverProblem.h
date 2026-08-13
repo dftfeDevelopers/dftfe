@@ -41,7 +41,7 @@ namespace dftfe
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &residualQuadValues,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-            &ldosAxQuadValues);
+        &ldosAxQuadValues);
 
     /**
      * @brief get the reference to x field
@@ -150,7 +150,7 @@ namespace dftfe
     distributedCPUVec<double> d_dlocMassVector;
     distributedCPUVec<double> d_meanValueConstraintVec;
 
-    bool d_isMeanValueConstraintComputed;
+    bool                            d_isMeanValueConstraintComputed;
     dealii::types::global_dof_index d_meanValueConstraintNodeId;
     dftfe::uInt                     d_meanValueConstraintProcId;
 
