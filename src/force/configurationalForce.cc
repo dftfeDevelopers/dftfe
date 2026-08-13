@@ -329,11 +329,10 @@ namespace dftfe
                                                         &hessianRhoCoreAtoms,
     const std::map<dealii::CellId, std::vector<double>> &pseudoVLocValues,
     const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
-                                &pseudoVLocAtoms,
-    const dealii::DoFHandler<3> &dofHandlerRhoNodal,
-    const vselfBinsManager      &vselfBinsManager,
-    const analyticSmearedLoadManager<memorySpace>
-      &analyticSmearedLoadManager,
+                                                  &pseudoVLocAtoms,
+    const dealii::DoFHandler<3>                   &dofHandlerRhoNodal,
+    const vselfBinsManager                        &vselfBinsManager,
+    const analyticSmearedLoadManager<memorySpace> &analyticSmearedLoadManager,
     const std::vector<distributedCPUVec<double>>
                       &vselfFieldGateauxDerStrainFDBins,
     const dftfe::uInt &binsStartDofHandlerIndexElectro,
@@ -1803,16 +1802,15 @@ namespace dftfe
   template <dftfe::utils::MemorySpace memorySpace>
   void
   configurationalForceClass<memorySpace>::computeAnalyticSmearedContribAll(
-    const std::vector<std::vector<double>> &atomLocations,
-    const std::vector<dftfe::Int>          &imageIds,
-    const std::vector<double>              &imageCharges,
-    const std::vector<std::vector<double>> &imagePositions,
-    const analyticSmearedLoadManager<memorySpace>
-      &analyticSmearedLoadManager,
-    const distributedCPUVec<double>        &phiTotRhoOutValues,
-    const bool floatingNuclearCharges,
-    const bool computeForce,
-    const bool computeStress)
+    const std::vector<std::vector<double>>        &atomLocations,
+    const std::vector<dftfe::Int>                 &imageIds,
+    const std::vector<double>                     &imageCharges,
+    const std::vector<std::vector<double>>        &imagePositions,
+    const analyticSmearedLoadManager<memorySpace> &analyticSmearedLoadManager,
+    const distributedCPUVec<double>               &phiTotRhoOutValues,
+    const bool                                     floatingNuclearCharges,
+    const bool                                     computeForce,
+    const bool                                     computeStress)
   {
     const std::vector<double> &smearedChargeWidths =
       analyticSmearedLoadManager.smearedChargeWidths();
@@ -1870,283 +1868,269 @@ namespace dftfe
               atomLocation[iAtom][2]   = imagePositions[imageId][2];
             }
         }
-        AssertThrow(
-          atomLocations.size() == d_dftParams.natoms &&
-            smearedChargeWidths.size() == d_dftParams.natoms &&
-            smearedChargeScaling.size() == d_dftParams.natoms,
-          dealii::ExcMessage(
-            "DFT-FE Error: incomplete ASL atom data in smeared-force assembly."));
-        AssertThrow(imageIds.size() == imageCharges.size() &&
-                      imageIds.size() == imagePositions.size(),
-                    dealii::ExcMessage(
-                      "DFT-FE Error: inconsistent ASL image data in smeared-force assembly."));
-        for (const dftfe::Int atomId : imageIds)
-          AssertThrow(
-            atomId >= 0 &&
-              static_cast<dftfe::uInt>(atomId) < d_dftParams.natoms,
-            dealii::ExcMessage(
-              "DFT-FE Error: invalid ASL image owner in smeared-force assembly."));
+    AssertThrow(
+      atomLocations.size() == d_dftParams.natoms &&
+        smearedChargeWidths.size() == d_dftParams.natoms &&
+        smearedChargeScaling.size() == d_dftParams.natoms,
+      dealii::ExcMessage(
+        "DFT-FE Error: incomplete ASL atom data in smeared-force assembly."));
+    AssertThrow(
+      imageIds.size() == imageCharges.size() &&
+        imageIds.size() == imagePositions.size(),
+      dealii::ExcMessage(
+        "DFT-FE Error: inconsistent ASL image data in smeared-force assembly."));
+    for (const dftfe::Int atomId : imageIds)
+      AssertThrow(
+        atomId >= 0 && static_cast<dftfe::uInt>(atomId) < d_dftParams.natoms,
+        dealii::ExcMessage(
+          "DFT-FE Error: invalid ASL image owner in smeared-force assembly."));
 
-        auto getAtomCharge = [&](const dftfe::uInt atomId) {
-          return d_dftParams.isPseudopotential ? atomLocations[atomId][1] :
-                                                 atomLocations[atomId][0];
-        };
+    auto getAtomCharge = [&](const dftfe::uInt atomId) {
+      return d_dftParams.isPseudopotential ? atomLocations[atomId][1] :
+                                             atomLocations[atomId][0];
+    };
 
-        std::vector<dealii::Point<3>> atomPoints(d_dftParams.natoms);
-        std::vector<double>           atomCharges(d_dftParams.natoms, 0.0);
-        for (dftfe::uInt iAtom = 0; iAtom < d_dftParams.natoms; ++iAtom)
+    std::vector<dealii::Point<3>> atomPoints(d_dftParams.natoms);
+    std::vector<double>           atomCharges(d_dftParams.natoms, 0.0);
+    for (dftfe::uInt iAtom = 0; iAtom < d_dftParams.natoms; ++iAtom)
+      {
+        atomPoints[iAtom]  = dealii::Point<3>(atomLocations[iAtom][2],
+                                             atomLocations[iAtom][3],
+                                             atomLocations[iAtom][4]);
+        atomCharges[iAtom] = getAtomCharge(iAtom);
+      }
+    std::vector<dealii::Point<3>> imagePoints(imagePositions.size());
+    std::vector<double>           imageWidths(imagePositions.size(), 0.0);
+    for (dftfe::uInt iImage = 0; iImage < imagePositions.size(); ++iImage)
+      {
+        imagePoints[iImage] = dealii::Point<3>(imagePositions[iImage][0],
+                                               imagePositions[iImage][1],
+                                               imagePositions[iImage][2]);
+        imageWidths[iImage] = smearedChargeWidths[imageIds[iImage]];
+      }
+    std::vector<double>                   totalChargeValues(nQuadsPerCell, 0.0);
+    static const std::vector<dftfe::uInt> emptyCandidates;
+    for (dftfe::uInt iMacroCell = 0;
+         iMacroCell <
+         d_basisOperationsPtrElectroHost->matrixFreeData().n_cell_batches();
+         ++iMacroCell)
+      {
+        bool isCellNonTrivial = false;
+        for (dftfe::uInt iSubCell = 0;
+             iSubCell < d_basisOperationsPtrElectroHost->matrixFreeData()
+                          .n_active_entries_per_cell_batch(iMacroCell);
+             ++iSubCell)
           {
-            atomPoints[iAtom]  = dealii::Point<3>(atomLocations[iAtom][2],
-                                                 atomLocations[iAtom][3],
-                                                 atomLocations[iAtom][4]);
-            atomCharges[iAtom] = getAtomCharge(iAtom);
+            const dealii::CellId currentCellId =
+              d_basisOperationsPtrElectroHost->matrixFreeData()
+                .get_cell_iterator(
+                  iMacroCell,
+                  iSubCell,
+                  d_basisOperationsPtrElectroHost->d_dofHandlerID)
+                ->id();
+            const auto atomCandidatesIt =
+              bCellNonTrivialAtomIds.find(currentCellId);
+            isCellNonTrivial =
+              atomCandidatesIt != bCellNonTrivialAtomIds.end() &&
+              !atomCandidatesIt->second.empty();
+            if (isCellNonTrivial)
+              break;
           }
-        std::vector<dealii::Point<3>> imagePoints(imagePositions.size());
-        std::vector<double>           imageWidths(imagePositions.size(), 0.0);
-        for (dftfe::uInt iImage = 0; iImage < imagePositions.size(); ++iImage)
+        if (!isCellNonTrivial)
+          continue;
+        feEvalObjPhiSmeared.reinit(iMacroCell);
+        feEvalObjPhiSmeared.read_dof_values_plain(phiTotRhoOutValues);
+        feEvalObjPhiSmeared.evaluate(dealii::EvaluationFlags::gradients);
+
+        for (dftfe::uInt iSubCell = 0;
+             iSubCell < d_basisOperationsPtrElectroHost->matrixFreeData()
+                          .n_active_entries_per_cell_batch(iMacroCell);
+             ++iSubCell)
           {
-            imagePoints[iImage] = dealii::Point<3>(imagePositions[iImage][0],
-                                                   imagePositions[iImage][1],
-                                                   imagePositions[iImage][2]);
-            imageWidths[iImage] = smearedChargeWidths[imageIds[iImage]];
-          }
-        std::vector<double> totalChargeValues(nQuadsPerCell, 0.0);
-        static const std::vector<dftfe::uInt> emptyCandidates;
-        for (dftfe::uInt iMacroCell = 0;
-             iMacroCell <
-             d_basisOperationsPtrElectroHost->matrixFreeData().n_cell_batches();
-             ++iMacroCell)
-          {
-            bool isCellNonTrivial = false;
-            for (dftfe::uInt iSubCell = 0;
-                 iSubCell < d_basisOperationsPtrElectroHost->matrixFreeData()
-                              .n_active_entries_per_cell_batch(iMacroCell);
-                 ++iSubCell)
-              {
-                const dealii::CellId currentCellId =
-                  d_basisOperationsPtrElectroHost->matrixFreeData()
-                    .get_cell_iterator(
-                      iMacroCell,
-                      iSubCell,
-                      d_basisOperationsPtrElectroHost->d_dofHandlerID)
-                    ->id();
-                const auto atomCandidatesIt =
-                  bCellNonTrivialAtomIds.find(currentCellId);
-                isCellNonTrivial =
-                  atomCandidatesIt != bCellNonTrivialAtomIds.end() &&
-                  !atomCandidatesIt->second.empty();
-                if (isCellNonTrivial)
-                  break;
-              }
-            if (!isCellNonTrivial)
+            auto currentCellPtr =
+              d_basisOperationsPtrElectroHost->matrixFreeData()
+                .get_cell_iterator(
+                  iMacroCell,
+                  iSubCell,
+                  d_basisOperationsPtrElectroHost->d_dofHandlerID);
+            const dealii::CellId currentCellId = currentCellPtr->id();
+            const dftfe::uInt    iCell =
+              d_basisOperationsPtrElectroHost->cellIndex(currentCellId);
+            const auto physicalCandidatesIt =
+              bCellNonTrivialAtomIds.find(currentCellId);
+            if (physicalCandidatesIt == bCellNonTrivialAtomIds.end() ||
+                physicalCandidatesIt->second.empty())
               continue;
-            feEvalObjPhiSmeared.reinit(iMacroCell);
-            feEvalObjPhiSmeared.read_dof_values_plain(phiTotRhoOutValues);
-            feEvalObjPhiSmeared.evaluate(dealii::EvaluationFlags::gradients);
+            const auto bQuadValuesIt = bQuadValuesAllAtoms.find(currentCellId);
+            AssertThrow(
+              bQuadValuesIt != bQuadValuesAllAtoms.end(),
+              dealii::ExcMessage(
+                "DFT-FE Error: missing ASL quadrature values in force assembly."));
+            const std::vector<double> &bQuadAtomValuesCell =
+              bQuadValuesIt->second;
+            AssertThrow(
+              bQuadAtomValuesCell.size() == nQuadsPerCell,
+              dealii::ExcMessage(
+                "DFT-FE Error: ASL quadrature data has an unexpected size in force assembly."));
 
-            for (dftfe::uInt iSubCell = 0;
-                 iSubCell < d_basisOperationsPtrElectroHost->matrixFreeData()
-                              .n_active_entries_per_cell_batch(iMacroCell);
-                 ++iSubCell)
+            const double *JxWValues =
+              d_basisOperationsPtrElectroHost->JxWBasisData().data() +
+              nQuadsPerCell * iCell;
+            const double *quadPointsCurrentCell =
+              d_basisOperationsPtrElectroHost->quadPoints().data() +
+              iCell * nQuadsPerCell * 3;
+            const auto imageCandidatesIt =
+              bCellNonTrivialAtomImageIds.find(currentCellId);
+            const std::vector<dftfe::uInt> &physicalAtomCandidates =
+              physicalCandidatesIt == bCellNonTrivialAtomIds.end() ?
+                emptyCandidates :
+                physicalCandidatesIt->second;
+            const std::vector<dftfe::uInt> &imageCandidates =
+              imageCandidatesIt == bCellNonTrivialAtomImageIds.end() ?
+                emptyCandidates :
+                imageCandidatesIt->second;
+            std::copy(bQuadAtomValuesCell.begin(),
+                      bQuadAtomValuesCell.end(),
+                      totalChargeValues.begin());
+            for (dftfe::uInt iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
               {
-                auto currentCellPtr =
-                  d_basisOperationsPtrElectroHost->matrixFreeData()
-                    .get_cell_iterator(
-                      iMacroCell,
-                      iSubCell,
-                      d_basisOperationsPtrElectroHost->d_dofHandlerID);
-                const dealii::CellId currentCellId = currentCellPtr->id();
-                const dftfe::uInt    iCell =
-                  d_basisOperationsPtrElectroHost->cellIndex(currentCellId);
-                const auto physicalCandidatesIt =
-                  bCellNonTrivialAtomIds.find(currentCellId);
-                if (physicalCandidatesIt == bCellNonTrivialAtomIds.end() ||
-                    physicalCandidatesIt->second.empty())
-                  continue;
-                const auto bQuadValuesIt =
-                  bQuadValuesAllAtoms.find(currentCellId);
-                AssertThrow(
-                  bQuadValuesIt != bQuadValuesAllAtoms.end(),
-                  dealii::ExcMessage(
-                    "DFT-FE Error: missing ASL quadrature values in force assembly."));
-                const std::vector<double> &bQuadAtomValuesCell =
-                  bQuadValuesIt->second;
-                AssertThrow(
-                  bQuadAtomValuesCell.size() == nQuadsPerCell,
-                  dealii::ExcMessage(
-                    "DFT-FE Error: ASL quadrature data has an unexpected size in force assembly."));
-
-                const double *JxWValues =
-                  d_basisOperationsPtrElectroHost->JxWBasisData().data() +
-                  nQuadsPerCell * iCell;
-                const double *quadPointsCurrentCell =
-                  d_basisOperationsPtrElectroHost->quadPoints().data() +
-                  iCell * nQuadsPerCell * 3;
-                const auto imageCandidatesIt =
-                  bCellNonTrivialAtomImageIds.find(currentCellId);
-                const std::vector<dftfe::uInt> &physicalAtomCandidates =
-                  physicalCandidatesIt == bCellNonTrivialAtomIds.end() ?
-                    emptyCandidates :
-                    physicalCandidatesIt->second;
-                const std::vector<dftfe::uInt> &imageCandidates =
-                  imageCandidatesIt == bCellNonTrivialAtomImageIds.end() ?
-                    emptyCandidates :
-                    imageCandidatesIt->second;
-                std::copy(bQuadAtomValuesCell.begin(),
-                          bQuadAtomValuesCell.end(),
-                          totalChargeValues.begin());
-                for (dftfe::uInt iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
+                const double *quadPoint = quadPointsCurrentCell + iQuad * 3;
+                const dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
+                  &gradPhiVals = feEvalObjPhiSmeared.get_gradient(iQuad);
+                for (const dftfe::uInt iAtom : physicalAtomCandidates)
                   {
-                    const double *quadPoint = quadPointsCurrentCell + iQuad * 3;
-                    const dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
-                      &gradPhiVals = feEvalObjPhiSmeared.get_gradient(iQuad);
-                    for (const dftfe::uInt iAtom : physicalAtomCandidates)
-                      {
-                        const double diffx =
-                          quadPoint[0] - atomPoints[iAtom][0];
-                        const double diffy =
-                          quadPoint[1] - atomPoints[iAtom][1];
-                        const double diffz =
-                          quadPoint[2] - atomPoints[iAtom][2];
-                        const double distanceSquared =
-                          diffx * diffx + diffy * diffy + diffz * diffz;
-                        const double atomWidth = smearedChargeWidths[iAtom];
-                        if (distanceSquared > atomWidth * atomWidth)
-                          continue;
-                        const double distanceToAtom =
-                          std::sqrt(distanceSquared);
-                        const double copyCharge =
-                          -atomCharges[iAtom] * smearedChargeScaling[iAtom] *
-                          dftUtils::smearedCharge(distanceToAtom, atomWidth);
-                        if (computeForce)
-                          for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
-                            forceContribSmeared[3 * iAtom + iDim] +=
-                              copyCharge * gradPhiVals[iDim][iSubCell] *
-                              JxWValues[iQuad];
-                        if (computeStress)
-                          for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
-                            for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
-                              stressContribSmeared[3 * iDim + jDim] -=
-                                copyCharge * gradPhiVals[iDim][iSubCell] *
-                                (quadPoint[jDim] - atomPoints[iAtom][jDim]) *
-                                JxWValues[iQuad];
-                      }
-                    for (const dftfe::uInt iImage : imageCandidates)
-                      {
-                        const dftfe::uInt iAtom = imageIds[iImage];
-                        const double      diffx =
-                          quadPoint[0] - imagePoints[iImage][0];
-                        const double diffy =
-                          quadPoint[1] - imagePoints[iImage][1];
-                        const double diffz =
-                          quadPoint[2] - imagePoints[iImage][2];
-                        const double distanceSquared =
-                          diffx * diffx + diffy * diffy + diffz * diffz;
-                        const double imageWidth = imageWidths[iImage];
-                        if (distanceSquared > imageWidth * imageWidth)
-                          continue;
-                        const double distanceToAtom =
-                          std::sqrt(distanceSquared);
-                        const double copyCharge =
-                          -imageCharges[iImage] * smearedChargeScaling[iAtom] *
-                          dftUtils::smearedCharge(distanceToAtom, imageWidth);
-                        if (computeForce)
-                          for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
-                            forceContribSmeared[3 * iAtom + iDim] +=
-                              copyCharge * gradPhiVals[iDim][iSubCell] *
-                              JxWValues[iQuad];
-                        if (computeStress)
-                          for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
-                            for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
-                              stressContribSmeared[3 * iDim + jDim] -=
-                                copyCharge * gradPhiVals[iDim][iSubCell] *
-                                (quadPoint[jDim] - imagePoints[iImage][jDim]) *
-                                JxWValues[iQuad];
-                      }
+                    const double diffx = quadPoint[0] - atomPoints[iAtom][0];
+                    const double diffy = quadPoint[1] - atomPoints[iAtom][1];
+                    const double diffz = quadPoint[2] - atomPoints[iAtom][2];
+                    const double distanceSquared =
+                      diffx * diffx + diffy * diffy + diffz * diffz;
+                    const double atomWidth = smearedChargeWidths[iAtom];
+                    if (distanceSquared > atomWidth * atomWidth)
+                      continue;
+                    const double distanceToAtom = std::sqrt(distanceSquared);
+                    const double copyCharge =
+                      -atomCharges[iAtom] * smearedChargeScaling[iAtom] *
+                      dftUtils::smearedCharge(distanceToAtom, atomWidth);
+                    if (computeForce)
+                      for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
+                        forceContribSmeared[3 * iAtom + iDim] +=
+                          copyCharge * gradPhiVals[iDim][iSubCell] *
+                          JxWValues[iQuad];
+                    if (computeStress)
+                      for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
+                        for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
+                          stressContribSmeared[3 * iDim + jDim] -=
+                            copyCharge * gradPhiVals[iDim][iSubCell] *
+                            (quadPoint[jDim] - atomPoints[iAtom][jDim]) *
+                            JxWValues[iQuad];
                   }
-
-                if (computeForce && !floatingNuclearCharges)
+                for (const dftfe::uInt iImage : imageCandidates)
                   {
-                    dealii::DoFHandler<3>::active_cell_iterator
-                      currentCellPtrForce(
-                        &d_dofHandlerForce.get_triangulation(),
-                        currentCellPtr->level(),
-                        currentCellPtr->index(),
-                        &d_dofHandlerForce);
-                    feValuesForce.reinit(currentCellPtrForce);
-                    currentCellPtrForce->get_dof_indices(localDofIndices);
-                    std::fill(cellContribution.begin(),
-                              cellContribution.end(),
-                              0.0);
-                    for (dftfe::uInt iDoF = 0; iDoF < FEForce.dofs_per_cell;
-                         ++iDoF)
-                      {
-                        const dftfe::uInt iDim =
-                          FEForce.system_to_component_index(iDoF).first;
-                        for (dftfe::uInt iQuad = 0; iQuad < nQuadsPerCell;
-                             ++iQuad)
-                          {
-                            const double shapeValue =
-                              feValuesForce.shape_value(iDoF, iQuad);
-                            const dealii::
-                              Tensor<1, 3, dealii::VectorizedArray<double>>
-                                &gradPhiVals =
-                                  feEvalObjPhiSmeared.get_gradient(iQuad);
-                            cellContribution[iDoF] -=
-                              totalChargeValues[iQuad] *
-                              gradPhiVals[iDim][iSubCell] * shapeValue *
-                              JxWValues[iQuad];
-                          }
-                      }
-                    d_affineConstraintsForce.distribute_local_to_global(
-                      cellContribution,
-                      localDofIndices,
-                      d_configForceContribsLinFE);
+                    const dftfe::uInt iAtom = imageIds[iImage];
+                    const double diffx = quadPoint[0] - imagePoints[iImage][0];
+                    const double diffy = quadPoint[1] - imagePoints[iImage][1];
+                    const double diffz = quadPoint[2] - imagePoints[iImage][2];
+                    const double distanceSquared =
+                      diffx * diffx + diffy * diffy + diffz * diffz;
+                    const double imageWidth = imageWidths[iImage];
+                    if (distanceSquared > imageWidth * imageWidth)
+                      continue;
+                    const double distanceToAtom = std::sqrt(distanceSquared);
+                    const double copyCharge =
+                      -imageCharges[iImage] * smearedChargeScaling[iAtom] *
+                      dftUtils::smearedCharge(distanceToAtom, imageWidth);
+                    if (computeForce)
+                      for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
+                        forceContribSmeared[3 * iAtom + iDim] +=
+                          copyCharge * gradPhiVals[iDim][iSubCell] *
+                          JxWValues[iQuad];
+                    if (computeStress)
+                      for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
+                        for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
+                          stressContribSmeared[3 * iDim + jDim] -=
+                            copyCharge * gradPhiVals[iDim][iSubCell] *
+                            (quadPoint[jDim] - imagePoints[iImage][jDim]) *
+                            JxWValues[iQuad];
                   }
               }
-          }
 
-        if (computeForce)
-          {
-            MPI_Allreduce(MPI_IN_PLACE,
-                          forceContribSmeared.data(),
-                          3 * d_dftParams.natoms,
-                          MPI_DOUBLE,
-                          MPI_SUM,
-                          d_mpiCommDomain);
-            for (dftfe::uInt iAtom = 0; iAtom < d_dftParams.natoms; iAtom++)
-              for (dftfe::uInt iDim = 0; iDim < 3; iDim++)
-                d_forceTotal[3 * iAtom + iDim] +=
-                  forceContribSmeared[3 * iAtom + iDim];
+            if (computeForce && !floatingNuclearCharges)
+              {
+                dealii::DoFHandler<3>::active_cell_iterator currentCellPtrForce(
+                  &d_dofHandlerForce.get_triangulation(),
+                  currentCellPtr->level(),
+                  currentCellPtr->index(),
+                  &d_dofHandlerForce);
+                feValuesForce.reinit(currentCellPtrForce);
+                currentCellPtrForce->get_dof_indices(localDofIndices);
+                std::fill(cellContribution.begin(),
+                          cellContribution.end(),
+                          0.0);
+                for (dftfe::uInt iDoF = 0; iDoF < FEForce.dofs_per_cell; ++iDoF)
+                  {
+                    const dftfe::uInt iDim =
+                      FEForce.system_to_component_index(iDoF).first;
+                    for (dftfe::uInt iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
+                      {
+                        const double shapeValue =
+                          feValuesForce.shape_value(iDoF, iQuad);
+                        const dealii::
+                          Tensor<1, 3, dealii::VectorizedArray<double>>
+                            &gradPhiVals =
+                              feEvalObjPhiSmeared.get_gradient(iQuad);
+                        cellContribution[iDoF] -= totalChargeValues[iQuad] *
+                                                  gradPhiVals[iDim][iSubCell] *
+                                                  shapeValue * JxWValues[iQuad];
+                      }
+                  }
+                d_affineConstraintsForce.distribute_local_to_global(
+                  cellContribution,
+                  localDofIndices,
+                  d_configForceContribsLinFE);
+              }
           }
-        if (computeStress)
-          {
-            MPI_Allreduce(MPI_IN_PLACE,
-                          stressContribSmeared.data(),
-                          9,
-                          MPI_DOUBLE,
-                          MPI_SUM,
-                          d_mpiCommDomain);
-            for (dftfe::uInt iDim = 0; iDim < 3; iDim++)
-              for (dftfe::uInt jDim = 0; jDim < 3; jDim++)
-                d_stressTotal[3 * iDim + jDim] +=
-                  stressContribSmeared[3 * iDim + jDim];
-          }
+      }
+
+    if (computeForce)
+      {
+        MPI_Allreduce(MPI_IN_PLACE,
+                      forceContribSmeared.data(),
+                      3 * d_dftParams.natoms,
+                      MPI_DOUBLE,
+                      MPI_SUM,
+                      d_mpiCommDomain);
+        for (dftfe::uInt iAtom = 0; iAtom < d_dftParams.natoms; iAtom++)
+          for (dftfe::uInt iDim = 0; iDim < 3; iDim++)
+            d_forceTotal[3 * iAtom + iDim] +=
+              forceContribSmeared[3 * iAtom + iDim];
+      }
+    if (computeStress)
+      {
+        MPI_Allreduce(MPI_IN_PLACE,
+                      stressContribSmeared.data(),
+                      9,
+                      MPI_DOUBLE,
+                      MPI_SUM,
+                      d_mpiCommDomain);
+        for (dftfe::uInt iDim = 0; iDim < 3; iDim++)
+          for (dftfe::uInt jDim = 0; jDim < 3; jDim++)
+            d_stressTotal[3 * iDim + jDim] +=
+              stressContribSmeared[3 * iDim + jDim];
+      }
   }
 
 
   template <dftfe::utils::MemorySpace memorySpace>
   void
   configurationalForceClass<memorySpace>::computeSmearedContribAll(
-    const std::vector<std::vector<double>> &atomLocations,
-    const std::vector<dftfe::Int>          &imageIds,
-    const std::vector<double>              &imageCharges,
-    const std::vector<std::vector<double>> &imagePositions,
-    const vselfBinsManager                 &vselfBinsManager,
-    const analyticSmearedLoadManager<memorySpace>
-      &analyticSmearedLoadManager,
-    const dftfe::uInt                      &binsStartDofHandlerIndexElectro,
-    const distributedCPUVec<double>        &phiTotRhoOutValues,
+    const std::vector<std::vector<double>>        &atomLocations,
+    const std::vector<dftfe::Int>                 &imageIds,
+    const std::vector<double>                     &imageCharges,
+    const std::vector<std::vector<double>>        &imagePositions,
+    const vselfBinsManager                        &vselfBinsManager,
+    const analyticSmearedLoadManager<memorySpace> &analyticSmearedLoadManager,
+    const dftfe::uInt               &binsStartDofHandlerIndexElectro,
+    const distributedCPUVec<double> &phiTotRhoOutValues,
     const std::map<dealii::CellId, std::vector<dftfe::Int>>
       &bQuadAtomIdsAllAtoms,
     const std::map<dealii::CellId, std::vector<dftfe::Int>>
@@ -2175,8 +2159,7 @@ namespace dftfe
                                          computeStress);
         return;
       }
-    const std::vector<double> &smearedChargeWidths =
-      legacySmearedChargeWidths;
+    const std::vector<double> &smearedChargeWidths = legacySmearedChargeWidths;
     const std::vector<double> &smearedChargeScaling =
       legacySmearedChargeScaling;
     std::vector<double> forceContribSmeared(3 * d_dftParams.natoms, 0.0);
@@ -2579,12 +2562,11 @@ namespace dftfe
       &gradRhoTotalOutValuesLpsp,
     const std::map<dealii::CellId, std::vector<double>> &pseudoVLocValues,
     const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
-                                &pseudoVLocAtoms,
-    const analyticSmearedLoadManager<memorySpace>
-      &analyticSmearedLoadManager,
-    const bool floatingNuclearCharges,
-    const bool computeForce,
-    const bool computeStress)
+                                                  &pseudoVLocAtoms,
+    const analyticSmearedLoadManager<memorySpace> &analyticSmearedLoadManager,
+    const bool                                     floatingNuclearCharges,
+    const bool                                     computeForce,
+    const bool                                     computeStress)
   {
     const std::vector<double> &smearedChargeWidths =
       analyticSmearedLoadManager.smearedChargeWidths();
@@ -2618,173 +2600,211 @@ namespace dftfe
       double dz = a[2] - b[2];
       return std::sqrt(dx * dx + dy * dy + dz * dz);
     };
-        AssertThrow(
-          atomLocations.size() == d_dftParams.natoms &&
-            smearedChargeWidths.size() == d_dftParams.natoms,
-          dealii::ExcMessage(
-            "DFT-FE Error: incomplete ASL atom data in local-potential force assembly."));
-        AssertThrow(imageIds.size() == imageCharges.size() &&
-                      imageIds.size() == imagePositions.size(),
-                    dealii::ExcMessage(
-                      "DFT-FE Error: inconsistent ASL image data in local-potential force assembly."));
-        for (const dftfe::Int atomId : imageIds)
-          AssertThrow(
-            atomId >= 0 &&
-              static_cast<dftfe::uInt>(atomId) < d_dftParams.natoms,
-            dealii::ExcMessage(
-              "DFT-FE Error: invalid ASL image owner in local-potential force assembly."));
-        auto getAtomCharge = [&](const dftfe::uInt atomId) {
-          return d_dftParams.isPseudopotential ? atomLocations[atomId][1] :
-                                                 atomLocations[atomId][0];
-        };
+    AssertThrow(
+      atomLocations.size() == d_dftParams.natoms &&
+        smearedChargeWidths.size() == d_dftParams.natoms,
+      dealii::ExcMessage(
+        "DFT-FE Error: incomplete ASL atom data in local-potential force assembly."));
+    AssertThrow(
+      imageIds.size() == imageCharges.size() &&
+        imageIds.size() == imagePositions.size(),
+      dealii::ExcMessage(
+        "DFT-FE Error: inconsistent ASL image data in local-potential force assembly."));
+    for (const dftfe::Int atomId : imageIds)
+      AssertThrow(
+        atomId >= 0 && static_cast<dftfe::uInt>(atomId) < d_dftParams.natoms,
+        dealii::ExcMessage(
+          "DFT-FE Error: invalid ASL image owner in local-potential force assembly."));
+    auto getAtomCharge = [&](const dftfe::uInt atomId) {
+      return d_dftParams.isPseudopotential ? atomLocations[atomId][1] :
+                                             atomLocations[atomId][0];
+    };
 
-        const dftfe::uInt domainTaskId =
-          dealii::Utilities::MPI::this_mpi_process(d_mpiCommDomain);
-        const dftfe::uInt nDomainTasks =
-          dealii::Utilities::MPI::n_mpi_processes(d_mpiCommDomain);
-        const dftfe::uInt pairAtomBegin =
-          d_dftParams.natoms * domainTaskId / nDomainTasks;
-        const dftfe::uInt pairAtomEnd =
-          d_dftParams.natoms * (domainTaskId + 1) / nDomainTasks;
+    const dftfe::uInt domainTaskId =
+      dealii::Utilities::MPI::this_mpi_process(d_mpiCommDomain);
+    const dftfe::uInt nDomainTasks =
+      dealii::Utilities::MPI::n_mpi_processes(d_mpiCommDomain);
+    const dftfe::uInt pairAtomBegin =
+      d_dftParams.natoms * domainTaskId / nDomainTasks;
+    const dftfe::uInt pairAtomEnd =
+      d_dftParams.natoms * (domainTaskId + 1) / nDomainTasks;
 
-        std::vector<std::pair<dealii::Point<3>, double>> enclosingBallCells(
-          nCells);
-        for (dftfe::uInt iCell = 0; iCell < nCells; ++iCell)
+    std::vector<std::pair<dealii::Point<3>, double>> enclosingBallCells(nCells);
+    for (dftfe::uInt iCell = 0; iCell < nCells; ++iCell)
+      {
+        cellPtr = d_basisOperationsPtrElectroHost->getCellIterator(iCell);
+        enclosingBallCells[iCell] = cellPtr->enclosing_ball();
+      }
+
+    std::vector<std::vector<dftfe::uInt>> candidateCellsByAtom(
+      d_dftParams.natoms);
+    std::vector<std::map<dftfe::uInt, std::vector<dftfe::uInt>>>
+      imageCandidatesByCellAndAtom(nCells);
+    for (const auto &cellAtomIds : bCellNonTrivialAtomIds)
+      {
+        const dftfe::uInt iCell =
+          d_basisOperationsPtrElectroHost->cellIndex(cellAtomIds.first);
+        for (const dftfe::uInt atomId : cellAtomIds.second)
+          if (atomId < d_dftParams.natoms)
+            candidateCellsByAtom[atomId].push_back(iCell);
+      }
+    for (const auto &cellImageIds : bCellNonTrivialAtomImageIds)
+      {
+        const dftfe::uInt iCell =
+          d_basisOperationsPtrElectroHost->cellIndex(cellImageIds.first);
+        for (const dftfe::uInt imageId : cellImageIds.second)
+          if (imageId < imageIds.size())
+            {
+              imageCandidatesByCellAndAtom[iCell][imageIds[imageId]].push_back(
+                imageId);
+              candidateCellsByAtom[imageIds[imageId]].push_back(iCell);
+            }
+      }
+    for (const auto &atomCellValues : pseudoVLocAtoms)
+      {
+        const dftfe::uInt atomOrImageId = atomCellValues.first;
+        if (atomOrImageId < d_dftParams.natoms)
+          {
+            for (const auto &cellValues : atomCellValues.second)
+              {
+                candidateCellsByAtom[atomOrImageId].push_back(
+                  d_basisOperationsPtrElectroHost->cellIndex(cellValues.first));
+              }
+          }
+        else
+          {
+            const dftfe::uInt imageId = atomOrImageId - d_dftParams.natoms;
+            if (imageId >= imageIds.size())
+              continue;
+            const dftfe::uInt atomId = imageIds[imageId];
+            for (const auto &cellValues : atomCellValues.second)
+              {
+                const dftfe::uInt iCell =
+                  d_basisOperationsPtrElectroHost->cellIndex(cellValues.first);
+                candidateCellsByAtom[atomId].push_back(iCell);
+                imageCandidatesByCellAndAtom[iCell][atomId].push_back(imageId);
+              }
+          }
+      }
+    for (std::vector<dftfe::uInt> &candidateCells : candidateCellsByAtom)
+      {
+        std::sort(candidateCells.begin(), candidateCells.end());
+        candidateCells.erase(std::unique(candidateCells.begin(),
+                                         candidateCells.end()),
+                             candidateCells.end());
+      }
+    for (auto &imageCandidatesByAtom : imageCandidatesByCellAndAtom)
+      for (auto &atomImages : imageCandidatesByAtom)
+        {
+          std::vector<dftfe::uInt> &imageCandidates = atomImages.second;
+          std::sort(imageCandidates.begin(), imageCandidates.end());
+          imageCandidates.erase(std::unique(imageCandidates.begin(),
+                                            imageCandidates.end()),
+                                imageCandidates.end());
+        }
+
+    std::vector<double> localCorrectionValues(nQuadsPerCell, 0.0);
+    for (dftfe::uInt iAtom = 0; iAtom < d_dftParams.natoms; ++iAtom)
+      {
+        const double atomCharge   = getAtomCharge(iAtom);
+        const double atomWidth    = smearedChargeWidths[iAtom];
+        const auto   pseudoAtomIt = pseudoVLocAtoms.find(iAtom);
+        for (const dftfe::uInt iCell : candidateCellsByAtom[iAtom])
           {
             cellPtr = d_basisOperationsPtrElectroHost->getCellIterator(iCell);
-            enclosingBallCells[iCell] = cellPtr->enclosing_ball();
-          }
+            const dealii::CellId cellId = cellPtr->id();
+            const double        *quadPointsCurrentCell =
+              d_basisOperationsPtrElectroHost->quadPoints().data() +
+              iCell * nQuadsPerCell * 3;
+            const double *JxWValues =
+              d_basisOperationsPtrElectroHost->JxWBasisData().data() +
+              nQuadsPerCell * iCell;
+            std::fill(localCorrectionValues.begin(),
+                      localCorrectionValues.end(),
+                      0.0);
+            bool isTrivial = true;
 
-        std::vector<std::vector<dftfe::uInt>> candidateCellsByAtom(
-          d_dftParams.natoms);
-        std::vector<std::map<dftfe::uInt, std::vector<dftfe::uInt>>>
-          imageCandidatesByCellAndAtom(nCells);
-        for (const auto &cellAtomIds : bCellNonTrivialAtomIds)
-          {
-            const dftfe::uInt iCell =
-              d_basisOperationsPtrElectroHost->cellIndex(cellAtomIds.first);
-            for (const dftfe::uInt atomId : cellAtomIds.second)
-              if (atomId < d_dftParams.natoms)
-                candidateCellsByAtom[atomId].push_back(iCell);
-          }
-        for (const auto &cellImageIds : bCellNonTrivialAtomImageIds)
-          {
-            const dftfe::uInt iCell =
-              d_basisOperationsPtrElectroHost->cellIndex(cellImageIds.first);
-            for (const dftfe::uInt imageId : cellImageIds.second)
-              if (imageId < imageIds.size())
+            const std::vector<double> *pseudoCellValues = nullptr;
+            if (pseudoAtomIt != pseudoVLocAtoms.end())
+              {
+                const auto cellIt = pseudoAtomIt->second.find(cellId);
+                if (cellIt != pseudoAtomIt->second.end())
+                  pseudoCellValues = &cellIt->second;
+              }
+
+            bool includePhysicalAtom = pseudoCellValues != nullptr;
+            if (!includePhysicalAtom)
+              {
+                const std::pair<dealii::Point<3>, double> &enclosingBallCell =
+                  enclosingBallCells[iCell];
+                const double atomCellDistance =
+                  enclosingBallCell.first.distance(
+                    dealii::Point<3>(atomLocations[iAtom][2],
+                                     atomLocations[iAtom][3],
+                                     atomLocations[iAtom][4]));
+                includePhysicalAtom =
+                  atomCellDistance <= enclosingBallCell.second + atomWidth;
+              }
+
+            if (includePhysicalAtom)
+              for (dftfe::uInt iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
                 {
-                  imageCandidatesByCellAndAtom[iCell][imageIds[imageId]]
-                    .push_back(imageId);
-                  candidateCellsByAtom[imageIds[imageId]].push_back(iCell);
+                  const double *quadPoint = quadPointsCurrentCell + iQuad * 3;
+                  const double  dist =
+                    distance3(quadPoint, atomLocations[iAtom].data() + 2);
+                  const double coulomb = -atomCharge / dist;
+                  const double phiG =
+                    dist > atomWidth ?
+                      coulomb :
+                      -atomCharge * dftUtils::smearedPot(dist, atomWidth);
+                  const double localCorrection =
+                    (pseudoCellValues == nullptr ? coulomb :
+                                                   (*pseudoCellValues)[iQuad]) -
+                    phiG;
+                  localCorrectionValues[iQuad] += localCorrection;
+                  if (std::abs(localCorrection) > 1.0e-12)
+                    isTrivial = false;
+                  if (computeStress)
+                    for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
+                      for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
+                        stressContribLPSP[3 * iDim + jDim] -=
+                          gradRhoTotalOutValuesLpsp[iCell * nQuadsPerCell * 3 +
+                                                    iQuad * 3 + iDim] *
+                          localCorrection *
+                          (quadPoint[jDim] - atomLocations[iAtom][2 + jDim]) *
+                          JxWValues[iQuad];
                 }
-          }
-        for (const auto &atomCellValues : pseudoVLocAtoms)
-          {
-            const dftfe::uInt atomOrImageId = atomCellValues.first;
-            if (atomOrImageId < d_dftParams.natoms)
-              {
-                for (const auto &cellValues : atomCellValues.second)
-                  {
-                    candidateCellsByAtom[atomOrImageId].push_back(
-                      d_basisOperationsPtrElectroHost->cellIndex(
-                        cellValues.first));
-                  }
-              }
-            else
-              {
-                const dftfe::uInt imageId = atomOrImageId - d_dftParams.natoms;
-                if (imageId >= imageIds.size())
-                  continue;
-                const dftfe::uInt atomId = imageIds[imageId];
-                for (const auto &cellValues : atomCellValues.second)
-                  {
-                    const dftfe::uInt iCell =
-                      d_basisOperationsPtrElectroHost->cellIndex(
-                        cellValues.first);
-                    candidateCellsByAtom[atomId].push_back(iCell);
-                    imageCandidatesByCellAndAtom[iCell][atomId].push_back(
-                      imageId);
-                  }
-              }
-          }
-        for (std::vector<dftfe::uInt> &candidateCells : candidateCellsByAtom)
-          {
-            std::sort(candidateCells.begin(), candidateCells.end());
-            candidateCells.erase(
-              std::unique(candidateCells.begin(), candidateCells.end()),
-              candidateCells.end());
-          }
-        for (auto &imageCandidatesByAtom : imageCandidatesByCellAndAtom)
-          for (auto &atomImages : imageCandidatesByAtom)
-            {
-              std::vector<dftfe::uInt> &imageCandidates = atomImages.second;
-              std::sort(imageCandidates.begin(), imageCandidates.end());
-              imageCandidates.erase(std::unique(imageCandidates.begin(),
-                                                imageCandidates.end()),
-                                    imageCandidates.end());
-            }
 
-        std::vector<double> localCorrectionValues(nQuadsPerCell, 0.0);
-        for (dftfe::uInt iAtom = 0; iAtom < d_dftParams.natoms; ++iAtom)
-          {
-            const double atomCharge   = getAtomCharge(iAtom);
-            const double atomWidth    = smearedChargeWidths[iAtom];
-            const auto   pseudoAtomIt = pseudoVLocAtoms.find(iAtom);
-            for (const dftfe::uInt iCell : candidateCellsByAtom[iAtom])
-              {
-                cellPtr =
-                  d_basisOperationsPtrElectroHost->getCellIterator(iCell);
-                const dealii::CellId cellId = cellPtr->id();
-                const double        *quadPointsCurrentCell =
-                  d_basisOperationsPtrElectroHost->quadPoints().data() +
-                  iCell * nQuadsPerCell * 3;
-                const double *JxWValues =
-                  d_basisOperationsPtrElectroHost->JxWBasisData().data() +
-                  nQuadsPerCell * iCell;
-                std::fill(localCorrectionValues.begin(),
-                          localCorrectionValues.end(),
-                          0.0);
-                bool isTrivial = true;
-
-                const std::vector<double> *pseudoCellValues = nullptr;
-                if (pseudoAtomIt != pseudoVLocAtoms.end())
-                  {
-                    const auto cellIt = pseudoAtomIt->second.find(cellId);
-                    if (cellIt != pseudoAtomIt->second.end())
-                      pseudoCellValues = &cellIt->second;
-                  }
-
-                bool includePhysicalAtom = pseudoCellValues != nullptr;
-                if (!includePhysicalAtom)
-                  {
-                    const std::pair<dealii::Point<3>, double>
-                                &enclosingBallCell = enclosingBallCells[iCell];
-                    const double atomCellDistance =
-                      enclosingBallCell.first.distance(
-                        dealii::Point<3>(atomLocations[iAtom][2],
-                                         atomLocations[iAtom][3],
-                                         atomLocations[iAtom][4]));
-                    includePhysicalAtom =
-                      atomCellDistance <= enclosingBallCell.second + atomWidth;
-                  }
-
-                if (includePhysicalAtom)
+            const auto atomImagesIt =
+              imageCandidatesByCellAndAtom[iCell].find(iAtom);
+            if (atomImagesIt != imageCandidatesByCellAndAtom[iCell].end())
+              for (const dftfe::uInt iImage : atomImagesIt->second)
+                {
+                  const auto pseudoImageIt =
+                    pseudoVLocAtoms.find(d_dftParams.natoms + iImage);
+                  const std::vector<double> *pseudoImageCellValues = nullptr;
+                  if (pseudoImageIt != pseudoVLocAtoms.end())
+                    {
+                      const auto cellIt = pseudoImageIt->second.find(cellId);
+                      if (cellIt != pseudoImageIt->second.end())
+                        pseudoImageCellValues = &cellIt->second;
+                    }
                   for (dftfe::uInt iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
                     {
                       const double *quadPoint =
                         quadPointsCurrentCell + iQuad * 3;
                       const double dist =
-                        distance3(quadPoint, atomLocations[iAtom].data() + 2);
-                      const double coulomb = -atomCharge / dist;
+                        distance3(quadPoint, imagePositions[iImage].data());
+                      const double coulomb = -imageCharges[iImage] / dist;
                       const double phiG =
                         dist > atomWidth ?
                           coulomb :
-                          -atomCharge * dftUtils::smearedPot(dist, atomWidth);
+                          -imageCharges[iImage] *
+                            dftUtils::smearedPot(dist, atomWidth);
                       const double localCorrection =
-                        (pseudoCellValues == nullptr ?
+                        (pseudoImageCellValues == nullptr ?
                            coulomb :
-                           (*pseudoCellValues)[iQuad]) -
+                           (*pseudoImageCellValues)[iQuad]) -
                         phiG;
                       localCorrectionValues[iQuad] += localCorrection;
                       if (std::abs(localCorrection) > 1.0e-12)
@@ -2797,218 +2817,165 @@ namespace dftfe
                                                           3 +
                                                         iQuad * 3 + iDim] *
                               localCorrection *
-                              (quadPoint[jDim] -
-                               atomLocations[iAtom][2 + jDim]) *
+                              (quadPoint[jDim] - imagePositions[iImage][jDim]) *
                               JxWValues[iQuad];
                     }
-
-                const auto atomImagesIt =
-                  imageCandidatesByCellAndAtom[iCell].find(iAtom);
-                if (atomImagesIt != imageCandidatesByCellAndAtom[iCell].end())
-                  for (const dftfe::uInt iImage : atomImagesIt->second)
-                    {
-                      const auto pseudoImageIt =
-                        pseudoVLocAtoms.find(d_dftParams.natoms + iImage);
-                      const std::vector<double> *pseudoImageCellValues =
-                        nullptr;
-                      if (pseudoImageIt != pseudoVLocAtoms.end())
-                        {
-                          const auto cellIt =
-                            pseudoImageIt->second.find(cellId);
-                          if (cellIt != pseudoImageIt->second.end())
-                            pseudoImageCellValues = &cellIt->second;
-                        }
-                      for (dftfe::uInt iQuad = 0; iQuad < nQuadsPerCell;
-                           ++iQuad)
-                        {
-                          const double *quadPoint =
-                            quadPointsCurrentCell + iQuad * 3;
-                          const double dist = distance3(
-                            quadPoint, imagePositions[iImage].data());
-                          const double coulomb = -imageCharges[iImage] / dist;
-                          const double phiG =
-                            dist > atomWidth ?
-                              coulomb :
-                              -imageCharges[iImage] *
-                                dftUtils::smearedPot(dist, atomWidth);
-                          const double localCorrection =
-                            (pseudoImageCellValues == nullptr ?
-                               coulomb :
-                               (*pseudoImageCellValues)[iQuad]) -
-                            phiG;
-                          localCorrectionValues[iQuad] += localCorrection;
-                          if (std::abs(localCorrection) > 1.0e-12)
-                            isTrivial = false;
-                          if (computeStress)
-                            for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
-                              for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
-                                stressContribLPSP[3 * iDim + jDim] -=
-                                  gradRhoTotalOutValuesLpsp
-                                    [iCell * nQuadsPerCell * 3 +
-                                     iQuad * 3 + iDim] *
-                                  localCorrection *
-                                  (quadPoint[jDim] -
-                                   imagePositions[iImage][jDim]) *
-                                  JxWValues[iQuad];
-                        }
-                    }
-
-                if (isTrivial)
-                  continue;
-                for (dftfe::uInt iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
-                  for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
-                    forceContribLPSP[3 * iAtom + iDim] +=
-                      gradRhoTotalOutValuesLpsp[iCell * nQuadsPerCell * 3 +
-                                                iQuad * 3 + iDim] *
-                      localCorrectionValues[iQuad] * JxWValues[iQuad];
-              }
-
-            if (iAtom >= pairAtomBegin && iAtom < pairAtomEnd)
-              {
-                for (dftfe::uInt jAtom = 0; jAtom < d_dftParams.natoms; ++jAtom)
-                  if (jAtom != iAtom)
-                    {
-                      const double dx =
-                        atomLocations[iAtom][2] - atomLocations[jAtom][2];
-                      const double dy =
-                        atomLocations[iAtom][3] - atomLocations[jAtom][3];
-                      const double dz =
-                        atomLocations[iAtom][4] - atomLocations[jAtom][4];
-                      const double separation =
-                        std::sqrt(dx * dx + dy * dy + dz * dz);
-                      const double correctionDer =
-                        -atomCharge * getAtomCharge(jAtom) *
-                        analyticSmearedLoadManager
-                          .pairInteractionDerivativeDifference(iAtom,
-                                                               jAtom,
-                                                               separation);
-                      forceContribLPSP[3 * iAtom + 0] +=
-                        correctionDer * dx / separation;
-                      forceContribLPSP[3 * iAtom + 1] +=
-                        correctionDer * dy / separation;
-                      forceContribLPSP[3 * iAtom + 2] +=
-                        correctionDer * dz / separation;
-                      if (computeStress && jAtom > iAtom)
-                        for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
-                          {
-                            const double forcePair =
-                              correctionDer *
-                              (iDim == 0 ? dx : (iDim == 1 ? dy : dz)) /
-                              separation;
-                            stressContribLPSP[3 * iDim + 0] += forcePair * dx;
-                            stressContribLPSP[3 * iDim + 1] += forcePair * dy;
-                            stressContribLPSP[3 * iDim + 2] += forcePair * dz;
-                          }
-                    }
-
-                for (dftfe::uInt iImage = 0; iImage < imageIds.size(); ++iImage)
-                  {
-                    const double dx =
-                      atomLocations[iAtom][2] - imagePositions[iImage][0];
-                    const double dy =
-                      atomLocations[iAtom][3] - imagePositions[iImage][1];
-                    const double dz =
-                      atomLocations[iAtom][4] - imagePositions[iImage][2];
-                    const double separation =
-                      std::sqrt(dx * dx + dy * dy + dz * dz);
-                    const double correctionDer =
-                      -atomCharge * imageCharges[iImage] *
-                      analyticSmearedLoadManager
-                        .pairInteractionDerivativeDifference(
-                          iAtom, imageIds[iImage], separation);
-                    forceContribLPSP[3 * iAtom + 0] +=
-                      correctionDer * dx / separation;
-                    forceContribLPSP[3 * iAtom + 1] +=
-                      correctionDer * dy / separation;
-                    forceContribLPSP[3 * iAtom + 2] +=
-                      correctionDer * dz / separation;
-                    if (computeStress)
-                      for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
-                        {
-                          // Atom-image pairs are represented from both image
-                          // directions; 0.5 prevents double counting. Physical
-                          // atom pairs above are counted once via jAtom > iAtom.
-                          const double forcePair =
-                            0.5 * correctionDer *
-                            (iDim == 0 ? dx : (iDim == 1 ? dy : dz)) /
-                            separation;
-                          stressContribLPSP[3 * iDim + 0] += forcePair * dx;
-                          stressContribLPSP[3 * iDim + 1] += forcePair * dy;
-                          stressContribLPSP[3 * iDim + 2] += forcePair * dz;
-                        }
-                  }
-              }
-          }
-
-        if (computeForce && !floatingNuclearCharges)
-          for (dftfe::uInt iCell = 0; iCell < nCells; ++iCell)
-            {
-              auto currentCellPtr =
-                d_basisOperationsPtrElectroHost->getCellIterator(iCell);
-              const double *JxWValues =
-                d_basisOperationsPtrElectroHost->JxWBasisData().data() +
-                nQuadsPerCell * iCell;
-              const auto pseudoValuesIt =
-                pseudoVLocValues.find(currentCellPtr->id());
-              AssertThrow(
-                pseudoValuesIt != pseudoVLocValues.end(),
-                dealii::ExcMessage(
-                  "DFT-FE Error: missing local-potential values in ASL force assembly."));
-              const std::vector<double> &tempPseudoVal =
-                pseudoValuesIt->second;
-
-              dealii::DoFHandler<3>::active_cell_iterator currentCellPtrForce(
-                &d_dofHandlerForce.get_triangulation(),
-                currentCellPtr->level(),
-                currentCellPtr->index(),
-                &d_dofHandlerForce);
-              feValuesForce.reinit(currentCellPtrForce);
-              currentCellPtrForce->get_dof_indices(localDofIndices);
-              std::fill(cellContribution.begin(), cellContribution.end(), 0.0);
-              for (dftfe::uInt iDoF = 0; iDoF < FEForce.dofs_per_cell; ++iDoF)
-                {
-                  const dftfe::uInt iDim =
-                    FEForce.system_to_component_index(iDoF).first;
-                  for (dftfe::uInt iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
-                    {
-                      const double shapeValue =
-                        feValuesForce.shape_value(iDoF, iQuad);
-                      cellContribution[iDoF] -=
-                        gradRhoTotalOutValuesLpsp[iCell * nQuadsPerCell * 3 +
-                                                  iQuad * 3 + iDim] *
-                        tempPseudoVal[iQuad] * shapeValue * JxWValues[iQuad];
-                    }
                 }
-              d_affineConstraintsForce.distribute_local_to_global(
-                cellContribution, localDofIndices, d_configForceContribsLinFE);
-            }
 
-        if (computeForce)
-          {
-            MPI_Allreduce(MPI_IN_PLACE,
-                          forceContribLPSP.data(),
-                          3 * d_dftParams.natoms,
-                          MPI_DOUBLE,
-                          MPI_SUM,
-                          d_mpiCommDomain);
-            for (dftfe::uInt iAtom = 0; iAtom < d_dftParams.natoms; iAtom++)
-              for (dftfe::uInt iDim = 0; iDim < 3; iDim++)
-                d_forceTotal[3 * iAtom + iDim] +=
-                  forceContribLPSP[3 * iAtom + iDim];
+            if (isTrivial)
+              continue;
+            for (dftfe::uInt iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
+              for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
+                forceContribLPSP[3 * iAtom + iDim] +=
+                  gradRhoTotalOutValuesLpsp[iCell * nQuadsPerCell * 3 +
+                                            iQuad * 3 + iDim] *
+                  localCorrectionValues[iQuad] * JxWValues[iQuad];
           }
-        if (computeStress)
+
+        if (iAtom >= pairAtomBegin && iAtom < pairAtomEnd)
           {
-            MPI_Allreduce(MPI_IN_PLACE,
-                          stressContribLPSP.data(),
-                          9,
-                          MPI_DOUBLE,
-                          MPI_SUM,
-                          d_mpiCommDomain);
-            for (dftfe::uInt iDim = 0; iDim < 3; iDim++)
-              for (dftfe::uInt jDim = 0; jDim < 3; jDim++)
-                d_stressTotal[3 * iDim + jDim] +=
-                  stressContribLPSP[3 * iDim + jDim];
+            for (dftfe::uInt jAtom = 0; jAtom < d_dftParams.natoms; ++jAtom)
+              if (jAtom != iAtom)
+                {
+                  const double dx =
+                    atomLocations[iAtom][2] - atomLocations[jAtom][2];
+                  const double dy =
+                    atomLocations[iAtom][3] - atomLocations[jAtom][3];
+                  const double dz =
+                    atomLocations[iAtom][4] - atomLocations[jAtom][4];
+                  const double separation =
+                    std::sqrt(dx * dx + dy * dy + dz * dz);
+                  const double correctionDer =
+                    -atomCharge * getAtomCharge(jAtom) *
+                    analyticSmearedLoadManager
+                      .pairInteractionDerivativeDifference(iAtom,
+                                                           jAtom,
+                                                           separation);
+                  forceContribLPSP[3 * iAtom + 0] +=
+                    correctionDer * dx / separation;
+                  forceContribLPSP[3 * iAtom + 1] +=
+                    correctionDer * dy / separation;
+                  forceContribLPSP[3 * iAtom + 2] +=
+                    correctionDer * dz / separation;
+                  if (computeStress && jAtom > iAtom)
+                    for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
+                      {
+                        const double forcePair =
+                          correctionDer *
+                          (iDim == 0 ? dx : (iDim == 1 ? dy : dz)) / separation;
+                        stressContribLPSP[3 * iDim + 0] += forcePair * dx;
+                        stressContribLPSP[3 * iDim + 1] += forcePair * dy;
+                        stressContribLPSP[3 * iDim + 2] += forcePair * dz;
+                      }
+                }
+
+            for (dftfe::uInt iImage = 0; iImage < imageIds.size(); ++iImage)
+              {
+                const double dx =
+                  atomLocations[iAtom][2] - imagePositions[iImage][0];
+                const double dy =
+                  atomLocations[iAtom][3] - imagePositions[iImage][1];
+                const double dz =
+                  atomLocations[iAtom][4] - imagePositions[iImage][2];
+                const double separation =
+                  std::sqrt(dx * dx + dy * dy + dz * dz);
+                const double correctionDer =
+                  -atomCharge * imageCharges[iImage] *
+                  analyticSmearedLoadManager
+                    .pairInteractionDerivativeDifference(iAtom,
+                                                         imageIds[iImage],
+                                                         separation);
+                forceContribLPSP[3 * iAtom + 0] +=
+                  correctionDer * dx / separation;
+                forceContribLPSP[3 * iAtom + 1] +=
+                  correctionDer * dy / separation;
+                forceContribLPSP[3 * iAtom + 2] +=
+                  correctionDer * dz / separation;
+                if (computeStress)
+                  for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
+                    {
+                      // Atom-image pairs are represented from both image
+                      // directions; 0.5 prevents double counting. Physical
+                      // atom pairs above are counted once via jAtom > iAtom.
+                      const double forcePair =
+                        0.5 * correctionDer *
+                        (iDim == 0 ? dx : (iDim == 1 ? dy : dz)) / separation;
+                      stressContribLPSP[3 * iDim + 0] += forcePair * dx;
+                      stressContribLPSP[3 * iDim + 1] += forcePair * dy;
+                      stressContribLPSP[3 * iDim + 2] += forcePair * dz;
+                    }
+              }
           }
+      }
+
+    if (computeForce && !floatingNuclearCharges)
+      for (dftfe::uInt iCell = 0; iCell < nCells; ++iCell)
+        {
+          auto currentCellPtr =
+            d_basisOperationsPtrElectroHost->getCellIterator(iCell);
+          const double *JxWValues =
+            d_basisOperationsPtrElectroHost->JxWBasisData().data() +
+            nQuadsPerCell * iCell;
+          const auto pseudoValuesIt =
+            pseudoVLocValues.find(currentCellPtr->id());
+          AssertThrow(
+            pseudoValuesIt != pseudoVLocValues.end(),
+            dealii::ExcMessage(
+              "DFT-FE Error: missing local-potential values in ASL force assembly."));
+          const std::vector<double> &tempPseudoVal = pseudoValuesIt->second;
+
+          dealii::DoFHandler<3>::active_cell_iterator currentCellPtrForce(
+            &d_dofHandlerForce.get_triangulation(),
+            currentCellPtr->level(),
+            currentCellPtr->index(),
+            &d_dofHandlerForce);
+          feValuesForce.reinit(currentCellPtrForce);
+          currentCellPtrForce->get_dof_indices(localDofIndices);
+          std::fill(cellContribution.begin(), cellContribution.end(), 0.0);
+          for (dftfe::uInt iDoF = 0; iDoF < FEForce.dofs_per_cell; ++iDoF)
+            {
+              const dftfe::uInt iDim =
+                FEForce.system_to_component_index(iDoF).first;
+              for (dftfe::uInt iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
+                {
+                  const double shapeValue =
+                    feValuesForce.shape_value(iDoF, iQuad);
+                  cellContribution[iDoF] -=
+                    gradRhoTotalOutValuesLpsp[iCell * nQuadsPerCell * 3 +
+                                              iQuad * 3 + iDim] *
+                    tempPseudoVal[iQuad] * shapeValue * JxWValues[iQuad];
+                }
+            }
+          d_affineConstraintsForce.distribute_local_to_global(
+            cellContribution, localDofIndices, d_configForceContribsLinFE);
+        }
+
+    if (computeForce)
+      {
+        MPI_Allreduce(MPI_IN_PLACE,
+                      forceContribLPSP.data(),
+                      3 * d_dftParams.natoms,
+                      MPI_DOUBLE,
+                      MPI_SUM,
+                      d_mpiCommDomain);
+        for (dftfe::uInt iAtom = 0; iAtom < d_dftParams.natoms; iAtom++)
+          for (dftfe::uInt iDim = 0; iDim < 3; iDim++)
+            d_forceTotal[3 * iAtom + iDim] +=
+              forceContribLPSP[3 * iAtom + iDim];
+      }
+    if (computeStress)
+      {
+        MPI_Allreduce(MPI_IN_PLACE,
+                      stressContribLPSP.data(),
+                      9,
+                      MPI_DOUBLE,
+                      MPI_SUM,
+                      d_mpiCommDomain);
+        for (dftfe::uInt iDim = 0; iDim < 3; iDim++)
+          for (dftfe::uInt jDim = 0; jDim < 3; jDim++)
+            d_stressTotal[3 * iDim + jDim] +=
+              stressContribLPSP[3 * iDim + jDim];
+      }
   }
 
 
@@ -3026,11 +2993,10 @@ namespace dftfe
       &gradRhoTotalOutValuesLpsp,
     const std::map<dealii::CellId, std::vector<double>> &pseudoVLocValues,
     const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
-                                &pseudoVLocAtoms,
-    const dealii::DoFHandler<3> &dofHandlerRhoNodal,
-    const vselfBinsManager      &vselfBinsManager,
-    const analyticSmearedLoadManager<memorySpace>
-      &analyticSmearedLoadManager,
+                                                  &pseudoVLocAtoms,
+    const dealii::DoFHandler<3>                   &dofHandlerRhoNodal,
+    const vselfBinsManager                        &vselfBinsManager,
+    const analyticSmearedLoadManager<memorySpace> &analyticSmearedLoadManager,
     const std::vector<distributedCPUVec<double>>
       &vselfFieldGateauxDerStrainFDBins,
     const std::map<dealii::CellId, std::vector<dftfe::uInt>>
@@ -3058,8 +3024,7 @@ namespace dftfe
                                       computeStress);
         return;
       }
-    const std::vector<double> &smearedChargeWidths =
-      legacySmearedChargeWidths;
+    const std::vector<double> &smearedChargeWidths = legacySmearedChargeWidths;
     const std::vector<double> &smearedChargeScaling =
       legacySmearedChargeScaling;
     std::vector<double> forceContribLPSP(3 * d_dftParams.natoms, 0.0);

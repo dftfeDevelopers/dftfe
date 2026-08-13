@@ -56,8 +56,7 @@ namespace dftfe
   void
   dftClass<memorySpace>::computeNuclearSelfPotential()
   {
-    if (d_dftParamsPtr->smearedNuclearChargePathway ==
-        "ANALYTIC_SMEARED_LOAD")
+    if (d_dftParamsPtr->smearedNuclearChargePathway == "ANALYTIC_SMEARED_LOAD")
       {
         initAnalyticSmearedLoadData();
         return;

@@ -1261,8 +1261,7 @@ namespace dftfe
 
 
     if (d_dftParamsPtr->smearedNuclearCharges &&
-        d_dftParamsPtr->smearedNuclearChargePathway !=
-          "ANALYTIC_SMEARED_LOAD")
+        d_dftParamsPtr->smearedNuclearChargePathway != "ANALYTIC_SMEARED_LOAD")
       calculateSmearedChargeWidths();
 
     if (d_dftParamsPtr->verbosity >= 4)

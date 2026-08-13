@@ -1777,7 +1777,7 @@ namespace dftfe
       }
 
       prm.leave_subsection();
-      isPseudopotential   = prm.get_bool("PSEUDOPOTENTIAL CALCULATION");
+      isPseudopotential = prm.get_bool("PSEUDOPOTENTIAL CALCULATION");
       // Both compatibility inputs are known only at this point in parsing.
       if (!isPseudopotential || !smearedNuclearCharges)
         smearedNuclearChargePathway = "LEGACY_VSELF";

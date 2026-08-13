@@ -33,13 +33,13 @@ namespace dftfe
     const double                            minDist,
     const double                            pspCutOffTrunc,
     const std::shared_ptr<oncvClass<dataTypes::number, memorySpace>>
-                                              &oncvClassPtr,
-    const dealii::DoFHandler<3>             &dofHandlerPRefined,
-    const dealii::MatrixFree<3, double>     &matrixFreeDataPRefined,
-    const dftfe::uInt                        smearedChargeQuadratureId,
-    const MPI_Comm                          &mpiCommunicator,
-    const dftParameters                     &dftParams,
-    dealii::ConditionalOStream              &pcout)
+                                        &oncvClassPtr,
+    const dealii::DoFHandler<3>         &dofHandlerPRefined,
+    const dealii::MatrixFree<3, double> &matrixFreeDataPRefined,
+    const dftfe::uInt                    smearedChargeQuadratureId,
+    const MPI_Comm                      &mpiCommunicator,
+    const dftParameters                 &dftParams,
+    dealii::ConditionalOStream          &pcout)
   {
     const dftfe::uInt numberGlobalAtoms = atomLocations.size();
 
@@ -79,9 +79,8 @@ namespace dftfe
         std::map<dftfe::uInt, double> atomTypeToWidth;
 
         auto getAtomMeshSize = [&](const dftfe::uInt atomId) {
-          if (dftParams.meshSizesFile != "" &&
-              atomId < meshSizes.size() && !meshSizes[atomId].empty() &&
-              meshSizes[atomId][0] > 0.0)
+          if (dftParams.meshSizesFile != "" && atomId < meshSizes.size() &&
+              !meshSizes[atomId].empty() && meshSizes[atomId][0] > 0.0)
             return meshSizes[atomId][0];
           return dftParams.meshSizeOuterBall;
         };
@@ -145,7 +144,8 @@ namespace dftfe
                           static_cast<double>(nRadiusSamples - 1);
             else if (dftParams.verbosity >= 1)
               pcout << "Warning: no stable Coulombic tail was identified for Z="
-                    << atomicNumber << "; using the full local-potential radius "
+                    << atomicNumber
+                    << "; using the full local-potential radius "
                     << maxLocalPotentialRadius << "." << std::endl;
             if (!std::isfinite(coreWidth) || coreWidth <= 0.0)
               coreWidth = d_referenceSmearedChargeWidth;
@@ -207,9 +207,8 @@ namespace dftfe
           }
       }
 
-    const bool hasPeriodicDirection = dftParams.periodicX ||
-                                      dftParams.periodicY ||
-                                      dftParams.periodicZ;
+    const bool hasPeriodicDirection =
+      dftParams.periodicX || dftParams.periodicY || dftParams.periodicZ;
     const std::array<bool, 3> periodicDirection = {
       static_cast<bool>(dftParams.periodicX),
       static_cast<bool>(dftParams.periodicY),
@@ -329,7 +328,7 @@ namespace dftfe
 
     const auto getAtomCharge = [&](const dftfe::uInt atomId) {
       return dftParams.isPseudopotential ? atomLocations[atomId][1] :
-                                                 atomLocations[atomId][0];
+                                           atomLocations[atomId][0];
     };
 
     const auto getAtomPoint = [&](const dftfe::uInt atomId) {
@@ -347,20 +346,17 @@ namespace dftfe
 
     std::vector<dealii::Point<3>> imagePoints(imagePositions.size());
     std::vector<dftfe::uInt>      imageAtomIds(imagePositions.size());
-    std::vector<double> imageWidths(imagePositions.size(), 0.0);
-    for (dftfe::uInt iImage = 0; iImage < imagePositions.size();
-         ++iImage)
+    std::vector<double>           imageWidths(imagePositions.size(), 0.0);
+    for (dftfe::uInt iImage = 0; iImage < imagePositions.size(); ++iImage)
       {
-        imagePoints[iImage] =
-          dealii::Point<3>(imagePositions[iImage][0],
-                           imagePositions[iImage][1],
-                           imagePositions[iImage][2]);
+        imagePoints[iImage]  = dealii::Point<3>(imagePositions[iImage][0],
+                                               imagePositions[iImage][1],
+                                               imagePositions[iImage][2]);
         imageAtomIds[iImage] = imageIds[iImage];
         imageWidths[iImage]  = d_smearedChargeWidths[imageAtomIds[iImage]];
       }
     const dealii::Quadrature<3> &smearedChargeQuadrature =
-      matrixFreeDataPRefined.get_quadrature(
-        smearedChargeQuadratureId);
+      matrixFreeDataPRefined.get_quadrature(smearedChargeQuadratureId);
     dealii::FEValues<3> feValuesSmearedCharge(dofHandlerPRefined.get_fe(),
                                               smearedChargeQuadrature,
                                               dealii::update_quadrature_points |
@@ -390,19 +386,18 @@ namespace dftfe
                   enclosingBallCellRadius + atomWidth)
                 physicalAtomCandidates.push_back(iAtom);
             }
-          for (dftfe::uInt iImage = 0; iImage < imagePositions.size();
-               ++iImage)
+          for (dftfe::uInt iImage = 0; iImage < imagePositions.size(); ++iImage)
             {
               if (enclosingBallCellCenter.distance(imagePoints[iImage]) <=
                   enclosingBallCellRadius + imageWidths[iImage])
                 imageCandidates.push_back(iImage);
             }
 
-          const dealii::CellId cellId = cell->id();
+          const dealii::CellId cellId  = cell->id();
           const auto physicalInsertion = d_physicalCandidatesByCell.emplace(
             cellId, std::move(physicalAtomCandidates));
-          const auto imageInsertion = d_imageCandidatesByCell.emplace(
-            cellId, std::move(imageCandidates));
+          const auto imageInsertion =
+            d_imageCandidatesByCell.emplace(cellId, std::move(imageCandidates));
           const std::vector<dftfe::uInt> &physicalCandidates =
             physicalInsertion.first->second;
           const std::vector<dftfe::uInt> &cellImageCandidates =
@@ -476,7 +471,8 @@ namespace dftfe
         const dealii::Point<3> pointI      = atomPoints[iAtom];
         analyticCorrectionEnergy +=
           0.5 * atomChargeI * atomChargeI *
-          analyticSmearedLoadManager<memorySpace>::smearedPairInteraction(widthI, widthI, 0.0);
+          analyticSmearedLoadManager<memorySpace>::smearedPairInteraction(
+            widthI, widthI, 0.0);
         for (dftfe::uInt jAtom = 0; jAtom < numberGlobalAtoms; ++jAtom)
           if (jAtom != iAtom)
             {
@@ -484,29 +480,30 @@ namespace dftfe
               const double           separation = pointI.distance(pointJ);
               analyticCorrectionEnergy +=
                 0.5 * atomChargeI * atomCharges[jAtom] *
-                analyticSmearedLoadManager<memorySpace>::smearedPairInteractionDifference(
-                  widthI,
-                  d_smearedChargeWidths[jAtom],
-                  d_referenceSmearedChargeWidth,
-                  d_referenceSmearedChargeWidth,
-                  separation,
-                  d_smearedPairRadiusCoefficients[iAtom],
-                  d_smearedPairRadiusCoefficients[jAtom]);
+                analyticSmearedLoadManager<memorySpace>::
+                  smearedPairInteractionDifference(
+                    widthI,
+                    d_smearedChargeWidths[jAtom],
+                    d_referenceSmearedChargeWidth,
+                    d_referenceSmearedChargeWidth,
+                    separation,
+                    d_smearedPairRadiusCoefficients[iAtom],
+                    d_smearedPairRadiusCoefficients[jAtom]);
             }
-        for (dftfe::uInt iImage = 0; iImage < imagePositions.size();
-             ++iImage)
+        for (dftfe::uInt iImage = 0; iImage < imagePositions.size(); ++iImage)
           {
             const double separation = pointI.distance(imagePoints[iImage]);
             analyticCorrectionEnergy +=
               0.5 * atomChargeI * imageCharges[iImage] *
-              analyticSmearedLoadManager<memorySpace>::smearedPairInteractionDifference(
-                widthI,
-                imageWidths[iImage],
-                d_referenceSmearedChargeWidth,
-                d_referenceSmearedChargeWidth,
-                separation,
-                d_smearedPairRadiusCoefficients[iAtom],
-                d_smearedPairRadiusCoefficients[imageAtomIds[iImage]]);
+              analyticSmearedLoadManager<memorySpace>::
+                smearedPairInteractionDifference(
+                  widthI,
+                  imageWidths[iImage],
+                  d_referenceSmearedChargeWidth,
+                  d_referenceSmearedChargeWidth,
+                  separation,
+                  d_smearedPairRadiusCoefficients[iAtom],
+                  d_smearedPairRadiusCoefficients[imageAtomIds[iImage]]);
           }
       }
     // Downstream energy assembly applies 0.5 * (phi - vSelf), so store twice
@@ -520,10 +517,12 @@ namespace dftfe
           std::vector<double>   bQuadValuesCell(n_q_points_smeared_charge, 0.0);
           std::set<dftfe::uInt> nonTrivialAtomIdsCell;
           std::set<dftfe::uInt> nonTrivialAtomImageIdsCell;
-          const auto physicalCandidatesIt =
+          const auto            physicalCandidatesIt =
             d_physicalCandidatesByCell.find(cell->id());
-          const auto imageCandidatesIt = d_imageCandidatesByCell.find(cell->id());
-          AssertThrow(physicalCandidatesIt != d_physicalCandidatesByCell.end() &&
+          const auto imageCandidatesIt =
+            d_imageCandidatesByCell.find(cell->id());
+          AssertThrow(physicalCandidatesIt !=
+                          d_physicalCandidatesByCell.end() &&
                         imageCandidatesIt != d_imageCandidatesByCell.end(),
                       dealii::ExcMessage(
                         "DFT-FE Error: missing cached ASL cell candidates."));
