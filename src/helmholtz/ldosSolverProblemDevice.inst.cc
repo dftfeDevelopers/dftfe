@@ -1,0 +1,16 @@
+template class ldosSolverProblemDevice<1>;
+template class ldosSolverProblemDevice<2>;
+template class ldosSolverProblemDevice<3>;
+template class ldosSolverProblemDevice<4>;
+template class ldosSolverProblemDevice<5>;
+template class ldosSolverProblemDevice<6>;
+template class ldosSolverProblemDevice<7>;
+template class ldosSolverProblemDevice<8>;
+template class ldosSolverProblemDevice<9>;
+template class ldosSolverProblemDevice<10>;
+template class ldosSolverProblemDevice<11>;
+template class ldosSolverProblemDevice<12>;
+template class ldosSolverProblemDevice<13>;
+template class ldosSolverProblemDevice<14>;
+template class ldosSolverProblemDevice<15>;
+template class ldosSolverProblemDevice<16>;

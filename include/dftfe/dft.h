@@ -73,6 +73,7 @@
 #include <dftfe/atomCenteredPostProcessing.h>
 #include <dftfe/poissonSolverProblemWrapper.h>
 #include <dftfe/kerkerSolverProblemWrapper.h>
+#include <dftfe/ldosSolverProblemWrapper.h>
 #include <dftfe/groupSymmetry.h>
 
 namespace dftfe
@@ -551,6 +552,9 @@ namespace dftfe
     compute_fermienergy(
       const std::vector<std::vector<double>> &eigenValuesInput,
       const double                            numElectronsInput);
+
+    void
+    compute_ldosOccupanciesAndTotalDOS();
 
     /**
      *@brief find HOMO eigenvalue for pure state
@@ -1179,6 +1183,9 @@ namespace dftfe
     void
     compute_rhoOut(const bool isGroundState = false);
 
+    void
+    compute_ldosOut();
+
     /**
      *@brief Mixing schemes for mixing electron-density
      */
@@ -1195,6 +1202,18 @@ namespace dftfe
       dealiiLinearSolver        &CGSolver,
       distributedCPUVec<double> &residualRho,
       distributedCPUVec<double> &preCondTotalDensityResidualVector);
+
+    void
+    applyLdosPreconditionerToTotalDensityResidual(
+#ifdef DFTFE_WITH_DEVICE
+      ldosSolverProblemDeviceWrapperClass
+                           &ldosPreconditionedResidualSolverProblemDevice,
+      linearSolverCGDevice &CGSolverDevice,
+#endif
+      ldosSolverProblemWrapperClass &ldosPreconditionedResidualSolverProblem,
+      dealiiLinearSolver            &CGSolver,
+      distributedCPUVec<double>     &residualRho,
+      distributedCPUVec<double>     &preCondTotalDensityResidualVector);
 
     double
     lowrankApproxScfDielectricMatrixInv(const dftfe::uInt scfIter);
@@ -1662,6 +1681,14 @@ namespace dftfe
      */
     std::vector<std::vector<double>> eigenValues;
     std::vector<std::vector<double>> d_partialOccupancies;
+
+    std::vector<std::vector<double>> d_ldosOccupancies;
+    double                           d_totalDOS;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+                              d_ldosQuadValues;
+    distributedCPUVec<double> d_ldosNodalValues;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      d_ldosAxQuadValuesElectro;
 
     /**
      * data storage for the occupancy of Kohn-Sham wavefunctions

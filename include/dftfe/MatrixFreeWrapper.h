@@ -176,6 +176,19 @@ namespace dftfe
     }
 
     /**
+     * @brief Initialize Helmholtz operator coefficient as a per-(cell,
+     * quadrature-point) field.
+     *
+     */
+    inline void
+    initOperatorCoeffs(const T *coeffHelmholtz, dftfe::uInt nQuadTotal)
+    {
+      std::visit(
+        [&](auto &t) { t->initOperatorCoeffs(coeffHelmholtz, nQuadTotal); },
+        d_MatrixFreeObject);
+    }
+
+    /**
      * @brief Compute Laplace operator multipled by X
      *
      */

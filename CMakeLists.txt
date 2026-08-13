@@ -156,6 +156,7 @@ SET(TARGET_SRC
   ./src/poisson/poissonSolverProblem.cc
   ./src/poisson/MultiVectorPoissonLinearSolverProblem.cpp
   ./src/helmholtz/kerkerSolverProblem.cc
+  ./src/helmholtz/ldosSolverProblem.cc
   ./src/dftOperator/KohnShamDFTBaseOperator.cc
   ./src/dftOperator/KohnShamDFTStandardEigenOperator.cc
   ./src/dftOperator/veffPrimeForLRDM.cc
@@ -229,6 +230,7 @@ SET(TARGET_SRC
   ./src/dft/moveAtoms.cc
   ./src/dft/moveMeshToAtoms.cc
   ./src/dft/kerker.cc
+  ./src/dft/ldos.cc
   ./src/dft/pRefinedDoFHandler.cc
   ./src/dft/psiInitialGuess.cc
   ./src/dft/publicMethods.cc
@@ -354,6 +356,7 @@ IF (WITH_GPU)
   ./src/linAlg/rayleighRitzDevice.cc
   ./src/poisson/poissonSolverProblemDevice.cc
   ./src/helmholtz/kerkerSolverProblemDevice.cc
+  ./src/helmholtz/ldosSolverProblemDevice.cc
   ./src/solvers/eigenSolvers/chebyshevOrthogonalizedSubspaceIterationSolverDevice.cc
   ./src/solvers/linearSolverDevice.cc
   ./src/solvers/linearSolverProblemDevice.cc

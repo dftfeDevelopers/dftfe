@@ -34,6 +34,29 @@ getMultiVectorIndex(const dftfe::uInt  node,
             (ghostMap[node - nOwnedDofs + batch * nGhostDofs]));
 }
 
+template <typename T>
+struct HelmholtzScalarCoeff
+{
+  T value;
+  inline T
+  operator()(dftfe::uInt /*cellIdx*/, dftfe::uInt /*qPointIdx*/) const
+  {
+    return value;
+  }
+};
+
+template <typename T>
+struct HelmholtzPointerCoeff
+{
+  const T    *ptr;
+  dftfe::uInt nQuadPerCell;
+  inline T
+  operator()(dftfe::uInt cellIdx, dftfe::uInt qPointIdx) const
+  {
+    return ptr[cellIdx * nQuadPerCell + qPointIdx];
+  }
+};
+
 
 template <typename T,
           std::uint32_t nDofsPerDim,
@@ -1046,14 +1069,15 @@ template <typename T,
           std::uint32_t nDofsPerDim,
           std::uint32_t nQuadPointsPerDim,
           std::uint32_t batchSize,
-          std::uint32_t dim>
+          std::uint32_t dim,
+          typename CoeffOp>
 void
 HelmholtzKernel(sycl::nd_item<3>           item,
                 T                         *dst,
                 const T                   *src,
                 const T                   *J,
                 const dftfe::uInt         *map,
-                const T                    coeffHelmholtz,
+                const CoeffOp              coeffHelmholtz,
                 const T                   *shapeBufferDevice,
                 sycl::local_accessor<T, 1> sharedMem)
 {
@@ -1523,14 +1547,26 @@ HelmholtzKernel(sycl::nd_item<3>           item,
 
       for (std::uint32_t j = 0; j < qOdd; j++)
         {
-          regR[j] = regT[j + qOdd] + regT[j] + coeffHelmholtz * detJ * regP[j];
+          const T cLo =
+            coeffHelmholtz(blockIdxX,
+                           i + j * nQuadPointsPerDim * nQuadPointsPerDim);
+          const T cHi =
+            coeffHelmholtz(blockIdxX,
+                           i + (nQuadPointsPerDim - 1 - j) * nQuadPointsPerDim *
+                                 nQuadPointsPerDim);
+          regR[j] = regT[j + qOdd] + regT[j] + cLo * detJ * regP[j];
           regR[nQuadPointsPerDim - 1 - j] =
             regT[j + qOdd] - regT[j] +
-            coeffHelmholtz * detJ * regP[nQuadPointsPerDim - 1 - j];
+            cHi * detJ * regP[nQuadPointsPerDim - 1 - j];
         }
 
       if constexpr (nQuadPointsPerDim % 2 == 1)
-        regR[qOdd] = regT[2 * qOdd] + coeffHelmholtz * detJ * regP[qOdd];
+        {
+          const T cMid =
+            coeffHelmholtz(blockIdxX,
+                           i + qOdd * nQuadPointsPerDim * nQuadPointsPerDim);
+          regR[qOdd] = regT[2 * qOdd] + cMid * detJ * regP[qOdd];
+        }
     }
 
   // 2nd GEMM of DT

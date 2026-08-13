@@ -80,6 +80,27 @@ namespace dftfe
                       dftfe::uInt  nBatch);
 
     static inline void
+    computeHelmholtzX(T           *dst,
+                      T           *src,
+                      T           *jacobianFactor,
+                      dftfe::uInt *map,
+                      T           *shapeBuffer,
+                      T           *coeffHelmholtz,
+                      dftfe::uInt  nCells,
+                      dftfe::uInt  nBatch);
+
+    template <typename CoeffOp>
+    static inline void
+    computeHelmholtzXImpl(T           *dst,
+                          T           *src,
+                          T           *jacobianFactor,
+                          dftfe::uInt *map,
+                          T           *shapeBuffer,
+                          CoeffOp      coeffHelmholtz,
+                          dftfe::uInt  nCells,
+                          dftfe::uInt  nBatch);
+
+    static inline void
     constraintsDistribute(T                 *src,
                           const dftfe::uInt *constrainingNodeBuckets,
                           const dftfe::uInt *constrainingNodeOffset,

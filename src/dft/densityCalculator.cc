@@ -52,14 +52,23 @@ namespace dftfe
       &gradDensityValues,
     std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-                        &tauValues,
-    const bool           isEvaluateGradRho,
-    const bool           isEvaluateTau,
-    const MPI_Comm      &mpiCommParent,
-    const MPI_Comm      &interpoolcomm,
-    const MPI_Comm      &interBandGroupComm,
-    const dftParameters &dftParams)
+                                           &tauValues,
+    const bool                              isEvaluateGradRho,
+    const bool                              isEvaluateTau,
+    const MPI_Comm                         &mpiCommParent,
+    const MPI_Comm                         &interpoolcomm,
+    const MPI_Comm                         &interBandGroupComm,
+    const dftParameters                    &dftParams,
+    const std::vector<std::vector<double>> *ldosOccupancies,
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      *ldosQuadValues)
   {
+    const bool computeLDOS = ldosOccupancies != nullptr;
+    AssertThrow(
+      !computeLDOS || ldosQuadValues != nullptr,
+      dealii::ExcMessage(
+        "LDOS output storage must be provided with LDOS occupancies."));
+
     int this_process;
     MPI_Comm_rank(mpiCommParent, &this_process);
 #if defined(DFTFE_WITH_DEVICE)
@@ -130,8 +139,12 @@ namespace dftfe
     dftfe::utils::MemoryStorage<double, memorySpace> rho;
     dftfe::utils::MemoryStorage<double, memorySpace> gradRho;
     dftfe::utils::MemoryStorage<double, memorySpace> tau;
+    dftfe::utils::MemoryStorage<double, memorySpace> ldos;
 
     rho.resize(totalLocallyOwnedCells * numQuadPoints * numRhoComponents, 0.0);
+    if (computeLDOS)
+      ldos.resize(totalLocallyOwnedCells * numQuadPoints * numRhoComponents,
+                  0.0);
     wfcQuadPointData.resize(cellsBlockSize * numQuadPoints * BVec *
                               numWfnSpinors,
                             zero);
@@ -167,13 +180,20 @@ namespace dftfe
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       partialOccupVecHost(BVec, 0.0);
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      ldosOccupVecHost;
+    if (computeLDOS)
+      ldosOccupVecHost.resize(BVec, 0.0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       kCoordHost(3, 0.0);
 #if defined(DFTFE_WITH_DEVICE)
     dftfe::utils::MemoryStorage<double, memorySpace> partialOccupVec(
       partialOccupVecHost.size());
+    dftfe::utils::MemoryStorage<double, memorySpace> ldosOccupVec(
+      ldosOccupVecHost.size());
     dftfe::utils::MemoryStorage<double, memorySpace> kCoord(kCoordHost.size());
 #else
     auto &partialOccupVec = partialOccupVecHost;
+    auto &ldosOccupVec    = ldosOccupVecHost;
     auto &kCoord          = kCoordHost;
 #endif
 
@@ -216,8 +236,20 @@ namespace dftfe
                                            jvec + iEigenVec] *
                         kPointWeights[kPoint] * spinPolarizedFactor;
 
+                    if (computeLDOS)
+                      for (dftfe::uInt iEigenVec = 0;
+                           iEigenVec < currentBlockSize;
+                           ++iEigenVec)
+                        *(ldosOccupVecHost.begin() + iEigenVec) =
+                          (*ldosOccupancies)[kPoint]
+                                            [totalNumWaveFunctions * spinIndex +
+                                             jvec + iEigenVec] *
+                          kPointWeights[kPoint] * spinPolarizedFactor;
+
 #if defined(DFTFE_WITH_DEVICE)
                     partialOccupVec.copyFrom(partialOccupVecHost);
+                    if (computeLDOS)
+                      ldosOccupVec.copyFrom(ldosOccupVecHost);
                     kCoord.copyFrom(kCoordHost);
 #endif
                     if (memorySpace == dftfe::utils::MemorySpace::HOST)
@@ -320,6 +352,27 @@ namespace dftfe
                                   dftParams.noncolin,
                                   dftParams.hasSOC);
                               }
+
+                            if (computeLDOS)
+                              computeRhoGradRhoFromInterpolatedValues(
+                                BLASWrapperPtr,
+                                std::pair<dftfe::uInt, dftfe::uInt>(
+                                  startingCellId,
+                                  startingCellId + currentCellsBlockSize),
+                                std::pair<dftfe::uInt, dftfe::uInt>(
+                                  jvec, jvec + currentBlockSize),
+                                numQuadPoints,
+                                totalLocallyOwnedCells,
+                                ldosOccupVec.data(),
+                                wfcQuadPointData.data(),
+                                gradWfcQuadPointData.data(),
+                                rhoWfcContributions.data(),
+                                gradRhoWfcContributions.data(),
+                                ldos.data(),
+                                nullptr,
+                                false,
+                                dftParams.noncolin,
+                                dftParams.hasSOC);
                           } // non-trivial cell block check
                       }     // cells block loop
                   }
@@ -331,6 +384,7 @@ namespace dftfe
     dftfe::utils::MemoryStorage<double, memorySpace> rhoRefinedStorage;
     dftfe::utils::MemoryStorage<double, memorySpace> gradRhoRefinedStorage;
     dftfe::utils::MemoryStorage<double, memorySpace> tauRefinedStorage;
+    dftfe::utils::MemoryStorage<double, memorySpace> ldosRefinedStorage;
 
     if (useIntermediateQuadrature)
       {
@@ -351,11 +405,16 @@ namespace dftfe
                                        numRhoComponents,
                                      0.0);
           }
+        if (computeLDOS)
+          ldosRefinedStorage.resize(totalLocallyOwnedCells *
+                                      numQuadsQuadratureIndex,
+                                    0.0);
       }
     auto &rhoRefined = useIntermediateQuadrature ? rhoRefinedStorage : rho;
     auto &gradRhoRefined =
       useIntermediateQuadrature ? gradRhoRefinedStorage : gradRho;
-    auto &tauRefined = useIntermediateQuadrature ? tauRefinedStorage : tau;
+    auto &tauRefined  = useIntermediateQuadrature ? tauRefinedStorage : tau;
+    auto &ldosRefined = useIntermediateQuadrature ? ldosRefinedStorage : ldos;
 
     if (useIntermediateQuadrature)
       {
@@ -388,6 +447,12 @@ namespace dftfe
                   spinIndex * totalLocallyOwnedCells * numQuadsQuadratureIndex,
                 1);
           }
+        if (computeLDOS)
+          basisOperationsPtr->interpolateQ1ToQ2(ldos.data(),
+                                                intermediateQuadratureIndex,
+                                                quadratureIndex,
+                                                ldosRefined.data(),
+                                                1);
       }
 
 #if defined(DFTFE_WITH_DEVICE)
@@ -397,6 +462,8 @@ namespace dftfe
       gradRhoHost;
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       tauHost;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      ldosHost;
 
     rhoHost.resize(rhoRefined.size());
     rhoHost.copyFrom(rhoRefined);
@@ -411,10 +478,16 @@ namespace dftfe
         tauHost.resize(tauRefined.size());
         tauHost.copyFrom(tauRefined);
       }
+    if (computeLDOS)
+      {
+        ldosHost.resize(ldosRefined.size());
+        ldosHost.copyFrom(ldosRefined);
+      }
 #else
     auto &rhoHost         = rhoRefined;
     auto &gradRhoHost     = gradRhoRefined;
     auto &tauHost         = tauRefined;
+    auto &ldosHost        = ldosRefined;
 #endif
 
     int size;
@@ -442,6 +515,13 @@ namespace dftfe
                         MPI_SUM,
                         interpoolcomm);
       }
+    if (size > 1 && computeLDOS)
+      MPI_Allreduce(MPI_IN_PLACE,
+                    ldosHost.data(),
+                    ldosHost.size(),
+                    dataTypes::mpi_type_id(ldosHost.data()),
+                    MPI_SUM,
+                    interpoolcomm);
 
     MPI_Comm_size(interBandGroupComm, &size);
     if (size > 1)
@@ -468,6 +548,13 @@ namespace dftfe
                         MPI_SUM,
                         interBandGroupComm);
       }
+    if (size > 1 && computeLDOS)
+      MPI_Allreduce(MPI_IN_PLACE,
+                    ldosHost.data(),
+                    ldosHost.size(),
+                    dataTypes::mpi_type_id(ldosHost.data()),
+                    MPI_SUM,
+                    interBandGroupComm);
 
     if (dftParams.spinPolarized == 1)
       {
@@ -580,6 +667,15 @@ namespace dftfe
           {
             tauValues[0] = tauHost;
           }
+      }
+
+    if (computeLDOS)
+      {
+        ldosQuadValues->resize(totalLocallyOwnedCells *
+                               numQuadsQuadratureIndex);
+        std::memcpy(ldosQuadValues->data(),
+                    ldosHost.data(),
+                    ldosQuadValues->size() * sizeof(double));
       }
 
 #if defined(DFTFE_WITH_DEVICE)
@@ -848,13 +944,16 @@ namespace dftfe
       &gradDensityValues,
     std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-                        &tauValues,
-    const bool           isEvaluateGradRho,
-    const bool           isEvaluateTau,
-    const MPI_Comm      &mpiCommParent,
-    const MPI_Comm      &interpoolcomm,
-    const MPI_Comm      &interBandGroupComm,
-    const dftParameters &dftParams);
+                                           &tauValues,
+    const bool                              isEvaluateGradRho,
+    const bool                              isEvaluateTau,
+    const MPI_Comm                         &mpiCommParent,
+    const MPI_Comm                         &interpoolcomm,
+    const MPI_Comm                         &interBandGroupComm,
+    const dftParameters                    &dftParams,
+    const std::vector<std::vector<double>> *ldosOccupancies,
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      *ldosQuadValues);
 
 #endif
 
@@ -885,12 +984,15 @@ namespace dftfe
       &gradDensityValues,
     std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-                        &tauValues,
-    const bool           isEvaluateGradRho,
-    const bool           isEvaluateTau,
-    const MPI_Comm      &mpiCommParent,
-    const MPI_Comm      &interpoolcomm,
-    const MPI_Comm      &interBandGroupComm,
-    const dftParameters &dftParams);
+                                           &tauValues,
+    const bool                              isEvaluateGradRho,
+    const bool                              isEvaluateTau,
+    const MPI_Comm                         &mpiCommParent,
+    const MPI_Comm                         &interpoolcomm,
+    const MPI_Comm                         &interBandGroupComm,
+    const dftParameters                    &dftParams,
+    const std::vector<std::vector<double>> *ldosOccupancies,
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      *ldosQuadValues);
 
 } // namespace dftfe

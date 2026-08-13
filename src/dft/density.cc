@@ -42,6 +42,7 @@ namespace dftfe
     if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
         d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA" ||
         d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND" ||
+        d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_LDOS" ||
         d_dftParamsPtr->useSymm)
       {
         computeRhoNodalFromPSI();
@@ -311,6 +312,106 @@ namespace dftfe
       }
   }
 
+  // calculate LDOS (Local Density of States)
+  template <dftfe::utils::MemorySpace memorySpace>
+  void
+  dftClass<memorySpace>::compute_ldosOut()
+  {
+    // Map 1p GLL points to 2p nodal mesh
+    d_matrixFreeDataPRefined.initialize_dof_vector(
+      d_ldosNodalValues, d_densityDofHandlerIndexElectro);
+    d_ldosNodalValues = 0.0;
+
+    const dealii::IndexSet &locallyOwnedDofs =
+      d_dofHandlerRhoNodal.locally_owned_dofs();
+
+    const dftfe::uInt dofs_per_cell =
+      d_dofHandlerRhoNodal.get_fe().dofs_per_cell;
+    const dealii::Quadrature<3> &quadrature_formula =
+      matrix_free_data.get_quadrature(d_gllQuadratureId);
+    const dftfe::uInt numQuadPoints = quadrature_formula.size();
+
+    // get access to quadrature point coordinates and density DoFHandler nodal
+    // points
+    const std::vector<dealii::Point<3>> &quadraturePointCoor =
+      quadrature_formula.get_points();
+    const std::vector<dealii::Point<3>> &supportPointNaturalCoor =
+      d_dofHandlerRhoNodal.get_fe().get_unit_support_points();
+    std::vector<dftfe::uInt> renumberingMap(numQuadPoints);
+
+    // create renumbering map between the numbering order of quadrature points
+    // and lobatto support points
+    for (dftfe::uInt i = 0; i < numQuadPoints; ++i)
+      {
+        const dealii::Point<3> &nodalCoor = supportPointNaturalCoor[i];
+        for (dftfe::uInt j = 0; j < numQuadPoints; ++j)
+          {
+            const dealii::Point<3> &quadCoor = quadraturePointCoor[j];
+            double                  dist     = quadCoor.distance(nodalCoor);
+            if (dist <= 1e-08)
+              {
+                renumberingMap[i] = j;
+                break;
+              }
+          }
+      }
+
+    typename dealii::DoFHandler<3>::active_cell_iterator
+      cellP           = d_dofHandlerRhoNodal.begin_active(),
+      endcP           = d_dofHandlerRhoNodal.end();
+    dftfe::uInt iCell = 0;
+
+    for (; cellP != endcP; ++cellP)
+      {
+        if (cellP->is_locally_owned())
+          {
+            std::vector<dealii::types::global_dof_index> cell_dof_indices(
+              dofs_per_cell);
+            cellP->get_dof_indices(cell_dof_indices);
+
+            const double *nodalValues =
+              d_ldosQuadValues.data() + iCell * dofs_per_cell;
+
+            for (dftfe::uInt iNode = 0; iNode < dofs_per_cell; ++iNode)
+              {
+                const dealii::types::global_dof_index nodeID =
+                  cell_dof_indices[iNode];
+                if (!d_constraintsRhoNodal.is_constrained(nodeID))
+                  {
+                    if (locallyOwnedDofs.is_element(nodeID))
+                      d_ldosNodalValues(nodeID) =
+                        nodalValues[renumberingMap[iNode]];
+                  }
+              }
+            ++iCell;
+          }
+      }
+
+    d_constraintsRhoNodal.distribute(d_ldosNodalValues);
+    d_ldosNodalValues.update_ghost_values();
+
+    if (d_dftParamsPtr->useSymm)
+      {
+        groupSymmetryPtr->symmetrizeScalarFieldFromLocalValues(
+          d_ldosNodalValues, d_dofHandlerRhoNodal);
+        d_constraintsRhoNodal.set_zero(d_ldosNodalValues);
+        d_ldosNodalValues.zero_out_ghost_values();
+      }
+
+    // Interpolate LDOS nodal field to the quadrature used by the Helmholtz
+    // operator and its low-rank correction.
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> dummy;
+    d_basisOperationsPtrElectroHost->interpolate(
+      d_ldosNodalValues,
+      d_densityDofHandlerIndexElectro,
+      d_kerkerAXQuadratureIdElectro,
+      d_ldosAxQuadValuesElectro,
+      dummy,
+      dummy,
+      false);
+  }
+
+
 
   // rho data reinitilization without remeshing. The rho out of last ground
   // state solve is made the rho in of the new solve
@@ -341,6 +442,7 @@ namespace dftfe
     if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
         d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA" ||
         d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND" ||
+        d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_LDOS" ||
         d_dftParamsPtr->useSymm)
       {
         d_densityInNodalValues = d_densityOutNodalValues;
@@ -391,6 +493,9 @@ namespace dftfe
   void
   dftClass<memorySpace>::computeRhoNodalFromPSI()
   {
+    const bool computeLDOS =
+      d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_LDOS";
+
     std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       densityPRefinedNodalData;
@@ -467,7 +572,9 @@ namespace dftfe
                         d_mpiCommParent,
                         interpoolcomm,
                         interBandGroupComm,
-                        *d_dftParamsPtr);
+                        *d_dftParamsPtr,
+                        computeLDOS ? &d_ldosOccupancies : nullptr,
+                        computeLDOS ? &d_ldosQuadValues : nullptr);
 #endif
     if (!d_dftParamsPtr->useDevice)
       computeRhoFromPSI(&d_eigenVectorsFlattenedHost,
@@ -488,7 +595,9 @@ namespace dftfe
                         d_mpiCommParent,
                         interpoolcomm,
                         interBandGroupComm,
-                        *d_dftParamsPtr);
+                        *d_dftParamsPtr,
+                        computeLDOS ? &d_ldosOccupancies : nullptr,
+                        computeLDOS ? &d_ldosQuadValues : nullptr);
 
     // copy Lobatto quadrature data to fill in 2p DoFHandler nodal data
     for (dftfe::uInt iComp = 0; iComp < densityPRefinedNodalData.size();

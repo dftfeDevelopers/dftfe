@@ -360,6 +360,22 @@ namespace dftfe
                                            sigmaThresholdMgga,
                                            tauThresholdMgga);
 
+    const double tauUniformPrefactor =
+      (3.0 / 10.0) * std::pow(6.0 * M_PI * M_PI, 2.0 / 3.0);
+    for (dftfe::uInt i = 0; i < nquad; ++i)
+      for (dftfe::uInt spin = 0; spin < 2; ++spin)
+        {
+          const dftfe::uInt rhoIndex   = 2 * i + spin;
+          const dftfe::uInt sigmaIndex = 3 * i + 2 * spin;
+          const double      rho        = densityValues[rhoIndex];
+          const double      tauW       = sigmaValues[sigmaIndex] / (8.0 * rho);
+          const double      tauUniform =
+            tauUniformPrefactor * std::pow(rho, 5.0 / 3.0);
+
+          if (tauUniform > 1e-20 && tauValues[rhoIndex] < tauW)
+            tauValues[rhoIndex] = tauW + 1e-20;
+        }
+
     if (d_useLibxc)
       {
         // Allocate laplacian-related arrays only when using libxc
