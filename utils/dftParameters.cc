@@ -1472,7 +1472,7 @@ namespace dftfe
     useDensityMatrixPerturbationRankUpdates        = false;
     smearedNuclearCharges                          = false;
     floatingNuclearCharges                         = false;
-    smearedNuclearChargePathway                    = "LEGACY_VSELF";
+    smearedNuclearChargePathway                    = "ANALYTIC_SMEARED_LOAD";
     analyticSmearedLoadRadius                      = 0.0;
     multipoleBoundaryConditions                    = false;
     nonLinearCoreCorrection                        = false;
@@ -1771,6 +1771,9 @@ namespace dftfe
 
       prm.leave_subsection();
       isPseudopotential   = prm.get_bool("PSEUDOPOTENTIAL CALCULATION");
+      // Both compatibility inputs are known only at this point in parsing.
+      if (!isPseudopotential || !smearedNuclearCharges)
+        smearedNuclearChargePathway = "LEGACY_VSELF";
       pseudoTestsFlag     = prm.get_bool("PSEUDO TESTS FLAG");
       pseudoPotentialFile = prm.get("PSEUDOPOTENTIAL FILE NAMES LIST");
       XCType              = prm.get("EXCHANGE CORRELATION TYPE");

@@ -68,82 +68,7 @@ namespace dftfe
     //
     computing_timer.enter_subsection("Nuclear self-potential solve");
     computingTimerStandard.enter_subsection("Nuclear self-potential solve");
-    if (d_dftParamsPtr->smearedNuclearChargePathway == "ANALYTIC_SMEARED_LOAD")
-      initAnalyticSmearedLoadData();
-    else
-      {
-#ifdef DFTFE_WITH_DEVICE
-        if (d_dftParamsPtr->useDevice and d_dftParamsPtr->vselfGPU)
-          d_vselfBinsManager.solveVselfInBinsDevice(
-            d_basisOperationsPtrElectroHost,
-            d_baseDofHandlerIndexElectro,
-            d_phiTotAXQuadratureIdElectro,
-            d_binsStartDofHandlerIndexElectro,
-            d_dftParamsPtr->finiteElementPolynomialOrder ==
-                d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics ?
-              d_basisOperationsPtrDevice->cellStiffnessMatrixBasisData() :
-              d_basisOperationsPtrElectroDevice->cellStiffnessMatrixBasisData(),
-            d_BLASWrapperPtr,
-            d_constraintsPRefined,
-            d_imagePositionsTrunc,
-            d_imageIdsTrunc,
-            d_imageChargesTrunc,
-            d_localVselfs,
-            d_bQuadValuesAllAtoms,
-            d_bQuadAtomIdsAllAtoms,
-            d_bQuadAtomIdsAllAtomsImages,
-            d_bCellNonTrivialAtomIds,
-            d_bCellNonTrivialAtomIdsBins,
-            d_bCellNonTrivialAtomImageIds,
-            d_bCellNonTrivialAtomImageIdsBins,
-            d_smearedChargeWidths,
-            d_smearedChargeScaling,
-            d_smearedChargeQuadratureIdElectro,
-            d_dftParamsPtr->smearedNuclearCharges);
-        else
-          d_vselfBinsManager.solveVselfInBins(
-            d_basisOperationsPtrElectroHost,
-            d_binsStartDofHandlerIndexElectro,
-            d_phiTotAXQuadratureIdElectro,
-            d_constraintsPRefined,
-            d_imagePositionsTrunc,
-            d_imageIdsTrunc,
-            d_imageChargesTrunc,
-            d_localVselfs,
-            d_bQuadValuesAllAtoms,
-            d_bQuadAtomIdsAllAtoms,
-            d_bQuadAtomIdsAllAtomsImages,
-            d_bCellNonTrivialAtomIds,
-            d_bCellNonTrivialAtomIdsBins,
-            d_bCellNonTrivialAtomImageIds,
-            d_bCellNonTrivialAtomImageIdsBins,
-            d_smearedChargeWidths,
-            d_smearedChargeScaling,
-            d_smearedChargeQuadratureIdElectro,
-            d_dftParamsPtr->smearedNuclearCharges);
-#else
-        d_vselfBinsManager.solveVselfInBins(
-          d_basisOperationsPtrElectroHost,
-          d_binsStartDofHandlerIndexElectro,
-          d_phiTotAXQuadratureIdElectro,
-          d_constraintsPRefined,
-          d_imagePositionsTrunc,
-          d_imageIdsTrunc,
-          d_imageChargesTrunc,
-          d_localVselfs,
-          d_bQuadValuesAllAtoms,
-          d_bQuadAtomIdsAllAtoms,
-          d_bQuadAtomIdsAllAtomsImages,
-          d_bCellNonTrivialAtomIds,
-          d_bCellNonTrivialAtomIdsBins,
-          d_bCellNonTrivialAtomImageIds,
-          d_bCellNonTrivialAtomImageIdsBins,
-          d_smearedChargeWidths,
-          d_smearedChargeScaling,
-          d_smearedChargeQuadratureIdElectro,
-          d_dftParamsPtr->smearedNuclearCharges);
-#endif
-      }
+    computeNuclearSelfPotential();
     computingTimerStandard.leave_subsection("Nuclear self-potential solve");
     computing_timer.leave_subsection("Nuclear self-potential solve");
 
@@ -199,7 +124,7 @@ namespace dftfe
         computeMultipoleMoments(d_basisOperationsPtrElectroHost,
                                 d_densityQuadratureIdElectro,
                                 d_densityInQuadValues[0],
-                                &d_bQuadValuesAllAtoms);
+                                &activeBQuadValuesAllAtoms());
         updatePRefinedConstraints();
         computing_timer.leave_subsection("Update inhomogenous BC");
       }
@@ -230,7 +155,7 @@ namespace dftfe
           d_densityQuadratureIdElectro,
           d_phiTotAXQuadratureIdElectro,
           d_atomNodeIdToChargeMap,
-          d_bQuadValuesAllAtoms,
+          activeBQuadValuesAllAtoms(),
           d_smearedChargeQuadratureIdElectro,
           densityInQuadValuesCopy,
           d_BLASWrapperPtr,
@@ -257,7 +182,7 @@ namespace dftfe
           d_densityQuadratureIdElectro,
           d_phiTotAXQuadratureIdElectro,
           d_atomNodeIdToChargeMap,
-          d_bQuadValuesAllAtoms,
+          activeBQuadValuesAllAtoms(),
           d_smearedChargeQuadratureIdElectro,
           densityInQuadValuesCopy,
           true,
@@ -531,7 +456,7 @@ namespace dftfe
         computeMultipoleMoments(d_basisOperationsPtrElectroHost,
                                 d_densityQuadratureIdElectro,
                                 d_densityOutQuadValues[0],
-                                &d_bQuadValuesAllAtoms);
+                                &activeBQuadValuesAllAtoms());
         updatePRefinedConstraints();
         computing_timer.leave_subsection("Update inhomogenous BC");
       }
@@ -562,7 +487,7 @@ namespace dftfe
           d_densityQuadratureIdElectro,
           d_phiTotAXQuadratureIdElectro,
           d_atomNodeIdToChargeMap,
-          d_bQuadValuesAllAtoms,
+          activeBQuadValuesAllAtoms(),
           d_smearedChargeQuadratureIdElectro,
           densityOutQuadValuesCopy,
           d_BLASWrapperPtr,
@@ -592,7 +517,7 @@ namespace dftfe
           d_densityQuadratureIdElectro,
           d_phiTotAXQuadratureIdElectro,
           d_atomNodeIdToChargeMap,
-          d_bQuadValuesAllAtoms,
+          activeBQuadValuesAllAtoms(),
           d_smearedChargeQuadratureIdElectro,
           densityOutQuadValuesCopy,
           false,
@@ -660,9 +585,9 @@ namespace dftfe
       d_densityTotalOutValuesLpspQuad,
       d_auxDensityMatrixXCInPtr,
       d_auxDensityMatrixXCOutPtr,
-      d_bQuadValuesAllAtoms,
-      d_bCellNonTrivialAtomIds,
-      d_localVselfs,
+      activeBQuadValuesAllAtoms(),
+      activeBCellNonTrivialAtomIds(),
+      activeLocalVselfs(),
       d_pseudoVLoc,
       d_atomNodeIdToChargeMap,
       atomLocations.size(),

@@ -783,7 +783,11 @@ namespace dftfe
     FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
       cellIndex(const dealii::CellId cellid) const
     {
-      return d_cellIdToCellIndexMap.find(cellid)->second;
+      const auto cellIndexIt = d_cellIdToCellIndexMap.find(cellid);
+      AssertThrow(cellIndexIt != d_cellIdToCellIndexMap.end(),
+                  dealii::ExcMessage(
+                    "DFT-FE Error: requested cell ID is not present in FEBasisOperations."));
+      return cellIndexIt->second;
     }
 
 
