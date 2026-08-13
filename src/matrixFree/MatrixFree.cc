@@ -538,7 +538,34 @@ namespace dftfe
              batchSize,
              subBatchSize>::initOperatorCoeffs(T coeffHelmholtz)
   {
-    d_coeffHelmholtz = coeffHelmholtz;
+    d_coeffHelmholtz          = coeffHelmholtz;
+    d_coeffHelmholtzIsPointer = false;
+  }
+
+
+  template <typename T,
+            dftfe::operatorList       operatorID,
+            dftfe::utils::MemorySpace memorySpace,
+            bool                      isComplex,
+            std::uint32_t             nDofsPerDim,
+            std::uint32_t             nQuadPointsPerDim,
+            std::uint32_t             batchSize,
+            std::uint32_t             subBatchSize>
+  void
+  MatrixFree<T,
+             operatorID,
+             memorySpace,
+             isComplex,
+             nDofsPerDim,
+             nQuadPointsPerDim,
+             batchSize,
+             subBatchSize>::initOperatorCoeffs(const T    *coeffHelmholtz,
+                                               dftfe::uInt nQuadTotal)
+  {
+    d_coeffHelmholtzVec.resize(nQuadTotal);
+    dftfe::utils::MemoryTransfer<memorySpace, memorySpace>::copy(
+      nQuadTotal, d_coeffHelmholtzVec.data(), coeffHelmholtz);
+    d_coeffHelmholtzIsPointer = true;
   }
 
 
@@ -796,19 +823,31 @@ namespace dftfe
                                         d_nBatch);
 
         if constexpr (operatorID == dftfe::operatorList::Helmholtz)
-          dftfe::MatrixFreeDevice<
-            T,
-            operatorID,
-            nDofsPerDim,
-            nQuadPointsPerDim,
-            batchSize>::computeHelmholtzX(dst,
-                                          src,
-                                          d_jacobianFactor.data(),
-                                          d_map.data(),
-                                          shapeBufferDevice.data(),
-                                          d_coeffHelmholtz,
-                                          d_nCells,
-                                          d_nBatch);
+          {
+            using Op = dftfe::MatrixFreeDevice<T,
+                                               operatorID,
+                                               nDofsPerDim,
+                                               nQuadPointsPerDim,
+                                               batchSize>;
+            if (d_coeffHelmholtzIsPointer)
+              Op::computeHelmholtzX(dst,
+                                    src,
+                                    d_jacobianFactor.data(),
+                                    d_map.data(),
+                                    shapeBufferDevice.data(),
+                                    d_coeffHelmholtzVec.data(),
+                                    d_nCells,
+                                    d_nBatch);
+            else
+              Op::computeHelmholtzX(dst,
+                                    src,
+                                    d_jacobianFactor.data(),
+                                    d_map.data(),
+                                    shapeBufferDevice.data(),
+                                    d_coeffHelmholtz,
+                                    d_nCells,
+                                    d_nBatch);
+          }
       }
   }
 

@@ -48,13 +48,16 @@ namespace dftfe
       &gradDensityValues,
     std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-                        &tauValues,
-    const bool           isEvaluateGradRho,
-    const bool           isEvaluateTau,
-    const MPI_Comm      &mpiCommParent,
-    const MPI_Comm      &interpoolcomm,
-    const MPI_Comm      &interBandGroupComm,
-    const dftParameters &dftParams);
+                                           &tauValues,
+    const bool                              isEvaluateGradRho,
+    const bool                              isEvaluateTau,
+    const MPI_Comm                         &mpiCommParent,
+    const MPI_Comm                         &interpoolcomm,
+    const MPI_Comm                         &interBandGroupComm,
+    const dftParameters                    &dftParams,
+    const std::vector<std::vector<double>> *ldosOccupancies = nullptr,
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      *ldosQuadValues = nullptr);
 
 
   template <typename NumberType>

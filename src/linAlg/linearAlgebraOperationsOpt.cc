@@ -255,6 +255,7 @@ namespace dftfe
       Z.setValue(T(0.0));
       tempVec.setValue(T(0.0));
       const dftfe::uInt local_size = X.locallyOwnedSize() * X.numVectors();
+
 #if defined(DFTFE_WITH_DEVICE)
       dftfe::utils::MemoryStorage<T, dftfe::utils::MemorySpace::HOST> XHost(
         local_size, T(0.0));

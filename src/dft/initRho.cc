@@ -164,6 +164,7 @@ namespace dftfe
     if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
         d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA" ||
         d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND" ||
+        d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_LDOS" ||
         d_dftParamsPtr->useSymm)
       {
         d_densityOutQuadValues.resize(nDensityComponents);
@@ -192,6 +193,7 @@ namespace dftfe
     if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
         d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA" ||
         d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND" ||
+        d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_LDOS" ||
         d_dftParamsPtr->useSymm)
       {
         const dealii::IndexSet &locallyOwnedSet =
@@ -1868,6 +1870,7 @@ namespace dftfe
     if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
         d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA" ||
         d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND" ||
+        d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_LDOS" ||
         d_dftParamsPtr->useSymm)
       {
         d_densityOutQuadValues.resize(nDensityComponents);
@@ -2055,6 +2058,7 @@ namespace dftfe
     if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
         d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA" ||
         d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND" ||
+        d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_LDOS" ||
         d_dftParamsPtr->useSymm)
       {
         for (dftfe::uInt iComp = 0; iComp < d_densityInQuadValues.size();

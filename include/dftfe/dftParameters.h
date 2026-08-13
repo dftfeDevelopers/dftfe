@@ -58,7 +58,7 @@ namespace dftfe
       spinMixingEnhancementFactor;
     bool   adaptAndersonMixingParameter;
     double absLinearSolverTolerance, selfConsistentSolverTolerance, TVal,
-      selfConsistentSolverEnergyTolerance, tot_magnetization,
+      LDOSTemperature, selfConsistentSolverEnergyTolerance, tot_magnetization,
       absLinearSolverToleranceHelmholtz, smearTval, intervalSize;
 
     bool useAtomicMagnetizationGuessConstraintMag;
