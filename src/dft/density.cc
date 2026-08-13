@@ -357,8 +357,8 @@ namespace dftfe
       }
 
     typename dealii::DoFHandler<3>::active_cell_iterator
-      cellP           = d_dofHandlerRhoNodal.begin_active(),
-      endcP           = d_dofHandlerRhoNodal.end();
+                cellP = d_dofHandlerRhoNodal.begin_active(),
+                endcP = d_dofHandlerRhoNodal.end();
     dftfe::uInt iCell = 0;
 
     for (; cellP != endcP; ++cellP)
@@ -495,8 +495,6 @@ namespace dftfe
   {
     const bool computeLDOS =
       d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_LDOS";
-    if (computeLDOS)
-      compute_ldosOccupanciesAndTotalDOS();
 
     std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
@@ -512,8 +510,8 @@ namespace dftfe
     const dftfe::uInt dofs_per_cell =
       d_dofHandlerRhoNodal.get_fe().dofs_per_cell;
     typename dealii::DoFHandler<3>::active_cell_iterator
-      cell = d_dofHandlerRhoNodal.begin_active(),
-      endc = d_dofHandlerRhoNodal.end();
+                            cell = d_dofHandlerRhoNodal.begin_active(),
+                            endc = d_dofHandlerRhoNodal.end();
     const dealii::IndexSet &locallyOwnedDofs =
       d_dofHandlerRhoNodal.locally_owned_dofs();
     const dealii::Quadrature<3> &quadrature_formula =
@@ -606,8 +604,8 @@ namespace dftfe
          ++iComp)
       {
         dealii::DoFHandler<3>::active_cell_iterator
-          cellP           = d_dofHandlerRhoNodal.begin_active(),
-          endcP           = d_dofHandlerRhoNodal.end();
+                    cellP = d_dofHandlerRhoNodal.begin_active(),
+                    endcP = d_dofHandlerRhoNodal.end();
         dftfe::uInt iCell = 0;
         for (; cellP != endcP; ++cellP)
           {

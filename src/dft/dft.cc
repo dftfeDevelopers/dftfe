@@ -3554,6 +3554,11 @@ namespace dftfe
             pcout << "Fermi Energy computed: " << fermiEnergy << std::endl;
           }
 
+        if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_LDOS")
+          {
+            compute_ldosOccupanciesAndTotalDOS();
+          }
+
         numberChebyshevSolvePasses = count;
         computing_timer.enter_subsection("compute rho");
 
@@ -3985,6 +3990,15 @@ namespace dftfe
               }
             else
               pcout << "GS Fermi energy spin up: " << fermiEnergy << std::endl;
+          }
+
+        if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_LDOS")
+          {
+            if (d_dftParamsPtr->reproducible_output)
+              pcout << "Total density of states: " << std::setprecision(7)
+                    << d_totalDOS << std::endl;
+            else
+              pcout << "Total density of states: " << d_totalDOS << std::endl;
           }
 
         if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)

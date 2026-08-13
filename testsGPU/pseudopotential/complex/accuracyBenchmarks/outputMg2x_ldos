@@ -64,6 +64,7 @@ Pseudopotential initalization....
 
 Starting SCF iterations....
 SCF iterations converged to the specified tolerance after: 11 iterations.
+Total density of states: 3.9444615e+02
 
 Energy computations (Hartree) 
 -------------------
