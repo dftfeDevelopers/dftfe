@@ -1,6 +1,10 @@
 number of atoms: 2
 number of atoms types: 1
 Total number of k-points 8
+Found 280374416 GPUs
+MPI rank 0 uses GPU #3
+Found 0 GPUs
+MPI rank 0 uses GPU #0
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
 v1 : 5.368001262539999985e+00 0.000000000000000000e+00 0.000000000000000000e+00
 v2 : 0.000000000000000000e+00 5.368001262539999985e+00 0.000000000000000000e+00
@@ -39,20 +43,20 @@ SCF iterations converged to the specified tolerance after: 31 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:        -253.17197247
+             Total energy:        -253.17144843
 Absolute magnetization: 7.250
 Net magnetization     : 7.250
 
 Absolute value of cell stress (Hartree/Bohr^3)
 ------------------------------------------------------------------------
-0.000866  0.000000  0.000000
-0.000000  0.000866  0.000000
-0.000000  0.000000  0.000866
+0.000863  0.000000  0.000000
+0.000000  0.000863  0.000000
+0.000000  0.000000  0.000863
 ------------------------------------------------------------------------
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
-v1 : 5.372647 -0.000000 -0.000000
-v2 : -0.000000 5.372647 -0.000000
-v3 : -0.000000 -0.000000 5.372647
+v1 : 5.372634 0.000000 0.000000
+v2 : 0.000000 5.372634 0.000000
+v3 : 0.000000 0.000000 5.372634
 -----------------------------------------------------------------------------------------
 -----Fractional coordinates of atoms------ 
 AtomId 0:  0.000000 0.000000 0.000000
@@ -78,20 +82,20 @@ SCF iterations converged to the specified tolerance after: 19 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:        -253.17228846
+             Total energy:        -253.17176090
 Absolute magnetization: 7.250
 Net magnetization     : 7.250
 
 Absolute value of cell stress (Hartree/Bohr^3)
 ------------------------------------------------------------------------
-0.000837  0.000000  0.000000
-0.000000  0.000837  0.000000
-0.000000  0.000000  0.000837
+0.000835  0.000000  0.000000
+0.000000  0.000835  0.000000
+0.000000  0.000000  0.000835
 ------------------------------------------------------------------------
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
-v1 : 5.516736 -0.000000 0.000000
-v2 : 0.000000 5.516736 -0.000000
-v3 : -0.000000 0.000000 5.516736
+v1 : 5.516687 0.000000 0.000000
+v2 : 0.000000 5.516687 0.000000
+v3 : 0.000000 0.000000 5.516687
 -----------------------------------------------------------------------------------------
 -----Fractional coordinates of atoms------ 
 AtomId 0:  0.000000 0.000000 0.000000
@@ -113,24 +117,24 @@ Pseudopotential initalization....
 Reading data for core electron-density to be used in nonlinear core-correction.....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 29 iterations.
+SCF iterations converged to the specified tolerance after: 28 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:        -253.18722288
+             Total energy:        -253.18661237
 Absolute magnetization: 7.250
 Net magnetization     : 7.250
 
 Absolute value of cell stress (Hartree/Bohr^3)
 ------------------------------------------------------------------------
-0.000088  0.000000  0.000000
-0.000000  0.000088  0.000000
-0.000000  0.000000  0.000088
+0.000085  0.000000  0.000000
+0.000000  0.000085  0.000000
+0.000000  0.000000  0.000085
 ------------------------------------------------------------------------
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
-v1 : 5.534596 -0.000000 0.000000
-v2 : 0.000000 5.534596 -0.000000
-v3 : -0.000000 0.000000 5.534596
+v1 : 5.533923 0.000000 0.000000
+v2 : 0.000000 5.533923 0.000000
+v3 : 0.000000 0.000000 5.533923
 -----------------------------------------------------------------------------------------
 -----Fractional coordinates of atoms------ 
 AtomId 0:  0.000000 0.000000 0.000000
@@ -152,17 +156,17 @@ Pseudopotential initalization....
 Reading data for core electron-density to be used in nonlinear core-correction.....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 24 iterations.
+SCF iterations converged to the specified tolerance after: 22 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:        -253.18674739
+             Total energy:        -253.18615747
 Absolute magnetization: 7.250
 Net magnetization     : 7.250
 
 Absolute value of cell stress (Hartree/Bohr^3)
 ------------------------------------------------------------------------
-0.000012  0.000000  0.000000
-0.000000  0.000012  0.000000
-0.000000  0.000000  0.000012
+0.000011  0.000000  0.000000
+0.000000  0.000011  0.000000
+0.000000  0.000000  0.000011
 ------------------------------------------------------------------------
