@@ -17,8 +17,8 @@ v2 : 0.000000000000000000e+00 8.000000000000000000e+01 0.000000000000000000e+00
 v3 : 0.000000000000000000e+00 0.000000000000000000e+00 8.000000000000000000e+01
 -----------------------------------------------------------------------------------------
 ------------Cartesian coordinates of atoms (origin at center of domain)------------------
-AtomId 0:  -1.296487549965966712e+00 5.365505460959431663e-03 5.261733358411386716e-03
-AtomId 1:  1.296487549965966712e+00 -5.365505460959431663e-03 -5.261733358411386716e-03
+AtomId 0:  -1.296477490424942980e+00 5.365489211418796728e-03 5.261717423461297234e-03
+AtomId 1:  1.296477490424942980e+00 -5.365489211418796728e-03 -5.261717423461297234e-03
 -----------------------------------------------------------------------------------------
 
 Finite element mesh information
@@ -48,12 +48,12 @@ SCF iterations converged to the specified tolerance after: 2 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.78841145
+             Total energy:         -19.78924861
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.290494,0.001038,0.001018
-AtomId    1:  0.290494,0.001038,0.001018
+AtomId    0:  0.290791,0.001039,0.001019
+AtomId    1:  0.290791,0.001039,0.001019
 --------------------------------------------------------------------------------------------
 ---------------MDNVE() called------------------ 
 
@@ -76,16 +76,16 @@ SCF iterations converged to the specified tolerance after: 10 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.79364581
+             Total energy:         -19.79449661
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.289413,0.001557,0.001527
-AtomId    1:  0.289414,0.001557,0.001527
+AtomId    0:  0.289700,0.001559,0.001528
+AtomId    1:  0.289700,0.001558,0.001528
 --------------------------------------------------------------------------------------------
 ---------------MD STEP 3 ------------------ 
- Temperature from velocities: 1829.43
- Total Energy in Ha at timeIndex -19.78496
+ Temperature from velocities: 1833.73
+ Total Energy in Ha at timeIndex -19.78579
 
 Finite element mesh information
 -------------------------------------------------
@@ -106,14 +106,14 @@ SCF iterations converged to the specified tolerance after: 9 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.80164620
+             Total energy:         -19.80251631
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.287151,0.002070,0.002030
-AtomId    1:  0.287151,0.002070,0.002030
+AtomId    0:  0.287418,0.002072,0.002032
+AtomId    1:  0.287418,0.002072,0.002032
 --------------------------------------------------------------------------------------------
 ---------------MD STEP 4 ------------------ 
- Temperature from velocities: 3511.54
- Total Energy in Ha at timeIndex -19.78497
+ Temperature from velocities: 3519.55
+ Total Energy in Ha at timeIndex -19.78580
 ---MD run completed successfully---

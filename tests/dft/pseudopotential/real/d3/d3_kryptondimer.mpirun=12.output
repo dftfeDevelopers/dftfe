@@ -34,16 +34,16 @@ Pseudopotential initalization....
 Reading data for core electron-density to be used in nonlinear core-correction.....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 9 iterations.
+SCF iterations converged to the specified tolerance after: 10 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -41.85742143
+             Total energy:         -41.85711339
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.004719,0.000000,0.000000
-AtomId    1:  0.004719,0.000000,0.000000
+AtomId    0:  0.004463,0.000000,0.000000
+AtomId    1:  0.004462,0.000000,0.000000
 --------------------------------------------------------------------------------------------
 
 Finite element mesh information
@@ -61,16 +61,16 @@ Pseudopotential initalization....
 Reading data for core electron-density to be used in nonlinear core-correction.....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 8 iterations.
+SCF iterations converged to the specified tolerance after: 23 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -41.85746329
+             Total energy:         -41.85715055
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.004635,0.000000,0.000000
-AtomId    1:  0.004635,0.000000,0.000000
+AtomId    0:  0.004357,0.000000,0.000000
+AtomId    1:  0.004357,0.000000,0.000000
 --------------------------------------------------------------------------------------------
 
 Finite element mesh information
@@ -88,14 +88,14 @@ Pseudopotential initalization....
 Reading data for core electron-density to be used in nonlinear core-correction.....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 17 iterations.
+SCF iterations converged to the specified tolerance after: 15 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -41.85841717
+             Total energy:         -41.85795399
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.000722,0.000000,0.000000
-AtomId    1:  0.000722,0.000000,0.000000
+AtomId    0:  0.000370,0.000000,0.000000
+AtomId    1:  0.000370,0.000000,0.000000
 --------------------------------------------------------------------------------------------

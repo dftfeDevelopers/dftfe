@@ -43,10 +43,10 @@ Saving Quad data in progress...
 Saving Quad data completed...
 Saving Quad data in progress...
 Saving Quad data completed...
-SCF iterations converged to the specified tolerance after: 33 iterations.
+SCF iterations converged to the specified tolerance after: 29 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:        -248.92676512
-Absolute magnetization: 0.257
-Net magnetization     : 0.252
+             Total energy:        -247.69115707
+Absolute magnetization: 0.256
+Net magnetization     : 0.251
