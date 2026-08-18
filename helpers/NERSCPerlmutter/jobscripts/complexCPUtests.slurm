@@ -9,13 +9,8 @@
 export OMP_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 
-DFTFE_EXE=/global/homes/r/rezgar/dftfe/build/releaseCPU/complex/dftfe
-TEST_DIR=/global/homes/r/rezgar/dftfe/build/releaseCPU/complex/tests/dft/pseudopotential/complex
+BUILD_DIR=/global/homes/r/rezgar/dftfe/build/releaseCPU/complex
 
-cd $TEST_DIR
+cd $BUILD_DIR
 
-srun -n 32 $DFTFE_EXE TiAl_hubbard.prm            > output_TiAl_hubbard 2>&1
-srun -n 32 $DFTFE_EXE TiAl_hubbard_singlePrec.prm > output_TiAl_hubbard_singlePrec 2>&1
-srun -n 8  $DFTFE_EXE bccFe_01_a.prm              > output_bccFe_01_a 2>&1
-srun -n 8  $DFTFE_EXE bccFe_01_b.prm              > output_bccFe_01_b 2>&1
-srun -n 32 $DFTFE_EXE bccFe_afm.prm               > output_bccFe_afm 2>&1
+ctest -E "TiAl_hubbard|bccFe_01_a|bccFe_01_b|bccFe_afm" --output-on-failure 2>&1 | tee ctest-complex-perlmutter-CPU.out
