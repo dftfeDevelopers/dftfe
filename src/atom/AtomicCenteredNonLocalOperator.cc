@@ -468,10 +468,7 @@ namespace dftfe
           projectorMatrices;
         dftfe::uInt kptBatch               = 1;
         dftfe::uInt projectorMatrixSizeOld = 0;
-#if defined(DFTFE_WITH_DEVICE)
-        dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
-          sphericalFunctionBasisTimesJxW,
-          sphericalFunctionBasisWithDistanceTimesJxW;
+        // Store results for all k-points; work buffers hold one batch.
         dftfe::utils::MemoryStorage<dataTypes::number,
                                     dftfe::utils::MemorySpace::HOST>
           projectorTimesXMatricesHost, gradientProjectorDyadicXMatricesHost,
@@ -486,10 +483,10 @@ namespace dftfe
         if (d_computeIonForces)
           gradientProjectorMatricesHost.resize(3 * m * n, 0.0);
 
-        // sphericalFunctionBasisTimesJxW(WithDistance) are separate
-        // device-resident staging buffers here, refilled per k-point batch
-        // via copyFrom from the full *Host buffers below, so they are sized
-        // to a single k-point batch's worth of data.
+#if defined(DFTFE_WITH_DEVICE)
+        dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
+          sphericalFunctionBasisTimesJxW,
+          sphericalFunctionBasisWithDistanceTimesJxW;
         sphericalFunctionBasisTimesJxW.resize(nCellsPerBatch *
                                                 numberQuadraturePoints *
                                                 kptBatch *
@@ -505,17 +502,7 @@ namespace dftfe
           sphericalFunctionBasisTimesJxWHost;
         auto &sphericalFunctionBasisWithDistanceTimesJxW =
           sphericalFunctionBasisWithDistanceTimesJxWHost;
-        auto &projectorMatricesHost         = projectorMatrices;
-        auto &projectorTimesXMatricesHost   = projectorTimesXMatrices;
-        auto &gradientProjectorMatricesHost = gradientProjectorMatrices;
-        auto &gradientProjectorDyadicXMatricesHost =
-          gradientProjectorDyadicXMatrices;
-        // sphericalFunctionBasisTimesJxW(WithDistance) alias the *Host
-        // buffers here, which are already sized to hold all maxkPoints'
-        // worth of data (see their construction above) — do NOT resize them
-        // down to a single k-point batch like the device path above, or the
-        // later copyFrom calls will index past the aliased buffer's actual
-        // size for any iKpt > 0.
+        // These aliases retain the all-k-point size of the host buffers.
 #endif
         for (dftfe::Int iElemComp = 0;
              iElemComp < numberElementsInAtomCompactSupport;
@@ -872,7 +859,6 @@ namespace dftfe
                     dftfe::uInt dstOffset = iKpt * nCellsPerBatch *
                                             NumTotalSphericalFunctions *
                                             d_numberNodesPerElement;
-#if defined(DFTFE_WITH_DEVICE)
                     projectorMatricesHost.copyFrom(projectorMatrices,
                                                    projectorMatrixSize,
                                                    0,
@@ -899,7 +885,6 @@ namespace dftfe
                           0,
                           9 * dstOffset);
                       }
-#endif
                   }
               }
 
