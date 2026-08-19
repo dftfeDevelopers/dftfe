@@ -3688,19 +3688,6 @@ namespace dftfe
             computing_timer.leave_subsection("Energy residual computation");
           }
 
-        // TEMPORARY DIAGNOSTIC: print each pool's independently-computed
-        // norm/energyResidual before syncing, to check whether they differ
-        // by float noise or by something much larger.
-        {
-          const dftfe::uInt poolIdDiag =
-            dealii::Utilities::MPI::this_mpi_process(interpoolcomm);
-          if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) == 0)
-            std::cout << "[POOL DIAG] scfIter=" << scfIter
-                      << " poolId=" << poolIdDiag << " norm=" << std::setprecision(16)
-                      << norm << " energyResidual="
-                      << energyResidual << std::endl;
-        }
-
         // Pool divergence deadlock guard: `norm` (and `energyResidual`) are
         // reduced only over each k-point pool's domain communicator, so
         // floating-point summation-order differences across pools can leave
