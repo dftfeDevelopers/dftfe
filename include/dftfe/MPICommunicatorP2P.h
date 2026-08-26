@@ -69,6 +69,21 @@ namespace dftfe
           std::shared_ptr<const MPIPatternP2P<memorySpace>> mpiPatternP2P,
           const dftfe::uInt                                 blockSize);
 
+        /*
+         * @Brief Completes any non-blocking communication that was started
+         * (through one of the *Begin() calls) but never finished (through the
+         * matching *End() call), and reports it on std::cerr. Such an operation
+         * would otherwise leak its MPI_Request objects, which are drawn from a
+         * finite pool inside the MPI implementation.
+         *
+         * @note This reports rather than throws. A destructor is implicitly
+         * noexcept, and more importantly it is routinely run while another
+         * exception is unwinding the stack, where a second exception would
+         * call std::terminate and discard the original error. The unmatched
+         * Begin()/End() itself is caught by the checks in those functions.
+         */
+        ~MPICommunicatorP2P();
+
         void
         updateGhostValues(MemoryStorage<ValueType, memorySpace> &dataArray,
                           const dftfe::uInt communicationChannel = 0);
@@ -123,6 +138,20 @@ namespace dftfe
 
         void
         setCompressBitsPerValue(dftfe::uInt bpv);
+
+      private:
+        /*
+         * @Brief Helper used by the destructor. If \p inFlight is true, waits
+         * on \p requests so that the MPI_Request objects are returned to the
+         * MPI implementation, and reports the unmatched Begin() on \p opName
+         * to std::cerr.
+         */
+        void
+        reclaimPendingRequests(bool                     &inFlight,
+                               std::vector<MPI_Request> &requests,
+								               const std::string        &opName);
+
+
 
       private:
         std::shared_ptr<const MPIPatternP2P<memorySpace>> d_mpiPatternP2P;
@@ -206,6 +235,17 @@ namespace dftfe
         std::vector<MPI_Request> d_requestsAccumulateAddLocallyOwned;
         std::vector<MPI_Request> d_requestsAccumulateInsertLocallyOwned;
         MPI_Comm                 d_mpiCommunicator;
+
+        /*
+         * Each of the three operations owns a single set of MPI_Request
+         * handles, which is reused across communication channels. Starting an
+         * operation while a previous one is still in flight would silently
+         * overwrite (and thereby leak) the outstanding handles, so the flags
+         * below track the Begin()/End() pairing and are asserted on.
+         */
+        bool d_updateGhostValuesInFlight;
+        bool d_accumulateAddLocallyOwnedInFlight;
+        bool d_accumulateInsertLocallyOwnedInFlight;
 
         communicationProtocol  d_commProtocol;
         communicationPrecision d_commPrecision;
