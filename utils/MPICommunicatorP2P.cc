@@ -149,6 +149,8 @@ namespace dftfe
       }
 
 
+      template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+      void
       MPICommunicatorP2P<ValueType, memorySpace>::reclaimPendingRequests(
         bool                     &inFlight,
         std::vector<MPI_Request> &requests,
