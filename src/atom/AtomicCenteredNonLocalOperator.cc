@@ -465,7 +465,7 @@ namespace dftfe
           gradientProjectorDyadicXMatrices;
 
         dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
-          projectorMatrices;
+                    projectorMatrices;
         dftfe::uInt kptBatch               = 1;
         dftfe::uInt projectorMatrixSizeOld = 0;
         // Store results for all k-points; work buffers hold one batch.

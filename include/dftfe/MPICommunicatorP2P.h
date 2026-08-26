@@ -149,7 +149,7 @@ namespace dftfe
         void
         reclaimPendingRequests(bool                     &inFlight,
                                std::vector<MPI_Request> &requests,
-								               const std::string        &opName);
+                               const std::string        &opName);
 
 
 

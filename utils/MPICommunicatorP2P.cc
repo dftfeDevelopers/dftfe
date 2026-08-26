@@ -64,16 +64,16 @@ namespace dftfe
 
         d_requestsUpdateGhostValues.resize(
           d_mpiPatternP2P->getGhostProcIds().size() +
-          d_mpiPatternP2P->getTargetProcIds().size(),
-		      MPI_REQUEST_NULL);
+            d_mpiPatternP2P->getTargetProcIds().size(),
+          MPI_REQUEST_NULL);
         d_requestsAccumulateAddLocallyOwned.resize(
           d_mpiPatternP2P->getGhostProcIds().size() +
-          d_mpiPatternP2P->getTargetProcIds().size(),
+            d_mpiPatternP2P->getTargetProcIds().size(),
           MPI_REQUEST_NULL);
 
         d_requestsAccumulateInsertLocallyOwned.resize(
           d_mpiPatternP2P->getGhostProcIds().size() +
-          d_mpiPatternP2P->getTargetProcIds().size(),
+            d_mpiPatternP2P->getTargetProcIds().size(),
           MPI_REQUEST_NULL);
 
 #ifdef DFTFE_WITH_DEVICE
@@ -214,7 +214,7 @@ namespace dftfe
         reclaimPendingRequests(d_accumulateInsertLocallyOwnedInFlight,
                                d_requestsAccumulateInsertLocallyOwned,
                                "accumulateInsertLocallyOwned");
-       }
+      }
 
 
       template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
@@ -467,10 +467,10 @@ namespace dftfe
           "same set of MPI_Request handles, so the requests of the earlier "
           "call would be overwritten and leaked. Call "
           "updateGhostValuesEnd() before starting the next one.");
-        
-		    d_updateGhostValuesInFlight = true;
-        
-				// initiate non-blocking receives from ghost processors
+
+        d_updateGhostValuesInFlight = true;
+
+        // initiate non-blocking receives from ghost processors
         if (d_commPrecision == communicationPrecision::standard)
           {
             ValueType *recvArrayStartPtr =
@@ -1382,8 +1382,8 @@ namespace dftfe
                 dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
 #endif
           }
-          
-					d_updateGhostValuesInFlight = false;
+
+        d_updateGhostValuesInFlight = false;
       }
 
       template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
@@ -1403,7 +1403,6 @@ namespace dftfe
           MemoryStorage<ValueType, memorySpace> &dataArray,
           const dftfe::uInt                      communicationChannel)
       {
-
         throwException<LogicError>(
           !d_accumulateAddLocallyOwnedInFlight,
           "accumulateAddLocallyOwnedBegin() was called on an "
@@ -1412,8 +1411,8 @@ namespace dftfe
           "set of MPI_Request handles, so the requests of the earlier call "
           "would be overwritten and leaked. Call "
           "accumulateAddLocallyOwnedEnd() before starting the next one.");
-        
-			  d_accumulateAddLocallyOwnedInFlight = true;
+
+        d_accumulateAddLocallyOwnedInFlight = true;
 
         if (d_commPrecision == communicationPrecision::standard)
           {
@@ -2152,7 +2151,7 @@ namespace dftfe
           d_accumulateAddLocallyOwnedInFlight,
           "accumulateAddLocallyOwnedEnd() was called without a matching "
           "accumulateAddLocallyOwnedBegin().");
-		
+
         // wait for all send and recv requests to be completed
 #if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
         if constexpr (memorySpace == MemorySpace::DEVICE)
@@ -2175,8 +2174,8 @@ namespace dftfe
                 throwException(err == MPI_SUCCESS, errMsg);
               }
           }
-        
-				if (d_commPrecision == communicationPrecision::standard)
+
+        if (d_commPrecision == communicationPrecision::standard)
           {
 #ifdef DFTFE_WITH_DEVICE
             if constexpr (memorySpace == MemorySpace::DEVICE)
@@ -2332,7 +2331,7 @@ namespace dftfe
           dftfe::utils::deviceStreamSynchronize(
             dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
 #endif
-				d_accumulateAddLocallyOwnedInFlight = false;
+        d_accumulateAddLocallyOwnedInFlight = false;
       }
 
       template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
@@ -2352,7 +2351,6 @@ namespace dftfe
           MemoryStorage<ValueType, memorySpace> &dataArray,
           const dftfe::uInt                      communicationChannel)
       {
-        
         throwException<LogicError>(
           !d_accumulateInsertLocallyOwnedInFlight,
           "accumulateInsertLocallyOwnedBegin() was called on an "
@@ -2361,10 +2359,10 @@ namespace dftfe
           "same set of MPI_Request handles, so the requests of the earlier "
           "call would be overwritten and leaked. Call "
           "accumulateInsertLocallyOwnedEnd() before starting the next one.");
-        
-		    d_accumulateInsertLocallyOwnedInFlight = true;
 
-				if (d_commPrecision == communicationPrecision::standard)
+        d_accumulateInsertLocallyOwnedInFlight = true;
+
+        if (d_commPrecision == communicationPrecision::standard)
           {
             // initiate non-blocking receives from target processors
             ValueType *recvArrayStartPtr = d_sendRecvBuffer.data();
@@ -2836,7 +2834,7 @@ namespace dftfe
           dftfe::utils::deviceStreamSynchronize(
             dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
 #endif
-		    d_accumulateInsertLocallyOwnedInFlight = false;
+        d_accumulateInsertLocallyOwnedInFlight = false;
       }
 
       template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
