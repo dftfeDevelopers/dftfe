@@ -129,6 +129,7 @@ set_property(TARGET "dftfe_exe" PROPERTY OUTPUT_NAME "dftfe")
 SET(TARGET_SRC
   ./src/dftfeWrapper.cc
   ./src/dft/dft.cc
+  ./src/dft/analyticSmearedLoadManager.cc
   ./src/dft/vselfBinsManager.cc
   ./src/dft/energyCalculator.cc
   ./src/dft/energyDensity.cc

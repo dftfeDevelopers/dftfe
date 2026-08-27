@@ -28,6 +28,8 @@
 #include <dftfe/BLASWrapper.h>
 #include <dftfe/AuxDensityMatrix.h>
 #include <dftfe/configurationalForce.h>
+#include <dftfe/analyticSmearedLoadManager.h>
+#include <dftfe/dftUtils.h>
 
 #include <complex>
 #include <deque>
@@ -1045,7 +1047,29 @@ namespace dftfe
       std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
         &_pseudoValuesAtoms);
 
+    void
+    initAnalyticSmearedLoadData();
 
+    bool
+    usesAnalyticSmearedLoad() const;
+
+    std::map<dealii::CellId, std::vector<double>> &
+    activeBQuadValuesAllAtoms();
+
+    const std::map<dealii::CellId, std::vector<double>> &
+    activeBQuadValuesAllAtoms() const;
+
+    const std::map<dealii::CellId, std::vector<dftfe::uInt>> &
+    activeBCellNonTrivialAtomIds() const;
+
+    const std::map<dealii::CellId, std::vector<dftfe::uInt>> &
+    activeBCellNonTrivialAtomImageIds() const;
+
+    const std::vector<std::vector<double>> &
+    activeLocalVselfs() const;
+
+    void
+    computeNuclearSelfPotential();
 
     /**
      *@brief Sets homegeneous dirichlet boundary conditions for total potential constraints on
@@ -1432,9 +1456,6 @@ namespace dftfe
 
     /// non-intersecting smeared charges of all atoms at quad points
     std::map<dealii::CellId, std::vector<double>> d_bQuadValuesAllAtoms;
-
-    /// non-intersecting smeared charge gradients of all atoms at quad points
-    std::map<dealii::CellId, std::vector<double>> d_gradbQuadValuesAllAtoms;
 
     /// non-intersecting smeared charges atom ids of all atoms at quad points
     std::map<dealii::CellId, std::vector<dftfe::Int>> d_bQuadAtomIdsAllAtoms;
@@ -1852,6 +1873,9 @@ namespace dftfe
 
     /// vselfBinsManager object
     vselfBinsManager d_vselfBinsManager;
+
+    /// Geometry-dependent state for the analytic smeared-load pathway
+    analyticSmearedLoadManager<memorySpace> d_analyticSmearedLoadManager;
 
     /// Gateaux derivative of vself field with respect to affine strain tensor
     /// components using central finite difference. This is used for cell stress

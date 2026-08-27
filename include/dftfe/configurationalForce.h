@@ -24,7 +24,9 @@
 #include <dftfe/FEBasisOperations.h>
 #include <dftfe/BLASWrapper.h>
 #include <dftfe/vselfBinsManager.h>
+#include <dftfe/analyticSmearedLoadManager.h>
 #include <dftfe/groupSymmetry.h>
+#include <dftfe/dftUtils.h>
 namespace dftfe
 {
   template <dftfe::utils::MemorySpace memorySpace>
@@ -121,9 +123,10 @@ namespace dftfe
                                                           &hessianRhoCoreAtoms,
       const std::map<dealii::CellId, std::vector<double>> &pseudoVLocValues,
       const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
-                                  &pseudoVLocAtoms,
-      const dealii::DoFHandler<3> &dofHandlerRhoNodal,
-      const vselfBinsManager      &vselfBinsManager,
+                                                    &pseudoVLocAtoms,
+      const dealii::DoFHandler<3>                   &dofHandlerRhoNodal,
+      const vselfBinsManager                        &vselfBinsManager,
+      const analyticSmearedLoadManager<memorySpace> &analyticSmearedLoadManager,
       const std::vector<distributedCPUVec<double>>
                         &vselfFieldGateauxDerStrainFDBins,
       const dftfe::uInt &binsStartDofHandlerIndexElectro,
@@ -133,8 +136,12 @@ namespace dftfe
       const std::map<dealii::CellId, std::vector<dftfe::Int>>
         &bQuadAtomIdsAllAtomsImages,
       const std::map<dealii::CellId, std::vector<double>> &bQuadValuesAllAtoms,
-      const std::vector<double>                           &smearedChargeWidths,
-      const std::vector<double>                           &smearedChargeScaling,
+      const std::map<dealii::CellId, std::vector<dftfe::uInt>>
+        &bCellNonTrivialAtomIds,
+      const std::map<dealii::CellId, std::vector<dftfe::uInt>>
+                                &bCellNonTrivialAtomImageIds,
+      const std::vector<double> &smearedChargeWidths,
+      const std::vector<double> &smearedChargeScaling,
       const std::vector<double> &gaussianConstantsForce,
       const std::vector<double> &generatorFlatTopWidths,
       const bool                 floatingNuclearCharges,
@@ -155,6 +162,34 @@ namespace dftfe
 
 
   private:
+    void
+    computeAnalyticSmearedContribAll(
+      const std::vector<std::vector<double>>        &atomLocations,
+      const std::vector<dftfe::Int>                 &imageIds,
+      const std::vector<double>                     &imageCharges,
+      const std::vector<std::vector<double>>        &imagePositions,
+      const analyticSmearedLoadManager<memorySpace> &analyticSmearedLoadManager,
+      const distributedCPUVec<double>               &phiTotRhoOutValues,
+      const bool                                     floatingNuclearCharges,
+      const bool                                     computeForce,
+      const bool                                     computeStress);
+
+    void
+    computeAnalyticLPSPContribAll(
+      const std::vector<std::vector<double>> &atomLocations,
+      const std::vector<dftfe::Int>          &imageIds,
+      const std::vector<double>              &imageCharges,
+      const std::vector<std::vector<double>> &imagePositions,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &gradRhoTotalOutValuesLpsp,
+      const std::map<dealii::CellId, std::vector<double>> &pseudoVLocValues,
+      const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
+                                                    &pseudoVLocAtoms,
+      const analyticSmearedLoadManager<memorySpace> &analyticSmearedLoadManager,
+      const bool                                     floatingNuclearCharges,
+      const bool                                     computeForce,
+      const bool                                     computeStress);
+
     void
     computeWfcContribNloc(
       std::shared_ptr<
@@ -234,19 +269,28 @@ namespace dftfe
 
     void
     computeSmearedContribAll(
-      const std::vector<std::vector<double>> &atomLocations,
-      const std::vector<std::vector<double>> &imagePositions,
-      const vselfBinsManager                 &vselfBinsManager,
-      const dftfe::uInt                      &binsStartDofHandlerIndexElectro,
-      const distributedCPUVec<double>        &phiTotRhoOutValues,
+      const std::vector<std::vector<double>>        &atomLocations,
+      const std::vector<dftfe::Int>                 &imageIds,
+      const std::vector<double>                     &imageCharges,
+      const std::vector<std::vector<double>>        &imagePositions,
+      const vselfBinsManager                        &vselfBinsManager,
+      const analyticSmearedLoadManager<memorySpace> &analyticSmearedLoadManager,
+      const dftfe::uInt               &binsStartDofHandlerIndexElectro,
+      const distributedCPUVec<double> &phiTotRhoOutValues,
       const std::map<dealii::CellId, std::vector<dftfe::Int>>
         &bQuadAtomIdsAllAtoms,
       const std::map<dealii::CellId, std::vector<dftfe::Int>>
         &bQuadAtomIdsAllAtomsImages,
       const std::map<dealii::CellId, std::vector<double>> &bQuadValuesAllAtoms,
-      const bool floatingNuclearCharges,
-      const bool computeForce,
-      const bool computeStress);
+      const std::map<dealii::CellId, std::vector<dftfe::uInt>>
+        &bCellNonTrivialAtomIds,
+      const std::map<dealii::CellId, std::vector<dftfe::uInt>>
+                                &bCellNonTrivialAtomImageIds,
+      const std::vector<double> &smearedChargeWidths,
+      const std::vector<double> &smearedChargeScaling,
+      const bool                 floatingNuclearCharges,
+      const bool                 computeForce,
+      const bool                 computeStress);
 
     void
     computeLPSPContribAll(
@@ -261,11 +305,16 @@ namespace dftfe
         &gradRhoTotalOutValuesLpsp,
       const std::map<dealii::CellId, std::vector<double>> &pseudoVLocValues,
       const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
-                                  &pseudoVLocAtoms,
-      const dealii::DoFHandler<3> &dofHandlerRhoNodal,
-      const vselfBinsManager      &vselfBinsManager,
+                                                    &pseudoVLocAtoms,
+      const dealii::DoFHandler<3>                   &dofHandlerRhoNodal,
+      const vselfBinsManager                        &vselfBinsManager,
+      const analyticSmearedLoadManager<memorySpace> &analyticSmearedLoadManager,
       const std::vector<distributedCPUVec<double>>
-                                &vselfFieldGateauxDerStrainFDBins,
+        &vselfFieldGateauxDerStrainFDBins,
+      const std::map<dealii::CellId, std::vector<dftfe::uInt>>
+        &bCellNonTrivialAtomIds,
+      const std::map<dealii::CellId, std::vector<dftfe::uInt>>
+                                &bCellNonTrivialAtomImageIds,
       const std::vector<double> &smearedChargeWidths,
       const std::vector<double> &smearedChargeScaling,
       const bool                 floatingNuclearCharges,

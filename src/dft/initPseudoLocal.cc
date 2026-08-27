@@ -21,8 +21,99 @@
 #include <dftfe/fileReaders.h>
 #include <dftfe/vectorUtilities.h>
 #include <dftfe/feevaluationWrapper.h>
+#include <algorithm>
+#include <cmath>
+#include <map>
+#include <set>
+#include <utility>
+
 namespace dftfe
 {
+  template <dftfe::utils::MemorySpace memorySpace>
+  void
+  dftClass<memorySpace>::initAnalyticSmearedLoadData()
+  {
+    d_smearedChargeMoments.assign(13, 0.0);
+    d_smearedChargeMomentsComputed = false;
+    d_analyticSmearedLoadManager.initialize(atomLocations,
+                                            d_imageIdsTrunc,
+                                            d_imageChargesTrunc,
+                                            d_imagePositionsTrunc,
+                                            d_meshSizes,
+                                            d_domainBoundingVectors,
+                                            d_minDist,
+                                            d_pspCutOffTrunc,
+                                            d_oncvClassPtr,
+                                            d_dofHandlerPRefined,
+                                            d_matrixFreeDataPRefined,
+                                            d_smearedChargeQuadratureIdElectro,
+                                            mpi_communicator,
+                                            *d_dftParamsPtr,
+                                            pcout);
+  }
+
+  template <dftfe::utils::MemorySpace memorySpace>
+  void
+  dftClass<memorySpace>::computeNuclearSelfPotential()
+  {
+    if (d_dftParamsPtr->smearedNuclearChargePathway == "ANALYTIC_SMEARED_LOAD")
+      {
+        initAnalyticSmearedLoadData();
+        return;
+      }
+
+#ifdef DFTFE_WITH_DEVICE
+    if (d_dftParamsPtr->useDevice && d_dftParamsPtr->vselfGPU)
+      d_vselfBinsManager.solveVselfInBinsDevice(
+        d_basisOperationsPtrElectroHost,
+        d_baseDofHandlerIndexElectro,
+        d_phiTotAXQuadratureIdElectro,
+        d_binsStartDofHandlerIndexElectro,
+        d_dftParamsPtr->finiteElementPolynomialOrder ==
+            d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics ?
+          d_basisOperationsPtrDevice->cellStiffnessMatrixBasisData() :
+          d_basisOperationsPtrElectroDevice->cellStiffnessMatrixBasisData(),
+        d_BLASWrapperPtr,
+        d_constraintsPRefined,
+        d_imagePositionsTrunc,
+        d_imageIdsTrunc,
+        d_imageChargesTrunc,
+        d_localVselfs,
+        d_bQuadValuesAllAtoms,
+        d_bQuadAtomIdsAllAtoms,
+        d_bQuadAtomIdsAllAtomsImages,
+        d_bCellNonTrivialAtomIds,
+        d_bCellNonTrivialAtomIdsBins,
+        d_bCellNonTrivialAtomImageIds,
+        d_bCellNonTrivialAtomImageIdsBins,
+        d_smearedChargeWidths,
+        d_smearedChargeScaling,
+        d_smearedChargeQuadratureIdElectro,
+        d_dftParamsPtr->smearedNuclearCharges);
+    else
+#endif
+      d_vselfBinsManager.solveVselfInBins(
+        d_basisOperationsPtrElectroHost,
+        d_binsStartDofHandlerIndexElectro,
+        d_phiTotAXQuadratureIdElectro,
+        d_constraintsPRefined,
+        d_imagePositionsTrunc,
+        d_imageIdsTrunc,
+        d_imageChargesTrunc,
+        d_localVselfs,
+        d_bQuadValuesAllAtoms,
+        d_bQuadAtomIdsAllAtoms,
+        d_bQuadAtomIdsAllAtomsImages,
+        d_bCellNonTrivialAtomIds,
+        d_bCellNonTrivialAtomIdsBins,
+        d_bCellNonTrivialAtomImageIds,
+        d_bCellNonTrivialAtomImageIdsBins,
+        d_smearedChargeWidths,
+        d_smearedChargeScaling,
+        d_smearedChargeQuadratureIdElectro,
+        d_dftParamsPtr->smearedNuclearCharges);
+  }
+
   //
   // Initialize rho by reading in single-atom electron-density and fit a spline
   //
@@ -48,12 +139,7 @@ namespace dftfe
     //
     // Reading single atom rho initial guess
     //
-    std::map<dftfe::uInt, std::vector<std::vector<double>>> pseudoPotentialData;
-    std::map<dftfe::uInt, double>                           outerMostDataPoint;
-    // FIXME: the truncation tolerance can potentially be loosened
-    // further for production runs where more accurate meshes are used
-    const double truncationTol =
-      d_dftParamsPtr->reproducible_output ? 1.0e-8 : 1.0e-7;
+    std::map<dftfe::uInt, double> outerMostDataPoint;
     // Larger max allowed Tail is important for pseudo-dojo database ONCV
     // pseudopotential local potentials which have a larger data range
     // with slow convergence to -Z/r
@@ -87,9 +173,21 @@ namespace dftfe
     if (d_dftParamsPtr->verbosity >= 4)
       pcout << "initLocalPSP, max psp tail considered: " << maxTail
             << std::endl;
+    const bool analyticSmearedLoadRoute =
+      d_dftParamsPtr->smearedNuclearChargePathway == "ANALYTIC_SMEARED_LOAD";
+    const std::vector<double> &smearedChargeWidths =
+      analyticSmearedLoadRoute ?
+        d_analyticSmearedLoadManager.smearedChargeWidths() :
+        d_smearedChargeWidths;
+    double maxSmearedChargeWidth = 0.0;
+    if (analyticSmearedLoadRoute && !smearedChargeWidths.empty())
+      maxSmearedChargeWidth = *std::max_element(smearedChargeWidths.begin(),
+                                                smearedChargeWidths.end());
     const double cutOffForPsp =
-      std::max(vselfBinManager.getStoredAdaptiveBallRadius() + 6.0,
-               maxTail + 2.0);
+      analyticSmearedLoadRoute ?
+        std::max(maxSmearedChargeWidth + 6.0, maxTail + 2.0) :
+        std::max(vselfBinManager.getStoredAdaptiveBallRadius() + 6.0,
+                 maxTail + 2.0);
 
     //
     // Initialize pseudopotential
@@ -110,25 +208,6 @@ namespace dftfe
     double init_1;
     MPI_Barrier(d_mpiCommParent);
     init_1 = MPI_Wtime();
-
-    const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
-                     &partitioner = phiExt.get_partitioner();
-    const dftfe::uInt localSize   = partitioner->locally_owned_size();
-    const dftfe::uInt n_ghosts    = partitioner->n_ghost_indices();
-    const dftfe::uInt totalSize   = localSize + n_ghosts;
-
-
-    const std::vector<std::map<dealii::types::global_dof_index, dftfe::Int>>
-      &boundaryNodeMapBinsOnlyChargeId =
-        vselfBinManager.getBoundaryFlagsBinsOnlyChargeId();
-    const std::vector<
-      std::map<dealii::types::global_dof_index, dealii::Point<3>>>
-      &dofClosestChargeLocationMapBins =
-        vselfBinManager.getClosestAtomLocationsBins();
-    const std::map<dftfe::uInt, dftfe::uInt> &atomIdBinIdMap =
-      vselfBinManager.getAtomIdBinIdMapLocalAllImages();
-
-    const dftfe::uInt dofs_per_cell = _dofHandler.get_fe().dofs_per_cell;
 
     dealii::BoundingBox<3> boundingBoxTria(
       vectorTools::createBoundingBoxTriaLocallyOwned(_dofHandler));
@@ -190,118 +269,139 @@ namespace dftfe
 
     const dftfe::uInt kptGroupTaskId =
       dealii::Utilities::MPI::this_mpi_process(interpoolcomm);
-    std::vector<dftfe::Int> kptGroupLowHighPlusOneIndicesStep1;
+    if (!analyticSmearedLoadRoute)
+      {
+        const std::vector<std::map<dealii::types::global_dof_index, dftfe::Int>>
+          &boundaryNodeMapBinsOnlyChargeId =
+            vselfBinManager.getBoundaryFlagsBinsOnlyChargeId();
+        const std::vector<
+          std::map<dealii::types::global_dof_index, dealii::Point<3>>>
+          &dofClosestChargeLocationMapBins =
+            vselfBinManager.getClosestAtomLocationsBins();
+        const std::map<dftfe::uInt, dftfe::uInt> &atomIdBinIdMap =
+          vselfBinManager.getAtomIdBinIdMapLocalAllImages();
+        const auto             &partitioner = phiExt.get_partitioner();
+        std::vector<dftfe::Int> kptGroupLowHighPlusOneIndicesStep1;
 
-    if (numberDofs > 0)
-      dftUtils::createKpointParallelizationIndices(
-        interpoolcomm, numberDofs, kptGroupLowHighPlusOneIndicesStep1);
+        if (numberDofs > 0)
+          dftUtils::createKpointParallelizationIndices(
+            interpoolcomm, numberDofs, kptGroupLowHighPlusOneIndicesStep1);
 
 #pragma omp parallel for num_threads(d_nOMPThreads)
-    for (dftfe::uInt localDofId = 0; localDofId < phiExt.locally_owned_size();
-         ++localDofId)
-      {
-        if (localDofId <
-              kptGroupLowHighPlusOneIndicesStep1[2 * kptGroupTaskId + 1] &&
-            localDofId >=
-              kptGroupLowHighPlusOneIndicesStep1[2 * kptGroupTaskId])
+        for (dftfe::uInt localDofId = 0;
+             localDofId < phiExt.locally_owned_size();
+             ++localDofId)
           {
-            const dealii::types::global_dof_index dofId =
-              partitioner->local_to_global(localDofId);
-            const dealii::Point<3> &nodalCoor =
-              _supportPoints.find(dofId)->second;
-            if (!_phiExtConstraintMatrix.is_constrained(dofId))
+            if (localDofId <
+                  kptGroupLowHighPlusOneIndicesStep1[2 * kptGroupTaskId + 1] &&
+                localDofId >=
+                  kptGroupLowHighPlusOneIndicesStep1[2 * kptGroupTaskId])
               {
-                dealii::Point<3> atom;
-                double           atomCharge;
-                dftfe::Int       atomicNumber;
-                dftfe::Int       chargeId;
-                double           distanceToAtom;
-                double           sumVal = 0.0;
-                double           val;
-                double           diffx;
-                double           diffy;
-                double           diffz;
-                for (dftfe::uInt iAtom = 0;
-                     iAtom < (atomLocations.size() + numberImageCharges);
-                     ++iAtom)
+                const dealii::types::global_dof_index dofId =
+                  partitioner->local_to_global(localDofId);
+                const dealii::Point<3> &nodalCoor =
+                  _supportPoints.find(dofId)->second;
+                if (!_phiExtConstraintMatrix.is_constrained(dofId))
                   {
-                    diffx = nodalCoor[0] - atomsImagesPositions[iAtom * 3 + 0];
-                    diffy = nodalCoor[1] - atomsImagesPositions[iAtom * 3 + 1];
-                    diffz = nodalCoor[2] - atomsImagesPositions[iAtom * 3 + 2];
-                    atomCharge = atomsImagesCharges[iAtom];
-
-                    distanceToAtom =
-                      std::sqrt(diffx * diffx + diffy * diffy + diffz * diffz);
-
-                    if (distanceToAtom < cutOffForPsp)
+                    dealii::Point<3> atom;
+                    double           atomCharge;
+                    dftfe::Int       chargeId;
+                    double           distanceToAtom;
+                    double           sumVal = 0.0;
+                    double           val;
+                    double           diffx;
+                    double           diffy;
+                    double           diffz;
+                    for (dftfe::uInt iAtom = 0;
+                         iAtom < (atomLocations.size() + numberImageCharges);
+                         ++iAtom)
                       {
-                        if (iAtom < numberGlobalCharges)
-                          {
-                            chargeId = iAtom;
-                          }
-                        else
-                          {
-                            const dftfe::uInt iImageCharge =
-                              iAtom - numberGlobalCharges;
-                            chargeId = d_imageIds[iImageCharge];
-                          }
+                        diffx =
+                          nodalCoor[0] - atomsImagesPositions[iAtom * 3 + 0];
+                        diffy =
+                          nodalCoor[1] - atomsImagesPositions[iAtom * 3 + 1];
+                        diffz =
+                          nodalCoor[2] - atomsImagesPositions[iAtom * 3 + 2];
+                        atomCharge = atomsImagesCharges[iAtom];
 
-                        if (atomIdBinIdMap.find(chargeId) !=
-                            atomIdBinIdMap.end())
-                          {
-                            const dftfe::uInt binId =
-                              atomIdBinIdMap.find(chargeId)->second;
-                            const dftfe::Int boundaryFlagChargeId =
-                              boundaryNodeMapBinsOnlyChargeId[binId]
-                                .find(dofId)
-                                ->second;
+                        distanceToAtom = std::sqrt(
+                          diffx * diffx + diffy * diffy + diffz * diffz);
 
-                            if (boundaryFlagChargeId == chargeId)
+                        if (distanceToAtom < cutOffForPsp)
+                          {
+                            if (iAtom < numberGlobalCharges)
                               {
-                                atom[0] = atomsImagesPositions[iAtom * 3 + 0];
-                                atom[1] = atomsImagesPositions[iAtom * 3 + 1];
-                                atom[2] = atomsImagesPositions[iAtom * 3 + 2];
+                                chargeId = iAtom;
+                              }
+                            else
+                              {
+                                const dftfe::uInt iImageCharge =
+                                  iAtom - numberGlobalCharges;
+                                chargeId = d_imageIds[iImageCharge];
+                              }
 
-                                if (dofClosestChargeLocationMapBins[binId]
-                                      .find(dofId)
-                                      ->second.distance(atom) < 1e-5)
+                            if (atomIdBinIdMap.find(chargeId) !=
+                                atomIdBinIdMap.end())
+                              {
+                                const dftfe::uInt binId =
+                                  atomIdBinIdMap.find(chargeId)->second;
+                                const dftfe::Int boundaryFlagChargeId =
+                                  boundaryNodeMapBinsOnlyChargeId[binId]
+                                    .find(dofId)
+                                    ->second;
+
+                                if (boundaryFlagChargeId == chargeId)
                                   {
-                                    const distributedCPUVec<double> &vselfBin =
-                                      vselfBinManager
-                                        .getVselfFieldBins()[binId];
-                                    val = vselfBin.local_element(localDofId);
+                                    atom[0] =
+                                      atomsImagesPositions[iAtom * 3 + 0];
+                                    atom[1] =
+                                      atomsImagesPositions[iAtom * 3 + 1];
+                                    atom[2] =
+                                      atomsImagesPositions[iAtom * 3 + 2];
+
+                                    if (dofClosestChargeLocationMapBins[binId]
+                                          .find(dofId)
+                                          ->second.distance(atom) < 1e-5)
+                                      {
+                                        const distributedCPUVec<double>
+                                          &vselfBin =
+                                            vselfBinManager
+                                              .getVselfFieldBins()[binId];
+                                        val =
+                                          vselfBin.local_element(localDofId);
+                                      }
+                                    else
+                                      val = -atomCharge / distanceToAtom;
                                   }
                                 else
                                   val = -atomCharge / distanceToAtom;
                               }
-                            else
-                              val = -atomCharge / distanceToAtom;
                           }
-                      }
-                    else
-                      {
-                        val = -atomCharge / distanceToAtom;
-                      }
+                        else
+                          {
+                            val = -atomCharge / distanceToAtom;
+                          }
 
-                    sumVal += val;
+                        sumVal += val;
+                      }
+                    phiExt.local_element(localDofId) = sumVal;
                   }
-                phiExt.local_element(localDofId) = sumVal;
-              }
-          } // interpool comm parallelization
-      }     // dof loop
+              } // interpool comm parallelization
+          }     // dof loop
 
-    if (numberDofs > 0 && numberKptGroups > 1)
-      MPI_Allreduce(MPI_IN_PLACE,
-                    phiExt.begin(),
-                    numberDofs,
-                    MPI_DOUBLE,
-                    MPI_SUM,
-                    interpoolcomm);
-    MPI_Barrier(interpoolcomm);
-    phiExt.update_ghost_values();
-    d_basisOperationsPtrElectroHost
-      ->d_constraintInfo[d_phiExtDofHandlerIndexElectro]
-      .distribute(phiExt);
+        if (numberDofs > 0 && numberKptGroups > 1)
+          MPI_Allreduce(MPI_IN_PLACE,
+                        phiExt.begin(),
+                        numberDofs,
+                        MPI_DOUBLE,
+                        MPI_SUM,
+                        interpoolcomm);
+        MPI_Barrier(interpoolcomm);
+        phiExt.update_ghost_values();
+        d_basisOperationsPtrElectroHost
+          ->d_constraintInfo[d_phiExtDofHandlerIndexElectro]
+          .distribute(phiExt);
+      }
 
     MPI_Barrier(d_mpiCommParent);
     init_1 = MPI_Wtime() - init_1;
@@ -360,7 +460,6 @@ namespace dftfe
                                                      quadPointPtr[q * 3 + 1],
                                                      quadPointPtr[q * 3 + 2]);
 
-                    double temp;
                     double tempVal = 0.0;
                     double diffx;
                     double diffy;
@@ -383,35 +482,31 @@ namespace dftfe
                           diffx * diffx + diffy * diffy + diffz * diffz);
                         distanceToAtomInv = 1.0 / distanceToAtom;
 
+                        dftfe::Int chargeId;
+                        if (iAtom < numberGlobalCharges)
+                          {
+                            chargeId     = iAtom;
+                            atomicNumber = std::round(atomLocations[iAtom][0]);
+                          }
+                        else
+                          {
+                            const dftfe::uInt iImageCharge =
+                              iAtom - numberGlobalCharges;
+                            chargeId     = d_imageIds[iImageCharge];
+                            atomicNumber = std::round(
+                              atomLocations[d_imageIds[iImageCharge]][0]);
+                          }
+
                         if (distanceToAtom <= maxTail)
                           {
-                            if (iAtom < numberGlobalCharges)
-                              {
-                                atomicNumber =
-                                  std::round(atomLocations[iAtom][0]);
-                              }
-                            else
-                              {
-                                const dftfe::uInt iImageCharge =
-                                  iAtom - numberGlobalCharges;
-                                atomicNumber = std::round(
-                                  atomLocations[d_imageIds[iImageCharge]][0]);
-                              }
-
                             if (distanceToAtom <=
                                 outerMostDataPoint[atomicNumber])
                               {
                                 if (d_dftParamsPtr->isPseudopotential)
-                                  {
-                                    value =
-                                      d_oncvClassPtr->getRadialLocalPseudo(
-                                        atomicNumber, distanceToAtom);
-                                    // add here
-                                  }
+                                  value = d_oncvClassPtr->getRadialLocalPseudo(
+                                    atomicNumber, distanceToAtom);
                                 else
-                                  {
-                                    value = -atomCharge * distanceToAtomInv;
-                                  }
+                                  value = -atomCharge * distanceToAtomInv;
                               }
                             else
                               {
@@ -422,6 +517,15 @@ namespace dftfe
                           {
                             value = -atomCharge * distanceToAtomInv;
                           }
+
+                        if (analyticSmearedLoadRoute)
+                          value -=
+                            distanceToAtom > smearedChargeWidths[chargeId] ?
+                              -atomCharge / distanceToAtom :
+                              -atomCharge * dftUtils::smearedPot(
+                                              distanceToAtom,
+                                              smearedChargeWidths[chargeId]);
+
                         tempVal += value;
                       } // atom loop
                     pseudoVLoc[q] = tempVal;
@@ -430,43 +534,47 @@ namespace dftfe
           }         // intercomm paral
       }             // cell loop
 
-    FEEvaluationWrapperClass<1> feEvalObj(_matrix_free_data,
-                                          _phiExtDofHandlerIndex,
-                                          lpspQuadratureId);
-    AssertThrow(
-      _matrix_free_data.get_quadrature(lpspQuadratureId).size() ==
-        feEvalObj.n_q_points,
-      dealii::ExcMessage(
-        "DFT-FE Error: mismatch in quadrature rule usage in initLocalPseudoPotential."));
-
-    for (dftfe::uInt macrocell = 0;
-         macrocell < _matrix_free_data.n_cell_batches();
-         ++macrocell)
+    if (!analyticSmearedLoadRoute)
       {
-        if (macrocell <
-              kptGroupLowHighPlusOneIndicesStep2[2 * kptGroupTaskId + 1] &&
-            macrocell >= kptGroupLowHighPlusOneIndicesStep2[2 * kptGroupTaskId])
+        FEEvaluationWrapperClass<1> feEvalObj(_matrix_free_data,
+                                              _phiExtDofHandlerIndex,
+                                              lpspQuadratureId);
+        AssertThrow(
+          _matrix_free_data.get_quadrature(lpspQuadratureId).size() ==
+            feEvalObj.n_q_points,
+          dealii::ExcMessage(
+            "DFT-FE Error: mismatch in quadrature rule usage in initLocalPseudoPotential."));
+
+        for (dftfe::uInt macrocell = 0;
+             macrocell < _matrix_free_data.n_cell_batches();
+             ++macrocell)
           {
-            feEvalObj.reinit(macrocell);
-            feEvalObj.read_dof_values(phiExt);
-            feEvalObj.evaluate(dealii::EvaluationFlags::values);
-            for (dftfe::uInt iSubCell = 0;
-                 iSubCell <
-                 _matrix_free_data.n_active_entries_per_cell_batch(macrocell);
-                 ++iSubCell)
+            if (macrocell <
+                  kptGroupLowHighPlusOneIndicesStep2[2 * kptGroupTaskId + 1] &&
+                macrocell >=
+                  kptGroupLowHighPlusOneIndicesStep2[2 * kptGroupTaskId])
               {
-                dealii::DoFHandler<3>::active_cell_iterator subCellPtr =
-                  _matrix_free_data.get_cell_iterator(macrocell,
-                                                      iSubCell,
-                                                      _phiExtDofHandlerIndex);
-                dealii::CellId       subCellId  = subCellPtr->id();
-                std::vector<double> &pseudoVLoc = _pseudoValues[subCellId];
-                // loop over quad points
-                for (dftfe::uInt q = 0; q < n_q_points; ++q)
+                feEvalObj.reinit(macrocell);
+                feEvalObj.read_dof_values(phiExt);
+                feEvalObj.evaluate(dealii::EvaluationFlags::values);
+                for (dftfe::uInt iSubCell = 0;
+                     iSubCell <
+                     _matrix_free_data.n_active_entries_per_cell_batch(
+                       macrocell);
+                     ++iSubCell)
                   {
-                    pseudoVLoc[q] -= feEvalObj.get_value(q)[iSubCell];
-                  } // loop over quad points
-              }     // subcell loop
+                    dealii::DoFHandler<3>::active_cell_iterator subCellPtr =
+                      _matrix_free_data.get_cell_iterator(
+                        macrocell, iSubCell, _phiExtDofHandlerIndex);
+                    dealii::CellId       subCellId  = subCellPtr->id();
+                    std::vector<double> &pseudoVLoc = _pseudoValues[subCellId];
+                    // loop over quad points
+                    for (dftfe::uInt q = 0; q < n_q_points; ++q)
+                      {
+                        pseudoVLoc[q] -= feEvalObj.get_value(q)[iSubCell];
+                      } // loop over quad points
+                  }     // subcell loop
+              }
           }
       }
     if (numMacroCells > 0 && numberKptGroups > 1)

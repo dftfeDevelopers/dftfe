@@ -53,6 +53,7 @@ namespace dftfe
       d_cellCentroids.clear();
       d_flattenedCellDofIndexToProcessDofIndexMap.clear();
       d_cellIndexToCellIdMap.clear();
+      d_cellIndexToCellIteratorMap.clear();
       d_cellIdToCellIndexMap.clear();
       d_inverseJacobianData.clear();
       d_JxWData.clear();
@@ -782,7 +783,12 @@ namespace dftfe
     FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
       cellIndex(const dealii::CellId cellid) const
     {
-      return d_cellIdToCellIndexMap.find(cellid)->second;
+      const auto cellIndexIt = d_cellIdToCellIndexMap.find(cellid);
+      AssertThrow(
+        cellIndexIt != d_cellIdToCellIndexMap.end(),
+        dealii::ExcMessage(
+          "DFT-FE Error: requested cell ID is not present in FEBasisOperations."));
+      return cellIndexIt->second;
     }
 
 
@@ -884,6 +890,25 @@ namespace dftfe
               d_nQuadsPerCell[d_quadratureIndex] * d_nDofsPerCell *
               d_cellsBlockSize * 3);
         }
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    void
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      clearTempStorage()
+    {
+      tempCellNodalData.clear();
+      tempQuadratureGradientsData.clear();
+      tempQuadratureGradientsDataNonAffine.clear();
+      tempCellMatrixBlock.clear();
+      tempCellValuesBlock.clear();
+      tempCellValuesBlockCoeff.clear();
+      tempCellGradientsBlock.clear();
+      tempCellGradientsBlockCoeff.clear();
+      tempCellGradientsBlock2.clear();
+      zeroIndexVec.clear();
     }
 
     template <typename ValueTypeBasisCoeff,

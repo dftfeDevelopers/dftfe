@@ -51,74 +51,79 @@ namespace dftfe
     inline double
     smearedCharge(double r, double rc)
     {
-      double val;
       if (r > rc)
-        {
-          val = 0.0;
-        }
-      else
-        {
-          val = -21.0 * pow(r - rc, 3.0) *
-                (6.0 * r * r + 3.0 * r * rc + rc * rc) /
-                (5.0 * M_PI * pow(rc, 8.0));
-        }
-      return val;
+        return 0.0;
+
+      const double rmrc = r - rc;
+      const double r2   = r * r;
+      const double rc2  = rc * rc;
+      const double rc4  = rc2 * rc2;
+      const double rc8  = rc4 * rc4;
+
+      return -21.0 * rmrc * rmrc * rmrc * (6.0 * r2 + 3.0 * r * rc + rc2) /
+             (5.0 * M_PI * rc8);
     }
 
     inline double
     smearedChargeDr(double r, double rc)
     {
-      double val;
       if (r > rc)
-        {
-          val = 0.0;
-        }
-      else
-        {
-          val =
-            (-63.0 * pow(r - rc, 2.0) * (6.0 * r * r + 3.0 * r * rc + rc * rc) -
-             63.0 * pow(r - rc, 3.0) * (4.0 * r + rc)) /
-            (5.0 * M_PI * pow(rc, 8.0));
-        }
-      return val;
+        return 0.0;
+
+      const double rmrc  = r - rc;
+      const double rmrc2 = rmrc * rmrc;
+      const double r2    = r * r;
+      const double rc2   = rc * rc;
+      const double rc4   = rc2 * rc2;
+      const double rc8   = rc4 * rc4;
+
+      return (-63.0 * rmrc2 * (6.0 * r2 + 3.0 * r * rc + rc2) -
+              63.0 * rmrc2 * rmrc * (4.0 * r + rc)) /
+             (5.0 * M_PI * rc8);
     }
 
     inline double
     smearedPot(double r, double rc)
     {
-      double val;
       if (r > rc)
-        {
-          val = 1.0 / r;
-        }
-      else
-        {
-          val = (9.0 * pow(r, 7.0) - 30.0 * pow(r, 6.0) * rc +
-                 28.0 * pow(r, 5.0) * pow(rc, 2.0) -
-                 14.0 * pow(r, 2.0) * pow(rc, 5) + 12.0 * pow(rc, 7)) /
-                (5.0 * pow(rc, 8.0));
-        }
-      return val;
+        return 1.0 / r;
+
+      const double r2  = r * r;
+      const double r4  = r2 * r2;
+      const double r5  = r4 * r;
+      const double r6  = r5 * r;
+      const double r7  = r6 * r;
+      const double rc2 = rc * rc;
+      const double rc4 = rc2 * rc2;
+      const double rc5 = rc4 * rc;
+      const double rc7 = rc5 * rc2;
+      const double rc8 = rc4 * rc4;
+
+      return (9.0 * r7 - 30.0 * r6 * rc + 28.0 * r5 * rc2 - 14.0 * r2 * rc5 +
+              12.0 * rc7) /
+             (5.0 * rc8);
     }
 
     // derivative w.r.t r
     inline double
     smearedPotDr(double r, double rc)
     {
-      double val;
       if (r > rc)
-        {
-          val = -1.0 / pow(r, 2.0);
-        }
-      else
-        {
-          val = (63.0 * pow(r, 6.0) - 180.0 * pow(r, 5.0) * rc +
-                 140.0 * pow(r, 4.0) * pow(rc, 2.0) -
-                 28.0 * pow(r, 1.0) * pow(rc, 5)) /
-                (5.0 * pow(rc, 8.0));
-        }
-      return val;
+        return -1.0 / (r * r);
+
+      const double r2  = r * r;
+      const double r4  = r2 * r2;
+      const double r5  = r4 * r;
+      const double r6  = r5 * r;
+      const double rc2 = rc * rc;
+      const double rc4 = rc2 * rc2;
+      const double rc5 = rc4 * rc;
+      const double rc8 = rc4 * rc4;
+
+      return (63.0 * r6 - 180.0 * r5 * rc + 140.0 * r4 * rc2 - 28.0 * r * rc5) /
+             (5.0 * rc8);
     }
+
 
     inline std::vector<double>
     getFractionalCoordinates(

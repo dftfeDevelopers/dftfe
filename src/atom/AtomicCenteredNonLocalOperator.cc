@@ -465,11 +465,10 @@ namespace dftfe
           gradientProjectorDyadicXMatrices;
 
         dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
-          projectorMatrices;
-#if defined(DFTFE_WITH_DEVICE)
-        dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
-          sphericalFunctionBasisTimesJxW,
-          sphericalFunctionBasisWithDistanceTimesJxW;
+                    projectorMatrices;
+        dftfe::uInt kptBatch               = 1;
+        dftfe::uInt projectorMatrixSizeOld = 0;
+        // Store results for all k-points; work buffers hold one batch.
         dftfe::utils::MemoryStorage<dataTypes::number,
                                     dftfe::utils::MemorySpace::HOST>
           projectorTimesXMatricesHost, gradientProjectorDyadicXMatricesHost,
@@ -484,20 +483,10 @@ namespace dftfe
         if (d_computeIonForces)
           gradientProjectorMatricesHost.resize(3 * m * n, 0.0);
 
-#else
-        auto &sphericalFunctionBasisTimesJxW =
-          sphericalFunctionBasisTimesJxWHost;
-        auto &sphericalFunctionBasisWithDistanceTimesJxW =
-          sphericalFunctionBasisWithDistanceTimesJxWHost;
-        auto &projectorMatricesHost         = projectorMatrices;
-        auto &projectorTimesXMatricesHost   = projectorTimesXMatrices;
-        auto &gradientProjectorMatricesHost = gradientProjectorMatrices;
-        auto &gradientProjectorDyadicXMatricesHost =
-          gradientProjectorDyadicXMatrices;
-#endif
-        dftfe::uInt kptBatch               = 1;
-        dftfe::uInt projectorMatrixSizeOld = 0;
-
+#if defined(DFTFE_WITH_DEVICE)
+        dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
+          sphericalFunctionBasisTimesJxW,
+          sphericalFunctionBasisWithDistanceTimesJxW;
         sphericalFunctionBasisTimesJxW.resize(nCellsPerBatch *
                                                 numberQuadraturePoints *
                                                 kptBatch *
@@ -508,6 +497,13 @@ namespace dftfe
             3 * nCellsPerBatch * numberQuadraturePoints * kptBatch *
               NumTotalSphericalFunctions,
             0.0);
+#else
+        auto &sphericalFunctionBasisTimesJxW =
+          sphericalFunctionBasisTimesJxWHost;
+        auto &sphericalFunctionBasisWithDistanceTimesJxW =
+          sphericalFunctionBasisWithDistanceTimesJxWHost;
+        // These aliases retain the all-k-point size of the host buffers.
+#endif
         for (dftfe::Int iElemComp = 0;
              iElemComp < numberElementsInAtomCompactSupport;
              iElemComp += nCellsPerBatch)
@@ -863,7 +859,6 @@ namespace dftfe
                     dftfe::uInt dstOffset = iKpt * nCellsPerBatch *
                                             NumTotalSphericalFunctions *
                                             d_numberNodesPerElement;
-#if defined(DFTFE_WITH_DEVICE)
                     projectorMatricesHost.copyFrom(projectorMatrices,
                                                    projectorMatrixSize,
                                                    0,
@@ -890,7 +885,6 @@ namespace dftfe
                           0,
                           9 * dstOffset);
                       }
-#endif
                   }
               }
 

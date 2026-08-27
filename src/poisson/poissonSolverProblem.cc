@@ -189,10 +189,9 @@ namespace dftfe
     tempvec.update_ghost_values();
     d_constraintsInfo.distribute(tempvec);
 
-    dealii::FEEvaluation<3, FEOrderElectro, FEOrderElectro + 1> fe_eval(
-      *d_matrixFreeDataPtr,
-      d_matrixFreeVectorComponent,
-      d_matrixFreeQuadratureComponentAX);
+    FEEvaluationWrapperClass<1> fe_eval(*d_matrixFreeDataPtr,
+                                        d_matrixFreeVectorComponent,
+                                        d_matrixFreeQuadratureComponentAX);
 
     const dealii::Quadrature<3> &quadratureRuleAxTemp =
       d_matrixFreeDataPtr->get_quadrature(d_matrixFreeQuadratureComponentAX);
@@ -701,10 +700,9 @@ namespace dftfe
     dealii::VectorizedArray<double> quarter =
       dealii::make_vectorized_array(1.0 / (4.0 * M_PI));
 
-    dealii::FEEvaluation<3, FEOrderElectro, FEOrderElectro + 1> fe_eval(
-      matrixFreeData,
-      d_matrixFreeVectorComponent,
-      d_matrixFreeQuadratureComponentAX);
+    FEEvaluationWrapperClass<1> fe_eval(matrixFreeData,
+                                        d_matrixFreeVectorComponent,
+                                        d_matrixFreeQuadratureComponentAX);
 
     for (dftfe::uInt cell = cell_range.first; cell < cell_range.second; ++cell)
       {
