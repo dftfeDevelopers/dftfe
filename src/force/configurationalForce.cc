@@ -329,10 +329,11 @@ namespace dftfe
                                                         &hessianRhoCoreAtoms,
     const std::map<dealii::CellId, std::vector<double>> &pseudoVLocValues,
     const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
-                                                  &pseudoVLocAtoms,
-    const dealii::DoFHandler<3>                   &dofHandlerRhoNodal,
-    const vselfBinsManager                        &vselfBinsManager,
-    const analyticSmearedLoadManager<memorySpace> &analyticSmearedLoadManager,
+                                &pseudoVLocAtoms,
+    const dealii::DoFHandler<3> &dofHandlerRhoNodal,
+    const vselfBinsManager      &vselfBinsManager,
+    const analyticSmearedChargeManager<memorySpace>
+      &analyticSmearedChargeManager,
     const std::vector<distributedCPUVec<double>>
                       &vselfFieldGateauxDerStrainFDBins,
     const dftfe::uInt &binsStartDofHandlerIndexElectro,
@@ -573,7 +574,7 @@ namespace dftfe
                         computeStress);
     computingTimerStandard.leave_subsection(
       "exchange-correlation contributuion");
-    if (d_dftParams.smearedNuclearChargePathway != "ANALYTIC_SMEARED_LOAD")
+    if (d_dftParams.smearedNuclearChargePathway != "ANALYTIC_SMEARED_CHARGE")
       {
         computingTimerStandard.enter_subsection("setup vself bins");
         createBinObjectsForce(
@@ -603,7 +604,7 @@ namespace dftfe
                               pseudoVLocAtoms,
                               dofHandlerRhoNodal,
                               vselfBinsManager,
-                              analyticSmearedLoadManager,
+                              analyticSmearedChargeManager,
                               vselfFieldGateauxDerStrainFDBins,
                               bCellNonTrivialAtomIds,
                               bCellNonTrivialAtomImageIds,
@@ -623,7 +624,7 @@ namespace dftfe
                                  imageCharges,
                                  imagePositions,
                                  vselfBinsManager,
-                                 analyticSmearedLoadManager,
+                                 analyticSmearedChargeManager,
                                  binsStartDofHandlerIndexElectro,
                                  phiTotRhoOutValues,
                                  bQuadAtomIdsAllAtoms,
@@ -645,7 +646,7 @@ namespace dftfe
                                  computeForce,
                                  computeStress);
     computingTimerStandard.leave_subsection("Electro Eshelby contribution");
-    if (d_dftParams.smearedNuclearChargePathway != "ANALYTIC_SMEARED_LOAD" &&
+    if (d_dftParams.smearedNuclearChargePathway != "ANALYTIC_SMEARED_CHARGE" &&
         (!floatingNuclearCharges || computeStress))
       {
         computingTimerStandard.enter_subsection("ESelf Eshelby contribution");
@@ -1802,26 +1803,27 @@ namespace dftfe
   template <dftfe::utils::MemorySpace memorySpace>
   void
   configurationalForceClass<memorySpace>::computeAnalyticSmearedContribAll(
-    const std::vector<std::vector<double>>        &atomLocations,
-    const std::vector<dftfe::Int>                 &imageIds,
-    const std::vector<double>                     &imageCharges,
-    const std::vector<std::vector<double>>        &imagePositions,
-    const analyticSmearedLoadManager<memorySpace> &analyticSmearedLoadManager,
-    const distributedCPUVec<double>               &phiTotRhoOutValues,
-    const bool                                     floatingNuclearCharges,
-    const bool                                     computeForce,
-    const bool                                     computeStress)
+    const std::vector<std::vector<double>> &atomLocations,
+    const std::vector<dftfe::Int>          &imageIds,
+    const std::vector<double>              &imageCharges,
+    const std::vector<std::vector<double>> &imagePositions,
+    const analyticSmearedChargeManager<memorySpace>
+                                    &analyticSmearedChargeManager,
+    const distributedCPUVec<double> &phiTotRhoOutValues,
+    const bool                       floatingNuclearCharges,
+    const bool                       computeForce,
+    const bool                       computeStress)
   {
     const std::vector<double> &smearedChargeWidths =
-      analyticSmearedLoadManager.smearedChargeWidths();
+      analyticSmearedChargeManager.smearedChargeWidths();
     const std::vector<double> &smearedChargeScaling =
-      analyticSmearedLoadManager.smearedChargeScaling();
+      analyticSmearedChargeManager.smearedChargeScaling();
     const auto &bQuadValuesAllAtoms =
-      analyticSmearedLoadManager.bQuadValuesAllAtoms();
+      analyticSmearedChargeManager.bQuadValuesAllAtoms();
     const auto &bCellNonTrivialAtomIds =
-      analyticSmearedLoadManager.bCellNonTrivialAtomIds();
+      analyticSmearedChargeManager.bCellNonTrivialAtomIds();
     const auto &bCellNonTrivialAtomImageIds =
-      analyticSmearedLoadManager.bCellNonTrivialAtomImageIds();
+      analyticSmearedChargeManager.bCellNonTrivialAtomImageIds();
     std::vector<double> forceContribSmeared(3 * d_dftParams.natoms, 0.0);
     std::vector<double> stressContribSmeared(9, 0.0);
     dealii::FEValues<3> feValuesForce(
@@ -1873,17 +1875,17 @@ namespace dftfe
         smearedChargeWidths.size() == d_dftParams.natoms &&
         smearedChargeScaling.size() == d_dftParams.natoms,
       dealii::ExcMessage(
-        "DFT-FE Error: incomplete ASL atom data in smeared-force assembly."));
+        "DFT-FE Error: incomplete ASC atom data in smeared-force assembly."));
     AssertThrow(
       imageIds.size() == imageCharges.size() &&
         imageIds.size() == imagePositions.size(),
       dealii::ExcMessage(
-        "DFT-FE Error: inconsistent ASL image data in smeared-force assembly."));
+        "DFT-FE Error: inconsistent ASC image data in smeared-force assembly."));
     for (const dftfe::Int atomId : imageIds)
       AssertThrow(
         atomId >= 0 && static_cast<dftfe::uInt>(atomId) < d_dftParams.natoms,
         dealii::ExcMessage(
-          "DFT-FE Error: invalid ASL image owner in smeared-force assembly."));
+          "DFT-FE Error: invalid ASC image owner in smeared-force assembly."));
 
     auto getAtomCharge = [&](const dftfe::uInt atomId) {
       return d_dftParams.isPseudopotential ? atomLocations[atomId][1] :
@@ -1965,13 +1967,13 @@ namespace dftfe
             AssertThrow(
               bQuadValuesIt != bQuadValuesAllAtoms.end(),
               dealii::ExcMessage(
-                "DFT-FE Error: missing ASL quadrature values in force assembly."));
+                "DFT-FE Error: missing ASC quadrature values in force assembly."));
             const std::vector<double> &bQuadAtomValuesCell =
               bQuadValuesIt->second;
             AssertThrow(
               bQuadAtomValuesCell.size() == nQuadsPerCell,
               dealii::ExcMessage(
-                "DFT-FE Error: ASL quadrature data has an unexpected size in force assembly."));
+                "DFT-FE Error: ASC quadrature data has an unexpected size in force assembly."));
 
             const double *JxWValues =
               d_basisOperationsPtrElectroHost->JxWBasisData().data() +
@@ -2123,12 +2125,13 @@ namespace dftfe
   template <dftfe::utils::MemorySpace memorySpace>
   void
   configurationalForceClass<memorySpace>::computeSmearedContribAll(
-    const std::vector<std::vector<double>>        &atomLocations,
-    const std::vector<dftfe::Int>                 &imageIds,
-    const std::vector<double>                     &imageCharges,
-    const std::vector<std::vector<double>>        &imagePositions,
-    const vselfBinsManager                        &vselfBinsManager,
-    const analyticSmearedLoadManager<memorySpace> &analyticSmearedLoadManager,
+    const std::vector<std::vector<double>> &atomLocations,
+    const std::vector<dftfe::Int>          &imageIds,
+    const std::vector<double>              &imageCharges,
+    const std::vector<std::vector<double>> &imagePositions,
+    const vselfBinsManager                 &vselfBinsManager,
+    const analyticSmearedChargeManager<memorySpace>
+                                    &analyticSmearedChargeManager,
     const dftfe::uInt               &binsStartDofHandlerIndexElectro,
     const distributedCPUVec<double> &phiTotRhoOutValues,
     const std::map<dealii::CellId, std::vector<dftfe::Int>>
@@ -2146,13 +2149,13 @@ namespace dftfe
     const bool                 computeForce,
     const bool                 computeStress)
   {
-    if (d_dftParams.smearedNuclearChargePathway == "ANALYTIC_SMEARED_LOAD")
+    if (d_dftParams.smearedNuclearChargePathway == "ANALYTIC_SMEARED_CHARGE")
       {
         computeAnalyticSmearedContribAll(atomLocations,
                                          imageIds,
                                          imageCharges,
                                          imagePositions,
-                                         analyticSmearedLoadManager,
+                                         analyticSmearedChargeManager,
                                          phiTotRhoOutValues,
                                          floatingNuclearCharges,
                                          computeForce,
@@ -2562,18 +2565,19 @@ namespace dftfe
       &gradRhoTotalOutValuesLpsp,
     const std::map<dealii::CellId, std::vector<double>> &pseudoVLocValues,
     const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
-                                                  &pseudoVLocAtoms,
-    const analyticSmearedLoadManager<memorySpace> &analyticSmearedLoadManager,
-    const bool                                     floatingNuclearCharges,
-    const bool                                     computeForce,
-    const bool                                     computeStress)
+      &pseudoVLocAtoms,
+    const analyticSmearedChargeManager<memorySpace>
+              &analyticSmearedChargeManager,
+    const bool floatingNuclearCharges,
+    const bool computeForce,
+    const bool computeStress)
   {
     const std::vector<double> &smearedChargeWidths =
-      analyticSmearedLoadManager.smearedChargeWidths();
+      analyticSmearedChargeManager.smearedChargeWidths();
     const auto &bCellNonTrivialAtomIds =
-      analyticSmearedLoadManager.bCellNonTrivialAtomIds();
+      analyticSmearedChargeManager.bCellNonTrivialAtomIds();
     const auto &bCellNonTrivialAtomImageIds =
-      analyticSmearedLoadManager.bCellNonTrivialAtomImageIds();
+      analyticSmearedChargeManager.bCellNonTrivialAtomImageIds();
     std::vector<double> forceContribLPSP(3 * d_dftParams.natoms, 0.0);
     std::vector<double> stressContribLPSP(9, 0.0);
     dftfe::uInt totalNumAtomsInclImages = d_dftParams.natoms + imageIds.size();
@@ -2604,17 +2608,17 @@ namespace dftfe
       atomLocations.size() == d_dftParams.natoms &&
         smearedChargeWidths.size() == d_dftParams.natoms,
       dealii::ExcMessage(
-        "DFT-FE Error: incomplete ASL atom data in local-potential force assembly."));
+        "DFT-FE Error: incomplete ASC atom data in local-potential force assembly."));
     AssertThrow(
       imageIds.size() == imageCharges.size() &&
         imageIds.size() == imagePositions.size(),
       dealii::ExcMessage(
-        "DFT-FE Error: inconsistent ASL image data in local-potential force assembly."));
+        "DFT-FE Error: inconsistent ASC image data in local-potential force assembly."));
     for (const dftfe::Int atomId : imageIds)
       AssertThrow(
         atomId >= 0 && static_cast<dftfe::uInt>(atomId) < d_dftParams.natoms,
         dealii::ExcMessage(
-          "DFT-FE Error: invalid ASL image owner in local-potential force assembly."));
+          "DFT-FE Error: invalid ASC image owner in local-potential force assembly."));
     auto getAtomCharge = [&](const dftfe::uInt atomId) {
       return d_dftParams.isPseudopotential ? atomLocations[atomId][1] :
                                              atomLocations[atomId][0];
@@ -2847,7 +2851,7 @@ namespace dftfe
                     std::sqrt(dx * dx + dy * dy + dz * dz);
                   const double correctionDer =
                     -atomCharge * getAtomCharge(jAtom) *
-                    analyticSmearedLoadManager
+                    analyticSmearedChargeManager
                       .pairInteractionDerivativeDifference(iAtom,
                                                            jAtom,
                                                            separation);
@@ -2881,7 +2885,7 @@ namespace dftfe
                   std::sqrt(dx * dx + dy * dy + dz * dz);
                 const double correctionDer =
                   -atomCharge * imageCharges[iImage] *
-                  analyticSmearedLoadManager
+                  analyticSmearedChargeManager
                     .pairInteractionDerivativeDifference(iAtom,
                                                          imageIds[iImage],
                                                          separation);
@@ -2921,7 +2925,7 @@ namespace dftfe
           AssertThrow(
             pseudoValuesIt != pseudoVLocValues.end(),
             dealii::ExcMessage(
-              "DFT-FE Error: missing local-potential values in ASL force assembly."));
+              "DFT-FE Error: missing local-potential values in ASC force assembly."));
           const std::vector<double> &tempPseudoVal = pseudoValuesIt->second;
 
           dealii::DoFHandler<3>::active_cell_iterator currentCellPtrForce(
@@ -2993,10 +2997,11 @@ namespace dftfe
       &gradRhoTotalOutValuesLpsp,
     const std::map<dealii::CellId, std::vector<double>> &pseudoVLocValues,
     const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
-                                                  &pseudoVLocAtoms,
-    const dealii::DoFHandler<3>                   &dofHandlerRhoNodal,
-    const vselfBinsManager                        &vselfBinsManager,
-    const analyticSmearedLoadManager<memorySpace> &analyticSmearedLoadManager,
+                                &pseudoVLocAtoms,
+    const dealii::DoFHandler<3> &dofHandlerRhoNodal,
+    const vselfBinsManager      &vselfBinsManager,
+    const analyticSmearedChargeManager<memorySpace>
+      &analyticSmearedChargeManager,
     const std::vector<distributedCPUVec<double>>
       &vselfFieldGateauxDerStrainFDBins,
     const std::map<dealii::CellId, std::vector<dftfe::uInt>>
@@ -3009,7 +3014,7 @@ namespace dftfe
     const bool                 computeForce,
     const bool                 computeStress)
   {
-    if (d_dftParams.smearedNuclearChargePathway == "ANALYTIC_SMEARED_LOAD")
+    if (d_dftParams.smearedNuclearChargePathway == "ANALYTIC_SMEARED_CHARGE")
       {
         computeAnalyticLPSPContribAll(atomLocations,
                                       imageIds,
@@ -3018,7 +3023,7 @@ namespace dftfe
                                       gradRhoTotalOutValuesLpsp,
                                       pseudoVLocValues,
                                       pseudoVLocAtoms,
-                                      analyticSmearedLoadManager,
+                                      analyticSmearedChargeManager,
                                       floatingNuclearCharges,
                                       computeForce,
                                       computeStress);

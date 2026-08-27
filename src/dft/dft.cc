@@ -1261,7 +1261,8 @@ namespace dftfe
 
 
     if (d_dftParamsPtr->smearedNuclearCharges &&
-        d_dftParamsPtr->smearedNuclearChargePathway != "ANALYTIC_SMEARED_LOAD")
+        d_dftParamsPtr->smearedNuclearChargePathway !=
+          "ANALYTIC_SMEARED_CHARGE")
       calculateSmearedChargeWidths();
 
     if (d_dftParamsPtr->verbosity >= 4)
@@ -1612,7 +1613,7 @@ namespace dftfe
 
         if (d_dftParamsPtr->smearedNuclearCharges &&
             d_dftParamsPtr->smearedNuclearChargePathway !=
-              "ANALYTIC_SMEARED_LOAD")
+              "ANALYTIC_SMEARED_CHARGE")
           calculateSmearedChargeWidths();
 
         d_netFloatingDispSinceLastCheckForSmearedChargeOverlaps.clear();
@@ -4274,7 +4275,7 @@ namespace dftfe
                 (d_dftParamsPtr->isPseudopotential ||
                  d_dftParamsPtr->smearedNuclearCharges) &&
                 d_dftParamsPtr->smearedNuclearChargePathway !=
-                  "ANALYTIC_SMEARED_LOAD")
+                  "ANALYTIC_SMEARED_CHARGE")
               {
                 computeVselfFieldGateauxDerFD();
               }
@@ -4312,7 +4313,7 @@ namespace dftfe
                 d_pseudoVLocAtoms,
                 d_dofHandlerRhoNodal,
                 d_vselfBinsManager,
-                d_analyticSmearedLoadManager,
+                d_analyticSmearedChargeManager,
                 d_vselfFieldGateauxDerStrainFDBins,
                 d_binsStartDofHandlerIndexElectro,
                 d_phiExtDofHandlerIndexElectro,
@@ -4362,7 +4363,7 @@ namespace dftfe
                 d_pseudoVLocAtoms,
                 d_dofHandlerRhoNodal,
                 d_vselfBinsManager,
-                d_analyticSmearedLoadManager,
+                d_analyticSmearedChargeManager,
                 d_vselfFieldGateauxDerStrainFDBins,
                 d_binsStartDofHandlerIndexElectro,
                 d_phiExtDofHandlerIndexElectro,
@@ -5650,18 +5651,18 @@ namespace dftfe
   /// non-intersecting smeared charges of all atoms at quad points
   template <dftfe::utils::MemorySpace memorySpace>
   bool
-  dftClass<memorySpace>::usesAnalyticSmearedLoad() const
+  dftClass<memorySpace>::usesAnalyticSmearedCharge() const
   {
     return d_dftParamsPtr->smearedNuclearChargePathway ==
-           "ANALYTIC_SMEARED_LOAD";
+           "ANALYTIC_SMEARED_CHARGE";
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
   std::map<dealii::CellId, std::vector<double>> &
   dftClass<memorySpace>::activeBQuadValuesAllAtoms()
   {
-    return usesAnalyticSmearedLoad() ?
-             d_analyticSmearedLoadManager.bQuadValuesAllAtoms() :
+    return usesAnalyticSmearedCharge() ?
+             d_analyticSmearedChargeManager.bQuadValuesAllAtoms() :
              d_bQuadValuesAllAtoms;
   }
 
@@ -5669,8 +5670,8 @@ namespace dftfe
   const std::map<dealii::CellId, std::vector<double>> &
   dftClass<memorySpace>::activeBQuadValuesAllAtoms() const
   {
-    return usesAnalyticSmearedLoad() ?
-             d_analyticSmearedLoadManager.bQuadValuesAllAtoms() :
+    return usesAnalyticSmearedCharge() ?
+             d_analyticSmearedChargeManager.bQuadValuesAllAtoms() :
              d_bQuadValuesAllAtoms;
   }
 
@@ -5678,8 +5679,8 @@ namespace dftfe
   const std::map<dealii::CellId, std::vector<dftfe::uInt>> &
   dftClass<memorySpace>::activeBCellNonTrivialAtomIds() const
   {
-    return usesAnalyticSmearedLoad() ?
-             d_analyticSmearedLoadManager.bCellNonTrivialAtomIds() :
+    return usesAnalyticSmearedCharge() ?
+             d_analyticSmearedChargeManager.bCellNonTrivialAtomIds() :
              d_bCellNonTrivialAtomIds;
   }
 
@@ -5687,8 +5688,8 @@ namespace dftfe
   const std::map<dealii::CellId, std::vector<dftfe::uInt>> &
   dftClass<memorySpace>::activeBCellNonTrivialAtomImageIds() const
   {
-    return usesAnalyticSmearedLoad() ?
-             d_analyticSmearedLoadManager.bCellNonTrivialAtomImageIds() :
+    return usesAnalyticSmearedCharge() ?
+             d_analyticSmearedChargeManager.bCellNonTrivialAtomImageIds() :
              d_bCellNonTrivialAtomImageIds;
   }
 
@@ -5696,8 +5697,8 @@ namespace dftfe
   const std::vector<std::vector<double>> &
   dftClass<memorySpace>::activeLocalVselfs() const
   {
-    return usesAnalyticSmearedLoad() ?
-             d_analyticSmearedLoadManager.localVselfs() :
+    return usesAnalyticSmearedCharge() ?
+             d_analyticSmearedChargeManager.localVselfs() :
              d_localVselfs;
   }
 

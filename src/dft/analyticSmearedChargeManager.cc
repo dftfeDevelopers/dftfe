@@ -7,7 +7,7 @@
 //
 // ---------------------------------------------------------------------
 
-#include <dftfe/analyticSmearedLoadManager.h>
+#include <dftfe/analyticSmearedChargeManager.h>
 #include <dftfe/dftParameters.h>
 #include <dftfe/dftUtils.h>
 #include <dftfe/oncvClass.h>
@@ -23,7 +23,7 @@ namespace dftfe
 {
   template <dftfe::utils::MemorySpace memorySpace>
   void
-  analyticSmearedLoadManager<memorySpace>::initialize(
+  analyticSmearedChargeManager<memorySpace>::initialize(
     const std::vector<std::vector<double>> &atomLocations,
     const std::vector<dftfe::Int>          &imageIds,
     const std::vector<double>              &imageCharges,
@@ -47,12 +47,12 @@ namespace dftfe
       imagePositions.size() == imageIds.size() &&
         imageCharges.size() == imageIds.size(),
       dealii::ExcMessage(
-        "DFT-FE Error: inconsistent truncated-image data in ASL initialization."));
+        "DFT-FE Error: inconsistent truncated-image data in ASC initialization."));
     for (const dftfe::Int atomId : imageIds)
       AssertThrow(
         atomId >= 0 && static_cast<dftfe::uInt>(atomId) < numberGlobalAtoms,
         dealii::ExcMessage(
-          "DFT-FE Error: invalid truncated-image owner in ASL initialization."));
+          "DFT-FE Error: invalid truncated-image owner in ASC initialization."));
 
     d_bQuadValuesAllAtoms.clear();
     d_bCellNonTrivialAtomIds.clear();
@@ -66,10 +66,10 @@ namespace dftfe
       std::min(0.7, std::max(1.0e-8, 0.5 * minDist - 0.3));
 
     d_smearedChargeWidths.assign(numberGlobalAtoms,
-                                 dftParams.analyticSmearedLoadRadius);
+                                 dftParams.analyticSmearedChargeRadius);
     d_smearedChargeScaling.assign(numberGlobalAtoms, 1.0);
 
-    if (dftParams.analyticSmearedLoadRadius <= 0.0)
+    if (dftParams.analyticSmearedChargeRadius <= 0.0)
       {
         constexpr double              fluxChargeRelativeTolerance = 1.0e-3;
         constexpr double              meshResolutionFactor        = 2.5;
@@ -198,7 +198,7 @@ namespace dftfe
 
         if (numberGlobalAtoms > 0 && dftParams.verbosity >= 2)
           {
-            pcout << "ASL automatic smeared charge widths by atom type:";
+            pcout << "ASC automatic smeared charge widths by atom type:";
             for (const auto &typeWidth : atomTypeToWidth)
               pcout << " Z=" << typeWidth.first << ":" << typeWidth.second
                     << "(core=" << atomTypeToPspCoreWidth[typeWidth.first]
@@ -255,7 +255,7 @@ namespace dftfe
       AssertThrow(
         std::abs(det) > 1.0e-14,
         dealii::ExcMessage(
-          "DFT-FE Error: invalid domain bounding vectors for ASL radius cap."));
+          "DFT-FE Error: invalid domain bounding vectors for ASC radius cap."));
       return std::array<double, 3>{dot(rhs, cross(c1, c2)) / det,
                                    dot(c0, cross(rhs, c2)) / det,
                                    dot(c0, cross(c1, rhs)) / det};
@@ -277,7 +277,7 @@ namespace dftfe
             AssertThrow(
               normalNorm > 1.0e-14,
               dealii::ExcMessage(
-                "DFT-FE Error: invalid domain face normal for ASL radius cap."));
+                "DFT-FE Error: invalid domain face normal for ASC radius cap."));
             const double cellHeight =
               std::abs(dot(latticeVectors[iDim], normal)) / normalNorm;
             boundaryCap =
@@ -297,7 +297,7 @@ namespace dftfe
         AssertThrow(
           atomRadiusCap > 1.0e-10,
           dealii::ExcMessage(
-            "DFT-FE Error: ASL smeared charge radius cap is non-positive. Check atom positions and boundary conditions."));
+            "DFT-FE Error: ASC smeared charge radius cap is non-positive. Check atom positions and boundary conditions."));
         minRadiusCap = std::min(minRadiusCap, atomRadiusCap);
         if (d_smearedChargeWidths[iAtom] > atomRadiusCap)
           {
@@ -313,7 +313,7 @@ namespace dftfe
         const auto minMaxWidth =
           std::minmax_element(d_smearedChargeWidths.begin(),
                               d_smearedChargeWidths.end());
-        pcout << "ASL smeared charge radius cap min: " << minRadiusCap
+        pcout << "ASC smeared charge radius cap min: " << minRadiusCap
               << ", width min/max after cap: " << *minMaxWidth.first << " "
               << *minMaxWidth.second;
         if (smearedChargeWidthCapped)
@@ -445,7 +445,7 @@ namespace dftfe
         AssertThrow(
           smearedChargeIntegral[iAtom] > 1.0e-14,
           dealii::ExcMessage(
-            "DFT-FE Error: analytic smeared-load charge normalization integral is zero."));
+            "DFT-FE Error: analytic smeared-charge charge normalization integral is zero."));
         d_smearedChargeScaling[iAtom] = 1.0 / smearedChargeIntegral[iAtom];
       }
     if (numberGlobalAtoms > 0 && dftParams.verbosity >= 2)
@@ -453,7 +453,7 @@ namespace dftfe
         const auto minMaxScaling =
           std::minmax_element(d_smearedChargeScaling.begin(),
                               d_smearedChargeScaling.end());
-        pcout << "ASL smeared charge scaling min/max: " << *minMaxScaling.first
+        pcout << "ASC smeared charge scaling min/max: " << *minMaxScaling.first
               << " " << *minMaxScaling.second << std::endl;
       }
 
@@ -471,7 +471,7 @@ namespace dftfe
         const dealii::Point<3> pointI      = atomPoints[iAtom];
         analyticCorrectionEnergy +=
           0.5 * atomChargeI * atomChargeI *
-          analyticSmearedLoadManager<memorySpace>::smearedPairInteraction(
+          analyticSmearedChargeManager<memorySpace>::smearedPairInteraction(
             widthI, widthI, 0.0);
         for (dftfe::uInt jAtom = 0; jAtom < numberGlobalAtoms; ++jAtom)
           if (jAtom != iAtom)
@@ -480,7 +480,7 @@ namespace dftfe
               const double           separation = pointI.distance(pointJ);
               analyticCorrectionEnergy +=
                 0.5 * atomChargeI * atomCharges[jAtom] *
-                analyticSmearedLoadManager<memorySpace>::
+                analyticSmearedChargeManager<memorySpace>::
                   smearedPairInteractionDifference(
                     widthI,
                     d_smearedChargeWidths[jAtom],
@@ -495,7 +495,7 @@ namespace dftfe
             const double separation = pointI.distance(imagePoints[iImage]);
             analyticCorrectionEnergy +=
               0.5 * atomChargeI * imageCharges[iImage] *
-              analyticSmearedLoadManager<memorySpace>::
+              analyticSmearedChargeManager<memorySpace>::
                 smearedPairInteractionDifference(
                   widthI,
                   imageWidths[iImage],
@@ -525,7 +525,7 @@ namespace dftfe
                           d_physicalCandidatesByCell.end() &&
                         imageCandidatesIt != d_imageCandidatesByCell.end(),
                       dealii::ExcMessage(
-                        "DFT-FE Error: missing cached ASL cell candidates."));
+                        "DFT-FE Error: missing cached ASC cell candidates."));
           const std::vector<dftfe::uInt> &physicalAtomCandidates =
             physicalCandidatesIt->second;
           const std::vector<dftfe::uInt> &imageCandidates =
@@ -623,24 +623,24 @@ namespace dftfe
 
   template <dftfe::utils::MemorySpace memorySpace>
   const std::vector<double> &
-  analyticSmearedLoadManager<memorySpace>::smearedChargeWidths() const
+  analyticSmearedChargeManager<memorySpace>::smearedChargeWidths() const
   {
     return d_smearedChargeWidths;
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
   const std::vector<double> &
-  analyticSmearedLoadManager<memorySpace>::smearedChargeScaling() const
+  analyticSmearedChargeManager<memorySpace>::smearedChargeScaling() const
   {
     return d_smearedChargeScaling;
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
   double
-  analyticSmearedLoadManager<memorySpace>::pairInteractionDerivativeDifference(
-    const dftfe::uInt atomIdA,
-    const dftfe::uInt atomIdB,
-    const double      separation) const
+  analyticSmearedChargeManager<memorySpace>::
+    pairInteractionDerivativeDifference(const dftfe::uInt atomIdA,
+                                        const dftfe::uInt atomIdB,
+                                        const double      separation) const
   {
     AssertIndexRange(atomIdA, d_smearedChargeWidths.size());
     AssertIndexRange(atomIdB, d_smearedChargeWidths.size());
@@ -656,41 +656,42 @@ namespace dftfe
 
   template <dftfe::utils::MemorySpace memorySpace>
   const std::vector<std::vector<double>> &
-  analyticSmearedLoadManager<memorySpace>::localVselfs() const
+  analyticSmearedChargeManager<memorySpace>::localVselfs() const
   {
     return d_localVselfs;
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
   const std::map<dealii::CellId, std::vector<double>> &
-  analyticSmearedLoadManager<memorySpace>::bQuadValuesAllAtoms() const
+  analyticSmearedChargeManager<memorySpace>::bQuadValuesAllAtoms() const
   {
     return d_bQuadValuesAllAtoms;
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
   std::map<dealii::CellId, std::vector<double>> &
-  analyticSmearedLoadManager<memorySpace>::bQuadValuesAllAtoms()
+  analyticSmearedChargeManager<memorySpace>::bQuadValuesAllAtoms()
   {
     return d_bQuadValuesAllAtoms;
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
   const std::map<dealii::CellId, std::vector<dftfe::uInt>> &
-  analyticSmearedLoadManager<memorySpace>::bCellNonTrivialAtomIds() const
+  analyticSmearedChargeManager<memorySpace>::bCellNonTrivialAtomIds() const
   {
     return d_bCellNonTrivialAtomIds;
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
   const std::map<dealii::CellId, std::vector<dftfe::uInt>> &
-  analyticSmearedLoadManager<memorySpace>::bCellNonTrivialAtomImageIds() const
+  analyticSmearedChargeManager<memorySpace>::bCellNonTrivialAtomImageIds() const
   {
     return d_bCellNonTrivialAtomImageIds;
   }
 
-  template class analyticSmearedLoadManager<dftfe::utils::MemorySpace::HOST>;
+  template class analyticSmearedChargeManager<dftfe::utils::MemorySpace::HOST>;
 #ifdef DFTFE_WITH_DEVICE
-  template class analyticSmearedLoadManager<dftfe::utils::MemorySpace::DEVICE>;
+  template class analyticSmearedChargeManager<
+    dftfe::utils::MemorySpace::DEVICE>;
 #endif
 } // namespace dftfe

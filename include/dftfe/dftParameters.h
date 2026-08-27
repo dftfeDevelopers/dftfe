@@ -174,7 +174,7 @@ namespace dftfe
     bool        smearedNuclearCharges;
     bool        floatingNuclearCharges;
     std::string smearedNuclearChargePathway;
-    double      analyticSmearedLoadRadius;
+    double      analyticSmearedChargeRadius;
     bool        multipoleBoundaryConditions;
     bool        nonLinearCoreCorrection;
     dftfe::uInt maxLineSearchIterCGPRP;
