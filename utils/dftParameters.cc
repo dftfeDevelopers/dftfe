@@ -1170,7 +1170,7 @@ namespace dftfe
             "TENSOR OP TYPE SINGLE PREC CHEBY",
             "FP32",
             dealii::Patterns::Selection("FP32|TF32|BF16"),
-            "[Advanced] Tensor operation datatype for the modified single precision algorithm for Chebyshev filtering, this only used on Nvidia GPUs with compute capability greater than 80. Default setting is FP32.");
+            "[Advanced] Tensor operation datatype for the modified single precision algorithm for Chebyshev filtering. This option is valid on GPUs that support the selected datatype through the configured device BLAS backend. Default setting is FP32.");
 
           prm.declare_entry(
             "OVERLAP COMPUTE COMMUN CHEBY",
