@@ -28,7 +28,7 @@
 #include <dftfe/BLASWrapper.h>
 #include <dftfe/AuxDensityMatrix.h>
 #include <dftfe/configurationalForce.h>
-#include <dftfe/analyticSmearedLoadManager.h>
+#include <dftfe/analyticSmearedChargeManager.h>
 #include <dftfe/dftUtils.h>
 
 #include <complex>
@@ -1048,10 +1048,10 @@ namespace dftfe
         &_pseudoValuesAtoms);
 
     void
-    initAnalyticSmearedLoadData();
+    initAnalyticSmearedChargeData();
 
     bool
-    usesAnalyticSmearedLoad() const;
+    usesAnalyticSmearedCharge() const;
 
     std::map<dealii::CellId, std::vector<double>> &
     activeBQuadValuesAllAtoms();
@@ -1874,8 +1874,8 @@ namespace dftfe
     /// vselfBinsManager object
     vselfBinsManager d_vselfBinsManager;
 
-    /// Geometry-dependent state for the analytic smeared-load pathway
-    analyticSmearedLoadManager<memorySpace> d_analyticSmearedLoadManager;
+    /// Geometry-dependent state for the analytic smeared-charge pathway
+    analyticSmearedChargeManager<memorySpace> d_analyticSmearedChargeManager;
 
     /// Gateaux derivative of vself field with respect to affine strain tensor
     /// components using central finite difference. This is used for cell stress

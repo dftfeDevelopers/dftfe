@@ -272,7 +272,8 @@ namespace dftfe
     d_phiTotDofHandlerIndexElectro = d_constraintsVectorElectro.size() - 1;
 
     d_binsStartDofHandlerIndexElectro = d_constraintsVectorElectro.size();
-    if (d_dftParamsPtr->smearedNuclearChargePathway != "ANALYTIC_SMEARED_LOAD")
+    if (d_dftParamsPtr->smearedNuclearChargePathway !=
+        "ANALYTIC_SMEARED_CHARGE")
       {
         double init_bins;
         MPI_Barrier(d_mpiCommParent);

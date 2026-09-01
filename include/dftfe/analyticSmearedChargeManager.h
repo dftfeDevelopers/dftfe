@@ -7,8 +7,8 @@
 //
 // ---------------------------------------------------------------------
 
-#ifndef DFTFE_ANALYTICSMEAREDLOADMANAGER_H
-#define DFTFE_ANALYTICSMEAREDLOADMANAGER_H
+#ifndef DFTFE_ANALYTICSMEAREDCHARGEMANAGER_H
+#define DFTFE_ANALYTICSMEAREDCHARGEMANAGER_H
 
 #include <dftfe/headers.h>
 #include <dftfe/MemorySpaceType.h>
@@ -26,13 +26,13 @@ namespace dftfe
   class oncvClass;
 
   /** Owns geometry-dependent data and analytic pair kernels for the
-   *  ANALYTIC_SMEARED_LOAD nuclear-charge pathway.
+   *  ANALYTIC_SMEARED_CHARGE nuclear-charge pathway.
    */
   template <dftfe::utils::MemorySpace memorySpace>
-  class analyticSmearedLoadManager
+  class analyticSmearedChargeManager
   {
   public:
-    /** Rebuild all ASL data after atom positions, cell, or mesh change. */
+    /** Rebuild all ASC data after atom positions, cell, or mesh change. */
     void
     initialize(const std::vector<std::vector<double>> &atomLocations,
                const std::vector<dftfe::Int>          &imageIds,

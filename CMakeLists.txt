@@ -129,7 +129,7 @@ set_property(TARGET "dftfe_exe" PROPERTY OUTPUT_NAME "dftfe")
 SET(TARGET_SRC
   ./src/dftfeWrapper.cc
   ./src/dft/dft.cc
-  ./src/dft/analyticSmearedLoadManager.cc
+  ./src/dft/analyticSmearedChargeManager.cc
   ./src/dft/vselfBinsManager.cc
   ./src/dft/energyCalculator.cc
   ./src/dft/energyDensity.cc
@@ -442,7 +442,13 @@ IF (WITH_GPU)
   IF ("${GPU_LANG}" STREQUAL "cuda")
     MESSAGE(STATUS "DFT-FE: GPU language = CUDA")
     set(DFTFE_WITH_DEVICE_LANG_CUDA 1)
-    find_package(CUDAToolkit REQUIRED)
+    IF (USE_64BIT_INT)
+      # The cuBLAS ILP64 APIs used by DFT-FE, including cublasGemmEx_64,
+      # require CUDA 12.
+      find_package(CUDAToolkit 12.0 REQUIRED)
+    ELSE()
+      find_package(CUDAToolkit REQUIRED)
+    ENDIF()
     # CUDA toolkit includes are PUBLIC because CUDA types appear in device headers
     target_include_directories(${TARGETLIB} PUBLIC ${CUDAToolkit_INCLUDE_DIRS})
     target_link_libraries(${TARGETLIB} PUBLIC CUDA::cudart)
@@ -454,6 +460,11 @@ IF (WITH_GPU)
       set(__HIP_PLATFORM_AMD__ 1)
     ELSEIF ("${GPU_VENDOR}" STREQUAL "nvidia")
       set(__HIP_PLATFORM_NVIDIA__ 1)
+    ENDIF()
+    IF (USE_64BIT_INT)
+      # The hipBLAS ILP64 APIs used by DFT-FE, including hipblasGemmEx_64,
+      # require ROCm 6.3.
+      find_package(hip 6.3.0 CONFIG REQUIRED)
     ENDIF()
     find_package(hipblas)
     target_link_libraries(${TARGETLIB} PUBLIC roc::hipblas)

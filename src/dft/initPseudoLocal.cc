@@ -31,34 +31,36 @@ namespace dftfe
 {
   template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<memorySpace>::initAnalyticSmearedLoadData()
+  dftClass<memorySpace>::initAnalyticSmearedChargeData()
   {
     d_smearedChargeMoments.assign(13, 0.0);
     d_smearedChargeMomentsComputed = false;
-    d_analyticSmearedLoadManager.initialize(atomLocations,
-                                            d_imageIdsTrunc,
-                                            d_imageChargesTrunc,
-                                            d_imagePositionsTrunc,
-                                            d_meshSizes,
-                                            d_domainBoundingVectors,
-                                            d_minDist,
-                                            d_pspCutOffTrunc,
-                                            d_oncvClassPtr,
-                                            d_dofHandlerPRefined,
-                                            d_matrixFreeDataPRefined,
-                                            d_smearedChargeQuadratureIdElectro,
-                                            mpi_communicator,
-                                            *d_dftParamsPtr,
-                                            pcout);
+    d_analyticSmearedChargeManager.initialize(
+      atomLocations,
+      d_imageIdsTrunc,
+      d_imageChargesTrunc,
+      d_imagePositionsTrunc,
+      d_meshSizes,
+      d_domainBoundingVectors,
+      d_minDist,
+      d_pspCutOffTrunc,
+      d_oncvClassPtr,
+      d_dofHandlerPRefined,
+      d_matrixFreeDataPRefined,
+      d_smearedChargeQuadratureIdElectro,
+      mpi_communicator,
+      *d_dftParamsPtr,
+      pcout);
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<memorySpace>::computeNuclearSelfPotential()
   {
-    if (d_dftParamsPtr->smearedNuclearChargePathway == "ANALYTIC_SMEARED_LOAD")
+    if (d_dftParamsPtr->smearedNuclearChargePathway ==
+        "ANALYTIC_SMEARED_CHARGE")
       {
-        initAnalyticSmearedLoadData();
+        initAnalyticSmearedChargeData();
         return;
       }
 
@@ -173,18 +175,18 @@ namespace dftfe
     if (d_dftParamsPtr->verbosity >= 4)
       pcout << "initLocalPSP, max psp tail considered: " << maxTail
             << std::endl;
-    const bool analyticSmearedLoadRoute =
-      d_dftParamsPtr->smearedNuclearChargePathway == "ANALYTIC_SMEARED_LOAD";
+    const bool analyticSmearedChargeRoute =
+      d_dftParamsPtr->smearedNuclearChargePathway == "ANALYTIC_SMEARED_CHARGE";
     const std::vector<double> &smearedChargeWidths =
-      analyticSmearedLoadRoute ?
-        d_analyticSmearedLoadManager.smearedChargeWidths() :
+      analyticSmearedChargeRoute ?
+        d_analyticSmearedChargeManager.smearedChargeWidths() :
         d_smearedChargeWidths;
     double maxSmearedChargeWidth = 0.0;
-    if (analyticSmearedLoadRoute && !smearedChargeWidths.empty())
+    if (analyticSmearedChargeRoute && !smearedChargeWidths.empty())
       maxSmearedChargeWidth = *std::max_element(smearedChargeWidths.begin(),
                                                 smearedChargeWidths.end());
     const double cutOffForPsp =
-      analyticSmearedLoadRoute ?
+      analyticSmearedChargeRoute ?
         std::max(maxSmearedChargeWidth + 6.0, maxTail + 2.0) :
         std::max(vselfBinManager.getStoredAdaptiveBallRadius() + 6.0,
                  maxTail + 2.0);
@@ -269,7 +271,7 @@ namespace dftfe
 
     const dftfe::uInt kptGroupTaskId =
       dealii::Utilities::MPI::this_mpi_process(interpoolcomm);
-    if (!analyticSmearedLoadRoute)
+    if (!analyticSmearedChargeRoute)
       {
         const std::vector<std::map<dealii::types::global_dof_index, dftfe::Int>>
           &boundaryNodeMapBinsOnlyChargeId =
@@ -518,7 +520,7 @@ namespace dftfe
                             value = -atomCharge * distanceToAtomInv;
                           }
 
-                        if (analyticSmearedLoadRoute)
+                        if (analyticSmearedChargeRoute)
                           value -=
                             distanceToAtom > smearedChargeWidths[chargeId] ?
                               -atomCharge / distanceToAtom :
@@ -534,7 +536,7 @@ namespace dftfe
           }         // intercomm paral
       }             // cell loop
 
-    if (!analyticSmearedLoadRoute)
+    if (!analyticSmearedChargeRoute)
       {
         FEEvaluationWrapperClass<1> feEvalObj(_matrix_free_data,
                                               _phiExtDofHandlerIndex,
