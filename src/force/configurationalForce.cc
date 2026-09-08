@@ -64,7 +64,7 @@ namespace dftfe
           spinPolarizedGradDensityValues[1].resize(
             spinPolarizedGradDensityValues[0].size(), 0.0);
         }
-      basisOperationsPtr->reinit(0, 0, quadratureId, false);
+      basisOperationsPtr->reinit(0, 0, quadratureId);
       const unsigned int  nQuadsPerCell = basisOperationsPtr->nQuadsPerCell();
       std::vector<double> cellMagAxisVals(isGGA ? nQuadsPerCell * 3 : 0, 0.0);
       for (unsigned int iCell = 0; iCell < basisOperationsPtr->nCells();
@@ -86,6 +86,13 @@ namespace dftfe
               std::sqrt(cellMagZValues[iQuad] * cellMagZValues[iQuad] +
                         cellMagYValues[iQuad] * cellMagYValues[iQuad] +
                         cellMagXValues[iQuad] * cellMagXValues[iQuad]);
+          // Keep rho^down = (n - |m|)/2 non-negative, as in the density and
+          // energy paths: |m| <= n holds for a physical spinor density but not
+          // necessarily for a mixed one.
+          for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
+            if (cellMagNormValues[iQuad] > cellRhoValues[iQuad])
+              cellMagNormValues[iQuad] =
+                cellRhoValues[iQuad] > 0.0 ? cellRhoValues[iQuad] : 0.0;
           if (isGGA)
             {
               const double *cellGradRhoValues =
@@ -1154,8 +1161,7 @@ namespace dftfe
                     d_basisOperationsPtr->reinit(currentBlockSize *
                                                    spinorFactor,
                                                  cellsBlockSize,
-                                                 d_densityQuadratureId,
-                                                 true);
+                                                 d_densityQuadratureId);
 
                     flattenedArrayBlock->updateGhostValues();
                     d_basisOperationsPtr->distribute(*(flattenedArrayBlock));
@@ -4345,8 +4351,7 @@ namespace dftfe
                     d_basisOperationsPtr->reinit(currentBlockSize *
                                                    spinorFactor,
                                                  cellsBlockSize,
-                                                 d_nlpspQuadratureId,
-                                                 true);
+                                                 d_nlpspQuadratureId);
 
                     d_BLASWrapperPtr->rightDiagonalScale(
                       flattenedArrayBlock->numVectors() / spinorFactor,
@@ -5087,8 +5092,7 @@ namespace dftfe
                     d_basisOperationsPtr->reinit(currentBlockSize *
                                                    spinorFactor,
                                                  cellsBlockSize,
-                                                 d_nlpspQuadratureId,
-                                                 false);
+                                                 d_nlpspQuadratureId);
 
                     d_BLASWrapperPtr->rightDiagonalScale(
                       flattenedArrayBlock->numVectors() / spinorFactor,

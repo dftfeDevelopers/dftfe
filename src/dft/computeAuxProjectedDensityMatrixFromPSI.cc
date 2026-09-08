@@ -114,7 +114,7 @@ namespace dftfe
     dftfe::linearAlgebra::MultiVector<NumberType, memorySpace>
       *flattenedArrayBlock;
 
-    basisOperationsPtr->reinit(BVec, cellsBlockSize, quadratureIndex, false);
+    basisOperationsPtr->reinit(BVec, cellsBlockSize, quadratureIndex);
 
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       allQuadPointsHost = basisOperationsPtr->quadPoints();
@@ -225,8 +225,7 @@ namespace dftfe
 #endif
                   basisOperationsPtr->reinit(currentBlockSize,
                                              cellsBlockSize,
-                                             quadratureIndex,
-                                             false);
+                                             quadratureIndex);
 
 
                   flattenedArrayBlock->updateGhostValues();

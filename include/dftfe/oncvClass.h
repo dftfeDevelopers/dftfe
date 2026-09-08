@@ -326,7 +326,13 @@ namespace dftfe
     std::map<unsigned int, std::map<unsigned int, std::array<double, 4>>>
          d_atomicProjectorFnsljmValues;
     bool d_reproducible_output;
+    /// True if any atom type carries a fully relativistic (spin-orbit)
+    /// pseudopotential.  It selects the non-local coupling layout, which is
+    /// global to the concatenated coupling buffer.  Per-species SOC is in
+    /// d_atomTypeSOCFlagMap, which selects the data each block is built from.
     bool d_hasSOC;
+    /// Per-atom-type SOC flag, as read from each species' PseudoAtomDat.
+    std::map<dftfe::uInt, bool> d_atomTypeSOCFlagMap;
     /// FIXME: eventually it should be a map of atomic number to struct-
     /// {valence number, mesh input etc}
     std::map<dftfe::uInt, dftfe::uInt> d_atomTypeAtributes;

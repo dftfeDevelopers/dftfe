@@ -65,9 +65,7 @@ namespace functionalTest
 
     basisOperationsPtr->reinit(blockSizeInput,
                                100,
-                               matrixFreeQuadratureComponentRhsDensity,
-                               true,  // TODO should this be set to true
-                               true); // TODO should this be set to true
+                               matrixFreeQuadratureComponentRhsDensity);
     dftfe::uInt totalLocallyOwnedCells = basisOperationsPtr->nCells();
     dftfe::uInt numQuadsPerCell        = basisOperationsPtr->nQuadsPerCell();
 

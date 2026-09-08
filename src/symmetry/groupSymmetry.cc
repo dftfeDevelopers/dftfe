@@ -141,8 +141,10 @@ namespace dftfe
           }
         else if (isNonCollinearSpin)
           {
+            // spglib writes one spin_flips entry per symmetry operation (not
+            // per atom), so it must be sized like rotation/translation.
             int    equivalent_atoms[d_numAtoms];
-            int    spin_flips[d_numAtoms];
+            int    spin_flips[max_size];
             double primitive_lattice[3][3];
             double tensors[d_numAtoms * 3];
             for (dftfe::uInt iAtom = 0; iAtom < d_numAtoms; ++iAtom)
@@ -600,35 +602,53 @@ namespace dftfe
     vectorFieldComponenty *= 0;
     vectorFieldComponentz *= 0;
     for (dftfe::uInt iSymm = 0; iSymm < d_numSymm; ++iSymm)
-      for (dftfe::uInt iDoF = 0;
-           iDoF < vectorFieldComponentz.locally_owned_size();
-           ++iDoF)
-        {
-          vectorFieldComponentx.local_element(iDoF) +=
-            (d_symmMatCart[iSymm][0 * 3 + 0] *
-               pointValuesx[localDoFIndexToPointIndexMap[iSymm][iDoF]] +
-             d_symmMatCart[iSymm][1 * 3 + 0] *
-               pointValuesy[localDoFIndexToPointIndexMap[iSymm][iDoF]] +
-             d_symmMatCart[iSymm][2 * 3 + 0] *
-               pointValuesz[localDoFIndexToPointIndexMap[iSymm][iDoF]]) /
-            d_numSymm;
-          vectorFieldComponenty.local_element(iDoF) +=
-            (d_symmMatCart[iSymm][0 * 3 + 1] *
-               pointValuesx[localDoFIndexToPointIndexMap[iSymm][iDoF]] +
-             d_symmMatCart[iSymm][1 * 3 + 1] *
-               pointValuesy[localDoFIndexToPointIndexMap[iSymm][iDoF]] +
-             d_symmMatCart[iSymm][2 * 3 + 1] *
-               pointValuesz[localDoFIndexToPointIndexMap[iSymm][iDoF]]) /
-            d_numSymm;
-          vectorFieldComponentz.local_element(iDoF) +=
-            (d_symmMatCart[iSymm][0 * 3 + 2] *
-               pointValuesx[localDoFIndexToPointIndexMap[iSymm][iDoF]] +
-             d_symmMatCart[iSymm][1 * 3 + 2] *
-               pointValuesy[localDoFIndexToPointIndexMap[iSymm][iDoF]] +
-             d_symmMatCart[iSymm][2 * 3 + 2] *
-               pointValuesz[localDoFIndexToPointIndexMap[iSymm][iDoF]]) /
-            d_numSymm;
-        }
+      {
+        // The magnetization is an axial (pseudo)vector, symmetrized as
+        // m'(r) = det(R) R m(R^-1 r).  spglib is called with is_axial = 1, so
+        // the magnetic group contains improper operations that leave m
+        // invariant, and det(R) is required for those.  det is invariant under
+        // the similarity transform to Cartesian coordinates, so it is +-1.
+        const std::vector<double> &symmMat = d_symmMatCart[iSymm];
+        const double               detSymmMat =
+          symmMat[0 * 3 + 0] * (symmMat[1 * 3 + 1] * symmMat[2 * 3 + 2] -
+                                symmMat[1 * 3 + 2] * symmMat[2 * 3 + 1]) -
+          symmMat[0 * 3 + 1] * (symmMat[1 * 3 + 0] * symmMat[2 * 3 + 2] -
+                                symmMat[1 * 3 + 2] * symmMat[2 * 3 + 0]) +
+          symmMat[0 * 3 + 2] * (symmMat[1 * 3 + 0] * symmMat[2 * 3 + 1] -
+                                symmMat[1 * 3 + 1] * symmMat[2 * 3 + 0]);
+        for (dftfe::uInt iDoF = 0;
+             iDoF < vectorFieldComponentz.locally_owned_size();
+             ++iDoF)
+          {
+            vectorFieldComponentx.local_element(iDoF) +=
+              detSymmMat *
+              (d_symmMatCart[iSymm][0 * 3 + 0] *
+                 pointValuesx[localDoFIndexToPointIndexMap[iSymm][iDoF]] +
+               d_symmMatCart[iSymm][1 * 3 + 0] *
+                 pointValuesy[localDoFIndexToPointIndexMap[iSymm][iDoF]] +
+               d_symmMatCart[iSymm][2 * 3 + 0] *
+                 pointValuesz[localDoFIndexToPointIndexMap[iSymm][iDoF]]) /
+              d_numSymm;
+            vectorFieldComponenty.local_element(iDoF) +=
+              detSymmMat *
+              (d_symmMatCart[iSymm][0 * 3 + 1] *
+                 pointValuesx[localDoFIndexToPointIndexMap[iSymm][iDoF]] +
+               d_symmMatCart[iSymm][1 * 3 + 1] *
+                 pointValuesy[localDoFIndexToPointIndexMap[iSymm][iDoF]] +
+               d_symmMatCart[iSymm][2 * 3 + 1] *
+                 pointValuesz[localDoFIndexToPointIndexMap[iSymm][iDoF]]) /
+              d_numSymm;
+            vectorFieldComponentz.local_element(iDoF) +=
+              detSymmMat *
+              (d_symmMatCart[iSymm][0 * 3 + 2] *
+                 pointValuesx[localDoFIndexToPointIndexMap[iSymm][iDoF]] +
+               d_symmMatCart[iSymm][1 * 3 + 2] *
+                 pointValuesy[localDoFIndexToPointIndexMap[iSymm][iDoF]] +
+               d_symmMatCart[iSymm][2 * 3 + 2] *
+                 pointValuesz[localDoFIndexToPointIndexMap[iSymm][iDoF]]) /
+              d_numSymm;
+          }
+      }
   }
 
   void

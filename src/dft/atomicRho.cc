@@ -525,7 +525,7 @@ namespace dftfe
               &quadratureGradValueData,
     const bool isConsiderGradData)
   {
-    d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId, false);
+    d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId);
     const dftfe::uInt nQuadsPerCell = d_basisOperationsPtrHost->nQuadsPerCell();
     const dftfe::uInt nCells        = d_basisOperationsPtrHost->nCells();
 
@@ -577,7 +577,7 @@ namespace dftfe
                               &quadratureValueData,
     distributedCPUVec<double> &nodalField)
   {
-    basisOperationsPtr->reinit(0, 0, quadratureId, false);
+    basisOperationsPtr->reinit(0, 0, quadratureId);
     const dftfe::uInt nQuadsPerCell = basisOperationsPtr->nQuadsPerCell();
     std::function<
       double(const typename dealii::DoFHandler<3>::active_cell_iterator &cell,

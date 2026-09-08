@@ -1697,8 +1697,10 @@ namespace dftfe
         prm.get_integer("POLYNOMIAL ORDER ELECTROSTATICS") == 0 ?
           prm.get_integer("POLYNOMIAL ORDER") :
           prm.get_integer("POLYNOMIAL ORDER ELECTROSTATICS");
+      densityNodalOrderIsDefault =
+        prm.get_integer("POLYNOMIAL ORDER DENSITY NODAL") == 0;
       finiteElementPolynomialOrderRhoNodal =
-        prm.get_integer("POLYNOMIAL ORDER DENSITY NODAL") == 0 ?
+        densityNodalOrderIsDefault ?
           (finiteElementPolynomialOrder + 2 >
                finiteElementPolynomialOrderElectrostatics ?
              finiteElementPolynomialOrder + 2 :
@@ -2011,6 +2013,20 @@ namespace dftfe
         mixingMethod != "LOW_RANK_DIELECM_PRECOND",
         dealii::ExcMessage(
           "DFT-FE Error: LRDM mixing scheme for noncollinear magnetism and spin-orbit coupling is not implemented yet."));
+    // Time-reversal maps a spinor state onto one with the same charge density
+    // but the opposite spin density.  The reduced-BZ reconstruction doubles the
+    // weight of the retained k-point without reversing the magnetization, so it
+    // manufactures a spurious moment as soon as the four-component density is
+    // built -- including for a nonmagnetic material, whose per-k spin texture
+    // is nonzero even though the full-BZ sum vanishes.  With SPIN-ORBIT
+    // COUPLING alone (noncolin == false) only the charge density is assembled
+    // and Veff is spin independent, so Kramers symmetry holds and the reduction
+    // stays exact.
+    if (noncolin)
+      AssertThrow(
+        !timeReversal,
+        dealii::ExcMessage(
+          "DFT-FE Error: USE TIME REVERSAL SYMMETRY cannot be used with NONCOLLINEAR SPIN. The reduced k-point reconstruction does not reverse the magnetization of the time-reversed spinor."));
     if (numberEigenValues != 0)
       AssertThrow(
         nbandGrps <= numberEigenValues,
@@ -2101,6 +2117,15 @@ namespace dftfe
           dealii::ExcMessage(
             "DFT-FE Error: Non-collinear magnetism and spin-orbit coupling with MGGA functional is not implemented yet."));
       }
+
+    // atomCenteredPostProcessing indexes the wavefunction array as
+    // [dof][band] with no spinor factor, so it supports neither noncollinear
+    // magnetism nor spin-orbit coupling.
+    if (writePdosFile)
+      AssertThrow(
+        !(noncolin || hasSOC),
+        dealii::ExcMessage(
+          "DFT-FE Error: WRITE PROJECTED DENSITY OF STATES is not implemented for noncollinear magnetism or spin-orbit coupling."));
 
     bool isHubbard = (XCType.substr(XCType.size() - 2) == "+U");
     if (isHubbard)
@@ -2299,6 +2324,14 @@ namespace dftfe
             "DFT-FE Error: GS is not implemented on GPUs. Use Auto option."));
       }
 
+    // The GS path scales the wavefunctions by the mass vector using the spinor
+    // row count (2 x owned dofs) against a vector of length owned dofs.
+    if (orthogType == "GS")
+      AssertThrow(
+        !(noncolin || hasSOC),
+        dealii::ExcMessage(
+          "DFT-FE Error: ORTHOGONALIZATION TYPE = GS is not implemented for noncollinear magnetism and spin-orbit coupling. Use CGS/Auto."));
+
     if (algoType == "FAST")
       {
         useMixedPrecXtOX                    = true;
@@ -2389,6 +2422,62 @@ namespace dftfe
         densityQuadratureRule = XCType.substr(0, 4) == "MGGA" ?
                                   16 :
                                   finiteElementPolynomialOrderRhoNodal + 1;
+      }
+
+    // Non-collinear GGA: the White-Bird construction differentiates the
+    // density through the Gauss-point Lagrange collocation basis, so the
+    // cell-local density rho = psi* psi, of degree
+    // 2 * finiteElementPolynomialOrder, must be exactly representable in that
+    // basis.  This requires
+    //
+    //     densityQuadratureRule >= 2 * finiteElementPolynomialOrder + 1
+    //
+    // which is what makes d(grad rho)_q / d(rho_p) equal D_qp, and hence the
+    // Hamiltonian the derivative of the evaluated discrete E_xc.
+    if (noncolin && XCType.substr(0, 3) == "GGA")
+      {
+        const dftfe::uInt requiredDensityQuadratureRule =
+          2 * finiteElementPolynomialOrder + 1;
+
+        // Mixing schemes that route the density through the nodal field (see
+        // src/dft/density.cc) replace rho by its interpolant of degree
+        // finiteElementPolynomialOrderRhoNodal before it reaches E_xc, so that
+        // order must also reach 2 * finiteElementPolynomialOrder to preserve
+        // the content the quadrature rule above requires.  Raised only when
+        // left at the default; a user-supplied order is honoured as given.
+        const bool usesNodalDensity =
+          mixingMethod == "ANDERSON_WITH_KERKER" ||
+          mixingMethod == "ANDERSON_WITH_RESTA" ||
+          mixingMethod == "LOW_RANK_DIELECM_PRECOND" ||
+          mixingMethod == "ANDERSON_WITH_LDOS" || useSymm;
+        if (usesNodalDensity && densityNodalOrderIsDefault &&
+            finiteElementPolynomialOrderRhoNodal <
+              2 * finiteElementPolynomialOrder)
+          {
+            if (verbosity >= 1 &&
+                dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0)
+              std::cout
+                << "Setting POLYNOMIAL ORDER DENSITY NODAL to "
+                << 2 * finiteElementPolynomialOrder
+                << " for noncollinear magnetism with a GGA functional and a nodal density mixing scheme."
+                << std::endl;
+            finiteElementPolynomialOrderRhoNodal =
+              2 * finiteElementPolynomialOrder;
+          }
+
+        if (densityQuadratureRule < requiredDensityQuadratureRule)
+          {
+            if (verbosity >= 1 &&
+                dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0)
+              std::cout
+                << "Setting DENSITY QUADRATURE RULE to "
+                << requiredDensityQuadratureRule
+                << " for noncollinear magnetism with a GGA functional; the requested value of "
+                << densityQuadratureRule
+                << " cannot represent the density exactly in the collocation basis."
+                << std::endl;
+            densityQuadratureRule = requiredDensityQuadratureRule;
+          }
       }
 
     if (useIntermediateDensityQuadrature)

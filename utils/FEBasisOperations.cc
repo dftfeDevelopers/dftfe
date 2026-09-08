@@ -423,10 +423,7 @@ namespace dftfe
     FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
       reinit(const dftfe::uInt &vecBlockSize,
              const dftfe::uInt &cellsBlockSize,
-             const dftfe::uInt &quadratureID,
-             const bool         isResizeTempStorageForInterpolation,
-             const bool         isResizeTempStorageForCellMatrices,
-             const bool         isResizeTempStorageForIntegralEvaluations)
+             const dftfe::uInt &quadratureID)
     {
       d_quadratureID = quadratureID;
       auto itr       = std::find(d_quadratureIDsVector.begin(),
@@ -444,9 +441,6 @@ namespace dftfe
           d_nVectors = vecBlockSize;
           initializeFlattenedIndexMaps();
         }
-      resizeTempStorage(isResizeTempStorageForInterpolation,
-                        isResizeTempStorageForCellMatrices,
-                        isResizeTempStorageForIntegralEvaluations);
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -819,77 +813,12 @@ namespace dftfe
               dftfe::utils::MemorySpace memorySpace>
     void
     FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
-      resizeTempStorage(const bool isResizeTempStorageForInterpolation,
-                        const bool isResizeTempStorageForCellMatrices,
-                        const bool isResizeTempStorageForIntegralEvaluations)
+      ensureCellMatrixBlock() const
     {
-      if (isResizeTempStorageForInterpolation)
-        {
-          tempCellNodalData.resize(d_nVectors * d_nDofsPerCell *
-                                   d_cellsBlockSize);
-          if (d_updateFlags[d_quadratureIndex] & update_gradients)
-            tempQuadratureGradientsData.resize(
-              areAllCellsCartesian ?
-                0 :
-                (d_nVectors * d_nQuadsPerCell[d_quadratureIndex] * 3 *
-                 d_cellsBlockSize));
-
-          if (d_updateFlags[d_quadratureIndex] & update_gradients)
-            tempQuadratureGradientsDataNonAffine.resize(
-              areAllCellsAffine ?
-                0 :
-                (d_nVectors * d_nQuadsPerCell[d_quadratureIndex] * 3 *
-                 d_cellsBlockSize));
-        }
-      if (isResizeTempStorageForCellMatrices)
-        {
-          if (tempCellMatrixBlock.size() !=
-              d_nDofsPerCell * d_nDofsPerCell * d_cellsBlockSize)
-            tempCellMatrixBlock.resize(d_nDofsPerCell * d_nDofsPerCell *
-                                       d_cellsBlockSize);
-          if (tempCellValuesBlock.size() != d_nQuadsPerCell[d_quadratureIndex] *
-                                              d_nDofsPerCell * d_cellsBlockSize)
-            tempCellValuesBlock.resize(d_nQuadsPerCell[d_quadratureIndex] *
-                                       d_nDofsPerCell * d_cellsBlockSize);
-
-          if (tempCellValuesBlockCoeff.size() !=
-              d_nQuadsPerCell[d_quadratureIndex] * d_nDofsPerCell *
-                d_cellsBlockSize)
-            {
-              tempCellValuesBlockCoeff.resize(
-                d_nQuadsPerCell[d_quadratureIndex] * d_nDofsPerCell *
-                d_cellsBlockSize);
-            }
-          if (tempCellGradientsBlock.size() !=
-              d_nQuadsPerCell[d_quadratureIndex] * d_nDofsPerCell *
-                d_cellsBlockSize * 3)
-            tempCellGradientsBlock.resize(d_nQuadsPerCell[d_quadratureIndex] *
-                                          d_nDofsPerCell * d_cellsBlockSize *
-                                          3);
-          if (tempCellGradientsBlockCoeff.size() !=
-              d_nQuadsPerCell[d_quadratureIndex] * d_nDofsPerCell *
-                d_cellsBlockSize * 3)
-            tempCellGradientsBlockCoeff.resize(
-              d_nQuadsPerCell[d_quadratureIndex] * d_nDofsPerCell *
-              d_cellsBlockSize * 3);
-          if (tempCellGradientsBlock2.size() !=
-              d_nQuadsPerCell[d_quadratureIndex] * d_nDofsPerCell *
-                d_cellsBlockSize * 3)
-            tempCellGradientsBlock2.resize(d_nQuadsPerCell[d_quadratureIndex] *
-                                           d_nDofsPerCell * d_cellsBlockSize *
-                                           3);
-          if (zeroIndexVec.size() != d_cellsBlockSize)
-            zeroIndexVec.resize(d_cellsBlockSize, 0);
-        }
-      if (isResizeTempStorageForIntegralEvaluations)
-        {
-          if (tempCellGradientsBlockCoeff.size() !=
-              d_nQuadsPerCell[d_quadratureIndex] * d_nDofsPerCell *
-                d_cellsBlockSize * 3)
-            tempCellGradientsBlockCoeff.resize(
-              d_nQuadsPerCell[d_quadratureIndex] * d_nDofsPerCell *
-              d_cellsBlockSize * 3);
-        }
+      const std::size_t requiredSize =
+        (std::size_t)d_nDofsPerCell * d_nDofsPerCell * d_cellsBlockSize;
+      if (tempCellMatrixBlock.size() != requiredSize)
+        tempCellMatrixBlock.resize(requiredSize);
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -897,7 +826,128 @@ namespace dftfe
               dftfe::utils::MemorySpace memorySpace>
     void
     FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
-      clearTempStorage()
+      ensureCellValuesBlock() const
+    {
+      const std::size_t requiredSize =
+        (std::size_t)d_nQuadsPerCell[d_quadratureIndex] * d_nDofsPerCell *
+        d_cellsBlockSize;
+      if (tempCellValuesBlock.size() != requiredSize)
+        tempCellValuesBlock.resize(requiredSize);
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    void
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      ensureCellGradientsBlock() const
+    {
+      const std::size_t requiredSize =
+        (std::size_t)d_nQuadsPerCell[d_quadratureIndex] * d_nDofsPerCell *
+        d_cellsBlockSize * 3;
+      if (tempCellGradientsBlock.size() != requiredSize)
+        tempCellGradientsBlock.resize(requiredSize);
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    void
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      ensureCellGradientsBlock2() const
+    {
+      const std::size_t requiredSize =
+        (std::size_t)d_nQuadsPerCell[d_quadratureIndex] * d_nDofsPerCell *
+        d_cellsBlockSize * 3;
+      if (tempCellGradientsBlock2.size() != requiredSize)
+        tempCellGradientsBlock2.resize(requiredSize);
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    void
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      ensureZeroIndexVec() const
+    {
+      if (zeroIndexVec.size() != d_cellsBlockSize)
+        zeroIndexVec.resize(d_cellsBlockSize, 0);
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    void
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      ensureCellNodalData() const
+    {
+      const std::size_t requiredSize =
+        (std::size_t)d_nVectors * d_nDofsPerCell * d_cellsBlockSize;
+      if (tempCellNodalData.size() != requiredSize)
+        tempCellNodalData.resize(requiredSize);
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    void
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      ensureQuadratureGradientsData() const
+    {
+      const std::size_t requiredSize = (std::size_t)d_nVectors *
+                                       d_nQuadsPerCell[d_quadratureIndex] * 3 *
+                                       d_cellsBlockSize;
+      if (tempQuadratureGradientsData.size() != requiredSize)
+        tempQuadratureGradientsData.resize(requiredSize);
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    void
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      ensureQuadratureGradientsDataNonAffine() const
+    {
+      const std::size_t requiredSize = (std::size_t)d_nVectors *
+                                       d_nQuadsPerCell[d_quadratureIndex] * 3 *
+                                       d_cellsBlockSize;
+      if (tempQuadratureGradientsDataNonAffine.size() != requiredSize)
+        tempQuadratureGradientsDataNonAffine.resize(requiredSize);
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    void
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      ensureCellValuesBlockCoeff() const
+    {
+      const std::size_t requiredSize = (std::size_t)d_nVectors *
+                                       d_nQuadsPerCell[d_quadratureIndex] *
+                                       d_cellsBlockSize;
+      if (tempCellValuesBlockCoeff.size() != requiredSize)
+        tempCellValuesBlockCoeff.resize(requiredSize);
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    void
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      ensureCellGradientsBlockCoeff() const
+    {
+      const std::size_t requiredSize =
+        (std::size_t)d_nQuadsPerCell[d_quadratureIndex] * d_nDofsPerCell * 3;
+      if (tempCellGradientsBlockCoeff.size() != requiredSize)
+        tempCellGradientsBlockCoeff.resize(requiredSize);
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    void
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      clearTempStorage() const
     {
       tempCellNodalData.clear();
       tempQuadratureGradientsData.clear();
@@ -1680,7 +1730,12 @@ namespace dftfe
                                  const bool        basisType,
                                  const bool        ceoffType)
     {
-      reinit(1, cellsBlockSize, quadratureID, false, true);
+      reinit(1, cellsBlockSize, quadratureID);
+      const ScratchScope scratch(*this);
+      ensureCellGradientsBlock();
+      ensureCellGradientsBlock2();
+      ensureCellMatrixBlock();
+      ensureZeroIndexVec();
       if (basisType)
         d_cellStiffnessMatrixBasisType.resize(d_nDofsPerCell * d_nDofsPerCell *
                                               d_nCells);
@@ -1861,6 +1916,8 @@ namespace dftfe
       const dftfe::uInt nCells        = this->nCells();
       const dftfe::uInt nQuadsPerCell = this->nQuadsPerCell();
       const dftfe::uInt nDofsPerCell  = this->nDofsPerCell();
+      ensureCellValuesBlock();
+      ensureZeroIndexVec();
 
       const double scalarCoeffAlpha = 1.0, scalarCoeffBeta = 0.0;
 
@@ -1920,6 +1977,9 @@ namespace dftfe
       const dftfe::uInt nCells        = this->nCells();
       const dftfe::uInt nQuadsPerCell = this->nQuadsPerCell();
       const dftfe::uInt nDofsPerCell  = this->nDofsPerCell();
+      ensureCellGradientsBlock();
+      ensureCellValuesBlock();
+      ensureZeroIndexVec();
 
       if constexpr (memorySpace == dftfe::utils::MemorySpace::HOST)
         {
@@ -2014,6 +2074,9 @@ namespace dftfe
       const dftfe::uInt nCells        = this->nCells();
       const dftfe::uInt nQuadsPerCell = this->nQuadsPerCell();
       const dftfe::uInt nDofsPerCell  = this->nDofsPerCell();
+      ensureCellGradientsBlock();
+      ensureCellValuesBlock();
+      ensureZeroIndexVec();
 
       if constexpr (memorySpace == dftfe::utils::MemorySpace::HOST)
         {
@@ -2130,6 +2193,9 @@ namespace dftfe
       const dftfe::uInt nCells        = this->nCells();
       const dftfe::uInt nQuadsPerCell = this->nQuadsPerCell();
       const dftfe::uInt nDofsPerCell  = this->nDofsPerCell();
+      ensureCellGradientsBlock();
+      ensureCellValuesBlock();
+      ensureZeroIndexVec();
 
       if constexpr (memorySpace == dftfe::utils::MemorySpace::HOST)
         {
@@ -2248,6 +2314,9 @@ namespace dftfe
       const dftfe::uInt nCells        = this->nCells();
       const dftfe::uInt nQuadsPerCell = this->nQuadsPerCell();
       const dftfe::uInt nDofsPerCell  = this->nDofsPerCell();
+      ensureCellGradientsBlock();
+      ensureCellGradientsBlock2();
+      ensureZeroIndexVec();
 
       const double scalarCoeffAlpha = 1.0, scalarCoeffBeta = 0.0;
 
@@ -2343,7 +2412,11 @@ namespace dftfe
                             const bool        basisType,
                             const bool        ceoffType)
     {
-      reinit(0, cellsBlockSize, quadratureID, false, true);
+      reinit(0, cellsBlockSize, quadratureID);
+      const ScratchScope scratch(*this);
+      ensureCellValuesBlock();
+      ensureCellMatrixBlock();
+      ensureZeroIndexVec();
       if (basisType)
         d_cellMassMatrixBasisType.resize(d_nDofsPerCell * d_nDofsPerCell *
                                          d_nCells);
@@ -2492,8 +2565,9 @@ namespace dftfe
         dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
           &scalarFieldTimesGradientShapeFunctionIntegral) const
     {
-      const dftfe::uInt         nQuadsPerCell    = this->nQuadsPerCell();
-      const dftfe::uInt         nDofsPerCell     = this->nDofsPerCell();
+      const dftfe::uInt nQuadsPerCell = this->nQuadsPerCell();
+      const dftfe::uInt nDofsPerCell  = this->nDofsPerCell();
+      ensureCellGradientsBlockCoeff();
       const ValueTypeBasisCoeff scalarCoeffAlpha = 1.0, scalarCoeffBeta = 0.0;
       const dftfe::uInt         numberOfElements = cellIndices.size();
       scalarFieldTimesGradientShapeFunctionIntegral.clear();
@@ -2733,8 +2807,9 @@ namespace dftfe
         dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
           &vectorFieldDyadicGradientShapeFunctionIntegral) const
     {
-      const dftfe::uInt         nQuadsPerCell    = this->nQuadsPerCell();
-      const dftfe::uInt         nDofsPerCell     = this->nDofsPerCell();
+      const dftfe::uInt nQuadsPerCell = this->nQuadsPerCell();
+      const dftfe::uInt nDofsPerCell  = this->nDofsPerCell();
+      ensureCellGradientsBlockCoeff();
       const ValueTypeBasisCoeff scalarCoeffAlpha = 1.0, scalarCoeffBeta = 0.0;
       const dftfe::uInt         numberOfElements = cellIndices.size();
       vectorFieldDyadicGradientShapeFunctionIntegral.clear();

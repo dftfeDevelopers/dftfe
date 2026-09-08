@@ -282,8 +282,7 @@ namespace dftfe
                                                cellsBlockSize,
                                                useIntermediateQuadrature ?
                                                  intermediateQuadratureIndex :
-                                                 quadratureIndex,
-                                               false);
+                                                 quadratureIndex);
 
 
                     flattenedArrayBlock->updateGhostValues();
@@ -866,6 +865,15 @@ namespace dftfe
     const bool isNonCollin,
     const bool hasSOC)
   {
+    // This routine applies the collinear stride and drops the second spinor
+    // component, so it supports neither noncollinear magnetism nor spin-orbit
+    // coupling.  dftParameters rejects MGGA with either; assert here too, so
+    // the requirement holds for any caller.
+    AssertThrow(
+      !(isNonCollin || hasSOC),
+      dealii::ExcMessage(
+        "DFT-FE Error: computeTauFromInterpolatedValues has no spinor implementation; kinetic energy density is not available for noncollinear magnetism or spin-orbit coupling."));
+
     const dftfe::uInt cellsBlockSize   = cellRange.second - cellRange.first;
     const dftfe::uInt vectorsBlockSize = vecRange.second - vecRange.first;
 

@@ -611,6 +611,11 @@ namespace dftfe
                                        fermiEnergyUp,
                                        fermiEnergyDown,
                                        d_dftParamsPtr->spinPolarized == 1,
+                                       (d_dftParamsPtr->spinPolarized == 1 ||
+                                        d_dftParamsPtr->noncolin ||
+                                        d_dftParamsPtr->hasSOC) ?
+                                         1.0 :
+                                         2.0,
                                        d_dftParamsPtr->constraintMagnetization,
                                        d_dftParamsPtr->TVal);
 

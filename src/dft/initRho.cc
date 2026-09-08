@@ -124,7 +124,7 @@ namespace dftfe
       }
 
     // Initialize electron density table storage for rhoIn
-    d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId, false);
+    d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId);
     const dftfe::uInt n_q_points = d_basisOperationsPtrHost->nQuadsPerCell();
     const dftfe::uInt nCells     = d_basisOperationsPtrHost->nCells();
     const dftfe::uInt nDensityComponents =
@@ -1841,7 +1841,7 @@ namespace dftfe
     pcout << "Loading Density data from Quadrature checkpoint......"
           << std::endl;
     // Initialize electron density table storage for rhoIn
-    d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId, false);
+    d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId);
     const dftfe::uInt n_q_points = d_basisOperationsPtrHost->nQuadsPerCell();
     const dftfe::uInt nCells     = d_basisOperationsPtrHost->nCells();
     const dftfe::uInt nDensityComponents =

@@ -645,8 +645,7 @@ namespace dftfe
 #endif
                     d_BasisOperatorMemPtr->reinit(currentBlockSize,
                                                   cellsBlockSize,
-                                                  d_densityQuadratureId,
-                                                  false);
+                                                  d_densityQuadratureId);
 
                     flattenedArrayBlock->updateGhostValues();
                     d_BasisOperatorMemPtr->distribute(*(flattenedArrayBlock));

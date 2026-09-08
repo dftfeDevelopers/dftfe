@@ -418,6 +418,21 @@ namespace dftfe
             "match the NATOMS input. Please check your atomic coordinates file. Sometimes an extra"
             "blank row at the end can cause this issue too."));
         pcout << "number of atoms: " << atomLocations.size() << "\n";
+
+        // Non-collinear magnetism reads the initial moment from three
+        // further columns per atom record (magnitude, polar angle theta,
+        // azimuthal angle phi, the angles in degrees).  initRho fills
+        // magX/Y/Z only for records of length 8 or 9, and zero initial
+        // magnetization is a stationary point of the SCF.
+        if (d_dftParamsPtr->noncolin)
+          for (dftfe::uInt iAtom = 0; iAtom < atomLocations.size(); ++iAtom)
+            AssertThrow(
+              atomLocations[iAtom].size() == 8 ||
+                atomLocations[iAtom].size() == 9,
+              dealii::ExcMessage(
+                "DFT-FE Error: NONCOLLINEAR SPIN requires 8 columns per row in the atomic coordinates file (atomic number, valence charge, three coordinates, then the initial magnetization as magnitude, theta and phi in degrees), or 9 with a trailing valence-charge override. Atom " +
+                std::to_string(iAtom) + " has " +
+                std::to_string(atomLocations[iAtom].size()) + " columns."));
         atomLocationsFractional.resize(atomLocations.size());
         //
         // find unique atom types
@@ -463,6 +478,21 @@ namespace dftfe
             "match the NATOMS input. Please check your atomic coordinates file. Sometimes an extra"
             "blank row at the end can cause this issue too."));
         pcout << "number of atoms: " << atomLocations.size() << "\n";
+
+        // Non-collinear magnetism reads the initial moment from three
+        // further columns per atom record (magnitude, polar angle theta,
+        // azimuthal angle phi, the angles in degrees).  initRho fills
+        // magX/Y/Z only for records of length 8 or 9, and zero initial
+        // magnetization is a stationary point of the SCF.
+        if (d_dftParamsPtr->noncolin)
+          for (dftfe::uInt iAtom = 0; iAtom < atomLocations.size(); ++iAtom)
+            AssertThrow(
+              atomLocations[iAtom].size() == 8 ||
+                atomLocations[iAtom].size() == 9,
+              dealii::ExcMessage(
+                "DFT-FE Error: NONCOLLINEAR SPIN requires 8 columns per row in the atomic coordinates file (atomic number, valence charge, three coordinates, then the initial magnetization as magnitude, theta and phi in degrees), or 9 with a trailing valence-charge override. Atom " +
+                std::to_string(iAtom) + " has " +
+                std::to_string(atomLocations[iAtom].size()) + " columns."));
 
         //
         // find unique atom types
@@ -1323,6 +1353,19 @@ namespace dftfe
                                  d_dftParamsPtr->floatingNuclearCharges,
                                  d_dftParamsPtr->isIonForce,
                                  d_dftParamsPtr->isCellStress);
+
+    // The non-local coupling layout follows the pseudopotential's SOC flag
+    // (oncvClass::getCouplingMatrix and the applyVOnCconjtransX call sites),
+    // while the input flag switches on the two-component spinor machinery.
+    // The two must agree: the buffer holds N scalar D_l constants in one
+    // layout and 4N^2 entries in the other.
+    if (d_dftParamsPtr->isPseudopotential)
+      AssertThrow(
+        d_oncvClassPtr->hasSOC() == d_dftParamsPtr->hasSOC,
+        dealii::ExcMessage(
+          d_oncvClassPtr->hasSOC() ?
+            "DFT-FE Error: a fully relativistic pseudopotential was supplied but SPIN-ORBIT COUPLING = false. Set SPIN-ORBIT COUPLING = true, or supply scalar relativistic pseudopotentials." :
+            "DFT-FE Error: SPIN-ORBIT COUPLING = true but none of the supplied pseudopotentials is fully relativistic. Supply fully relativistic pseudopotentials, or set SPIN-ORBIT COUPLING = false."));
 
     if (d_dftParamsPtr->solverMode == "NSCF")
       {
@@ -2519,7 +2562,7 @@ namespace dftfe
         if (isTauMGGA)
           {
             d_basisOperationsPtrElectroHost->reinit(
-              0, 0, d_densityQuadratureIdElectro, false);
+              0, 0, d_densityQuadratureIdElectro);
             for (dftfe::uInt iMix = 0; iMix < tauMixingVariables.size(); ++iMix)
               d_mixingScheme.addMixingVariable(
                 tauMixingVariables[iMix],
@@ -2533,7 +2576,7 @@ namespace dftfe
         if (d_dftParamsPtr->inverseKerkerMixingParameter > 0.0)
           {
             d_basisOperationsPtrElectroHost->reinit(
-              0, 0, d_densityQuadratureIdElectro, false);
+              0, 0, d_densityQuadratureIdElectro);
             dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
               gradRhoJxW;
             gradRhoJxW.resize(
@@ -2554,8 +2597,7 @@ namespace dftfe
       {
         d_basisOperationsPtrElectroHost->reinit(0,
                                                 0,
-                                                d_densityQuadratureIdElectro,
-                                                false);
+                                                d_densityQuadratureIdElectro);
         for (dftfe::uInt iMix = 0; iMix < mixingVariables.size(); ++iMix)
           d_mixingScheme.addMixingVariable(
             mixingVariables[iMix],
@@ -2715,7 +2757,7 @@ namespace dftfe
                       d_gradPhiResQuadValues.resize(
                         d_gradPhiOutQuadValues.size());
                     d_basisOperationsPtrElectroHost->reinit(
-                      0, 0, d_densityQuadratureIdElectro, false);
+                      0, 0, d_densityQuadratureIdElectro);
                     computeResidualQuadData(
                       d_gradPhiOutQuadValues,
                       d_gradPhiInQuadValues,
@@ -2744,7 +2786,7 @@ namespace dftfe
                           d_tauResidualQuadValues[iComp].resize(
                             d_tauOutQuadValues[iComp].size());
                         d_basisOperationsPtrElectroHost->reinit(
-                          0, 0, d_densityQuadratureIdElectro, false);
+                          0, 0, d_densityQuadratureIdElectro);
 
                         normsTau[iComp] = computeResidualQuadData(
                           d_tauOutQuadValues[iComp],
@@ -2909,7 +2951,7 @@ namespace dftfe
                       d_densityResidualQuadValues[iComp].resize(
                         d_densityOutQuadValues[iComp].size());
                     d_basisOperationsPtrElectroHost->reinit(
-                      0, 0, d_densityQuadratureIdElectro, false);
+                      0, 0, d_densityQuadratureIdElectro);
                     norms[iComp] = computeResidualQuadData(
                       d_densityOutQuadValues[iComp],
                       d_densityInQuadValues[iComp],
@@ -2956,7 +2998,7 @@ namespace dftfe
                 if (d_dftParamsPtr->inverseKerkerMixingParameter > 0.0)
                   {
                     d_basisOperationsPtrElectroHost->reinit(
-                      0, 0, d_densityQuadratureIdElectro, false);
+                      0, 0, d_densityQuadratureIdElectro);
                     if (scfIter == 1)
                       d_gradPhiResQuadValues.resize(
                         d_gradPhiOutQuadValues.size());
@@ -2989,7 +3031,7 @@ namespace dftfe
                           d_tauResidualQuadValues[iComp].resize(
                             d_tauOutQuadValues[iComp].size());
                         d_basisOperationsPtrElectroHost->reinit(
-                          0, 0, d_densityQuadratureIdElectro, false);
+                          0, 0, d_densityQuadratureIdElectro);
 
                         normsTau[iComp] = computeResidualQuadData(
                           d_tauOutQuadValues[iComp],
@@ -4193,6 +4235,11 @@ namespace dftfe
                                        fermiEnergyUp,
                                        fermiEnergyDown,
                                        d_dftParamsPtr->spinPolarized == 1,
+                                       (d_dftParamsPtr->spinPolarized == 1 ||
+                                        d_dftParamsPtr->noncolin ||
+                                        d_dftParamsPtr->hasSOC) ?
+                                         1.0 :
+                                         2.0,
                                        d_dftParamsPtr->constraintMagnetization,
                                        d_dftParamsPtr->TVal);
 
@@ -5858,6 +5905,9 @@ namespace dftfe
             dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
               cellMagNormValues(nQuadsPerCell, 0.0);
             magAxisVals.resize(totalLocallyOwnedCells * nQuadsPerCell * 3, 0.0);
+            dftfe::uInt numMagnitudeClamped = 0;
+            double      maxRhoAtClamp       = 0.0;
+            double      maxAbsViolation     = 0.0;
             for (dftfe::uInt iCell = 0; iCell < totalLocallyOwnedCells; ++iCell)
               {
                 const double *cellRhoValues =
@@ -5892,6 +5942,26 @@ namespace dftfe
                         cellMagAxisValues[3 * iQuad + 1] = 0.0;
                         cellMagAxisValues[3 * iQuad + 2] = 0.0;
                       }
+                    // |m| <= n holds for any physical spinor density
+                    // (Cauchy-Schwarz on the two-component wavefunction), but
+                    // the SCF mixes n and the components of m as independent
+                    // linear channels with signed coefficients, so a mixed
+                    // density can violate it and drive
+                    // rho^down = (n - |m|)/2 negative.  Clamping keeps the XC
+                    // input in the physical region; the bound is attained at
+                    // full polarization, which libxc handles.
+                    if (cellMagNormValues[iQuad] > cellRhoValues[iQuad])
+                      {
+                        ++numMagnitudeClamped;
+                        maxRhoAtClamp =
+                          std::max(maxRhoAtClamp, cellRhoValues[iQuad]);
+                        maxAbsViolation          = std::max(maxAbsViolation,
+                                                   cellMagNormValues[iQuad] -
+                                                     cellRhoValues[iQuad]);
+                        cellMagNormValues[iQuad] = cellRhoValues[iQuad] > 0.0 ?
+                                                     cellRhoValues[iQuad] :
+                                                     0.0;
+                      }
                     const double magByTwo = cellMagNormValues[iQuad] / 2.0;
                     densityValsForXC[iCell * nQuadsPerCell + iQuad] =
                       rhoByTwo + magByTwo;
@@ -5900,6 +5970,31 @@ namespace dftfe
                       rhoByTwo - magByTwo;
                   }
               }
+            numMagnitudeClamped =
+              dealii::Utilities::MPI::sum(numMagnitudeClamped,
+                                          mpi_communicator);
+            maxRhoAtClamp =
+              dealii::Utilities::MPI::max(maxRhoAtClamp, mpi_communicator);
+            maxAbsViolation =
+              dealii::Utilities::MPI::max(maxAbsViolation, mpi_communicator);
+            // The physical region {|m| <= n} is the convex Lorentz cone, so a
+            // convex combination of feasible densities stays feasible; Anderson
+            // uses signed least-squares coefficients and can leave it.  It does
+            // so only where n is already negligible, where the clamp cannot
+            // move the XC energy, so warn at verbosity 1 only when it fires at
+            // a chemically meaningful density.  The severity measure is the
+            // density and the absolute violation, not |m|/n, which diverges as
+            // n approaches zero.
+            const double clampWarnDensity = 1.0e-2;
+            if (numMagnitudeClamped > 0 && (maxRhoAtClamp > clampWarnDensity ?
+                                              d_dftParamsPtr->verbosity >= 1 :
+                                              d_dftParamsPtr->verbosity >= 4))
+              pcout
+                << "DFT-FE Warning: the magnetization magnitude exceeded the charge density at "
+                << numMagnitudeClamped
+                << " quadrature points and was clamped; the density mixing left the physical |m| <= n region."
+                << " max n at a clamped point = " << maxRhoAtClamp
+                << ", max (|m| - n) = " << maxAbsViolation << std::endl;
           }
         else if (spinPolarizedFactor == 1)
           {

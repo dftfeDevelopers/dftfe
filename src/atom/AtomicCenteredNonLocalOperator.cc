@@ -382,6 +382,10 @@ namespace dftfe
               }
           }
       }
+    // The loop below reuses the same scratch on every batch of every atom;
+    // one scope across the whole build sizes it once and releases it once.
+    auto scratch = d_basisOperatorPtr->scopedScratch();
+
     for (dftfe::uInt iAtom = 0; iAtom < d_totalAtomsInCurrentProc; ++iAtom)
       {
         dftfe::uInt      ChargeId = atomIdsInProc[iAtom];
@@ -440,16 +444,6 @@ namespace dftfe
             nCellsPerBatch * NumTotalSphericalFunctions * 3 *
               numberQuadraturePoints * maxkPoints,
             0.0);
-        std::vector<dataTypes::number>
-          inverseJacobianTimesGradientShapeFnForChargeId;
-        if (d_computeIonForces || d_computeCellStress)
-          {
-            inverseJacobianTimesGradientShapeFnForChargeId.clear();
-            inverseJacobianTimesGradientShapeFnForChargeId.resize(
-              numberElementsInAtomCompactSupport * 3 * numberQuadraturePoints *
-              d_numberNodesPerElement);
-          }
-
         const char              transA = 'N', transB = 'N';
         const dataTypes::number scalarCoeffAlpha = 1.0, scalarCoeffBeta = 0.0;
         const dftfe::uInt       inc = 1;
@@ -812,10 +806,7 @@ namespace dftfe
 
                     d_basisOperatorPtr->reinit(NumTotalSphericalFunctions,
                                                cellIndexes.size(),
-                                               quadratureIndex,
-                                               false,
-                                               false,
-                                               true);
+                                               quadratureIndex);
                     d_basisOperatorPtr
                       ->computeScalarFieldTimesShapeFunctionIntegral(
                         cellIndexes,

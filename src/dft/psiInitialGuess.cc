@@ -644,7 +644,7 @@ namespace dftfe
                                          2 * dof * d_numEigenValues +
                                          2 * waveId] +=
                                         dataTypes::number(
-                                          R * boost::math::spherical_harmonic_r(
+                                          R * boost::math::spherical_harmonic_i(
                                                 it->l, -(it->m), theta, phi));
                                       d_eigenVectorsFlattenedHost
                                         [kPoint * d_numEigenValues *
@@ -652,7 +652,7 @@ namespace dftfe
                                          2 * dof * d_numEigenValues +
                                          d_numEigenValues + 2 * waveId] +=
                                         dataTypes::number(
-                                          R * boost::math::spherical_harmonic_r(
+                                          R * boost::math::spherical_harmonic_i(
                                                 it->l, -(it->m), theta, phi));
                                       d_eigenVectorsFlattenedHost
                                         [kPoint * d_numEigenValues *
@@ -660,7 +660,7 @@ namespace dftfe
                                          2 * dof * d_numEigenValues +
                                          2 * waveId + 1] +=
                                         dataTypes::number(
-                                          R * boost::math::spherical_harmonic_r(
+                                          R * boost::math::spherical_harmonic_i(
                                                 it->l, -(it->m), theta, phi));
                                       d_eigenVectorsFlattenedHost
                                         [kPoint * d_numEigenValues *
@@ -668,7 +668,7 @@ namespace dftfe
                                          2 * dof * d_numEigenValues +
                                          d_numEigenValues + 2 * waveId + 1] +=
                                         -dataTypes::number(
-                                          R * boost::math::spherical_harmonic_r(
+                                          R * boost::math::spherical_harmonic_i(
                                                 it->l, -(it->m), theta, phi));
                                     }
                                   else

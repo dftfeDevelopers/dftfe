@@ -353,6 +353,35 @@ namespace dftfe
       double &correlationEnergy,
       double &excCorrPotentialTimesRho);
 
+    /**
+     * @brief Exact directional derivative of the discrete non-collinear XC energy
+     * along the density residual.
+     *
+     * The residual cross term is contracted against the discrete XC field the
+     * eigensolver used, B_xc = b_in * m_hat_in, giving a magnetic contribution
+     * of b_in * (m_hat_in . dm).  For GGA the gradient contribution is taken
+     * through the collocation shape-function gradient, the same White-Bird
+     * operator the Hamiltonian applies, and only the longitudinal projection
+     * of dm is retained to match it.
+     */
+    double
+    computeNonCollinearXCDirectionalDerivative(
+      const std::shared_ptr<
+        dftfe::basis::FEBasisOperations<dataTypes::number,
+                                        double,
+                                        dftfe::utils::MemorySpace::HOST>>
+                                                    &basisOperationsPtr,
+      const dftfe::uInt                              quadratureId,
+      const std::shared_ptr<excManager<memorySpace>> excManagerPtr,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &densityInValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &densityOutValues,
+      std::shared_ptr<AuxDensityMatrix<memorySpace>>
+        auxDensityXCInRepresentationPtr);
+
     double
     computeEntropicEnergy(
       const std::vector<std::vector<double>> &eigenValues,
@@ -362,6 +391,7 @@ namespace dftfe
       const double                            fermiEnergyUp,
       const double                            fermiEnergyDown,
       const bool                              isSpinPolarized,
+      const double                            spinDegeneracy,
       const bool                              isConstraintMagnetization,
       const double                            temperature) const;
 

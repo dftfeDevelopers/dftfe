@@ -96,6 +96,9 @@ namespace dftfe
         zeroIndexVec;
       mutable dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
         tempCellValuesBlockCoeff, tempCellGradientsBlockCoeff;
+      /// Number of live ScratchScope objects; the last one out clears the
+      /// scratch arrays above.
+      mutable dftfe::uInt d_scratchScopeDepth = 0;
       std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
         d_BLASWrapperPtr;
 
@@ -112,6 +115,56 @@ namespace dftfe
        * @brief Default Destructor
        */
       ~FEBasisOperations() = default;
+
+      /**
+       * @brief RAII lifetime for the internal scratch arrays.
+       *
+       * The scratch arrays are sized lazily by the operations that need them
+       * (see the ensure*() helpers) and can run to several GB at high
+       * quadrature orders, so they should not stay resident once the operation
+       * that needed them is done.  The OUTERMOST live scope releases them on
+       * destruction; nested scopes are no-ops, so an operation that opens a
+       * scope of its own remains cheap to call in a loop from a caller holding
+       * a scope.
+       *
+       * @code
+       * basisOps->reinit(0, cellsBlockSize, densityQuadratureId);
+       * auto scratch = basisOps->scopedScratch();
+       * for (iCell = 0; iCell < nCells; iCell += cellsBlockSize)
+       *   basisOps->computeWeightedCellMassMatrix(cellRange, weights, result);
+       * @endcode
+       */
+      class ScratchScope
+      {
+      public:
+        explicit ScratchScope(const FEBasisOperations &basisOps)
+          : d_basisOps(basisOps)
+        {
+          ++d_basisOps.d_scratchScopeDepth;
+        }
+
+        ~ScratchScope()
+        {
+          if (--d_basisOps.d_scratchScopeDepth == 0)
+            d_basisOps.clearTempStorage();
+        }
+
+        ScratchScope(const ScratchScope &) = delete;
+        ScratchScope &
+        operator=(const ScratchScope &) = delete;
+
+      private:
+        const FEBasisOperations &d_basisOps;
+      };
+
+      /**
+       * @brief Opens a ScratchScope on this object; see ScratchScope.
+       */
+      [[nodiscard]] ScratchScope
+      scopedScratch() const
+      {
+        return ScratchScope(*this);
+      }
 
       /**
        * @brief Clears the FEBasisOperations internal storage.
@@ -156,7 +209,13 @@ namespace dftfe
                                                     const dftfe::uInt quadId2);
 
       /**
-       * @brief sets internal variables and optionally resizes internal temp storage for interpolation operations
+       * @brief sets the vector block size, cell block size and quadrature index used by subsequent operations.
+       *
+       * Internal scratch storage is NOT sized here: each operation sizes
+       * exactly the arrays it needs, on first use, via the ensure*() helpers.
+       * Wrap the operations in a ScratchScope to bound the lifetime of that
+       * scratch - see ScratchScope.
+       *
        * @param[in] vecBlockSize block size to used for operations on vectors,
        * this has to be set to the exact value before any such operations are
        * called.
@@ -164,15 +223,11 @@ namespace dftfe
        * set to a value greater than or equal to the required value before any
        * such operations are called
        * @param[in] quadratureID Quadrature index to be used.
-       * @param[in] isResizeTempStorage whether to resize internal tempstorage.
        */
       void
       reinit(const dftfe::uInt &vecBlockSize,
              const dftfe::uInt &cellBlockSize,
-             const dftfe::uInt &quadratureID,
-             const bool         isResizeTempStorageForInerpolation = true,
-             const bool         isResizeTempStorageForCellMatrices = false,
-             const bool isResizeTempStorageForIntegralEvaluations  = false);
+             const dftfe::uInt &quadratureID);
 
       dftfe::utils::MemoryStorage<dftfe::uInt,
                                   dftfe::utils::MemorySpace::HOST> &
@@ -325,18 +380,67 @@ namespace dftfe
                              const bool ceoffType = false);
 
       /**
-       * @brief Resizes the internal temp storage to be sufficient for the vector and cell block sizes provided in reinit.
+       * @brief Sizes one internal scratch array for the current vector block size, cell block size and quadrature index.
+       *
+       * Each helper is idempotent, resizing only when the required size has
+       * changed, so calling it on every iteration of a cell-block loop is free
+       * after the first.  Every operation that touches a scratch array calls
+       * the corresponding helper itself.
+       *
+       * @{
        */
+
+      /// nDofsPerCell^2 * cellsBlockSize; cell matrix accumulator.
       void
-      resizeTempStorage(const bool isResizeTempStorageForInerpolation,
-                        const bool isResizeTempStorageForCellMatrices,
-                        const bool isResizeTempStorageForIntegralEvaluations);
+      ensureCellMatrixBlock() const;
+
+      /// nQuadsPerCell * nDofsPerCell * cellsBlockSize; weighted shape values.
+      void
+      ensureCellValuesBlock() const;
+
+      /// 3 * nQuadsPerCell * nDofsPerCell * cellsBlockSize; weighted shape
+      /// gradients.
+      void
+      ensureCellGradientsBlock() const;
+
+      /// Second buffer of the same shape as ensureCellGradientsBlock().
+      void
+      ensureCellGradientsBlock2() const;
+
+      /// cellsBlockSize zeros, used as a null strided-copy index map.
+      void
+      ensureZeroIndexVec() const;
+
+      /// nVectors * nDofsPerCell * cellsBlockSize; cell-local nodal values.
+      void
+      ensureCellNodalData() const;
+
+      /// nVectors * nQuadsPerCell * 3 * cellsBlockSize; real-space gradients.
+      void
+      ensureQuadratureGradientsData() const;
+
+      /// nVectors * nQuadsPerCell * 3 * cellsBlockSize; non-affine layout.
+      void
+      ensureQuadratureGradientsDataNonAffine() const;
+
+      /// nVectors * nQuadsPerCell * cellsBlockSize; JxW-scaled quadrature
+      /// values in multivector layout.
+      void
+      ensureCellValuesBlockCoeff() const;
+
+      /// 3 * nQuadsPerCell * nDofsPerCell; single-cell reference gradients.
+      void
+      ensureCellGradientsBlockCoeff() const;
+
+      /** @} */
 
       /**
        * @brief Clears the internal temporary storage.
+       *
+       * Prefer a ScratchScope over calling this directly.
        */
       void
-      clearTempStorage();
+      clearTempStorage() const;
 
       /**
        * @brief Number of quadrature points per cell for the quadratureID set in reinit.

@@ -93,9 +93,7 @@ namespace dftfe
     if (d_basisOperationsPtr->d_nVectors != numberWavefunctions)
       d_basisOperationsPtr->reinit(numberWavefunctions,
                                    d_cellsBlockSizeHX,
-                                   d_densityQuadratureID,
-                                   false,
-                                   false);
+                                   d_densityQuadratureID);
 
     d_BLASWrapperPtr->axpby(src.locallyOwnedSize() * src.numVectors(),
                             scalarX,
@@ -299,9 +297,7 @@ namespace dftfe
     if (d_basisOperationsPtr->d_nVectors != numberWavefunctions * spinorFactor)
       d_basisOperationsPtr->reinit(numberWavefunctions * spinorFactor,
                                    d_cellsBlockSizeHX,
-                                   d_densityQuadratureID,
-                                   false,
-                                   false);
+                                   d_densityQuadratureID);
     const bool hasNonlocalComponents =
       d_dftParamsPtr->isPseudopotential &&
       (d_pseudopotentialNonLocalOperator
@@ -394,8 +390,9 @@ namespace dftfe
             d_pseudopotentialNonLocalProjectorTimesVectorBlock
               .updateGhostValuesEnd();
             d_pseudopotentialNonLocalOperator->applyVOnCconjtransX(
-              d_dftParamsPtr->hasSOC ? CouplingStructure::blockDiagonal :
-                                       CouplingStructure::diagonal,
+              d_pseudopotentialClassPtr->hasSOC() ?
+                CouplingStructure::blockDiagonal :
+                CouplingStructure::diagonal,
               d_pseudopotentialClassPtr->getCouplingMatrix(),
               d_pseudopotentialNonLocalProjectorTimesVectorBlock,
               true);
@@ -558,9 +555,7 @@ namespace dftfe
     if (d_basisOperationsPtr->d_nVectors != numberWavefunctions * spinorFactor)
       d_basisOperationsPtr->reinit(numberWavefunctions * spinorFactor,
                                    d_cellsBlockSizeHX,
-                                   d_densityQuadratureID,
-                                   false,
-                                   false);
+                                   d_densityQuadratureID);
     const bool hasNonlocalComponents =
       d_dftParamsPtr->isPseudopotential &&
       (d_pseudopotentialNonLocalOperatorSinglePrec
@@ -650,8 +645,9 @@ namespace dftfe
             d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec
               .updateGhostValuesEnd();
             d_pseudopotentialNonLocalOperatorSinglePrec->applyVOnCconjtransX(
-              d_dftParamsPtr->hasSOC ? CouplingStructure::blockDiagonal :
-                                       CouplingStructure::diagonal,
+              d_pseudopotentialClassPtr->hasSOC() ?
+                CouplingStructure::blockDiagonal :
+                CouplingStructure::diagonal,
               d_pseudopotentialClassPtr->getCouplingMatrixSinglePrec(),
               d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec,
               true);

@@ -42,6 +42,10 @@ namespace dftfe
       offsetFlagZ;
     dftfe::uInt densityQuadratureRule, intermediateDensityQuadratureRule;
     bool        useIntermediateDensityQuadrature;
+    /// True when POLYNOMIAL ORDER DENSITY NODAL was left at its default, so
+    /// that the non-collinear GGA representation requirement may raise it.  A
+    /// value supplied by the user is always honoured as given.
+    bool        densityNodalOrderIsDefault = true;
     dftfe::uInt chebyshevOrder, numPass, numSCFIterations,
       maxLinearSolverIterations, mixingHistory, npool, numLevels,
       maxLinearSolverIterationsHelmholtz;

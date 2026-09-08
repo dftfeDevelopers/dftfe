@@ -28,6 +28,7 @@
 #include <iomanip>
 #include <stdexcept>
 #include <cmath>
+#include <set>
 
 
 namespace dftfe
@@ -335,6 +336,7 @@ namespace dftfe
           // Orbitals
           std::vector<std::string> pswfc_tag;
           pswfc_tag.push_back("PP_PSWFC");
+          std::set<std::string> listedOrbitalFiles;
           for (dftfe::Int i = 1;
                i <= xmlNodeChildCount(pswfc_tag, file_path_in);
                i++)
@@ -374,7 +376,10 @@ namespace dftfe
                   else if (w == 'f')
                     w = '3';
                 }
-              file << "psi" + orbital_string + ".inp" << std::endl;
+              // Emit each orbital file name once; a fully relativistic UPF
+              // has two PP_CHI entries per (n, l).
+              if (listedOrbitalFiles.insert(orbital_string).second)
+                file << "psi" + orbital_string + ".inp" << std::endl;
             }
         }
       file.close();
@@ -683,6 +688,7 @@ namespace dftfe
       radial_coord = XmlTagReaderMain(radial_tag, file_path_in);
       std::vector<std::string> pswfc_tag;
       pswfc_tag.push_back("PP_PSWFC");
+      std::set<std::string> writtenOrbitalNL;
       for (dftfe::Int i = 1; i <= xmlNodeChildCount(pswfc_tag, file_path_in);
            i++)
         {
@@ -731,19 +737,36 @@ namespace dftfe
             {
               l = '3';
             }
-          std::string  orbital_string = "psi";
-          std::fstream file;
-          file.open(file_path_out + "/" + orbital_string + n + l + ".inp",
-                    std::ios::out);
-          file << std::setprecision(12);
-          if (file.is_open())
+          std::string orbital_string = "psi";
+          // A fully relativistic UPF carries two PP_CHI entries per (n, l),
+          // one per relativistic j.  Each channel is written under a name
+          // carrying the UPF wavefunction index, and psi<n><l>.inp aliases the
+          // first channel of each (n, l) - that is the name psiInitialGuess
+          // looks up, the atomic initial guess not being j resolved.
+          const std::string channelName = file_path_out + "/" + orbital_string +
+                                          n + l + "_" + std::to_string(i) +
+                                          ".inp";
+          std::vector<std::string> orbitalFileNames;
+          orbitalFileNames.push_back(channelName);
+          const std::string nlKey(1, n);
+          if (writtenOrbitalNL.insert(nlKey + l).second)
+            orbitalFileNames.push_back(file_path_out + "/" + orbital_string +
+                                       n + l + ".inp");
+          for (const auto &orbitalFileName : orbitalFileNames)
             {
-              for (dftfe::Int l = 0; l < chi_values.size(); l++)
+              std::fstream file;
+              file.open(orbitalFileName, std::ios::out);
+              file << std::setprecision(12);
+              if (file.is_open())
                 {
-                  file << radial_coord[l] << " " << chi_values[l] << std::endl;
+                  for (dftfe::Int j = 0; j < chi_values.size(); j++)
+                    {
+                      file << radial_coord[j] << " " << chi_values[j]
+                           << std::endl;
+                    }
                 }
+              file.close();
             }
-          file.close();
         }
     }
 

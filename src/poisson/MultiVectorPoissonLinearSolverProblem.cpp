@@ -100,9 +100,7 @@ namespace dftfe
 
     d_basisOperationsPtr->reinit(1,
                                  d_cellBlockSize,
-                                 d_matrixFreeQuadratureComponentRhs,
-                                 false,  // TODO should this be set to true
-                                 false); // TODO should this be set to true
+                                 d_matrixFreeQuadratureComponentRhs);
 
     d_locallyOwnedSize     = d_basisOperationsPtr->nOwnedDofs();
     d_numberDofsPerElement = d_basisOperationsPtr->nDofsPerCell();
@@ -112,9 +110,7 @@ namespace dftfe
     d_cellBlockSize = d_numCells;
     d_basisOperationsPtr->reinit(1,
                                  d_cellBlockSize,
-                                 d_matrixFreeQuadratureComponentRhs,
-                                 false,  // TODO should this be set to true
-                                 false); // TODO should this be set to true
+                                 d_matrixFreeQuadratureComponentRhs);
 
     d_nQuadsPerCell = d_basisOperationsPtr->nQuadsPerCell();
 
@@ -287,9 +283,7 @@ namespace dftfe
 
     d_basisOperationsPtr->reinit(d_blockSize,
                                  d_cellBlockSize,
-                                 d_matrixFreeQuadratureComponentRhs,
-                                 false,  // TODO should this be set to true
-                                 false); // TODO should this be set to true
+                                 d_matrixFreeQuadratureComponentRhs);
     //
     d_basisOperationsPtr->extractToCellNodalData(x,
                                                  d_xCellLLevelNodalData.data());
@@ -520,10 +514,7 @@ namespace dftfe
 
     d_basisOperationsPtr->reinit(d_blockSize,
                                  d_cellBlockSize,
-                                 d_matrixFreeQuadratureComponentRhs,
-                                 false,  // TODO should this be set to true
-                                 false); // TODO should this be set to true
-                                         //
+                                 d_matrixFreeQuadratureComponentRhs);
 
     double l2ErrorIndex = 0.0;
     for (dftfe::uInt i = 0; i < flattenedArrayCellLocalProcIndexIdMap.size();
@@ -603,10 +594,7 @@ namespace dftfe
   {
     d_basisOperationsPtr->reinit(blockSizeInput,
                                  d_cellBlockSize,
-                                 d_matrixFreeQuadratureComponentRhs,
-                                 true,  // TODO should this be set to true
-                                 true); // TODO should this be set to true
-                                        //
+                                 d_matrixFreeQuadratureComponentRhs);
 
 
 
@@ -701,10 +689,7 @@ namespace dftfe
 
     d_basisOperationsPtr->reinit(d_blockSize,
                                  d_cellBlockSize,
-                                 d_matrixFreeQuadratureComponentRhs,
-                                 true,   // TODO should this be set to true
-                                 false); // TODO should this be set to true
-                                         //
+                                 d_matrixFreeQuadratureComponentRhs);
 
 
     std::pair<dftfe::uInt, dftfe::uInt> cellRange =

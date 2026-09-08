@@ -47,10 +47,7 @@ namespace dftfe
   void
   dftClass<memorySpace>::saveTriaInfoAndRhoNodalData()
   {
-    d_basisOperationsPtrElectroHost->reinit(0,
-                                            0,
-                                            d_densityQuadratureIdElectro,
-                                            false);
+    d_basisOperationsPtrElectroHost->reinit(0, 0, d_densityQuadratureIdElectro);
     dftfe::uInt nQuadsPerCell =
       d_basisOperationsPtrElectroHost->nQuadsPerCell();
     std::vector<const distributedCPUVec<double> *> solutionVectors;
@@ -500,7 +497,7 @@ namespace dftfe
     const MPI_Comm    &interBandGroupComm)
   {
     pcout << "Reading Quad data from checkpoint in progress..." << std::endl;
-    basisOperationsPtr->reinit(0, 0, quadratureId, false);
+    basisOperationsPtr->reinit(0, 0, quadratureId);
     const dftfe::uInt nQuadsPerCell = basisOperationsPtr->nQuadsPerCell();
     const dftfe::uInt nCells        = basisOperationsPtr->nCells();
     const dftfe::uInt totalTarget   = nCells * nQuadsPerCell;
@@ -657,7 +654,7 @@ namespace dftfe
     const MPI_Comm    &interBandGroupComm)
   {
     pcout << "Saving Quad data in progress..." << std::endl;
-    basisOperationsPtr->reinit(0, 0, quadratureId, false);
+    basisOperationsPtr->reinit(0, 0, quadratureId);
     const dftfe::uInt nQuadsPerCell = basisOperationsPtr->nQuadsPerCell();
     const dftfe::uInt nCells        = basisOperationsPtr->nCells();
     const dealii::DoFHandler<3> &dofHandlerTemp =

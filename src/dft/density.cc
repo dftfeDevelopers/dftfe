@@ -73,10 +73,7 @@ namespace dftfe
 
         if (isTauMGGA || (d_dftParamsPtr->printKE && isGroundState))
           {
-            d_basisOperationsPtrHost->reinit(0,
-                                             0,
-                                             d_densityQuadratureId,
-                                             false);
+            d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId);
             const dftfe::uInt nQuadsPerCell =
               d_basisOperationsPtrHost->nQuadsPerCell();
             const dftfe::uInt nCells = d_basisOperationsPtrHost->nCells();
@@ -174,7 +171,7 @@ namespace dftfe
       }
     else
       {
-        d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId, false);
+        d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId);
         const dftfe::uInt nQuadsPerCell =
           d_basisOperationsPtrHost->nQuadsPerCell();
         const dftfe::uInt nCells = d_basisOperationsPtrHost->nCells();
