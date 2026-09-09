@@ -115,7 +115,9 @@ namespace dftfe
       {
         src.updateGhostValues();
         d_basisOperationsPtr->distribute(src);
-        const dataTypes::number scalarCoeffAlpha = scalarOX,
+        // scalarOX is applied once, by the axpy that accumulates the cell
+        // blocks into dst, matching the useApproximateMatrixEntries branch.
+        const dataTypes::number scalarCoeffAlpha = one,
                                 scalarCoeffBeta  = dataTypes::number(0.0);
         if (!d_dftParamsPtr->memOptMode)
           {
@@ -153,7 +155,10 @@ namespace dftfe
                     cellRange.first * numDoFsPerCell);
               }
 
-            d_BLASWrapperPtr->xgemmStridedBatched(
+            // The cell mass matrix is real, so only cellMassMatrixBasisData()
+            // is kept; dzgemmStridedBatched applies it to the complex
+            // wavefunctions without a complex copy.
+            d_BLASWrapperPtr->dzgemmStridedBatched(
               'N',
               'N',
               numberWavefunctions,
@@ -166,7 +171,7 @@ namespace dftfe
                    cellRange.first * numDoFsPerCell * numberWavefunctions),
               numberWavefunctions,
               numDoFsPerCell * numberWavefunctions,
-              d_basisOperationsPtr->cellMassMatrix().data() +
+              d_basisOperationsPtr->cellMassMatrixBasisData().data() +
                 cellRange.first * numDoFsPerCell * numDoFsPerCell,
               numDoFsPerCell,
               numDoFsPerCell * numDoFsPerCell,
