@@ -381,22 +381,12 @@ namespace dftfe
     std::vector<dealii::Quadrature<1>> quadratureVector;
     quadratureVector.push_back(
       dealii::QGauss<1>(d_dftParamsPtr->densityQuadratureRule));
-    quadratureVector.push_back(
-      dealii::QIterated<1>(dealii::QGauss<1>(C_num1DQuadLPSP(
-                             d_dftParamsPtr->finiteElementPolynomialOrder)),
-                           C_numCopies1DQuadLPSP()));
-    if (d_dftParamsPtr->isCellStress)
-      quadratureVector.push_back(dealii::QIterated<1>(
-        dealii::QGauss<1>(C_num1DQuadSmearedChargeStress()),
-        C_numCopies1DQuadSmearedChargeStress()));
-    else if (d_dftParamsPtr->meshSizeOuterBall > 2.2)
-      quadratureVector.push_back(
-        dealii::QIterated<1>(dealii::QGauss<1>(C_num1DQuadSmearedChargeHigh()),
-                             C_numCopies1DQuadSmearedChargeHigh()));
-    else
-      quadratureVector.push_back(
-        dealii::QIterated<1>(dealii::QGauss<1>(C_num1DQuadSmearedCharge()),
-                             C_numCopies1DQuadSmearedCharge()));
+    quadratureVector.push_back(dealii::QIterated<1>(
+      dealii::QGauss<1>(d_dftParamsPtr->QuadratureOrderLocalPotential),
+      d_dftParamsPtr->QuadratureCopyLocalPotential));
+    quadratureVector.push_back(dealii::QIterated<1>(
+      dealii::QGauss<1>(d_dftParamsPtr->QuadratureOrderNuclearCharge),
+      d_dftParamsPtr->QuadratureCopyNuclearCharge));
     quadratureVector.push_back(dealii::QGauss<1>(
       C_num1DQuad(d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics)));
     quadratureVector.push_back(dealii::QGauss<1>(

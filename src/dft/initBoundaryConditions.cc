@@ -219,16 +219,14 @@ namespace dftfe
     std::vector<dealii::Quadrature<1>> quadratureVector;
     quadratureVector.push_back(
       dealii::QGauss<1>(d_dftParamsPtr->densityQuadratureRule));
-    quadratureVector.push_back(
-      dealii::QIterated<1>(dealii::QGauss<1>(C_num1DQuadNLPSP(
-                             d_dftParamsPtr->finiteElementPolynomialOrder)),
-                           C_numCopies1DQuadNLPSP()));
+    quadratureVector.push_back(dealii::QIterated<1>(
+      dealii::QGauss<1>(d_dftParamsPtr->QuadratureOrderNonLocalPSP),
+      d_dftParamsPtr->QuadratureCopyNonLocalPSP));
     quadratureVector.push_back(dealii::QGaussLobatto<1>(
       d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal + 1));
-    quadratureVector.push_back(
-      dealii::QIterated<1>(dealii::QGauss<1>(C_num1DQuadLPSP(
-                             d_dftParamsPtr->finiteElementPolynomialOrder)),
-                           C_numCopies1DQuadLPSP()));
+    quadratureVector.push_back(dealii::QIterated<1>(
+      dealii::QGauss<1>(d_dftParamsPtr->QuadratureOrderLocalPotential),
+      d_dftParamsPtr->QuadratureCopyLocalPotential));
     quadratureVector.push_back(dealii::QGauss<1>(
       C_num1DQuad(d_dftParamsPtr->finiteElementPolynomialOrder)));
     // SparsityPattern VEctor

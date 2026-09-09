@@ -3058,9 +3058,8 @@ namespace dftfe
 
 
     dealii::QIterated<3 - 1> faceQuadrature(
-      dealii::QGauss<1>(C_num1DQuadLPSP(
-        d_dftParams.finiteElementPolynomialOrderElectrostatics)),
-      C_numCopies1DQuadLPSP());
+      dealii::QGauss<1>(d_dftParams.QuadratureOrderLocalPotential),
+      d_dftParams.QuadratureCopyLocalPotential);
     dealii::FEFaceValues<3> feFaceValuesElectro(
       dofHandlerRhoNodal.get_fe(),
       faceQuadrature,

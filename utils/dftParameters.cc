@@ -492,6 +492,48 @@ namespace dftfe
           "0",
           dealii::Patterns::Integer(0, 24),
           "[Standard] The degree of the finite-element interpolating polynomial for the electrostatics part of the Kohn-Sham Hamiltonian. It is automatically set to POLYNOMIAL ORDER if POLYNOMIAL ORDER ELECTROSTATICS set to default value of zero.");
+
+        prm.declare_entry(
+          "NON LOCAL PSP QUADRATURE ORDER",
+          "0",
+          dealii::Patterns::Integer(0, 40),
+          "[Advanced] The quadrature rule used for the nonlocal potential projectors or orbital data. It is automatically set for default value of zero.");
+
+        prm.declare_entry(
+          "NON LOCAL PSP QUADRATURE COPY",
+          "0",
+          dealii::Patterns::Integer(0, 10),
+          "[Advanced] The number of copies of the quadrature rule used for the nonlocal potential projectors or orbital data. It is automatically set for default value of zero.");
+
+        prm.declare_entry(
+          "NUCLEAR CHARGE QUADRATURE ORDER",
+          "0",
+          dealii::Patterns::Integer(0, 40),
+          "[Advanced] The quadrature rule used for the smeared charge or compensation charge. It is automatically set for default value of zero.");
+
+        prm.declare_entry(
+          "NUCLEAR CHARGE QUADRATURE COPY",
+          "0",
+          dealii::Patterns::Integer(0, 10),
+          "[Advanced] The number of copies of the quadrature rule used for the smeared charge or compensation charge. It is automatically set for default value of zero.");
+
+        prm.declare_entry(
+          "LOCAL POTENTIAL QUADRATURE ORDER",
+          "0",
+          dealii::Patterns::Integer(0, 40),
+          "[Advanced] The quadrature rule used for the atom data local potentials. It is automatically set for default value of zero.");
+
+        prm.declare_entry(
+          "LOCAL POTENTIAL QUADRATURE COPY",
+          "0",
+          dealii::Patterns::Integer(0, 10),
+          "[Advanced] The number of copies of the quadrature rule used for the atom data local potentials. It is automatically set for default value of zero.");
+
+        prm.declare_entry(
+          "USE HIGH QUADRATURE RULE",
+          "false",
+          dealii::Patterns::Bool(),
+          "[Advanced] Used to select the default pseudopotential quadrature rules. If true: higher quadrature rules are used. Default: false.");
         prm.declare_entry(
           "POLYNOMIAL ORDER DENSITY NODAL",
           "0",
@@ -1697,6 +1739,19 @@ namespace dftfe
         prm.get_integer("POLYNOMIAL ORDER ELECTROSTATICS") == 0 ?
           prm.get_integer("POLYNOMIAL ORDER") :
           prm.get_integer("POLYNOMIAL ORDER ELECTROSTATICS");
+      QuadratureOrderNonLocalPSP =
+        prm.get_integer("NON LOCAL PSP QUADRATURE ORDER");
+      QuadratureCopyNonLocalPSP =
+        prm.get_integer("NON LOCAL PSP QUADRATURE COPY");
+      QuadratureOrderNuclearCharge =
+        prm.get_integer("NUCLEAR CHARGE QUADRATURE ORDER");
+      QuadratureCopyNuclearCharge =
+        prm.get_integer("NUCLEAR CHARGE QUADRATURE COPY");
+      QuadratureOrderLocalPotential =
+        prm.get_integer("LOCAL POTENTIAL QUADRATURE ORDER");
+      QuadratureCopyLocalPotential =
+        prm.get_integer("LOCAL POTENTIAL QUADRATURE COPY");
+      highQuadRule = prm.get_bool("USE HIGH QUADRATURE RULE");
       densityNodalOrderIsDefault =
         prm.get_integer("POLYNOMIAL ORDER DENSITY NODAL") == 0;
       finiteElementPolynomialOrderRhoNodal =
@@ -2423,6 +2478,31 @@ namespace dftfe
                                   16 :
                                   finiteElementPolynomialOrderRhoNodal + 1;
       }
+
+    // Pseudopotential quadrature rules. These were compile-time constants
+    // selected by DFTFE_WITH_HIGHERQUAD_PSP; the values below reproduce that
+    // choice, with USE HIGH QUADRATURE RULE taking the role of the macro.
+    if (QuadratureOrderNonLocalPSP == 0)
+      QuadratureOrderNonLocalPSP = highQuadRule ? 14 : 10;
+
+    if (QuadratureCopyNonLocalPSP == 0)
+      QuadratureCopyNonLocalPSP = 1;
+
+    if (QuadratureOrderLocalPotential == 0)
+      QuadratureOrderLocalPotential = highQuadRule ? 14 : 10;
+
+    if (QuadratureCopyLocalPotential == 0)
+      QuadratureCopyLocalPotential = 1;
+
+    // The smeared nuclear charge rule was selected by cell stress and mesh
+    // size at the point of use; that selection now resolves here.
+    if (QuadratureOrderNuclearCharge == 0)
+      QuadratureOrderNuclearCharge = 10;
+
+    if (QuadratureCopyNuclearCharge == 0)
+      QuadratureCopyNuclearCharge = isCellStress              ? 5 :
+                                    (meshSizeOuterBall > 2.2) ? 3 :
+                                                                2;
 
     // Non-collinear GGA: the White-Bird construction differentiates the
     // density through the Gauss-point Lagrange collocation basis, so the

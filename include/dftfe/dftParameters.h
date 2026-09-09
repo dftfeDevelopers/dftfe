@@ -220,6 +220,15 @@ namespace dftfe
     std::string tempControllerTypeBOMD;
     dftfe::Int  MDTrack;
 
+    // Quadrature data as inputs from user
+    unsigned int QuadratureOrderNonLocalPSP;
+    unsigned int QuadratureCopyNonLocalPSP;
+    unsigned int QuadratureOrderNuclearCharge;
+    unsigned int QuadratureCopyNuclearCharge;
+    unsigned int QuadratureOrderLocalPotential;
+    unsigned int QuadratureCopyLocalPotential;
+    bool         highQuadRule;
+
     bool writeStructreEnergyForcesFileForPostProcess;
 
     // Parameters for confining potential
