@@ -4288,7 +4288,15 @@ namespace dftfe
     if (d_dftParamsPtr->useDevice &&
         (d_dftParamsPtr->writeWfcSolutionFields ||
          d_dftParamsPtr->writeLdosFile || d_dftParamsPtr->writePdosFile))
-      d_eigenVectorsFlattenedDevice.copyTo(d_eigenVectorsFlattenedHost);
+      {
+        // the host storage is not allocated when the wavefunctions are
+        // generated on device, so size it on demand
+        if (d_eigenVectorsFlattenedHost.size() <
+            d_eigenVectorsFlattenedDevice.size())
+          d_eigenVectorsFlattenedHost.resize(
+            d_eigenVectorsFlattenedDevice.size(), dataTypes::number(0.0));
+        d_eigenVectorsFlattenedDevice.copyTo(d_eigenVectorsFlattenedHost);
+      }
 #endif
 
 

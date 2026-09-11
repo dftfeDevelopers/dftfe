@@ -134,6 +134,7 @@ SET(TARGET_SRC
   ./src/dft/energyCalculator.cc
   ./src/dft/energyDensity.cc
   ./src/dft/densityCalculator.cc
+  ./src/dft/atomicInitKernels.cc
   ./src/dft/computeAuxProjectedDensityMatrixFromPSI.cc
   ./src/dft/densityFirstOrderResponseCalculator.cc
   ./src/dft/applyMultipoleDirichletBC.cc
@@ -285,6 +286,8 @@ SET(DEVICE_SRC
   ./src/matrixFree/MatrixFreeDevice.cc
   ./utils/FEBasisOperationsKernelsInternalDevice.cc
   ./src/atom/AtomicCenteredNonLocalOperatorKernelsDevice.cc
+  ./src/atom/AtomCenteredSphericalFunctionDeviceKernels.cc
+  ./src/dft/atomicInitDeviceKernels.cc
   ./src/force/configurationalForceKernels.cc
   ./src/dftOperator/KohnShamHamiltonianOperatorDeviceKernels.cc
   ./src/excManager/excManagerDeviceKernels.cc
@@ -308,6 +311,8 @@ SET(DEVICE_SRC
   ./src/matrixFree/MatrixFreeDevice.cc
   ./utils/FEBasisOperationsKernelsInternalDevice.cc
   ./src/atom/AtomicCenteredNonLocalOperatorKernelsDevice.cc
+  ./src/atom/AtomCenteredSphericalFunctionDeviceKernels.cc
+  ./src/dft/atomicInitDeviceKernels.cc
   ./src/dftOperator/KohnShamHamiltonianOperatorDeviceKernels.cc
   ./src/excManager/excManagerDeviceKernels.cc
   ./src/excManager/exchangeCorrelationFunctionalEvaluatorDevice.cc
@@ -331,6 +336,8 @@ SET(DEVICE_SRC
   ./src/matrixFree/MatrixFreeDevice.cc
   ./utils/FEBasisOperationsKernelsInternalDevice.cc
   ./src/atom/AtomicCenteredNonLocalOperatorKernelsDevice.cc
+  ./src/atom/AtomCenteredSphericalFunctionDeviceKernels.cc
+  ./src/dft/atomicInitDeviceKernels.cc
   ./src/dftOperator/KohnShamHamiltonianOperatorDeviceKernels.cc
   ./src/excManager/excManagerDeviceKernels.cc
   ./src/excManager/exchangeCorrelationFunctionalEvaluatorDevice.cc

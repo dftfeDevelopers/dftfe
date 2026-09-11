@@ -127,12 +127,6 @@ namespace dftfe
             std::numeric_limits<dftfe::Int>::max() / d_numEigenValues,
           dealii::ExcMessage(
             "DFT-FE error: size of local wavefunctions storage exceeds integer bounds. Please increase number of MPI tasks"));
-        d_eigenVectorsFlattenedHost.resize(
-          (d_numEigenValues *
-           matrix_free_data.get_vector_partitioner()->locally_owned_size()) *
-            (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size() *
-            ((d_dftParamsPtr->noncolin || d_dftParamsPtr->hasSOC) ? 2 : 1),
-          dataTypes::number(0.0));
       }
 
 
@@ -165,16 +159,17 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
     if (d_dftParamsPtr->useDevice)
       {
-        d_eigenVectorsFlattenedDevice.resize(
-          d_eigenVectorsFlattenedHost.size());
+        // already sized and filled by readPSIRandomValuesDevice
+        if (d_eigenVectorsFlattenedHost.size() > 0)
+          {
+            d_eigenVectorsFlattenedDevice.resize(
+              d_eigenVectorsFlattenedHost.size());
+            d_eigenVectorsFlattenedDevice.copyFrom(d_eigenVectorsFlattenedHost);
+          }
 
         if (d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
           d_eigenVectorsDensityMatrixPrimeFlattenedDevice.resize(
-            d_eigenVectorsFlattenedHost.size());
-
-
-
-        d_eigenVectorsFlattenedDevice.copyFrom(d_eigenVectorsFlattenedHost);
+            d_eigenVectorsFlattenedDevice.size());
       }
 #endif
 

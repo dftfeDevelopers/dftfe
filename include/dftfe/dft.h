@@ -1027,6 +1027,16 @@ namespace dftfe
     readPSI();
     void
     readPSIRadialValues();
+
+#ifdef DFTFE_WITH_DEVICE
+    /**
+     * @brief Fills the random initial-guess wavefunctions directly in
+     * d_eigenVectorsFlattenedDevice, leaving the host array unallocated.
+     */
+    void
+    readPSIRandomValuesDevice();
+#endif
+
     void
     loadPSIFiles(dftfe::uInt  Z,
                  dftfe::uInt  n,

@@ -302,10 +302,15 @@ namespace dftfe
                                            d_densityDofHandlerIndex,
                                            quadratureIndices,
                                            updateFlags);
-            d_basisOperationsPtrHost->computeCellStiffnessMatrix(
-              d_feOrderPlusOneQuadratureId, 1, true, false);
-            if (std::is_same<dataTypes::number, std::complex<double>>::value ||
-                !d_dftParamsPtr->approxOverlapMatrix)
+            // Only the basis operations object held by the Kohn-Sham operator
+            // is read, which is the device one in a device run; init(src) does
+            // not copy these two matrices from the host.
+            if (!d_dftParamsPtr->useDevice)
+              d_basisOperationsPtrHost->computeCellStiffnessMatrix(
+                d_feOrderPlusOneQuadratureId, 1, true, false);
+            if (!d_dftParamsPtr->useDevice &&
+                (std::is_same<dataTypes::number, std::complex<double>>::value ||
+                 !d_dftParamsPtr->approxOverlapMatrix))
               d_basisOperationsPtrHost->computeCellMassMatrix(
                 d_feOrderPlusOneQuadratureId, 1, true, false);
             d_basisOperationsPtrHost->computeInverseSqrtMassVector(true, false);

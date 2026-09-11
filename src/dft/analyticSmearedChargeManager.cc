@@ -33,13 +33,16 @@ namespace dftfe
     const double                            minDist,
     const double                            pspCutOffTrunc,
     const std::shared_ptr<oncvClass<dataTypes::number, memorySpace>>
-                                        &oncvClassPtr,
-    const dealii::DoFHandler<3>         &dofHandlerPRefined,
-    const dealii::MatrixFree<3, double> &matrixFreeDataPRefined,
-    const dftfe::uInt                    smearedChargeQuadratureId,
-    const MPI_Comm                      &mpiCommunicator,
-    const dftParameters                 &dftParams,
-    dealii::ConditionalOStream          &pcout)
+                                &oncvClassPtr,
+    const dealii::DoFHandler<3> &dofHandlerPRefined,
+    const std::shared_ptr<
+      dftfe::basis::
+        FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
+                               &basisOperationsPtrElectro,
+    const dftfe::uInt           smearedChargeQuadratureId,
+    const MPI_Comm             &mpiCommunicator,
+    const dftParameters        &dftParams,
+    dealii::ConditionalOStream &pcout)
   {
     const dftfe::uInt numberGlobalAtoms = atomLocations.size();
 
@@ -355,16 +358,19 @@ namespace dftfe
         imageAtomIds[iImage] = imageIds[iImage];
         imageWidths[iImage]  = d_smearedChargeWidths[imageAtomIds[iImage]];
       }
-    const dealii::Quadrature<3> &smearedChargeQuadrature =
-      matrixFreeDataPRefined.get_quadrature(smearedChargeQuadratureId);
-    dealii::FEValues<3> feValuesSmearedCharge(dofHandlerPRefined.get_fe(),
-                                              smearedChargeQuadrature,
-                                              dealii::update_quadrature_points |
-                                                dealii::update_JxW_values);
-    const dftfe::uInt   n_q_points_smeared_charge =
-      smearedChargeQuadrature.size();
+    // the quadrature points and JxW for this quadrature are already held by
+    // the electrostatics basis operations object
+    basisOperationsPtrElectro->reinit(0, 0, smearedChargeQuadratureId);
+    const dftfe::uInt n_q_points_smeared_charge =
+      basisOperationsPtrElectro->nQuadsPerCell();
+    const double *quadPointsAll =
+      basisOperationsPtrElectro->quadPoints().data();
+    const double *jxwAll = basisOperationsPtrElectro->JxW().data();
 
     std::vector<double> smearedChargeIntegral(numberGlobalAtoms, 0.0);
+    // physical atoms and their periodic images share one accumulation loop
+    std::vector<std::array<double, 4>> candidateCenterAndWidth;
+    std::vector<dftfe::uInt>           candidateAtomIds;
     typename dealii::DoFHandler<3>::active_cell_iterator
       cell = dofHandlerPRefined.begin_active(),
       endc = dofHandlerPRefined.end();
@@ -406,30 +412,54 @@ namespace dftfe
           if (physicalCandidates.empty() && cellImageCandidates.empty())
             continue;
 
-          feValuesSmearedCharge.reinit(cell);
-          for (dftfe::uInt q = 0; q < n_q_points_smeared_charge; ++q)
+          const dftfe::uInt cellIndex =
+            basisOperationsPtrElectro->cellIndex(cellId);
+          const double *cellQuadPoints =
+            quadPointsAll + cellIndex * n_q_points_smeared_charge * 3;
+          const double *cellJxW =
+            jxwAll + cellIndex * n_q_points_smeared_charge;
+          candidateCenterAndWidth.clear();
+          candidateAtomIds.clear();
+          for (const dftfe::uInt iAtom : physicalCandidates)
             {
-              const dealii::Point<3> &quadPoint =
-                feValuesSmearedCharge.quadrature_point(q);
-              const double jxw = feValuesSmearedCharge.JxW(q);
-
-              for (const dftfe::uInt iAtom : physicalCandidates)
+              candidateCenterAndWidth.push_back({atomPoints[iAtom][0],
+                                                 atomPoints[iAtom][1],
+                                                 atomPoints[iAtom][2],
+                                                 d_smearedChargeWidths[iAtom]});
+              candidateAtomIds.push_back(iAtom);
+            }
+          for (const dftfe::uInt iImage : cellImageCandidates)
+            {
+              candidateCenterAndWidth.push_back({imagePoints[iImage][0],
+                                                 imagePoints[iImage][1],
+                                                 imagePoints[iImage][2],
+                                                 imageWidths[iImage]});
+              candidateAtomIds.push_back(imageAtomIds[iImage]);
+            }
+          // candidate outer so that the center and its width are loaded once
+          // per cell, and the square root is taken only inside the support
+          for (dftfe::uInt iCandidate = 0; iCandidate < candidateAtomIds.size();
+               ++iCandidate)
+            {
+              const double centerX     = candidateCenterAndWidth[iCandidate][0];
+              const double centerY     = candidateCenterAndWidth[iCandidate][1];
+              const double centerZ     = candidateCenterAndWidth[iCandidate][2];
+              const double width       = candidateCenterAndWidth[iCandidate][3];
+              const double widthSquare = width * width;
+              double       integral    = 0.0;
+              for (dftfe::uInt q = 0; q < n_q_points_smeared_charge; ++q)
                 {
-                  const double atomWidth = d_smearedChargeWidths[iAtom];
-                  const double r = quadPoint.distance(atomPoints[iAtom]);
-                  if (r <= atomWidth)
-                    smearedChargeIntegral[iAtom] +=
-                      dftUtils::smearedCharge(r, atomWidth) * jxw;
+                  const double dx = cellQuadPoints[q * 3 + 0] - centerX;
+                  const double dy = cellQuadPoints[q * 3 + 1] - centerY;
+                  const double dz = cellQuadPoints[q * 3 + 2] - centerZ;
+                  const double distanceSquared = dx * dx + dy * dy + dz * dz;
+                  if (distanceSquared > widthSquare)
+                    continue;
+                  integral +=
+                    dftUtils::smearedCharge(std::sqrt(distanceSquared), width) *
+                    cellJxW[q];
                 }
-              for (const dftfe::uInt iImage : cellImageCandidates)
-                {
-                  const dftfe::uInt imageAtomId = imageAtomIds[iImage];
-                  const double      imageWidth  = imageWidths[iImage];
-                  const double      r = quadPoint.distance(imagePoints[iImage]);
-                  if (r <= imageWidth)
-                    smearedChargeIntegral[imageAtomId] +=
-                      dftUtils::smearedCharge(r, imageWidth) * jxw;
-                }
+              smearedChargeIntegral[candidateAtomIds[iCandidate]] += integral;
             }
         }
 
@@ -533,15 +563,13 @@ namespace dftfe
 
           if (!physicalAtomCandidates.empty() || !imageCandidates.empty())
             {
-              feValuesSmearedCharge.reinit(cell);
-              for (dftfe::uInt q = 0; q < n_q_points_smeared_charge; ++q)
-                {
-                  const dealii::Point<3> &quadPoint =
-                    feValuesSmearedCharge.quadrature_point(q);
-                  cellQuadPoints[3 * q + 0] = quadPoint[0];
-                  cellQuadPoints[3 * q + 1] = quadPoint[1];
-                  cellQuadPoints[3 * q + 2] = quadPoint[2];
-                }
+              const dftfe::uInt cellIndex =
+                basisOperationsPtrElectro->cellIndex(cell->id());
+              const double *cellQuadPointsSrc =
+                quadPointsAll + cellIndex * n_q_points_smeared_charge * 3;
+              std::copy(cellQuadPointsSrc,
+                        cellQuadPointsSrc + 3 * n_q_points_smeared_charge,
+                        cellQuadPoints.begin());
               for (const dftfe::uInt iAtom : physicalAtomCandidates)
                 {
                   const dealii::Point<3> atomPoint  = atomPoints[iAtom];

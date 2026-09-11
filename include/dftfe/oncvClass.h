@@ -146,6 +146,20 @@ namespace dftfe
     double
     getRmaxValenceDensity(dftfe::uInt Znum);
 
+    /**
+     * @brief The atomic valence-density radial function for an atomic number,
+     * for callers that resolve it once outside a loop.
+     */
+    const AtomCenteredSphericalFunctionBase *
+    getRadialValenceDensityFunction(dftfe::uInt Znum,
+                                    dftfe::uInt threadId) const
+    {
+      const auto &mapForThread = d_atomicValenceDensityVector
+        [threadId < d_atomicValenceDensityVector.size() ? threadId : 0];
+      const auto it = mapForThread.find(Znum);
+      return it == mapForThread.end() ? nullptr : it->second.get();
+    }
+
     void
     getRadialCoreDensity(dftfe::uInt          Znum,
                          double               rad,
@@ -159,6 +173,21 @@ namespace dftfe
 
     double
     getRadialLocalPseudo(dftfe::uInt Znum, double rad);
+
+    /**
+     * @brief The local-pseudopotential radial function for an atomic number,
+     * for callers that resolve it once outside a loop.
+     */
+    const AtomCenteredSphericalFunctionBase *
+    getRadialLocalPseudoFunction(dftfe::uInt Znum, dftfe::uInt threadId) const
+    {
+      const auto &mapForThread =
+        d_atomicLocalPotVector[threadId < d_atomicLocalPotVector.size() ?
+                                 threadId :
+                                 0];
+      const auto it = mapForThread.find(Znum);
+      return it == mapForThread.end() ? nullptr : it->second.get();
+    }
 
     double
     getRmaxLocalPot(dftfe::uInt Znum);

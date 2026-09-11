@@ -95,7 +95,12 @@ namespace dftfe
       mutable dftfe::utils::MemoryStorage<dftfe::uInt, memorySpace>
         zeroIndexVec;
       mutable dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
-        tempCellValuesBlockCoeff, tempCellGradientsBlockCoeff;
+        tempCellValuesBlockCoeff, tempCellGradientsBlockCoeff,
+        tempCellGradientData;
+      /// Quadrature the reference gradients in tempCellGradientsBlockCoeff
+      /// were reshaped for, and whether they are still valid.
+      mutable dftfe::uInt d_cellGradientsBlockCoeffQuadratureID = 0;
+      mutable bool        d_cellGradientsBlockCoeffValid        = false;
       /// Number of live ScratchScope objects; the last one out clears the
       /// scratch arrays above.
       mutable dftfe::uInt d_scratchScopeDepth = 0;
@@ -428,9 +433,15 @@ namespace dftfe
       void
       ensureCellValuesBlockCoeff() const;
 
-      /// 3 * nQuadsPerCell * nDofsPerCell; single-cell reference gradients.
+      /// 3 * nQuadsPerCell * nDofsPerCell; single-cell reference gradients,
+      /// reshaped to the non affine layout on first use per quadrature.
       void
       ensureCellGradientsBlockCoeff() const;
+
+      /// 3 * nQuadsPerCell * nDofsPerCell * numberOfElements; Jacobian scaled
+      /// real space gradients.
+      void
+      ensureCellGradientData(const dftfe::uInt numberOfElements) const;
 
       /** @} */
 

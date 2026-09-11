@@ -33,6 +33,10 @@ namespace dftfe
     // clear existing data
     d_rhoCore.clear();
     d_gradRhoCore.clear();
+    // the per-atom maps are only read by the force and stress computation
+    const bool storePerAtomCoreData =
+      d_dftParamsPtr->isIonForce || d_dftParamsPtr->isCellStress;
+
     d_gradRhoCoreAtoms.clear();
     d_hessianRhoCore.clear();
     d_hessianRhoCoreAtoms.clear();
@@ -221,7 +225,7 @@ namespace dftfe
 
 
                   } // end loop over quad points
-                if (isCoreRhoDataInCell)
+                if (isCoreRhoDataInCell && storePerAtomCoreData)
                   {
                     std::vector<double> &gradRhoCoreAtomCell =
                       d_gradRhoCoreAtoms[iAtom][cell->id()];
@@ -341,7 +345,7 @@ namespace dftfe
 
                   } // quad point loop
 
-                if (isCoreRhoDataInCell)
+                if (isCoreRhoDataInCell && storePerAtomCoreData)
                   {
                     std::vector<double> &gradRhoCoreAtomCell =
                       d_gradRhoCoreAtoms[numberGlobalCharges + iImageCharge]

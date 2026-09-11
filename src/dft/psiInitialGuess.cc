@@ -19,6 +19,13 @@
 #include <dftfe/dft.h>
 #include <dftfe/fileReaders.h>
 #include <dftfe/vectorUtilities.h>
+#include <dftfe/atomicInitKernels.h>
+#include <dftfe/AtomCenteredSphericalFunctionDeviceUtils.h>
+#include <dftfe/atomTypeSplineTables.h>
+#ifdef DFTFE_WITH_DEVICE
+#  include <dftfe/AtomCenteredSphericalFunctionDeviceKernels.h>
+#endif
+#include <type_traits>
 #include <random>
 #include <boost/math/distributions/normal.hpp>
 #include <boost/math/special_functions/spherical_harmonic.hpp>
@@ -366,6 +373,16 @@ namespace dftfe
   void
   dftClass<memorySpace>::readPSIRadialValues()
   {
+#ifdef DFTFE_WITH_DEVICE
+    if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
+      if (d_dftParamsPtr->startingWFCType == "RANDOM" &&
+          !d_dftParamsPtr->reproducible_output &&
+          d_dftParamsPtr->solverMode == "GS")
+        {
+          readPSIRandomValuesDevice();
+          return;
+        }
+#endif
     const dealii::IndexSet &locallyOwnedSet = dofHandler.locally_owned_dofs();
     std::vector<dealii::IndexSet::size_type> locallyOwnedDOFs =
       locallyOwnedSet.get_index_vector();
@@ -373,6 +390,16 @@ namespace dftfe
     const dftfe::uInt numWfcComponents =
       (d_dftParamsPtr->noncolin || d_dftParamsPtr->hasSOC ? 2 : 1);
 
+    // sized here rather than by the caller, so that the device generator
+    // above can leave the host storage unallocated. BANDS reuses one spin
+    // and k-point block.
+    const dftfe::uInt numWfcBlocks =
+      d_dftParamsPtr->solverMode == "BANDS" ?
+        1 :
+        (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size();
+    d_eigenVectorsFlattenedHost.resize(d_numEigenValues * numberDofs *
+                                         numWfcComponents * numWfcBlocks,
+                                       dataTypes::number(0.0));
     std::fill(d_eigenVectorsFlattenedHost.begin(),
               d_eigenVectorsFlattenedHost.end(),
               0.0);
@@ -396,46 +423,256 @@ namespace dftfe
     tempDisp[1] = d_wfcInitTruncation;
     tempDisp[2] = d_wfcInitTruncation;
 
+    // An orbital contributes only if one of its centers, the master atom or
+    // any of its periodic images, lies within d_wfcInitTruncation of the
+    // locally owned cells.
     for (std::vector<orbital>::iterator it = waveFunctionsVector.begin();
          it < waveFunctionsVector.end();
          it++)
       {
-        const dftfe::uInt chargeId = it->atomID;
-        dealii::Point<3>  atomCoord;
-
-        if (chargeId < atomLocations.size())
-          {
-            atomCoord[0] = atomLocations[chargeId][2];
-            atomCoord[1] = atomLocations[chargeId][3];
-            atomCoord[2] = atomLocations[chargeId][4];
-          }
+        std::vector<dftfe::Int> imageIdsListFilter;
+        if (d_dftParamsPtr->periodicX || d_dftParamsPtr->periodicY ||
+            d_dftParamsPtr->periodicZ)
+          imageIdsListFilter = d_globalChargeIdToImageIdMap[it->atomID];
         else
+          imageIdsListFilter.push_back(it->atomID);
+
+        bool anyCenterInRange = false;
+        for (dftfe::uInt iImage = 0;
+             iImage < imageIdsListFilter.size() && !anyCenterInRange;
+             ++iImage)
           {
-            atomCoord[0] = d_imagePositions[chargeId - numberGlobalAtoms][0];
-            atomCoord[1] = d_imagePositions[chargeId - numberGlobalAtoms][1];
-            atomCoord[2] = d_imagePositions[chargeId - numberGlobalAtoms][2];
+            const dftfe::Int chargeId = imageIdsListFilter[iImage];
+            dealii::Point<3> atomCoord;
+
+            if (chargeId < numberGlobalAtoms)
+              {
+                atomCoord[0] = atomLocations[chargeId][2];
+                atomCoord[1] = atomLocations[chargeId][3];
+                atomCoord[2] = atomLocations[chargeId][4];
+              }
+            else
+              {
+                atomCoord[0] =
+                  d_imagePositions[chargeId - numberGlobalAtoms][0];
+                atomCoord[1] =
+                  d_imagePositions[chargeId - numberGlobalAtoms][1];
+                atomCoord[2] =
+                  d_imagePositions[chargeId - numberGlobalAtoms][2];
+              }
+
+            std::pair<dealii::Point<3, double>, dealii::Point<3, double>>
+              boundaryPoints;
+            boundaryPoints.first  = atomCoord - tempDisp;
+            boundaryPoints.second = atomCoord + tempDisp;
+            dealii::BoundingBox<3> boundingBoxAroundAtom(boundaryPoints);
+
+            if (boundingBoxTria.get_neighbor_type(boundingBoxAroundAtom) !=
+                dealii::NeighborType::not_neighbors)
+              anyCenterInRange = true;
           }
 
-
-        std::pair<dealii::Point<3, double>, dealii::Point<3, double>>
-          boundaryPoints;
-        boundaryPoints.first  = atomCoord - tempDisp;
-        boundaryPoints.second = atomCoord + tempDisp;
-        dealii::BoundingBox<3> boundingBoxAroundAtom(boundaryPoints);
-
-        if (boundingBoxTria.get_neighbor_type(boundingBoxAroundAtom) !=
-            dealii::NeighborType::not_neighbors)
-          ;
-        waveFunctionsVectorTruncated.push_back(*it);
+        if (anyCenterInRange)
+          waveFunctionsVectorTruncated.push_back(*it);
       }
 
-    boost::math::normal normDist;
-    bool                pp = false;
+
+    // per-orbital center lists: the master atom and its periodic images
+    const dftfe::uInt nOrbitalsTrunc = waveFunctionsVectorTruncated.size();
+    std::vector<dftfe::uInt> orbitalCenterStart(nOrbitalsTrunc + 1, 0);
+    std::vector<double>      orbitalCenterCoords;
+    for (dftfe::uInt iOrb = 0; iOrb < nOrbitalsTrunc; ++iOrb)
+      {
+        std::vector<dftfe::Int> imageIdsList;
+        if (d_dftParamsPtr->periodicX || d_dftParamsPtr->periodicY ||
+            d_dftParamsPtr->periodicZ)
+          imageIdsList =
+            d_globalChargeIdToImageIdMap[waveFunctionsVectorTruncated[iOrb]
+                                           .atomID];
+        else
+          imageIdsList.push_back(waveFunctionsVectorTruncated[iOrb].atomID);
+
+        for (dftfe::uInt iImage = 0; iImage < imageIdsList.size(); ++iImage)
+          {
+            const dftfe::Int chargeId = imageIdsList[iImage];
+            if (chargeId < numberGlobalAtoms)
+              {
+                orbitalCenterCoords.push_back(atomLocations[chargeId][2]);
+                orbitalCenterCoords.push_back(atomLocations[chargeId][3]);
+                orbitalCenterCoords.push_back(atomLocations[chargeId][4]);
+              }
+            else
+              {
+                orbitalCenterCoords.push_back(
+                  d_imagePositions[chargeId - numberGlobalAtoms][0]);
+                orbitalCenterCoords.push_back(
+                  d_imagePositions[chargeId - numberGlobalAtoms][1]);
+                orbitalCenterCoords.push_back(
+                  d_imagePositions[chargeId - numberGlobalAtoms][2]);
+              }
+          }
+        orbitalCenterStart[iOrb + 1] = orbitalCenterCoords.size() / 3;
+      }
+
+
+    // One thread or iteration per (unconstrained node, orbital), centers
+    // looped inside the kernel; a device run dispatches to the device
+    // specialization and a CPU run to the host one. The loop further down
+    // covers the cases this cannot handle.
+    bool wfcComputed = false;
+    if (nOrbitalsTrunc > 0 && numberDofs > 0)
+      {
+        splineHostTableUtils::SplineTableGroup psiTables;
+        std::vector<dftfe::Int>                orbitalLHost(nOrbitalsTrunc),
+          orbitalMHost(nOrbitalsTrunc);
+        std::vector<dftfe::uInt> orbitalSplineIdHost(nOrbitalsTrunc);
+        for (dftfe::uInt iOrb = 0; iOrb < nOrbitalsTrunc; ++iOrb)
+          {
+            const orbital &orb = waveFunctionsVectorTruncated[iOrb];
+            orbitalLHost[iOrb] = orb.l;
+            orbitalMHost[iOrb] = orb.m;
+            orbitalSplineIdHost[iOrb] =
+              psiTables.addSpline(orb.psi, d_wfcInitTruncation, 0.0, 1.0);
+          }
+        AtomTypeSplineTables<memorySpace> psiTablesMem;
+        psiTablesMem.stage(psiTables);
+
+        // compacted so the kernel needs no constraint handling
+        std::vector<double>      pointCoordsHost;
+        std::vector<dftfe::uInt> pointDofIndex;
+        pointCoordsHost.reserve(3 * numberDofs);
+        pointDofIndex.reserve(numberDofs);
+        for (dftfe::uInt dof = 0; dof < numberDofs; ++dof)
+          {
+            const dealii::types::global_dof_index dofID = locallyOwnedDOFs[dof];
+            if (constraintsNone.is_constrained(dofID))
+              continue;
+            const dealii::Point<3> &node = d_supportPoints[dofID];
+            pointCoordsHost.push_back(node[0]);
+            pointCoordsHost.push_back(node[1]);
+            pointCoordsHost.push_back(node[2]);
+            pointDofIndex.push_back(dof);
+          }
+        const dftfe::uInt nPointsWfc = pointDofIndex.size();
+
+        if (nPointsWfc > 0)
+          {
+            dftfe::utils::MemoryStorage<double, memorySpace> dPoints, dCenters,
+              dOut;
+            dftfe::utils::MemoryStorage<dftfe::uInt, memorySpace> dCenterStart,
+              dSplineIdWfc;
+            dftfe::utils::MemoryStorage<dftfe::Int, memorySpace> dOrbL, dOrbM;
+            stageHostVector(orbitalCenterCoords, dCenters);
+            stageHostVector(orbitalCenterStart, dCenterStart);
+            stageHostVector(orbitalSplineIdHost, dSplineIdWfc);
+            stageHostVector(orbitalLHost, dOrbL);
+            stageHostVector(orbitalMHost, dOrbM);
+
+            const bool isNoncolinWfc =
+              d_dftParamsPtr->noncolin || d_dftParamsPtr->hasSOC;
+            dftfe::uInt numKpointsWfc =
+              (d_dftParamsPtr->reproducible_output ?
+                 ((1 + d_dftParamsPtr->spinPolarized) *
+                  d_kPointWeights.size()) :
+                 (1 + d_dftParamsPtr->spinPolarized));
+            if (d_dftParamsPtr->solverMode == "BANDS")
+              numKpointsWfc = 1;
+
+            // cap on the transient output buffer of one block, in bytes
+            constexpr std::size_t maxBlockBytes = 256000000;
+            const dftfe::uInt     pointsBlockSize =
+              std::max<dftfe::uInt>(1,
+                                    maxBlockBytes /
+                                      (std::size_t)((nOrbitalsTrunc + 3) *
+                                                    sizeof(double)));
+            std::vector<double> hOut;
+
+            for (dftfe::uInt pointBlockStart = 0; pointBlockStart < nPointsWfc;
+                 pointBlockStart += pointsBlockSize)
+              {
+                const dftfe::uInt nPointsInBlock =
+                  std::min(pointsBlockSize, nPointsWfc - pointBlockStart);
+                dPoints.resize((std::size_t)nPointsInBlock * 3);
+                dPoints.template copyFrom<dftfe::utils::MemorySpace::HOST>(
+                  pointCoordsHost.data() + (std::size_t)pointBlockStart * 3);
+                dOut.resize((std::size_t)nPointsInBlock * nOrbitalsTrunc);
+
+                atomicInitKernels::atomicWavefunctionSuperposition<memorySpace>(
+                  nPointsInBlock,
+                  nOrbitalsTrunc,
+                  isNoncolinWfc,
+                  d_wfcInitTruncation,
+                  dPoints.data(),
+                  dCenterStart.data(),
+                  dCenters.data(),
+                  dOrbL.data(),
+                  dOrbM.data(),
+                  dSplineIdWfc.data(),
+                  psiTablesMem.knotX.data(),
+                  psiTablesMem.knotY.data(),
+                  psiTablesMem.coefB.data(),
+                  psiTablesMem.coefC.data(),
+                  psiTablesMem.coefD.data(),
+                  psiTablesMem.offsets.data(),
+                  psiTablesMem.nKnots.data(),
+                  psiTablesMem.gpParams.data(),
+                  dOut.data());
+
+                hOut.resize((std::size_t)nPointsInBlock * nOrbitalsTrunc);
+                dOut.copyTo(hOut);
+
+                for (dftfe::uInt iPoint = 0; iPoint < nPointsInBlock; ++iPoint)
+                  {
+                    const dftfe::uInt dof =
+                      pointDofIndex[pointBlockStart + iPoint];
+                    for (dftfe::uInt iOrb = 0; iOrb < nOrbitalsTrunc; ++iOrb)
+                      {
+                        const double acc =
+                          hOut[(std::size_t)iPoint * nOrbitalsTrunc + iOrb];
+                        const dftfe::uInt waveId =
+                          waveFunctionsVectorTruncated[iOrb].waveID;
+                        for (dftfe::uInt kPoint = 0; kPoint < numKpointsWfc;
+                             ++kPoint)
+                          if (isNoncolinWfc)
+                            {
+                              const dftfe::uInt baseNC =
+                                kPoint * d_numEigenValues * numberDofs * 2 +
+                                2 * dof * d_numEigenValues;
+                              d_eigenVectorsFlattenedHost[baseNC +
+                                                          2 * waveId] +=
+                                dataTypes::number(acc);
+                              d_eigenVectorsFlattenedHost[baseNC +
+                                                          d_numEigenValues +
+                                                          2 * waveId] +=
+                                dataTypes::number(acc);
+                              d_eigenVectorsFlattenedHost[baseNC + 2 * waveId +
+                                                          1] +=
+                                dataTypes::number(acc);
+                              d_eigenVectorsFlattenedHost[baseNC +
+                                                          d_numEigenValues +
+                                                          2 * waveId + 1] +=
+                                -dataTypes::number(acc);
+                            }
+                          else
+                            {
+                              const dftfe::uInt baseCO =
+                                kPoint * d_numEigenValues * numberDofs +
+                                dof * d_numEigenValues;
+                              d_eigenVectorsFlattenedHost[baseCO + waveId] +=
+                                dataTypes::number(acc);
+                            }
+                      }
+                  }
+              }
+
+            wfcComputed = true;
+          }
+      }
+
+    bool pp = false;
 #pragma omp parallel num_threads(d_nOMPThreads) \
   firstprivate(waveFunctionsVectorTruncated)
     {
-      std::mt19937 randomIntGenerator(this_mpi_process * d_nOMPThreads +
-                                      omp_get_thread_num());
 #pragma omp for
       for (dftfe::uInt dof = 0; dof < numberDofs; dof++)
         {
@@ -452,239 +689,94 @@ namespace dftfe
                                           (1 + d_dftParamsPtr->spinPolarized));
               if (d_dftParamsPtr->solverMode == "BANDS")
                 numKpoints = 1;
-              for (dftfe::Int kPoint = 0; kPoint < numKpoints; ++kPoint)
+              // The guess depends only on the node and the orbital; the
+              // k-point index enters only the destination offset, so each
+              // orbital's contribution is accumulated once and replicated
+              // across the slices.
+              for (dftfe::uInt iOrb = 0;
+                   iOrb < (wfcComputed ? 0 : nOrbitalsTrunc);
+                   ++iOrb)
                 {
-                  // dftfe::uInt waveFunction=0;
-                  for (std::vector<orbital>::iterator it =
-                         waveFunctionsVectorTruncated.begin();
-                       it < waveFunctionsVectorTruncated.end();
-                       it++)
+                  const orbital    &orb    = waveFunctionsVectorTruncated[iOrb];
+                  const dftfe::uInt waveId = orb.waveID;
+                  const bool        isNoncolin =
+                    d_dftParamsPtr->noncolin || d_dftParamsPtr->hasSOC;
+
+                  double acc = 0.0;
+                  for (dftfe::uInt iAtom = orbitalCenterStart[iOrb];
+                       iAtom < orbitalCenterStart[iOrb + 1];
+                       ++iAtom)
                     {
-                      //
-                      // get the imageIdmap information corresponding to
-                      // globalChargeId (Fix me: Examine whether periodic image
-                      // contributions have to be included or not) currently not
-                      // including
-                      std::vector<dftfe::Int> imageIdsList;
-                      if (d_dftParamsPtr->periodicX ||
-                          d_dftParamsPtr->periodicY ||
-                          d_dftParamsPtr->periodicZ)
+                      const double x =
+                        node[0] - orbitalCenterCoords[iAtom * 3 + 0];
+                      const double y =
+                        node[1] - orbitalCenterCoords[iAtom * 3 + 1];
+                      const double z =
+                        node[2] - orbitalCenterCoords[iAtom * 3 + 2];
+
+                      const double r = std::sqrt(x * x + y * y + z * z);
+
+                      // the angles and the harmonic are only needed inside
+                      // the truncation radius
+                      if (r > d_wfcInitTruncation)
+                        continue;
+
+                      double theta = std::acos(z / r);
+                      double phi   = std::atan2(y, x);
+                      if (r == 0)
                         {
-                          imageIdsList =
-                            d_globalChargeIdToImageIdMap[it->atomID];
-                        }
-                      else
-                        {
-                          imageIdsList.push_back(it->atomID);
+                          theta = 0;
+                          phi   = 0;
                         }
 
-                      const dftfe::uInt waveId = it->waveID;
-                      for (dftfe::Int iImageAtomCount = 0;
-                           iImageAtomCount < imageIdsList.size();
-                           ++iImageAtomCount)
-                        {
-                          //
-                          // find coordinates of atom correspoding to this wave
-                          // function and imageAtom
-                          //
-                          dftfe::Int chargeId = imageIdsList[iImageAtomCount];
-                          dealii::Point<3> atomCoord;
+                      // radial part
+                      const double R = alglib::spline1dcalc((orb.psi), r);
 
-                          if (chargeId < numberGlobalAtoms)
-                            {
-                              atomCoord[0] = atomLocations[chargeId][2];
-                              atomCoord[1] = atomLocations[chargeId][3];
-                              atomCoord[2] = atomLocations[chargeId][4];
-                            }
-                          else
-                            {
-                              atomCoord[0] =
-                                d_imagePositions[chargeId - numberGlobalAtoms]
-                                                [0];
-                              atomCoord[1] =
-                                d_imagePositions[chargeId - numberGlobalAtoms]
-                                                [1];
-                              atomCoord[2] =
-                                d_imagePositions[chargeId - numberGlobalAtoms]
-                                                [2];
-                            }
+                      const double Yval =
+                        orb.m >= 0 ? boost::math::spherical_harmonic_r(orb.l,
+                                                                       orb.m,
+                                                                       theta,
+                                                                       phi) :
+                                     boost::math::spherical_harmonic_i(orb.l,
+                                                                       -(orb.m),
+                                                                       theta,
+                                                                       phi);
 
-                          double x = node[0] - atomCoord[0];
-                          double y = node[1] - atomCoord[1];
-                          double z = node[2] - atomCoord[2];
-
-
-                          double r     = sqrt(x * x + y * y + z * z);
-                          double theta = acos(z / r);
-                          double phi   = atan2(y, x);
-
-                          if (r == 0)
-                            {
-                              theta = 0;
-                              phi   = 0;
-                            }
-
-                          double R = 0.0;
-                          if (
-                            r <=
-                            d_wfcInitTruncation) // outerValues[it->Z][it->n][it->l])
-                            {
-                              // radial part
-                              R = alglib::spline1dcalc((it->psi), r);
-                              // spherical part
-                              if (it->m > 0)
-                                {
-                                  if ((d_dftParamsPtr->noncolin ||
-                                       d_dftParamsPtr->hasSOC))
-                                    {
-                                      d_eigenVectorsFlattenedHost
-                                        [kPoint * d_numEigenValues *
-                                           numberDofs * 2 +
-                                         2 * dof * d_numEigenValues +
-                                         2 * waveId] +=
-                                        dataTypes::number(
-                                          R * boost::math::spherical_harmonic_r(
-                                                it->l, it->m, theta, phi));
-                                      d_eigenVectorsFlattenedHost
-                                        [kPoint * d_numEigenValues *
-                                           numberDofs * 2 +
-                                         2 * dof * d_numEigenValues +
-                                         d_numEigenValues + 2 * waveId] +=
-                                        dataTypes::number(
-                                          R * boost::math::spherical_harmonic_r(
-                                                it->l, it->m, theta, phi));
-                                      d_eigenVectorsFlattenedHost
-                                        [kPoint * d_numEigenValues *
-                                           numberDofs * 2 +
-                                         2 * dof * d_numEigenValues +
-                                         2 * waveId + 1] +=
-                                        dataTypes::number(
-                                          R * boost::math::spherical_harmonic_r(
-                                                it->l, it->m, theta, phi));
-                                      d_eigenVectorsFlattenedHost
-                                        [kPoint * d_numEigenValues *
-                                           numberDofs * 2 +
-                                         2 * dof * d_numEigenValues +
-                                         d_numEigenValues + 2 * waveId + 1] +=
-                                        -dataTypes::number(
-                                          R * boost::math::spherical_harmonic_r(
-                                                it->l, it->m, theta, phi));
-                                    }
-                                  else
-                                    d_eigenVectorsFlattenedHost
-                                      [kPoint * d_numEigenValues * numberDofs +
-                                       dof * d_numEigenValues + waveId] +=
-                                      dataTypes::number(
-                                        R * std::sqrt(2) *
-                                        boost::math::spherical_harmonic_r(
-                                          it->l, it->m, theta, phi));
-                                }
-                              else if (it->m == 0)
-                                {
-                                  if ((d_dftParamsPtr->noncolin ||
-                                       d_dftParamsPtr->hasSOC))
-                                    {
-                                      d_eigenVectorsFlattenedHost
-                                        [kPoint * d_numEigenValues *
-                                           numberDofs * 2 +
-                                         2 * dof * d_numEigenValues +
-                                         2 * waveId] +=
-                                        dataTypes::number(
-                                          R *
-                                          boost::math::spherical_harmonic_r(
-                                            it->l, it->m, theta, phi) /
-                                          std::sqrt(2.0));
-                                      d_eigenVectorsFlattenedHost
-                                        [kPoint * d_numEigenValues *
-                                           numberDofs * 2 +
-                                         2 * dof * d_numEigenValues +
-                                         d_numEigenValues + 2 * waveId] +=
-                                        dataTypes::number(
-                                          R *
-                                          boost::math::spherical_harmonic_r(
-                                            it->l, it->m, theta, phi) /
-                                          std::sqrt(2.0));
-                                      d_eigenVectorsFlattenedHost
-                                        [kPoint * d_numEigenValues *
-                                           numberDofs * 2 +
-                                         2 * dof * d_numEigenValues +
-                                         2 * waveId + 1] +=
-                                        dataTypes::number(
-                                          R *
-                                          boost::math::spherical_harmonic_r(
-                                            it->l, it->m, theta, phi) /
-                                          std::sqrt(2.0));
-                                      d_eigenVectorsFlattenedHost
-                                        [kPoint * d_numEigenValues *
-                                           numberDofs * 2 +
-                                         2 * dof * d_numEigenValues +
-                                         d_numEigenValues + 2 * waveId + 1] +=
-                                        -dataTypes::number(
-                                          R *
-                                          boost::math::spherical_harmonic_r(
-                                            it->l, it->m, theta, phi) /
-                                          std::sqrt(2.0));
-                                    }
-                                  else
-                                    d_eigenVectorsFlattenedHost
-                                      [kPoint * d_numEigenValues * numberDofs +
-                                       dof * d_numEigenValues + waveId] +=
-                                      dataTypes::number(
-                                        R * boost::math::spherical_harmonic_r(
-                                              it->l, it->m, theta, phi));
-                                }
-                              else
-                                {
-                                  if ((d_dftParamsPtr->noncolin ||
-                                       d_dftParamsPtr->hasSOC))
-                                    {
-                                      d_eigenVectorsFlattenedHost
-                                        [kPoint * d_numEigenValues *
-                                           numberDofs * 2 +
-                                         2 * dof * d_numEigenValues +
-                                         2 * waveId] +=
-                                        dataTypes::number(
-                                          R * boost::math::spherical_harmonic_i(
-                                                it->l, -(it->m), theta, phi));
-                                      d_eigenVectorsFlattenedHost
-                                        [kPoint * d_numEigenValues *
-                                           numberDofs * 2 +
-                                         2 * dof * d_numEigenValues +
-                                         d_numEigenValues + 2 * waveId] +=
-                                        dataTypes::number(
-                                          R * boost::math::spherical_harmonic_i(
-                                                it->l, -(it->m), theta, phi));
-                                      d_eigenVectorsFlattenedHost
-                                        [kPoint * d_numEigenValues *
-                                           numberDofs * 2 +
-                                         2 * dof * d_numEigenValues +
-                                         2 * waveId + 1] +=
-                                        dataTypes::number(
-                                          R * boost::math::spherical_harmonic_i(
-                                                it->l, -(it->m), theta, phi));
-                                      d_eigenVectorsFlattenedHost
-                                        [kPoint * d_numEigenValues *
-                                           numberDofs * 2 +
-                                         2 * dof * d_numEigenValues +
-                                         d_numEigenValues + 2 * waveId + 1] +=
-                                        -dataTypes::number(
-                                          R * boost::math::spherical_harmonic_i(
-                                                it->l, -(it->m), theta, phi));
-                                    }
-                                  else
-                                    d_eigenVectorsFlattenedHost
-                                      [kPoint * d_numEigenValues * numberDofs +
-                                       dof * d_numEigenValues + waveId] +=
-                                      dataTypes::number(
-                                        R * std::sqrt(2) *
-                                        boost::math::spherical_harmonic_i(
-                                          it->l, -(it->m), theta, phi));
-                                }
-                            }
-                        }
-                      // waveFunction++;
+                      acc +=
+                        isNoncolin ?
+                          (orb.m == 0 ? R * Yval / std::sqrt(2.0) : R * Yval) :
+                          (orb.m == 0 ? R * Yval : R * std::sqrt(2) * Yval);
                     }
 
+                  for (dftfe::Int kPoint = 0; kPoint < numKpoints; ++kPoint)
+                    if (isNoncolin)
+                      {
+                        const dftfe::uInt baseNC =
+                          kPoint * d_numEigenValues * numberDofs * 2 +
+                          2 * dof * d_numEigenValues;
+                        d_eigenVectorsFlattenedHost[baseNC + 2 * waveId] +=
+                          dataTypes::number(acc);
+                        d_eigenVectorsFlattenedHost[baseNC + d_numEigenValues +
+                                                    2 * waveId] +=
+                          dataTypes::number(acc);
+                        d_eigenVectorsFlattenedHost[baseNC + 2 * waveId + 1] +=
+                          dataTypes::number(acc);
+                        d_eigenVectorsFlattenedHost[baseNC + d_numEigenValues +
+                                                    2 * waveId + 1] +=
+                          -dataTypes::number(acc);
+                      }
+                    else
+                      {
+                        const dftfe::uInt baseCO =
+                          kPoint * d_numEigenValues * numberDofs +
+                          dof * d_numEigenValues;
+                        d_eigenVectorsFlattenedHost[baseCO + waveId] +=
+                          dataTypes::number(acc);
+                      }
+                }
+
+              for (dftfe::Int kPoint = 0; kPoint < numKpoints; ++kPoint)
+                {
                   d_nonAtomicWaveFunctions = 0;
                   if (waveFunctionsVector.size() <
                       d_numEigenValues / numWfcComponents)
@@ -694,68 +786,48 @@ namespace dftfe
                         numWfcComponents * waveFunctionsVector.size();
 
                       //
-                      // assign the rest of the wavefunctions using a standard
-                      // normal distribution
-                      //
-                      // boost::math::normal normDist;
-
+                      // Counter-based generator keyed on the global dof
+                      // index, so the guess is the same on the host and the
+                      // device and is independent of the MPI and thread
+                      // decomposition.
                       dataTypes::number *temp =
                         d_eigenVectorsFlattenedHost.data() +
                         kPoint * d_numEigenValues * numberDofs *
-                          ((d_dftParamsPtr->noncolin ||
-                            d_dftParamsPtr->hasSOC) ?
-                             2 :
-                             1);
+                          numWfcComponents;
+                      const unsigned long long globalDofId =
+                        static_cast<unsigned long long>(dofID);
                       for (dftfe::uInt iWave =
                              waveFunctionsVector.size() * numWfcComponents;
                            iWave < d_numEigenValues;
                            ++iWave)
-                        {
-                          if ((d_dftParamsPtr->noncolin ||
-                               d_dftParamsPtr->hasSOC))
-                            {
-                              double z =
-                                (-0.5 + ((double)randomIntGenerator() -
-                                         (double)randomIntGenerator.min()) /
-                                          ((double)randomIntGenerator.max() -
-                                           (double)randomIntGenerator.min())) *
-                                3.0;
-                              double value = boost::math::pdf(normDist, z);
-                              if (randomIntGenerator() % 2 == 0)
-                                value = -1.0 * value;
-
-                              temp[2 * dof * d_numEigenValues + iWave] =
-                                dataTypes::number(value);
-                              z =
-                                (-0.5 + ((double)randomIntGenerator() -
-                                         (double)randomIntGenerator.min()) /
-                                          ((double)randomIntGenerator.max() -
-                                           (double)randomIntGenerator.min())) *
-                                3.0;
-                              value = boost::math::pdf(normDist, z);
-                              if (randomIntGenerator() % 2 == 0)
-                                value = -1.0 * value;
-
-                              temp[2 * dof * d_numEigenValues +
-                                   d_numEigenValues + iWave] =
-                                dataTypes::number(value);
-                            }
-                          else
-                            {
-                              double z =
-                                (-0.5 + ((double)randomIntGenerator() -
-                                         (double)randomIntGenerator.min()) /
-                                          ((double)randomIntGenerator.max() -
-                                           (double)randomIntGenerator.min())) *
-                                3.0;
-                              double value = boost::math::pdf(normDist, z);
-                              if (randomIntGenerator() % 2 == 0)
-                                value = -1.0 * value;
-
-                              temp[dof * d_numEigenValues + iWave] =
-                                dataTypes::number(value);
-                            }
-                        }
+                        for (dftfe::uInt iSpinor = 0;
+                             iSpinor < numWfcComponents;
+                             ++iSpinor)
+                          {
+                            const double u1 =
+                              atomCenteredSphericalFunctionDeviceUtils::
+                                uniformRandomCentered(
+                                  atomCenteredSphericalFunctionDeviceUtils::
+                                    randomWavefunctionSeed,
+                                  globalDofId * numWfcComponents + iSpinor,
+                                  iWave,
+                                  0ULL);
+                            const double u2 =
+                              atomCenteredSphericalFunctionDeviceUtils::
+                                uniformRandomCentered(
+                                  atomCenteredSphericalFunctionDeviceUtils::
+                                    randomWavefunctionSeed,
+                                  globalDofId * numWfcComponents + iSpinor,
+                                  iWave,
+                                  1ULL);
+                            const double z     = 3.0 * u1;
+                            const double value = std::exp(-0.5 * z * z) *
+                                                 0.3989422804014327 *
+                                                 (u2 < 0.0 ? -1.0 : 1.0);
+                            temp[numWfcComponents * dof * d_numEigenValues +
+                                 iSpinor * d_numEigenValues + iWave] =
+                              dataTypes::number(value);
+                          }
                     }
                 }
             }
@@ -811,5 +883,93 @@ namespace dftfe
     readPSIRadialValues();
     computing_timer.leave_subsection("initialize wave functions");
   }
+#ifdef DFTFE_WITH_DEVICE
+  template <dftfe::utils::MemorySpace memorySpace>
+  void
+  dftClass<memorySpace>::readPSIRandomValuesDevice()
+  {
+    if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
+      {
+        const dealii::IndexSet &locallyOwnedSet =
+          dofHandler.locally_owned_dofs();
+        std::vector<dealii::IndexSet::size_type> locallyOwnedDOFs =
+          locallyOwnedSet.get_index_vector();
+        const dftfe::uInt numberDofs = locallyOwnedDOFs.size();
+        const dftfe::uInt numSpinorComponents =
+          (d_dftParamsPtr->noncolin || d_dftParamsPtr->hasSOC) ? 2 : 1;
+        const dftfe::uInt numBlocks =
+          (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size();
+        const dftfe::uInt blockSize =
+          d_numEigenValues * numberDofs * numSpinorComponents;
+
+        d_eigenVectorsFlattenedDevice.resize(blockSize * numBlocks,
+                                             dataTypes::number(0.0));
+
+        if (d_dftParamsPtr->verbosity >= 1)
+          pcout
+            << "Number of wavefunctions generated randomly to be used as initial guess for starting the SCF : "
+            << d_numEigenValues << std::endl;
+
+        d_nonAtomicWaveFunctions = d_numEigenValues;
+
+        // constrained dofs stay zero, matching the host generator
+        std::vector<dftfe::uInt> constrainedMaskHost(numberDofs, 0);
+        for (dftfe::uInt dof = 0; dof < numberDofs; dof++)
+          if (constraintsNone.is_constrained(locallyOwnedDOFs[dof]))
+            constrainedMaskHost[dof] = 1;
+        dftfe::utils::MemoryStorage<dftfe::uInt,
+                                    dftfe::utils::MemorySpace::DEVICE>
+          constrainedMaskDevice(numberDofs, 0);
+        constrainedMaskDevice.copyFrom(constrainedMaskHost);
+
+        // Fill the first (k-point, spin) block; the keying on the global
+        // dof id makes the guess independent of the parallel decomposition.
+        // The kernel derives its key as globalDofStartIndex + iNode, which
+        // equals the host key locallyOwnedDOFs[dof] * numSpinorComponents +
+        // iSpinor only while the locally owned set is one contiguous range.
+        // deal.II distributed dof handlers guarantee that; assert it so a
+        // future change cannot silently make host and device disagree.
+        AssertThrow(
+          numberDofs == 0 || locallyOwnedSet.is_contiguous(),
+          dealii::ExcMessage(
+            "DFT-FE Error: random wavefunction device path requires a contiguous locally owned dof range."));
+        const unsigned long long globalDofStartIndex =
+          numberDofs > 0 ?
+            static_cast<unsigned long long>(locallyOwnedDOFs[0]) *
+              numSpinorComponents :
+            0ULL;
+        const dftfe::uInt numRealsPerCoeff =
+          std::is_same<dataTypes::number, std::complex<double>>::value ? 2 : 1;
+        atomCenteredSphericalFunctionDeviceKernels::fillRandomWavefunctions(
+          numberDofs * numSpinorComponents,
+          d_numEigenValues,
+          numRealsPerCoeff,
+          numSpinorComponents,
+          globalDofStartIndex,
+          0ULL,
+          atomCenteredSphericalFunctionDeviceUtils::randomWavefunctionSeed,
+          constrainedMaskDevice.data(),
+          reinterpret_cast<double *>(d_eigenVectorsFlattenedDevice.data()));
+
+        // replicate the first block to all other (k-point, spin) blocks,
+        // matching the host generator's behavior
+        for (dftfe::uInt iBlock = 1; iBlock < numBlocks; iBlock++)
+          d_eigenVectorsFlattenedDevice.copyFrom(d_eigenVectorsFlattenedDevice,
+                                                 blockSize,
+                                                 0,
+                                                 iBlock * blockSize);
+
+        pcout
+          << "============================================================================================================================="
+          << std::endl;
+        pcout << "number of electrons: " << numElectrons << std::endl;
+        pcout << "number of eigen values: " << d_numEigenValues << std::endl;
+        pcout
+          << "============================================================================================================================="
+          << std::endl;
+      }
+  }
+#endif
+
 #include "dft.inst.cc"
 } // namespace dftfe

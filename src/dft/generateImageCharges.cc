@@ -65,12 +65,41 @@ namespace dftfe
     }
 
     //
+    // inverse of the row-major 3x3 lattice matrix, used to map a real space
+    // point to fractional coordinates
+    //
+    std::vector<double>
+    invert3x3(const std::vector<double> &m)
+    {
+      const double c00 = m[4] * m[8] - m[5] * m[7];
+      const double c01 = m[5] * m[6] - m[3] * m[8];
+      const double c02 = m[3] * m[7] - m[4] * m[6];
+      const double det = m[0] * c00 + m[1] * c01 + m[2] * c02;
+      AssertThrow(std::fabs(det) > 1.0e-14,
+                  dealii::ExcMessage(
+                    "DFT-FE Error: singular lattice vector matrix."));
+      const double        invDet = 1.0 / det;
+      std::vector<double> inv(9);
+      inv[0] = c00 * invDet;
+      inv[1] = (m[2] * m[7] - m[1] * m[8]) * invDet;
+      inv[2] = (m[1] * m[5] - m[2] * m[4]) * invDet;
+      inv[3] = c01 * invDet;
+      inv[4] = (m[0] * m[8] - m[2] * m[6]) * invDet;
+      inv[5] = (m[2] * m[3] - m[0] * m[5]) * invDet;
+      inv[6] = c02 * invDet;
+      inv[7] = (m[1] * m[6] - m[0] * m[7]) * invDet;
+      inv[8] = (m[0] * m[4] - m[1] * m[3]) * invDet;
+      return inv;
+    }
+
+    //
     // given surface defined by normal = surfaceNormal and a point = xred2
     // find the point on this surface closest to an arbitrary point = xred1
     // return fractional coordinates of nearest point
     //
     std::vector<double>
-    getNearestPointOnGivenSurface(std::vector<double>        latticeVectors,
+    getNearestPointOnGivenSurface(const std::vector<double> &latticeVectors,
+                                  const std::vector<double> &latticeVectorsInv,
                                   const std::vector<double> &xred1,
                                   const std::vector<double> &xred2,
                                   const std::vector<double> &surfaceNormal)
@@ -109,40 +138,19 @@ namespace dftfe
         nearestPtCoords[i] = P[i] + t * surfaceNormal[i];
 
       //
-      // get fractional coordinates for the nearest point : solve a system
-      // of equations
-      int N    = 3;
-      int NRHS = 1;
-      int LDA  = 3;
-      int IPIV[3];
-      int info;
-
-
-      dgesv_(&N,
-             &NRHS,
-             &latticeVectors[0],
-             &LDA,
-             &IPIV[0],
-             &nearestPtCoords[0],
-             &LDA,
-             &info);
-
-
-      if (info != 0)
-        {
-          std::cout << "LU solve in conversion of frac to real coords failed."
-                    << std::endl;
-          exit(-1);
-        }
-
+      // fractional coordinates of the nearest point. The forward map above is
+      // real = transpose(L) * frac with row j of latticeVectors holding
+      // domain vector j, so the inverse map transposes latticeVectorsInv.
       //
-      // nearestPtCoords is overwritten with the solution = frac coords
-      //
+      std::vector<double> fracCoords(3, 0.0);
+      for (dftfe::Int i = 0; i < 3; ++i)
+        for (dftfe::Int j = 0; j < 3; ++j)
+          fracCoords[i] += latticeVectorsInv[3 * j + i] * nearestPtCoords[j];
 
       std::vector<double> returnValue(3);
 
       for (dftfe::Int i = 0; i < 3; ++i)
-        returnValue[i] = roundToCell(nearestPtCoords[i]);
+        returnValue[i] = roundToCell(fracCoords[i]);
 
       return returnValue;
     }
@@ -153,6 +161,7 @@ namespace dftfe
     //
     double
     getMinDistanceFromImageToCell(const std::vector<double> &latticeVectors,
+                                  const std::vector<double> &latticeVectorsInv,
                                   const std::vector<double> &xreduced)
     {
       const double xfrac = xreduced[0];
@@ -192,8 +201,12 @@ namespace dftfe
           surfacePoint[1] = yfrac;
           surfacePoint[2] = zfrac;
 
-          std::vector<double> fracPtA = getNearestPointOnGivenSurface(
-            latticeVectors, xreduced, surfacePoint, surface1Normal);
+          std::vector<double> fracPtA =
+            getNearestPointOnGivenSurface(latticeVectors,
+                                          latticeVectorsInv,
+                                          xreduced,
+                                          surfacePoint,
+                                          surface1Normal);
           //
           // compute distance between fracPtA (closest point on surface A) and
           // xreduced
@@ -216,8 +229,12 @@ namespace dftfe
           surfacePoint[1] = 0;
           surfacePoint[2] = zfrac;
 
-          std::vector<double> fracPtB = getNearestPointOnGivenSurface(
-            latticeVectors, xreduced, surfacePoint, surface2Normal);
+          std::vector<double> fracPtB =
+            getNearestPointOnGivenSurface(latticeVectors,
+                                          latticeVectorsInv,
+                                          xreduced,
+                                          surfacePoint,
+                                          surface2Normal);
 
           for (dftfe::Int i = 0; i < 3; ++i)
             {
@@ -240,8 +257,12 @@ namespace dftfe
           surfacePoint[1] = yfrac;
           surfacePoint[2] = 0;
 
-          std::vector<double> fracPtC = getNearestPointOnGivenSurface(
-            latticeVectors, xreduced, surfacePoint, surface3Normal);
+          std::vector<double> fracPtC =
+            getNearestPointOnGivenSurface(latticeVectors,
+                                          latticeVectorsInv,
+                                          xreduced,
+                                          surfacePoint,
+                                          surface3Normal);
 
           for (dftfe::Int i = 0; i < 3; ++i)
             {
@@ -264,8 +285,12 @@ namespace dftfe
           surfacePoint[1] = yfrac;
           surfacePoint[2] = zfrac;
 
-          std::vector<double> fracPtD = getNearestPointOnGivenSurface(
-            latticeVectors, xreduced, surfacePoint, surface1Normal);
+          std::vector<double> fracPtD =
+            getNearestPointOnGivenSurface(latticeVectors,
+                                          latticeVectorsInv,
+                                          xreduced,
+                                          surfacePoint,
+                                          surface1Normal);
 
           for (dftfe::Int i = 0; i < 3; ++i)
             {
@@ -288,8 +313,12 @@ namespace dftfe
           surfacePoint[1] = 1;
           surfacePoint[2] = zfrac;
 
-          std::vector<double> fracPtE = getNearestPointOnGivenSurface(
-            latticeVectors, xreduced, surfacePoint, surface2Normal);
+          std::vector<double> fracPtE =
+            getNearestPointOnGivenSurface(latticeVectors,
+                                          latticeVectorsInv,
+                                          xreduced,
+                                          surfacePoint,
+                                          surface2Normal);
 
           for (dftfe::Int i = 0; i < 3; ++i)
             {
@@ -313,8 +342,12 @@ namespace dftfe
           surfacePoint[1] = yfrac;
           surfacePoint[2] = 1;
 
-          std::vector<double> fracPtF = getNearestPointOnGivenSurface(
-            latticeVectors, xreduced, surfacePoint, surface3Normal);
+          std::vector<double> fracPtF =
+            getNearestPointOnGivenSurface(latticeVectors,
+                                          latticeVectorsInv,
+                                          xreduced,
+                                          surfacePoint,
+                                          surface3Normal);
 
           for (dftfe::Int i = 0; i < 3; ++i)
             {
@@ -415,6 +448,10 @@ namespace dftfe
           }
       }
 
+    // maps candidate image positions to fractional coordinates
+    const std::vector<double> latticeVectorsInv =
+      internaldft::invert3x3(latticeVectors);
+
     imageIds.clear();
     imagePositions.clear();
     imageCharges.clear();
@@ -491,7 +528,7 @@ namespace dftfe
                               {
                                 const double distanceFromCell =
                                   internaldft::getMinDistanceFromImageToCell(
-                                    latticeVectors, newFrac);
+                                    latticeVectors, latticeVectorsInv, newFrac);
 
                                 if (distanceFromCell < pspCutOff)
                                   withinCutoff = true;
