@@ -3892,6 +3892,11 @@ namespace dftfe
         //   }
       }
 
+#ifdef DFTFE_WITH_DEVICE
+    if constexpr (dftfe::utils::MemorySpace::DEVICE == memorySpace)
+      d_subspaceIterationSolverDevice.releaseScratchMemory();
+#endif
+
     // if (d_dftParamsPtr->saveRhoData &&
     //     !(d_dftParamsPtr->solverMode == "GS" && scfIter % 10 == 0))
     //   {

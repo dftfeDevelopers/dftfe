@@ -412,10 +412,11 @@ namespace dftfe
       const MPI_Comm                                      &interBandGroupComm,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-                          &BLASWrapperPtr,
-      std::vector<double> &residualNorm,
-      const dftParameters &dftParams,
-      const bool           useBandParal = false);
+                                       &BLASWrapperPtr,
+      std::vector<double>              &residualNorm,
+      const dftParameters              &dftParams,
+      DeviceNumberScratchMemoryStorage &scratchMemoryStorage,
+      const bool                        useBandParal = false);
 
     void
     XtHX(operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,

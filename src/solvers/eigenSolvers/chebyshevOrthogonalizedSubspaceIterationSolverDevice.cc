@@ -102,6 +102,11 @@ namespace dftfe
     d_upperBoundUnWantedSpectrum = upperBoundUnWantedSpectrum;
   }
 
+  void
+  chebyshevOrthogonalizedSubspaceIterationSolverDevice::releaseScratchMemory()
+  {
+    d_deviceScratchMemoryStorage.clear();
+  }
 
   //
   // solve
@@ -836,6 +841,7 @@ namespace dftfe
           BLASWrapperPtr,
           residualNorms,
           d_dftParams,
+          d_deviceScratchMemoryStorage,
           true);
 
         if (d_dftParams.deviceFineGrainedTimings)

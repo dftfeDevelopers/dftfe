@@ -107,6 +107,12 @@ namespace dftfe
                          double lowerBoundUnWantedSpectrum,
                          double upperBoundUnWantedSpectrum);
 
+    /**
+     * @brief Return every pooled scratch buffer to the device allocator
+     */
+    void
+    releaseScratchMemory();
+
   private:
     const MPI_Comm d_mpiCommParent;
     //
