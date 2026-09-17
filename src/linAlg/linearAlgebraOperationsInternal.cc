@@ -181,7 +181,9 @@ namespace dftfe
 #  endif
                 elpa_set_integer(elpaHandle,
                                  "solver",
-                                 ELPA_SOLVER_1STAGE,
+                                 dftParams.useELPADeviceTwoStageSolver ?
+                                   ELPA_SOLVER_2STAGE :
+                                   ELPA_SOLVER_1STAGE,
                                  &error);
                 AssertThrow(error == ELPA_OK,
                             dealii::ExcMessage("DFT-FE Error: ELPA Error."));

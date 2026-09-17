@@ -190,6 +190,7 @@ namespace dftfe
     bool        allowMultipleFilteringPassesAfterFirstScf;
     dftfe::uInt highestStateOfInterestForChebFiltering;
     bool        useELPADeviceKernel;
+    bool        useELPADeviceTwoStageSolver;
     bool        memOptMode;
     bool        approxOverlapMatrix;
     bool        useReformulatedChFSI;

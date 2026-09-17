@@ -45,6 +45,8 @@ withGPUAwareMPI=OFF #Please use this option with care
 
 #Option to link to DCCL library (Only for GPU compilation)
 withDCCL=OFF
+#Option to use DCCL for P2P Communication (default is ON).
+withDCCLP2P=ON
 withMDI=OFF
 withTorch=OFF
 withCustomizedDealii=OFF
@@ -89,7 +91,7 @@ function cmake_configure() {
     -DXML_INCLUDE_DIR=$xmlIncludeDir\
     -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath -DWITH_TORCH=$withTorch -DTORCH_DIR=$torchDir\
     -DWITH_CUSTOMIZED_DEALII=$withCustomizedDealii\
-    -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH;$DFTD4PATH"\
+    -DWITH_DCCL=$withDCCL -DWITH_DCCL_P2P=$withDCCLP2P -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH;$DFTD4PATH"\
     -DWITH_COMPLEX=$withComplex -DWITH_GPU=$withGPU -DGPU_LANG=$gpuLang -DGPU_VENDOR=$gpuVendor -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_CUDA_FLAGS="$device_flags" -DCMAKE_CUDA_ARCHITECTURES="$device_architectures"\
     -DWITH_TESTING=$testing \
     -DHIGHERQUAD_PSP=$withHigherQuadPSP -DBUILD_SHARED_LIBS=ON $1
@@ -103,7 +105,7 @@ function cmake_configure() {
     -DXML_INCLUDE_DIR=$xmlIncludeDir\
     -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath -DWITH_TORCH=$withTorch -DTORCH_DIR=$torchDir\
     -DWITH_CUSTOMIZED_DEALII=$withCustomizedDealii\
-    -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH;$DFTD4PATH"\
+    -DWITH_DCCL=$withDCCL -DWITH_DCCL_P2P=$withDCCLP2P -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH;$DFTD4PATH"\
     -DWITH_COMPLEX=$withComplex -DWITH_GPU=$withGPU -DGPU_LANG=$gpuLang -DGPU_VENDOR=$gpuVendor -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_HIP_FLAGS="$device_flags" -DCMAKE_HIP_ARCHITECTURES="$device_architectures"\
     -DWITH_TESTING=$testing \
     -DHIGHERQUAD_PSP=$withHigherQuadPSP -DBUILD_SHARED_LIBS=ON $1
@@ -118,7 +120,7 @@ function cmake_configure() {
     -DXML_INCLUDE_DIR=$xmlIncludeDir\
     -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath -DWITH_TORCH=$withTorch -DTORCH_DIR=$torchDir\
     -DWITH_CUSTOMIZED_DEALII=$withCustomizedDealii\
-    -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH;$DFTD4PATH"\
+    -DWITH_DCCL=$withDCCL -DWITH_DCCL_P2P=$withDCCLP2P -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH;$DFTD4PATH"\
     -DWITH_COMPLEX=$withComplex \
     -DWITH_TESTING=$testing \
     -DHIGHERQUAD_PSP=$withHigherQuadPSP -DBUILD_SHARED_LIBS=ON $1    

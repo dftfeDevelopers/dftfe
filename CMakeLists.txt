@@ -701,6 +701,13 @@ IF (WITH_GPU AND "${GPU_LANG}" STREQUAL "hip")
  ENDIF()
 ENDIF()
 
+# ── DCCL for P2P Communication (optional, ON by default) ──────────────────────
+OPTION(WITH_DCCL_P2P "Use DCCL for P2P Communication" ON)
+IF (WITH_DCCL_P2P AND (DFTFE_WITH_CUDA_NCCL OR DFTFE_WITH_HIP_RCCL))
+  set(DFTFE_WITH_DCCL_P2P 1)
+  MESSAGE(STATUS "DFT-FE: DCCL enabled for P2P")
+ENDIF()
+
 # ── Executable links against the library ─────────────────────────────────────
 TARGET_LINK_LIBRARIES(${TARGET} PUBLIC ${TARGETLIB})
 

@@ -31,6 +31,7 @@
 #cmakedefine DFTFE_WITH_DEVICE_AWARE_MPI 1
 #cmakedefine DFTFE_WITH_CUDA_NCCL 1
 #cmakedefine DFTFE_WITH_HIP_RCCL 1
+#cmakedefine DFTFE_WITH_DCCL_P2P 1
 
 /* HIP platform selection */
 #cmakedefine __HIP_PLATFORM_AMD__ 1

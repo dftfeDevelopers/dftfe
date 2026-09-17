@@ -94,6 +94,12 @@ namespace dftfe
           "false",
           dealii::Patterns::Bool(),
           "[Advanced] If DFT-FE is linked to ELPA eigensolver library configured to run on GPUs, this parameter toggles the use of ELPA GPU kernels for dense symmetric matrix diagonalization calls in DFT-FE. ELPA version>=2020.11.001 is required for this feature. Default: false.");
+
+        prm.declare_entry(
+          "USE ELPA GPU TWO STAGE SOLVER",
+          "false",
+          dealii::Patterns::Bool(),
+          "[Advanced] Use the ELPA two-stage solver (ELPA2) instead of the one-stage solver (ELPA1) when USE ELPA GPU KERNEL is set to true; no effect on the CPU path, which always uses ELPA2. Prior to ELPA 2026, ELPA2 is not fully supported on GPUs when ELPA is built with GPU streams (the default), so set this to true only with ELPA 2026 or newer, or with an older ELPA configured with --enable-gpu-streams=no. Default: false.");
       }
       prm.leave_subsection();
 
@@ -1533,6 +1539,7 @@ namespace dftfe
     reuseLanczosUpperBoundFromFirstCall            = false;
     allowMultipleFilteringPassesAfterFirstScf      = true;
     useELPADeviceKernel                            = false;
+    useELPADeviceTwoStageSolver                    = false;
     // New Paramters for moleculardyynamics class
     startingTempBOMD           = 300;
     thermostatTimeConstantBOMD = 100;
@@ -1622,6 +1629,8 @@ namespace dftfe
         useDevice && prm.get_bool("USE GPUDIRECT MPI ALL REDUCE");
       useDCCL             = useDevice && prm.get_bool("USE DCCL");
       useELPADeviceKernel = useDevice && prm.get_bool("USE ELPA GPU KERNEL");
+      useELPADeviceTwoStageSolver =
+        useDevice && prm.get_bool("USE ELPA GPU TWO STAGE SOLVER");
     }
     prm.leave_subsection();
 
@@ -2404,12 +2413,14 @@ namespace dftfe
 #endif
 
 #ifndef DFTFE_WITH_DEVICE
-    useDevice           = false;
-    useELPADeviceKernel = false;
+    useDevice                   = false;
+    useELPADeviceKernel         = false;
+    useELPADeviceTwoStageSolver = false;
 #endif
 #if defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-    useDCCL             = false;
-    useELPADeviceKernel = false;
+    useDCCL                     = false;
+    useELPADeviceKernel         = false;
+    useELPADeviceTwoStageSolver = false;
 #endif
 
     if (scalapackBlockSize == 0)
