@@ -5244,10 +5244,10 @@ namespace dftfe
                                   for (dftfe::uInt jDim = 0; jDim < 3; jDim++)
                                     StressNlocContrib[3 * iDim + jDim] -=
                                       dataTypes::number(
-                                        kCoordHost[iDim] *
+                                        kCoordHost[jDim] *
                                         std::complex<double>(0.0, 1.0) *
                                         generatorAtAtomsNlocContribStress
-                                          [3 * iAtom + jDim]);
+                                          [3 * iAtom + iDim]);
                             }
                         }
 #endif
