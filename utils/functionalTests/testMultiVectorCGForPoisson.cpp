@@ -15,13 +15,13 @@
 // ---------------------------------------------------------------------
 //
 
-#include <dftfe/functionalTest.h>
-#include <dftfe/MultiVectorPoissonLinearSolverProblem.h>
-#include <dftfe/MultiVectorMinResSolver.h>
-#include <dftfe/MultiVectorCGSolver.h>
-#include <dftfe/poissonSolverProblem.h>
-#include <dftfe/dealiiLinearSolver.h>
-#include <dftfe/vectorUtilities.h>
+#include "functionalTest.h"
+#include "MultiVectorPoissonLinearSolverProblem.h"
+#include "MultiVectorMinResSolver.h"
+#include "MultiVectorCGSolver.h"
+#include "poissonSolverProblem.h"
+#include <dealiiLinearSolver.h>
+#include "vectorUtilities.h"
 
 
 

@@ -20,7 +20,7 @@
 //
 // dft header
 //
-#include <dftfe/dftfeWrapper.h>
+#include "dftfeWrapper.h"
 
 //
 // C++ headers

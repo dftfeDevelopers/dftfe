@@ -19,9 +19,9 @@
 
 
 
-#include <dftfe/dftUtils.h>
-#include <dftfe/fileReaders.h>
-#include <dftfe/geometryOptimizationClass.h>
+#include <dftUtils.h>
+#include <fileReaders.h>
+#include <geometryOptimizationClass.h>
 #include <sys/stat.h>
 
 

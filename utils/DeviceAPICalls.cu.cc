@@ -15,15 +15,18 @@
 // ---------------------------------------------------------------------
 
 
-#include <dftfe/config.h>
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-#  include <dftfe/DeviceAPICalls.h>
+#  include <DeviceAPICalls.h>
 #  include <stdio.h>
 #  include <vector>
-#  include <dftfe/DeviceDataTypeOverloads.h>
-#  include <dftfe/DeviceKernelLauncherHelpers.h>
-#  include <dftfe/DeviceTypeConfigHalfPrec.h>
-#  include <dftfe/Exceptions.h>
+#  include <DeviceDataTypeOverloads.h>
+#  include <DeviceKernelLauncherHelpers.h>
+#  include <DeviceTypeConfigHalfPrec.h>
+#  include <Exceptions.h>
+
+#include <iostream>
+#include <boost/stacktrace.hpp>
+
 namespace dftfe
 {
   namespace utils
@@ -146,14 +149,6 @@ namespace dftfe
                    std::size_t           size);
 
     template void
-    deviceSetValue(uint8_t *devPtr, uint8_t value, std::size_t size);
-
-    template void
-    deviceSetValue(std::complex<uint8_t> *devPtr,
-                   std::complex<uint8_t>  value,
-                   std::size_t            size);
-
-    template void
     deviceSetValue(uint16_t *devPtr, uint16_t value, std::size_t size);
 
     template void
@@ -164,7 +159,8 @@ namespace dftfe
     deviceError_t
     deviceFree(void *devPtr)
     {
-      deviceError_t err = cudaFree(devPtr);
+     // std::cout << boost::stacktrace::stacktrace();
+	    deviceError_t err = cudaFree(devPtr);
       DEVICE_API_CHECK(err);
       return err;
     }

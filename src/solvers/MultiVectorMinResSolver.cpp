@@ -17,9 +17,8 @@
 // @author Vishal Subramanian
 //
 
-#include <dftfe/config.h>
-#include <dftfe/MultiVectorMinResSolver.h>
-#include <dftfe/DeviceAPICalls.h>
+#include "MultiVectorMinResSolver.h"
+#include "DeviceAPICalls.h"
 namespace dftfe
 {
   // constructor
@@ -53,6 +52,11 @@ namespace dftfe
     MPI_Comm_rank(mpi_communicator, &this_process);
     MPI_Barrier(mpi_communicator);
 
+        const dftfe::utils::MemorySpace
+            memorySpaceHostTransfer = (dftfe::utils::MemorySpace::HOST == memorySpace) ? dftfe::utils::MemorySpace::HOST :
+            dftfe::utils::MemorySpace::HOST; 
+	    //dftfe::utils::MemorySpace::HOST_PINNED;
+
     dealii::TimerOutput computing_timer(mpi_communicator,
                                         pcout,
                                         debugLevel > 2 ?
@@ -82,9 +86,9 @@ namespace dftfe
     computing_timer.enter_subsection("MINRES initial MPI");
 
 
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+    dftfe::utils::MemoryStorage<double, memorySpaceHostTransfer>
       negOneHost(blockSize, -1.0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+    dftfe::utils::MemoryStorage<double, memorySpaceHostTransfer>
       beta1Host(blockSize, 0.0);
 
 
@@ -132,6 +136,39 @@ namespace dftfe
     w1MemSpace.reinit(bMemSpace);
     w2MemSpace.reinit(bMemSpace);
 
+    BLASWrapperPtr->MultiVectorXDot(blockSize,
+                                    locallyOwned,
+                                    bMemSpace.begin(),
+                                    bMemSpace.begin(),
+                                    d_onesMemSpace.begin(),
+                                    tempVec.begin(),
+                                    beta1MemSpace.begin(),
+                                    mpi_communicator,
+                                    beta1Host.begin());
+
+    pcout<<" rhs norm at start \n";
+    for(unsigned int iWave = 0 ; iWave < blockSize; iWave++)
+    {
+	    pcout<<" i = "<<iWave<<" rhs norm = "<<beta1Host[iWave]<<"\n";
+    }
+
+    BLASWrapperPtr->MultiVectorXDot(blockSize,
+                                    locallyOwned,
+                                    xMemSpace.begin(),
+                                    xMemSpace.begin(),
+                                    d_onesMemSpace.begin(),
+                                    tempVec.begin(),
+                                    beta1MemSpace.begin(),
+                                    mpi_communicator,
+                                    beta1Host.begin());
+
+    pcout<<" x norm at start \n";
+    for(unsigned int iWave = 0 ; iWave < blockSize; iWave++)
+    {
+            pcout<<" i = "<<iWave<<" x norm = "<<beta1Host[iWave]<<"\n";
+    }
+
+
     BLASWrapperPtr->axpby(locallyOwned * blockSize,
                           1.0,
                           xMemSpace.begin(),
@@ -154,6 +191,22 @@ namespace dftfe
                           xTmpMemSpace.begin(),
                           -1.0,
                           r1MemSpace.begin());
+
+    /// TESTING purposes only 
+     BLASWrapperPtr->MultiVectorXDot(blockSize,
+                                    locallyOwned,
+                                    r1MemSpace.begin(),
+                                    r1MemSpace.begin(),
+                                    d_onesMemSpace.begin(),
+                                    tempVec.begin(),
+                                    beta1MemSpace.begin(),
+                                    mpi_communicator,
+                                    beta1Host.begin());
+
+     pcout<<" Residual with out precond\n";
+	for (unsigned int i = 0; i < blockSize; ++i)
+            pcout<<" i = "<<i<<" res = "<<beta1Host[i]<<"\n";
+     ////
 
     problem.precondition_Jacobi(yMemSpace, r1MemSpace, omega);
 
@@ -181,33 +234,33 @@ namespace dftfe
       epsHost(blockSize, std::numeric_limits<double>::epsilon());
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       oldbHost(blockSize, 0.0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+    dftfe::utils::MemoryStorage<double,memorySpaceHostTransfer>
       betaHost(beta1Host);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+    dftfe::utils::MemoryStorage<double, memorySpaceHostTransfer>
       dbarHost(blockSize, 0.0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+    dftfe::utils::MemoryStorage<double, memorySpaceHostTransfer>
       epslnHost(blockSize, 0.0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+    dftfe::utils::MemoryStorage<double, memorySpaceHostTransfer>
       oldepsHost(blockSize, 0.0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+    dftfe::utils::MemoryStorage<double, memorySpaceHostTransfer>
       qrnormHost(beta1Host);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+    dftfe::utils::MemoryStorage<double, memorySpaceHostTransfer>
       phiHost(blockSize, 0.0);
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       phibarHost(beta1Host);
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> csHost(
       blockSize, -1.0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> snHost(
+    dftfe::utils::MemoryStorage<double, memorySpaceHostTransfer> snHost(
       blockSize, 0.0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+    dftfe::utils::MemoryStorage<double, memorySpaceHostTransfer>
       alphaHost(blockSize, 0.0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+    dftfe::utils::MemoryStorage<double, memorySpaceHostTransfer>
       gammaHost(blockSize, 0.0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+    dftfe::utils::MemoryStorage<double, memorySpaceHostTransfer>
       deltaHost(blockSize, 0.0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+    dftfe::utils::MemoryStorage<double, memorySpaceHostTransfer>
       gbarHost(blockSize, 0.0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+    dftfe::utils::MemoryStorage<double, memorySpaceHostTransfer>
       rnormHost(blockSize, 0.0);
 
 
@@ -223,15 +276,15 @@ namespace dftfe
       hasConvergedHost(blockSize, false);
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> sHost(
       blockSize, 0.0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+    dftfe::utils::MemoryStorage<double, memorySpaceHostTransfer>
       negBetaByBetaOldHost(blockSize, 0.0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+    dftfe::utils::MemoryStorage<double, memorySpaceHostTransfer>
       negAlphaByBetaHost(blockSize, 0.0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+    dftfe::utils::MemoryStorage<double, memorySpaceHostTransfer>
       denomHost(blockSize, 0.0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+    dftfe::utils::MemoryStorage<double, memorySpaceHostTransfer>
       negOldepsHost(blockSize, 0.0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+    dftfe::utils::MemoryStorage<double, memorySpaceHostTransfer>
       negDeltaHost(blockSize, 0.0);
     dftfe::utils::MemoryStorage<dftfe::uInt, dftfe::utils::MemorySpace::HOST>
                 lanczosSizeHost(blockSize, 0);
@@ -422,6 +475,7 @@ namespace dftfe
                                                           phiMemSpace.data(),
                                                           xTmpMemSpace.data());
 
+	double maxResNorm = 0;
         for (dftfe::uInt i = 0; i < blockSize; ++i)
           {
             qrnormHost[i] = phibarHost[i];
@@ -429,16 +483,19 @@ namespace dftfe
 
             //            std::cout<<" res = "<<rnormHost[i]<<"\n";
           }
+	maxResNorm = rnormHost[0];
 
         // pcout << " iter = " << iter << "\n";
         bool updateFlag = false;
-        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        dftfe::utils::MemoryStorage<double, memorySpaceHostTransfer>
           coeffForXMemHost(blockSize, 1.0);
-        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        dftfe::utils::MemoryStorage<double, memorySpaceHostTransfer>
           coeffForXTmpHost(blockSize, 0.0);
         for (dftfe::uInt i = 0; i < blockSize; ++i)
           {
-            // pcout << " res = " << rnormHost[i] << "\n";
+		  if ( maxResNorm < rnormHost[i])
+			  maxResNorm = rnormHost[i];
+            //pcout << " resnorm at end of iter = " << rnormHost[i] << "\n";
             if (rnormHost[i] < absTolerance && hasConvergedHost[i] == false)
               {
                 updateFlag          = true;
@@ -448,6 +505,7 @@ namespace dftfe
                 coeffForXTmpHost[i] = 1.0;
               }
           }
+	pcout << " minres iter = " << iter << " max res = "<<maxResNorm<<"\n";
         if (updateFlag)
           {
             coeffForXMemInMemSpace.copyFrom(coeffForXMemHost);
@@ -484,9 +542,9 @@ namespace dftfe
     computing_timer.enter_subsection("MINRES dist MPI");
 
     bool updateUncovergedFlag = false;
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+    dftfe::utils::MemoryStorage<double, memorySpaceHostTransfer>
       coeffForXMemHost(blockSize, 1.0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+    dftfe::utils::MemoryStorage<double, memorySpaceHostTransfer>
       coeffForXTmpHost(blockSize, 0.0);
     for (dftfe::uInt i = 0; i < blockSize; ++i)
       {
@@ -572,8 +630,42 @@ namespace dftfe
             pcout << " iB = " << iB << " norm = " << l2NormVec[iB] << "\n";
           }
     */
+
+    BLASWrapperPtr->MultiVectorXDot(blockSize,
+                                    locallyOwned,
+                                    xMemSpace.begin(),
+                                    xMemSpace.begin(),
+                                    d_onesMemSpace.begin(),
+                                    tempVec.begin(),
+                                    beta1MemSpace.begin(),
+                                    mpi_communicator,
+                                    beta1Host.begin());
+
+    pcout<<" x norm before dist \n";
+    for(unsigned int iWave = 0 ; iWave < blockSize; iWave++)
+    {
+            pcout<<" i = "<<iWave<<" x norm = "<<beta1Host[iWave]<<"\n";
+    }
     problem.distributeX();
-/*
+
+       BLASWrapperPtr->MultiVectorXDot(blockSize,
+                                    locallyOwned,
+                                    xMemSpace.begin(),
+                                    xMemSpace.begin(),
+                                    d_onesMemSpace.begin(),
+                                    tempVec.begin(),
+                                    beta1MemSpace.begin(),
+                                    mpi_communicator,
+                                    beta1Host.begin());
+
+    pcout<<" x norm after dist \n";
+    for(unsigned int iWave = 0 ; iWave < blockSize; iWave++)
+    {
+            pcout<<" i = "<<iWave<<" x norm = "<<beta1Host[iWave]<<"\n";
+    }
+
+    
+    /*
     xMemSpace.l2Norm(&l2NormVec[0]);
 
     pcout << " xMemSpace after dist = \n";

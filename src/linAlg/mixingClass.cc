@@ -17,9 +17,9 @@
 // @author Vishal Subramanian
 //
 
-#include <dftfe/mixingClass.h>
-#include <dftfe/linearAlgebraOperations.h>
-#include <dftfe/linearAlgebraOperationsInternal.h>
+#include <mixingClass.h>
+#include <linearAlgebraOperations.h>
+#include <linearAlgebraOperationsInternal.h>
 
 namespace dftfe
 {

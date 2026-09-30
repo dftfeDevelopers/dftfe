@@ -17,7 +17,7 @@
 // @author Vishal Subramanian
 //
 
-#include <dftfe/expConfiningPotential.h>
+#include "expConfiningPotential.h"
 
 namespace dftfe
 {

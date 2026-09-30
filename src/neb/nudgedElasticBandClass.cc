@@ -18,7 +18,7 @@
 // @author Kartick Ramakrishnan
 //
 
-#include <dftfe/nudgedElasticBandClass.h>
+#include "nudgedElasticBandClass.h"
 
 
 

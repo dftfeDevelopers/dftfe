@@ -17,8 +17,8 @@
 // @author Sambit Das(2017)
 //
 //
-#include <dftfe/meshMovement.h>
-#include <dftfe/vectorUtilities.h>
+#include <meshMovement.h>
+#include <vectorUtilities.h>
 
 namespace dftfe
 {
@@ -129,22 +129,37 @@ namespace dftfe
     d_locally_owned_dofs.clear();
     d_locally_relevant_dofs.clear();
     d_locally_owned_dofs = d_dofHandlerMoveMesh.locally_owned_dofs();
-    d_locally_relevant_dofs =
-      dealii::DoFTools::extract_locally_relevant_dofs(d_dofHandlerMoveMesh);
+    dealii::DoFTools::extract_locally_relevant_dofs(d_dofHandlerMoveMesh,
+                                                    d_locally_relevant_dofs);
 
     d_constraintsMoveMesh.clear();
-    d_constraintsMoveMesh.reinit(d_locally_owned_dofs, d_locally_relevant_dofs);
+    d_constraintsMoveMesh.reinit(d_locally_relevant_dofs);
     dealii::DoFTools::make_hanging_node_constraints(d_dofHandlerMoveMesh,
                                                     d_constraintsMoveMesh);
     d_periodicity_vector.clear();
+
+    // create unitVectorsXYZ
+    std::vector<std::vector<double>> unitVectorsXYZ;
+    unitVectorsXYZ.resize(3);
+
+    for (dftfe::Int i = 0; i < 3; ++i)
+      {
+        unitVectorsXYZ[i].resize(3, 0.0);
+        unitVectorsXYZ[i][i] = 0.0;
+      }
 
     std::vector<dealii::Tensor<1, 3>> offsetVectors;
     // resize offset vectors
     offsetVectors.resize(3);
 
     for (dftfe::Int i = 0; i < 3; ++i)
-      for (dftfe::Int j = 0; j < 3; ++j)
-        offsetVectors[i][j] = -domainBoundingVectors[i][j];
+      {
+        for (dftfe::Int j = 0; j < 3; ++j)
+          {
+            offsetVectors[i][j] =
+              unitVectorsXYZ[i][j] - domainBoundingVectors[i][j];
+          }
+      }
 
     const std::array<dftfe::Int, 3> periodic = {d_dftParams.periodicX,
                                                 d_dftParams.periodicY,
@@ -152,8 +167,12 @@ namespace dftfe
 
     std::vector<dftfe::Int> periodicDirectionVector;
     for (dftfe::uInt d = 0; d < 3; ++d)
-      if (periodic[d] == 1)
-        periodicDirectionVector.push_back(d);
+      {
+        if (periodic[d] == 1)
+          {
+            periodicDirectionVector.push_back(d);
+          }
+      }
 
     for (dftfe::Int i = 0;
          i < std::accumulate(periodic.begin(), periodic.end(), 0);
@@ -170,8 +189,7 @@ namespace dftfe
 
     dealii::DoFTools::make_periodicity_constraints<3, 3>(d_periodicity_vector,
                                                          d_constraintsMoveMesh);
-    dftfe::vectorTools::makeAffineConstraintsConsistentInParallel(
-      d_dofHandlerMoveMesh, d_constraintsMoveMesh);
+    d_constraintsMoveMesh.close();
 
     if (d_dftParams.createConstraintsFromSerialDofhandler)
       {
@@ -203,7 +221,9 @@ namespace dftfe
   void
   meshMovementClass::initIncrementField()
   {
-    dealii::IndexSet ghost_indices = d_constraintsMoveMesh.get_local_lines();
+    // d_incrementalDisplacement.reinit(d_locally_relevant_dofs.size());
+    // d_incrementalDisplacement=0;
+    dealii::IndexSet ghost_indices = d_locally_relevant_dofs;
     ghost_indices.subtract_set(d_locally_owned_dofs);
 
     d_incrementalDisplacement.reinit(d_locally_owned_dofs,
@@ -310,13 +330,28 @@ namespace dftfe
     // sanity check to make sure periodic boundary conditions are maintained
     MPI_Barrier(mpi_communicator);
 
+    // create unitVectorsXYZ
+    std::vector<std::vector<double>> unitVectorsXYZ;
+    unitVectorsXYZ.resize(3);
+
+    for (dftfe::Int i = 0; i < 3; ++i)
+      {
+        unitVectorsXYZ[i].resize(3, 0.0);
+        unitVectorsXYZ[i][i] = 0.0;
+      }
+
     std::vector<dealii::Tensor<1, 3>> offsetVectors;
     // resize offset vectors
     offsetVectors.resize(3);
 
     for (dftfe::Int i = 0; i < 3; ++i)
-      for (dftfe::Int j = 0; j < 3; ++j)
-        offsetVectors[i][j] = -d_domainBoundingVectors[i][j];
+      {
+        for (dftfe::Int j = 0; j < 3; ++j)
+          {
+            offsetVectors[i][j] =
+              unitVectorsXYZ[i][j] - d_domainBoundingVectors[i][j];
+          }
+      }
     /*
        if (d_dftParams.verbosity>=4)
        pcout << "Sanity check for periodic matched faces on moved

@@ -18,9 +18,9 @@
 //
 // @author Sambit Das
 //
-#include <dftfe/dftParameters.h>
-#include <dftfe/elpaScalaManager.h>
-#include <dftfe/linearAlgebraOperationsInternal.h>
+#include <dftParameters.h>
+#include <elpaScalaManager.h>
+#include <linearAlgebraOperationsInternal.h>
 
 //
 // Constructor.

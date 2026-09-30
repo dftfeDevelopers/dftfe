@@ -22,7 +22,7 @@
 //
 // @author Phani Motamarri (2018)
 //
-#include <dftfe/eigenSolver.h>
+#include "../../include/eigenSolver.h"
 
 //
 // Constructor.

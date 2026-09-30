@@ -16,15 +16,14 @@
 
 
 
-#include <dftfe/config.h>
 #ifdef DFTFE_WITH_DEVICE_LANG_SYCL
-#  include <dftfe/DeviceAPICalls.h>
+#  include <DeviceAPICalls.h>
 #  include <stdio.h>
 #  include <vector>
-#  include <dftfe/DeviceDataTypeOverloads.h>
-#  include <dftfe/DeviceKernelLauncherHelpers.h>
-#  include <dftfe/DeviceTypeConfigHalfPrec.sycl.h>
-#  include <dftfe/Exceptions.h>
+#  include <DeviceDataTypeOverloads.h>
+#  include <DeviceKernelLauncherHelpers.h>
+#  include <DeviceTypeConfigHalfPrec.sycl.h>
+#  include <Exceptions.h>
 
 namespace dftfe
 {
@@ -188,14 +187,6 @@ namespace dftfe
     deviceSetValue(std::complex<double> *devPtr,
                    std::complex<double>  value,
                    std::size_t           size);
-
-    template void
-    deviceSetValue(uint8_t *devPtr, uint8_t value, std::size_t size);
-
-    template void
-    deviceSetValue(std::complex<uint8_t> *devPtr,
-                   std::complex<uint8_t>  value,
-                   std::size_t            size);
 
     template void
     deviceSetValue(uint16_t *devPtr, uint16_t value, std::size_t size);

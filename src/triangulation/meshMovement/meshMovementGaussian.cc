@@ -17,8 +17,8 @@
 // @author Sambit Das(2017) and Phani Motamarri(2019)
 //
 //
-#include <dftfe/dftUtils.h>
-#include <dftfe/meshMovementGaussian.h>
+#include <dftUtils.h>
+#include <meshMovementGaussian.h>
 
 namespace dftfe
 {

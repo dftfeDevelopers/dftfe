@@ -20,8 +20,8 @@
 #include <boost/math/special_functions/legendre.hpp>
 #include <boost/math/special_functions/spherical_harmonic.hpp>
 #include <boost/math/special_functions/factorials.hpp>
-#include <dftfe/Exceptions.h>
-#include <dftfe/SphericalFunctionUtil.h>
+#include "Exceptions.h"
+#include "SphericalFunctionUtil.h"
 namespace dftfe
 {
   namespace utils

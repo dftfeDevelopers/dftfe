@@ -17,18 +17,17 @@
 // @author Sambit Das
 //
 
-#include <dftfe/config.h>
-#include <dftfe/constants.h>
-#include <dftfe/computeAuxProjectedDensityMatrixFromPSI.h>
-#include <dftfe/dftUtils.h>
-#include <dftfe/vectorUtilities.h>
-#include <dftfe/MemoryStorage.h>
-#include <dftfe/DataTypeOverloads.h>
-#include <dftfe/linearAlgebraOperationsDevice.h>
-#include <dftfe/DeviceAPICalls.h>
-#include <dftfe/DeviceDataTypeOverloads.h>
-#include <dftfe/DeviceTypeConfig.h>
-#include <dftfe/DeviceKernelLauncherHelpers.h>
+#include <constants.h>
+#include <computeAuxProjectedDensityMatrixFromPSI.h>
+#include <dftUtils.h>
+#include <vectorUtilities.h>
+#include <MemoryStorage.h>
+#include <DataTypeOverloads.h>
+#include <linearAlgebraOperationsDevice.h>
+#include <DeviceAPICalls.h>
+#include <DeviceDataTypeOverloads.h>
+#include <DeviceTypeConfig.h>
+#include <DeviceKernelLauncherHelpers.h>
 
 
 namespace dftfe

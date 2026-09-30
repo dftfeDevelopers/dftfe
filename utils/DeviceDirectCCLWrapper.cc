@@ -17,16 +17,15 @@
 // @author Sambit Das, David M. Rogers
 //
 
-#include <dftfe/config.h>
 #if defined(DFTFE_WITH_DEVICE)
 #  include <iostream>
 
-#  include <dftfe/deviceDirectCCLWrapper.h>
-#  include <dftfe/deviceKernelsGeneric.h>
-#  include <dftfe/DeviceDataTypeOverloads.h>
-#  include <dftfe/DeviceKernelLauncherHelpers.h>
-#  include <dftfe/DeviceAPICalls.h>
-#  include <dftfe/Exceptions.h>
+#  include <deviceDirectCCLWrapper.h>
+#  include <deviceKernelsGeneric.h>
+#  include <DeviceDataTypeOverloads.h>
+#  include <DeviceKernelLauncherHelpers.h>
+#  include <DeviceAPICalls.h>
+#  include <Exceptions.h>
 #  if defined(DFTFE_WITH_CUDA_NCCL)
 #    include <nccl.h>
 #  elif defined(DFTFE_WITH_HIP_RCCL)
@@ -49,22 +48,20 @@ namespace dftfe
       MPICHECK(MPI_Comm_dup(mpiComm, &d_mpiComm));
       MPICHECK(MPI_Comm_size(mpiComm, &totalRanks));
       MPICHECK(MPI_Comm_rank(mpiComm, &myRank));
-
 #  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
-      if (!dcclCommInit && useDCCL)
+      if (!ncclCommInit && useDCCL)
         {
-          dcclIdPtr   = new ncclUniqueId;
-          dcclCommPtr = new ncclComm_t;
+          ncclIdPtr   = new ncclUniqueId;
+          ncclCommPtr = new ncclComm_t;
           if (myRank == 0)
-            ncclGetUniqueId(dcclIdPtr);
+            ncclGetUniqueId(ncclIdPtr);
           MPICHECK(
-            MPI_Bcast(dcclIdPtr, sizeof(*dcclIdPtr), MPI_BYTE, 0, d_mpiComm));
+            MPI_Bcast(ncclIdPtr, sizeof(*ncclIdPtr), MPI_BYTE, 0, d_mpiComm));
           NCCLCHECK(
-            ncclCommInitRank(dcclCommPtr, totalRanks, *dcclIdPtr, myRank));
-          dcclCommInit = true;
+            ncclCommInitRank(ncclCommPtr, totalRanks, *ncclIdPtr, myRank));
+          ncclCommInit = true;
         }
 #  endif
-
       if (!commStreamCreated)
         {
           dftfe::utils::deviceStreamCreate(d_deviceCommStream, true);
@@ -77,20 +74,16 @@ namespace dftfe
       if (d_mpiComm != MPI_COMM_NULL)
         MPI_Comm_free(&d_mpiComm);
 #  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
-      if (dcclCommInit)
+      if (ncclCommInit)
         {
-          ncclCommDestroy(*dcclCommPtr);
-          delete dcclCommPtr;
-          delete dcclIdPtr;
+          ncclCommDestroy(*ncclCommPtr);
+          delete ncclCommPtr;
+          delete ncclIdPtr;
         }
 #  endif
-
       d_deviceDirectDCCLInstanceCounter--;
       if (commStreamCreated && d_deviceDirectDCCLInstanceCounter == 0)
-        {
-          dftfe::utils::deviceStreamDestroy(d_deviceCommStream);
-          commStreamCreated = false;
-        }
+        dftfe::utils::deviceStreamDestroy(d_deviceCommStream);
     }
 
     dftfe::Int
@@ -100,20 +93,19 @@ namespace dftfe
                                                    deviceStream_t &stream)
     {
 #  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
-      if (dcclCommInit)
+      if (ncclCommInit)
         {
           NCCLCHECK(ncclAllReduce((const void *)send,
                                   (void *)recv,
                                   size,
                                   ncclFloat,
                                   ncclSum,
-                                  *dcclCommPtr,
+                                  *ncclCommPtr,
                                   stream));
         }
 #  endif
-
 #  if defined(DFTFE_WITH_DEVICE_AWARE_MPI)
-      if (!dcclCommInit)
+      if (!ncclCommInit)
         {
           dftfe::utils::deviceStreamSynchronize(stream);
           if (send == recv)
@@ -142,20 +134,19 @@ namespace dftfe
                                                    deviceStream_t &stream)
     {
 #  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
-      if (dcclCommInit)
+      if (ncclCommInit)
         {
           NCCLCHECK(ncclAllReduce((const void *)send,
                                   (void *)recv,
                                   size,
                                   ncclDouble,
                                   ncclSum,
-                                  *dcclCommPtr,
+                                  *ncclCommPtr,
                                   stream));
         }
 #  endif
-
 #  if defined(DFTFE_WITH_DEVICE_AWARE_MPI)
-      if (!dcclCommInit)
+      if (!ncclCommInit)
         {
           dftfe::utils::deviceStreamSynchronize(stream);
           if (send == recv)
@@ -177,6 +168,7 @@ namespace dftfe
       return 0;
     }
 
+
     dftfe::Int
     DeviceCCLWrapper::deviceDirectAllReduceWrapper(
       const std::complex<double> *send,
@@ -185,20 +177,19 @@ namespace dftfe
       deviceStream_t             &stream)
     {
 #  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
-      if (dcclCommInit)
+      if (ncclCommInit)
         {
           NCCLCHECK(ncclAllReduce((const void *)send,
                                   (void *)recv,
                                   size * 2,
                                   ncclDouble,
                                   ncclSum,
-                                  *dcclCommPtr,
+                                  *ncclCommPtr,
                                   stream));
         }
 #  endif
-
 #  if defined(DFTFE_WITH_DEVICE_AWARE_MPI)
-      if (!dcclCommInit)
+      if (!ncclCommInit)
         {
           dftfe::utils::deviceStreamSynchronize(stream);
           if (send == recv)
@@ -217,6 +208,8 @@ namespace dftfe
                                    d_mpiComm));
         }
 #  endif
+
+
       return 0;
     }
 
@@ -228,20 +221,19 @@ namespace dftfe
       deviceStream_t            &stream)
     {
 #  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
-      if (dcclCommInit)
+      if (ncclCommInit)
         {
           NCCLCHECK(ncclAllReduce((const void *)send,
                                   (void *)recv,
                                   size * 2,
                                   ncclFloat,
                                   ncclSum,
-                                  *dcclCommPtr,
+                                  *ncclCommPtr,
                                   stream));
         }
 #  endif
-
 #  if defined(DFTFE_WITH_DEVICE_AWARE_MPI)
-      if (!dcclCommInit)
+      if (!ncclCommInit)
         {
           dftfe::utils::deviceStreamSynchronize(stream);
           if (send == recv)
@@ -263,6 +255,7 @@ namespace dftfe
 
       return 0;
     }
+
 
     dftfe::Int
     DeviceCCLWrapper::deviceDirectAllReduceMixedPrecGroupWrapper(
@@ -275,7 +268,7 @@ namespace dftfe
       deviceStream_t &stream)
     {
 #  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
-      if (dcclCommInit)
+      if (ncclCommInit)
         {
           NCCLCHECK(ncclGroupStart());
           NCCLCHECK(ncclAllReduce((const void *)send1,
@@ -283,21 +276,20 @@ namespace dftfe
                                   size1,
                                   ncclDouble,
                                   ncclSum,
-                                  *dcclCommPtr,
+                                  *ncclCommPtr,
                                   stream));
           NCCLCHECK(ncclAllReduce((const void *)send2,
                                   (void *)recv2,
                                   size2,
                                   ncclFloat,
                                   ncclSum,
-                                  *dcclCommPtr,
+                                  *ncclCommPtr,
                                   stream));
           NCCLCHECK(ncclGroupEnd());
         }
 #  endif
-
 #  if defined(DFTFE_WITH_DEVICE_AWARE_MPI)
-      if (!dcclCommInit)
+      if (!ncclCommInit)
         {
           dftfe::utils::deviceStreamSynchronize(stream);
           if (send1 == recv1 && send2 == recv2)
@@ -348,7 +340,7 @@ namespace dftfe
       deviceStream_t             &stream)
     {
 #  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
-      if (dcclCommInit)
+      if (ncclCommInit)
         {
           NCCLCHECK(ncclGroupStart());
           NCCLCHECK(ncclAllReduce((const void *)send1,
@@ -356,21 +348,20 @@ namespace dftfe
                                   size1 * 2,
                                   ncclDouble,
                                   ncclSum,
-                                  *dcclCommPtr,
+                                  *ncclCommPtr,
                                   stream));
           NCCLCHECK(ncclAllReduce((const void *)send2,
                                   (void *)recv2,
                                   size2 * 2,
                                   ncclFloat,
                                   ncclSum,
-                                  *dcclCommPtr,
+                                  *ncclCommPtr,
                                   stream));
           NCCLCHECK(ncclGroupEnd());
         }
 #  endif
-
 #  if defined(DFTFE_WITH_DEVICE_AWARE_MPI)
-      if (!dcclCommInit)
+      if (!ncclCommInit)
         {
           dftfe::utils::deviceStreamSynchronize(stream);
           if (send1 == recv1 && send2 == recv2)

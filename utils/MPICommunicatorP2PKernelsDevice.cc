@@ -27,16 +27,15 @@
  * @author Sambit Das.
  */
 
-#include <dftfe/config.h>
 #ifdef DFTFE_WITH_DEVICE
-#  include <dftfe/DeviceKernelLauncherHelpers.h>
-#  include <dftfe/DeviceDataTypeOverloads.h>
-#  include <dftfe/DeviceTypeConfigHalfPrec.h>
-#  include <dftfe/MPICommunicatorP2PKernels.h>
-#  include <dftfe/Exceptions.h>
+#  include <DeviceKernelLauncherHelpers.h>
+#  include <DeviceDataTypeOverloads.h>
+#  include <DeviceTypeConfigHalfPrec.h>
+#  include <MPICommunicatorP2PKernels.h>
+#  include <Exceptions.h>
 #  include <complex>
 #  include <algorithm>
-#  include <dftfe/BLASWrapper.h>
+#  include <BLASWrapper.h>
 
 namespace dftfe
 {

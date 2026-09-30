@@ -1,12 +1,11 @@
-#include <dftfe/config.h>
 #ifdef DFTFE_WITH_TORCH
 #  include <torch/script.h>
-#  include <dftfe/NNLDA.h>
+#  include <NNLDA.h>
 #  include <iostream>
 #  include <vector>
 #  include <algorithm>
 #  include <iterator>
-#  include <dftfe/Exceptions.h>
+#  include <Exceptions.h>
 namespace dftfe
 {
   namespace

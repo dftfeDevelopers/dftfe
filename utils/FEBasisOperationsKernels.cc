@@ -15,10 +15,9 @@
 // ---------------------------------------------------------------------
 //
 
-#include <dftfe/config.h>
-#include <dftfe/FEBasisOperations.h>
-#include <dftfe/linearAlgebraOperations.h>
-#include <dftfe/FEBasisOperationsKernelsInternal.h>
+#include <FEBasisOperations.h>
+#include <linearAlgebraOperations.h>
+#include <FEBasisOperationsKernelsInternal.h>
 
 namespace dftfe
 {
@@ -251,7 +250,6 @@ namespace dftfe
                   reshapeFromNonAffineLayoutHost(
                     d_nVectors,
                     d_nQuadsPerCell[d_quadratureIndex],
-                    3,
                     (cellRange.second - cellRange.first),
                     tempQuadratureGradientsDataNonAffine.data(),
                     quadratureGradients);
@@ -260,7 +258,6 @@ namespace dftfe
                   reshapeFromNonAffineLayoutDevice(
                     d_nVectors,
                     d_nQuadsPerCell[d_quadratureIndex],
-                    3,
                     (cellRange.second - cellRange.first),
                     tempQuadratureGradientsDataNonAffine.data(),
                     quadratureGradients);
@@ -291,7 +288,6 @@ namespace dftfe
 
           auto jxwHost = d_JxWData.find(d_quadratureID)->second;
 
-
           d_BLASWrapperPtr->stridedBlockScaleCopy(
             d_nVectors,
             d_nQuadsPerCell[d_quadratureIndex] *
@@ -300,7 +296,7 @@ namespace dftfe
             this->JxWBasisData().data() +
               cellRange.first * d_nQuadsPerCell[d_quadratureIndex],
             quadratureValues,
-            tempCellValuesBlockCoeff.data(),
+            tempCellQuadData.data(),
             mapQuadIdToProcId.data() +
               cellRange.first * d_nQuadsPerCell[d_quadratureIndex]);
 
@@ -312,7 +308,7 @@ namespace dftfe
             d_nDofsPerCell,
             d_nQuadsPerCell[d_quadratureIndex],
             &scalarCoeffAlpha,
-            tempCellValuesBlockCoeff.data(),
+            tempCellQuadData.data(),
             d_nVectors,
             d_nVectors * d_nQuadsPerCell[d_quadratureIndex],
             d_shapeFunctionData.find(d_quadratureID)->second.data(),
@@ -374,7 +370,6 @@ namespace dftfe
                   reshapeToNonAffineLayoutHost(
                     d_nVectors,
                     d_nQuadsPerCell[d_quadratureIndex],
-                    3,
                     (cellRange.second - cellRange.first),
                     quadratureGradients,
                     tempQuadratureGradientsDataNonAffine.data());
@@ -383,7 +378,6 @@ namespace dftfe
                   reshapeToNonAffineLayoutDevice(
                     d_nVectors,
                     d_nQuadsPerCell[d_quadratureIndex],
-                    3,
                     (cellRange.second - cellRange.first),
                     quadratureGradients,
                     tempQuadratureGradientsDataNonAffine.data());

@@ -17,8 +17,8 @@
 // @author Sambit Das(2018)
 //
 //
-#include <dftfe/dftUtils.h>
-#include <dftfe/meshMovementAffineTransform.h>
+#include <dftUtils.h>
+#include <meshMovementAffineTransform.h>
 
 namespace dftfe
 {

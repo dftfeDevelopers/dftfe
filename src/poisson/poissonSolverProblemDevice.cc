@@ -14,15 +14,13 @@
 //
 // ---------------------------------------------------------------------
 //
+// @author Gourab Panigrahi
+//
 
-/**
- * @author Gourab Panigrahi
- *
- */
-
-#include <dftfe/poissonSolverProblemDevice.h>
-#include <dftfe/MemoryTransfer.h>
-#include <dftfe/feevaluationWrapper.h>
+#include <poissonSolverProblemDevice.h>
+#include <MemoryTransfer.h>
+#include "matrixFreeDeviceKernels.h"
+#include <feevaluationWrapper.h>
 namespace dftfe
 {
   //
@@ -115,6 +113,7 @@ namespace dftfe
                                              d_xDevice.begin(),
                                              d_xPtr->begin());
 
+
     d_constraintMatrixPtr       = &constraintMatrix;
     d_matrixFreeVectorComponent = matrixFreeVectorComponent;
     d_matrixFreeQuadratureComponentRhsDensity =
@@ -155,28 +154,11 @@ namespace dftfe
             matrixFreeVectorComponent),
           constraintMatrix);
 
+        // Setup MatrixFree Mesh
+        setupMatrixFree();
+
+        // Setup MatrixFree Constraints
         setupConstraints();
-
-        // Setup MatrixFree
-        unsigned int nVectors = 1;
-
-        // Create matrixFreeWrapperDevice
-        d_matrixFreeWrapperDevice = std::make_unique<
-          dftfe::MatrixFreeWrapperClass<double,
-                                        dftfe::operatorList::Laplace,
-                                        dftfe::utils::MemorySpace::DEVICE,
-                                        false>>(
-          FEOrderElectro + 1,
-          mpi_communicator,
-          d_matrixFreeDataPtr,
-          constraintMatrix,
-          d_BLASWrapperPtr,
-          d_matrixFreeVectorComponent,
-          d_matrixFreeQuadratureComponentAX,
-          nVectors);
-
-        // Init MatrixFree
-        d_matrixFreeWrapperDevice->init();
 
         d_isFastConstraintsInitialized       = true;
         d_isHomogenousConstraintsInitialized = true;
@@ -245,9 +227,10 @@ namespace dftfe
     tempvec.update_ghost_values();
     d_constraintsInfo.distribute(tempvec);
 
-    FEEvaluationWrapperClass<1> fe_eval(*d_matrixFreeDataPtr,
-                                        d_matrixFreeVectorComponent,
-                                        d_matrixFreeQuadratureComponentAX);
+    dealii::FEEvaluation<3, FEOrderElectro, FEOrderElectro + 1> fe_eval(
+      *d_matrixFreeDataPtr,
+      d_matrixFreeVectorComponent,
+      d_matrixFreeQuadratureComponentAX);
 
     dftfe::Int isPerformStaticCondensation =
       (tempvec.linfty_norm() > 1e-10) ? 1 : 0;
@@ -344,7 +327,7 @@ namespace dftfe
         // const dftfe::uInt   num_quad_points_sc =
         // d_matrixFreeDataPtr->get_quadrature(d_smearedChargeQuadratureId).size();
 
-        FEEvaluationWrapperClass<1> fe_eval_sc(*d_matrixFreeDataPtr,
+        dealii::FEEvaluation<3, -1> fe_eval_sc(*d_matrixFreeDataPtr,
                                                d_matrixFreeVectorComponent,
                                                d_smearedChargeQuadratureId);
 
@@ -405,7 +388,7 @@ namespace dftfe
       }
     else if (d_smearedChargeValuesPtr != NULL && d_isGradSmearedChargeRhs)
       {
-        FEEvaluationWrapperClass<1> fe_eval_sc2(*d_matrixFreeDataPtr,
+        dealii::FEEvaluation<3, -1> fe_eval_sc2(*d_matrixFreeDataPtr,
                                                 d_matrixFreeVectorComponent,
                                                 d_smearedChargeQuadratureId);
 
@@ -643,8 +626,9 @@ namespace dftfe
     dealii::IndexSet locallyOwnedElements =
       d_meanValueConstraintVec.locally_owned_elements();
 
-    dealii::IndexSet locallyRelevantElements =
-      d_constraintMatrixPtr->get_local_lines();
+    dealii::IndexSet locallyRelevantElements;
+    dealii::DoFTools::extract_locally_relevant_dofs(dofHandler,
+                                                    locallyRelevantElements);
 
     // pick mean value constrained node such that it is not part
     // of periodic and hanging node constraint equations (both slave and master
@@ -828,9 +812,140 @@ namespace dftfe
   void
   poissonSolverProblemDevice<FEOrderElectro>::setupConstraints()
   {
+    if (!d_isHomogenousConstraintsInitialized)
+      d_constraintsTotalPotentialInfo.initialize(
+        d_matrixFreeDataPtr->get_vector_partitioner(
+          d_matrixFreeVectorComponent),
+        *d_constraintMatrixPtr,
+        false);
     d_inhomogenousConstraintsTotalPotentialInfo.initialize(
       d_matrixFreeDataPtr->get_vector_partitioner(d_matrixFreeVectorComponent),
       *d_constraintMatrixPtr);
+  }
+
+
+
+  template <dftfe::uInt FEOrderElectro>
+  void
+  poissonSolverProblemDevice<FEOrderElectro>::setupMatrixFree()
+  {
+    constexpr dftfe::Int p              = FEOrderElectro + 1;
+    constexpr dftfe::Int q              = p;
+    constexpr dftfe::Int nDofsPerCell   = p * p * p;
+    constexpr dftfe::Int dim            = 3;
+    constexpr double     coeffLaplacian = 1.0 / (4.0 * M_PI);
+
+    auto dofInfo =
+      d_matrixFreeDataPtr->get_dof_info(d_matrixFreeVectorComponent);
+    auto shapeInfo =
+      d_matrixFreeDataPtr->get_shape_info(d_matrixFreeVectorComponent,
+                                          d_matrixFreeQuadratureComponentAX);
+    auto mappingData = d_matrixFreeDataPtr->get_mapping_info()
+                         .cell_data[d_matrixFreeQuadratureComponentAX];
+    auto shapeData = shapeInfo.get_shape_data();
+
+    // Shape Function Values, Gradients and their Transposes
+    // P(q*p), D(q*q), PT(p*q), DT(q*q)
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      shapeFunction(2 * q * (p + q));
+
+    for (dftfe::Int i = 0; i < p; i++)
+      for (dftfe::Int j = 0; j < q; j++)
+        {
+#if (DEAL_II_VERSION_MAJOR >= 9 && DEAL_II_VERSION_MINOR >= 6)
+          double value = shapeData.shape_values[j + i * q] *
+                         std::sqrt(shapeData.quadrature.weight(j));
+#else
+          double value = shapeData.shape_values[j + i * q][0] *
+                         std::sqrt(shapeData.quadrature.weight(j));
+#endif
+          shapeFunction[j + i * q]               = value;
+          shapeFunction[i + j * p + q * (p + q)] = value;
+        }
+
+    for (dftfe::Int i = 0; i < q; i++)
+      for (dftfe::Int j = 0; j < q; j++)
+        {
+#if (DEAL_II_VERSION_MAJOR >= 9 && DEAL_II_VERSION_MINOR >= 6)
+          double grad = shapeData.shape_gradients_collocation[j + i * q] *
+                        std::sqrt(shapeData.quadrature.weight(j)) /
+                        std::sqrt(shapeData.quadrature.weight(i));
+#else
+          double grad = shapeData.shape_gradients_collocation[j + i * q][0] *
+                        std::sqrt(shapeData.quadrature.weight(j)) /
+                        std::sqrt(shapeData.quadrature.weight(i));
+#endif
+          shapeFunction[j + i * q + q * p]           = grad;
+          shapeFunction[i + j * q + (2 * p + q) * q] = grad;
+        }
+
+    // Jacobian
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      jacobianFactor(dim * dim * d_nLocalCells);
+
+    auto cellOffsets = mappingData.data_index_offsets;
+
+    for (dftfe::Int cellIdx = 0; cellIdx < d_nLocalCells; cellIdx++)
+      for (dftfe::Int k = 0; k < dim; k++)
+        for (dftfe::Int i = 0; i < dim; i++)
+          for (dftfe::Int j = 0; j < dim; j++)
+            jacobianFactor[j + i * dim + cellIdx * dim * dim] +=
+              coeffLaplacian *
+              mappingData
+                .JxW_values[cellOffsets[cellIdx / dofInfo.vectorization_length]]
+                           [0] *
+              mappingData
+                .jacobians[0]
+                          [cellOffsets[cellIdx / dofInfo.vectorization_length]]
+                          [k][j][0] *
+              mappingData
+                .jacobians[0]
+                          [cellOffsets[cellIdx / dofInfo.vectorization_length]]
+                          [k][i][0];
+
+    // Map making
+    dftfe::utils::MemoryStorage<dftfe::Int, dftfe::utils::MemorySpace::HOST>
+      map(nDofsPerCell * d_nLocalCells);
+
+    for (auto cellIdx = 0; cellIdx < d_nLocalCells; ++cellIdx)
+      std::transform((dofInfo.row_starts[cellIdx].second ==
+                        dofInfo.row_starts[cellIdx + 1].second &&
+                      dofInfo.row_starts_plain_indices[cellIdx] ==
+                        dealii::numbers::invalid_unsigned_int) ?
+                       dofInfo.dof_indices.data() +
+                         dofInfo.row_starts[cellIdx].first :
+                       dofInfo.plain_dof_indices.data() +
+                         dofInfo.row_starts_plain_indices[cellIdx],
+                     (dofInfo.row_starts[cellIdx].second ==
+                        dofInfo.row_starts[cellIdx + 1].second &&
+                      dofInfo.row_starts_plain_indices[cellIdx] ==
+                        dealii::numbers::invalid_unsigned_int) ?
+                       dofInfo.dof_indices.data() +
+                         dofInfo.row_starts[cellIdx].first + nDofsPerCell :
+                       dofInfo.plain_dof_indices.data() +
+                         dofInfo.row_starts_plain_indices[cellIdx] +
+                         nDofsPerCell,
+                     map.data() + cellIdx * nDofsPerCell,
+                     [](unsigned int &v) { return v; });
+
+    // Construct the device vectors
+    d_shapeFunction.resize(shapeFunction.size());
+    d_shapeFunction.copyFrom(shapeFunction);
+
+    d_jacobianFactor.resize(jacobianFactor.size());
+    d_jacobianFactor.copyFrom(jacobianFactor);
+
+    d_map.resize(map.size());
+    d_map.copyFrom(map);
+
+    d_shapeFunctionPtr  = d_shapeFunction.data();
+    d_jacobianFactorPtr = d_jacobianFactor.data();
+    d_mapPtr            = d_map.data();
+
+    constexpr std::size_t smem =
+      (4 * q * q * q + 2 * p * q + 2 * q * q + dim * dim) * sizeof(double);
+    matrixFreeDeviceKernels<double, p * p, q, p, dim>::
+      computeAXDevicePoissonSetAttributes(smem);
   }
 
 
@@ -841,6 +956,16 @@ namespace dftfe
     distributedDeviceVec<double> &Ax,
     distributedDeviceVec<double> &x)
   {
+    constexpr dftfe::Int dim     = 3;
+    constexpr dftfe::Int p       = FEOrderElectro + 1;
+    constexpr dftfe::Int q       = p;
+    constexpr dftfe::Int threads = 64;
+    // constexpr dftfe::Int threads =
+    //  (FEOrderElectro < 7 ? 96 : FEOrderElectro == 7 ? 64 : 256);
+    const dftfe::Int      blocks = d_nLocalCells;
+    constexpr std::size_t smem =
+      (4 * q * q * q + 2 * p * q + 2 * q * q + dim * dim) * sizeof(double);
+
     dftfe::utils::deviceMemset(Ax.begin(), 0, d_xLen * sizeof(double));
 
     if (d_isMeanValueConstraintComputed)
@@ -848,12 +973,22 @@ namespace dftfe
 
     x.updateGhostValues();
 
-    d_matrixFreeWrapperDevice->constraintsDistribute(x.data(), false);
+    d_constraintsTotalPotentialInfo.distribute(x);
 
-    d_matrixFreeWrapperDevice->computeAX(Ax.data(), x.data());
+    matrixFreeDeviceKernels<double, p * p, q, p, dim>::computeAXDevicePoisson(
+      blocks,
+      threads,
+      smem,
+      Ax.begin(),
+      x.begin(),
+      d_shapeFunctionPtr,
+      d_jacobianFactorPtr,
+      d_mapPtr);
 
-    d_matrixFreeWrapperDevice->constraintsDistributeTranspose(Ax.data(),
-                                                              x.data());
+
+    d_constraintsTotalPotentialInfo.set_zero(x);
+
+    d_constraintsTotalPotentialInfo.distribute_slave_to_master(Ax);
 
     Ax.accumulateAddLocallyOwned();
 

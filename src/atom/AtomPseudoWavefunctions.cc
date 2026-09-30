@@ -15,7 +15,7 @@
 // ---------------------------------------------------------------------
 //
 
-#include <dftfe/AtomPseudoWavefunctions.h>
+#include "AtomPseudoWavefunctions.h"
 #include "vector"
 namespace dftfe
 {

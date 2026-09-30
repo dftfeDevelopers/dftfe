@@ -15,8 +15,7 @@
 // ---------------------------------------------------------------------
 //
 
-#include <dftfe/config.h>
-#include <dftfe/AtomCenteredSphericalFunctionContainer.h>
+#include "AtomCenteredSphericalFunctionContainer.h"
 
 namespace dftfe
 {
@@ -228,12 +227,10 @@ namespace dftfe
     totalNonLocalElements = 0;
     d_offsetLocation.clear();
     d_offsetLocation.resize(totalAtomsInCurrentProcessor, 0);
-    dftfe::uInt                        offset = 0;
-    std::map<dftfe::uInt, dftfe::uInt> atomIdToIAtomMap;
+    dftfe::uInt offset = 0;
     for (dftfe::uInt iAtom = 0; iAtom < totalAtomsInCurrentProcessor; iAtom++)
       {
-        dftfe::uInt atomId       = d_AtomIdsInCurrentProcess[iAtom];
-        atomIdToIAtomMap[atomId] = iAtom;
+        dftfe::uInt atomId = d_AtomIdsInCurrentProcess[iAtom];
 
         d_offsetLocation[iAtom] = offset;
         offset +=
@@ -247,13 +244,17 @@ namespace dftfe
     iElemNonLocalToElemIndexMap.clear();
     iElemNonLocalToElemIndexMap.resize(totalNonLocalElements, 0);
     offset = 0;
-    for (dftfe::uInt iElem = 0; iElem < d_locallyOwnedCells; ++iElem)
+    for (dftfe::uInt iAtom = 0; iAtom < totalAtomsInCurrentProcessor; iAtom++)
       {
-        std::vector<dftfe::Int> atomIdsInElement = d_AtomIdsInElement[iElem];
-        for (dftfe::Int iAtom = 0; iAtom < atomIdsInElement.size(); ++iAtom)
+        dftfe::uInt atomId = d_AtomIdsInCurrentProcess[iAtom];
+
+        const dftfe::uInt numberElementsInCompactSupport =
+          d_elementIndexesInAtomCompactSupport[atomId].size();
+        for (dftfe::Int iElem = 0; iElem < numberElementsInCompactSupport;
+             iElem++)
           {
-            dftfe::Int atomId                   = atomIdsInElement[iAtom];
-            iElemNonLocalToElemIndexMap[offset] = iElem;
+            iElemNonLocalToElemIndexMap[offset] =
+              d_elementIndexesInAtomCompactSupport[atomId][iElem];
             offset++;
           }
       }
@@ -365,10 +366,10 @@ namespace dftfe
     //
     // loop over nonlocal atoms
     //
-    dftfe::uInt sparseFlag         = 0;
-    dftfe::Int  cumulativeSplineId = 0;
-    dftfe::Int  waveFunctionId;
-    d_locallyOwnedCells = basisOperationsPtr->nCells();
+    dftfe::uInt       sparseFlag         = 0;
+    dftfe::Int        cumulativeSplineId = 0;
+    dftfe::Int        waveFunctionId;
+    const dftfe::uInt totalLocallyOwnedCells = basisOperationsPtr->nCells();
 
     basisOperationsPtr->reinit(0, 0, quadratureIndex);
     const dftfe::uInt numberQuadraturePoints =
@@ -380,7 +381,7 @@ namespace dftfe
     // get number of global charges
     //
     dftfe::uInt       numberGlobalCharges = d_atomicNumbers.size();
-    const dftfe::uInt numberElements      = d_locallyOwnedCells;
+    const dftfe::uInt numberElements      = totalLocallyOwnedCells;
 
     std::vector<dftfe::Int> sparsityPattern(numberElements, -1);
 
@@ -417,7 +418,7 @@ namespace dftfe
         // parallel loop over all elements
         //
 
-        for (dftfe::Int iCell = 0; iCell < d_locallyOwnedCells; iCell++)
+        for (dftfe::Int iCell = 0; iCell < totalLocallyOwnedCells; iCell++)
           {
             double              maxR = 0.0;
             std::vector<double> quadPoints(numberQuadraturePoints * 3, 0.0);

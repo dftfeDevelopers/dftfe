@@ -17,9 +17,8 @@
 // @author Phani Motamarri, Gourab Panigrahi
 //
 
-#include <dftfe/config.h>
-#include <dftfe/dft.h>
-#include <dftfe/linearAlgebraOperations.h>
+#include <dft.h>
+#include <linearAlgebraOperations.h>
 
 namespace dftfe
 {
@@ -91,12 +90,9 @@ namespace dftfe
                      d_dftParamsPtr->maxLinearSolverIterationsHelmholtz,
                      d_dftParamsPtr->verbosity,
                      false);
-
     if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER")
-      {
-        preCondTotalDensityResidualVector.sadd(
-          4 * M_PI * d_dftParamsPtr->kerkerParameter, 1.0, residualRho);
-      }
+      preCondTotalDensityResidualVector.sadd(
+        4 * M_PI * d_dftParamsPtr->kerkerParameter, 1.0, residualRho);
     else if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA")
       {
         double kappa =
@@ -104,6 +100,7 @@ namespace dftfe
         double beta = d_dftParamsPtr->restaScreeningLength;
         double gamma =
           kappa * beta > 1e-8 ? std::sinh(kappa * beta) / kappa / beta : 1.0;
+
 
         preCondTotalDensityResidualVector.sadd(
           kappa * kappa - kappa * kappa / gamma -

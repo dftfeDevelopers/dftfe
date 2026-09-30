@@ -16,7 +16,7 @@
 //
 // @author Sambit Das
 
-#include <dftfe/dealiiLinearSolverProblem.h>
+#include <dealiiLinearSolverProblem.h>
 
 namespace dftfe
 {

@@ -16,8 +16,7 @@
 //
 // @author Phani Motamarri, Sambit Das
 //
-#include <dftfe/dft.h>
-#include <dftfe/feevaluationWrapper.h>
+#include <dft.h>
 
 namespace dftfe
 {

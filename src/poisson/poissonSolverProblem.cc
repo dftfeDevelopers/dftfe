@@ -17,10 +17,10 @@
 // @author Shiva Rudraraju, Phani Motamarri, Sambit Das
 //
 
-#include <dftfe/constants.h>
-#include <dftfe/poissonSolverProblem.h>
-#include <dftfe/vectorUtilities.h>
-#include <dftfe/feevaluationWrapper.h>
+#include <constants.h>
+#include <poissonSolverProblem.h>
+#include <vectorUtilities.h>
+#include <feevaluationWrapper.h>
 namespace dftfe
 {
   //
@@ -189,9 +189,10 @@ namespace dftfe
     tempvec.update_ghost_values();
     d_constraintsInfo.distribute(tempvec);
 
-    FEEvaluationWrapperClass<1> fe_eval(*d_matrixFreeDataPtr,
-                                        d_matrixFreeVectorComponent,
-                                        d_matrixFreeQuadratureComponentAX);
+    dealii::FEEvaluation<3, FEOrderElectro, FEOrderElectro + 1> fe_eval(
+      *d_matrixFreeDataPtr,
+      d_matrixFreeVectorComponent,
+      d_matrixFreeQuadratureComponentAX);
 
     const dealii::Quadrature<3> &quadratureRuleAxTemp =
       d_matrixFreeDataPtr->get_quadrature(d_matrixFreeQuadratureComponentAX);
@@ -544,8 +545,9 @@ namespace dftfe
     dealii::IndexSet locallyOwnedElements =
       d_meanValueConstraintVec.locally_owned_elements();
 
-    dealii::IndexSet locallyRelevantElements =
-      d_constraintMatrixPtr->get_local_lines();
+    dealii::IndexSet locallyRelevantElements;
+    dealii::DoFTools::extract_locally_relevant_dofs(dofHandler,
+                                                    locallyRelevantElements);
 
     // pick mean value constrained node such that it is not part
     // of periodic and hanging node constraint equations (both slave and master
@@ -700,9 +702,10 @@ namespace dftfe
     dealii::VectorizedArray<double> quarter =
       dealii::make_vectorized_array(1.0 / (4.0 * M_PI));
 
-    FEEvaluationWrapperClass<1> fe_eval(matrixFreeData,
-                                        d_matrixFreeVectorComponent,
-                                        d_matrixFreeQuadratureComponentAX);
+    dealii::FEEvaluation<3, FEOrderElectro, FEOrderElectro + 1> fe_eval(
+      matrixFreeData,
+      d_matrixFreeVectorComponent,
+      d_matrixFreeQuadratureComponentAX);
 
     for (dftfe::uInt cell = cell_range.first; cell < cell_range.second; ++cell)
       {

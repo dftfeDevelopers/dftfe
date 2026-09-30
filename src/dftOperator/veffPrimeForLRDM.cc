@@ -16,9 +16,8 @@
 //
 // @author Sambit Das, Nikhil Kodali
 //
-#include <dftfe/config.h>
-#include <dftfe/KohnShamDFTBaseOperator.h>
-#include <dftfe/AuxDensityMatrixFE.h>
+#include <KohnShamDFTBaseOperator.h>
+#include <AuxDensityMatrixFE.h>
 namespace dftfe
 {
   template <dftfe::utils::MemorySpace memorySpace>

@@ -1,5 +1,5 @@
-#include <dftfe/constraintMatrixInfoDeviceKernels.h>
-#include <dftfe/BLASWrapper.h>
+#include "constraintMatrixInfoDeviceKernels.h"
+#include <BLASWrapper.h>
 
 namespace dftfe
 {

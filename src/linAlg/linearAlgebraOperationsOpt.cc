@@ -21,13 +21,12 @@
  *
  */
 
-#include <dftfe/config.h>
-#include <dftfe/dftParameters.h>
-#include <dftfe/dftUtils.h>
-#include <dftfe/linearAlgebraOperations.h>
-#include <dftfe/linearAlgebraOperationsInternal.h>
-#include <dftfe/constants.h>
-#include <dftfe/DeviceAPICalls.h>
+#include "dftParameters.h"
+#include "dftUtils.h"
+#include "linearAlgebraOperations.h"
+#include "linearAlgebraOperationsInternal.h"
+#include "constants.h"
+#include <DeviceAPICalls.h>
 #include <random>
 
 namespace dftfe
@@ -120,12 +119,11 @@ namespace dftfe
       const bool                                          approxOverlapMatrix)
     {
       double e, c, sigma, sigma1, sigma2, gamma;
-      e                              = (b - a) / 2.0;
-      c                              = (b + a) / 2.0;
-      sigma                          = e / (a0 - c);
-      sigma1                         = sigma;
-      gamma                          = 2.0 / sigma1;
-      const dftfe::uInt spinorFactor = X.numVectors() / eigenvalues.size();
+      e      = (b - a) / 2.0;
+      c      = (b + a) / 2.0;
+      sigma  = e / (a0 - c);
+      sigma1 = sigma;
+      gamma  = 2.0 / sigma1;
 
 
 
@@ -142,8 +140,8 @@ namespace dftfe
       // //compute initial Residual
       operatorMatrix.overlapMatrixTimesX(
         X, 1.0, 0.0, 0.0, Y, approxOverlapMatrix);
-      BLASWrapperPtr->rightDiagonalScale(Y.numVectors() / spinorFactor,
-                                         Y.locallyOwnedSize() * spinorFactor,
+      BLASWrapperPtr->rightDiagonalScale(Y.numVectors(),
+                                         Y.locallyOwnedSize(),
                                          Y.data(),
                                          eigenValuesFiltered.data());
       operatorMatrix.HX(X, 1.0, -1.0, 0.0, Y);
@@ -177,8 +175,8 @@ namespace dftfe
           operatorMatrix.HXCheby(
             ResidualNew, alpha1, alpha2, -c * alpha1, Residual);
 
-          BLASWrapperPtr->ApaBD(X.locallyOwnedSize() * spinorFactor,
-                                X.numVectors() / spinorFactor,
+          BLASWrapperPtr->ApaBD(X.locallyOwnedSize(),
+                                X.numVectors(),
                                 alpha1,
                                 Residual.data(),
                                 Y.data(),
@@ -211,8 +209,8 @@ namespace dftfe
       operatorMatrix.overlapInverseMatrixTimesX(
         ResidualNew, 1.0, 0.0, 0.0, Residual);
 
-      BLASWrapperPtr->ApaBD(X.locallyOwnedSize() * spinorFactor,
-                            X.numVectors() / spinorFactor,
+      BLASWrapperPtr->ApaBD(X.locallyOwnedSize(),
+                            X.numVectors(),
                             1.0,
                             Residual.data(),
                             X.data(),
@@ -254,8 +252,7 @@ namespace dftfe
       Y.setValue(T(0.0));
       Z.setValue(T(0.0));
       tempVec.setValue(T(0.0));
-      const dftfe::uInt local_size = X.locallyOwnedSize() * X.numVectors();
-
+      const dftfe::uInt local_size = X.locallyOwnedSize();
 #if defined(DFTFE_WITH_DEVICE)
       dftfe::utils::MemoryStorage<T, dftfe::utils::MemorySpace::HOST> XHost(
         local_size, T(0.0));

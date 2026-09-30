@@ -1,5 +1,5 @@
 
-#include <dftfe/linearAlgebraOperationsDeviceKernels.h>
+#include "linearAlgebraOperationsDeviceKernels.h"
 
 namespace dftfe
 {

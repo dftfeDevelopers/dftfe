@@ -16,9 +16,8 @@
 //
 // @author Shukan Parekh, Phani Motamarri
 //
-#include <dftfe/config.h>
-#include <dftfe/headers.h>
-#include <dftfe/pseudoConverter.h>
+#include <headers.h>
+#include <pseudoConverter.h>
 #include <sys/stat.h>
 
 #include <fstream>
@@ -122,19 +121,16 @@ namespace dftfe
 
                   if (verbosity >= 1)
                     {
-                      pcout << " Reading Pseudopotential File: " << toParse
-                            << ", with atomic number: " << z;
                       if (nlccFlag > 0)
-                        pcout << ", has data for nonlinear core-correction";
+                        pcout << " Reading Pseudopotential File: " << toParse
+                              << ", with atomic number: " << z
+                              << ", and has data for nonlinear core-correction"
+                              << std::endl;
                       else
-                        pcout << ", has no nonlinear core-correction";
-                    }
-                  if (verbosity >= 1)
-                    {
-                      if (socFlag > 0)
-                        pcout << ", and has data for SOC" << std::endl;
-                      else
-                        pcout << ", and has no SOC" << std::endl;
+                        pcout << " Reading Pseudopotential File: " << toParse
+                              << ", with atomic number: " << z
+                              << ", and has no nonlinear core-correction"
+                              << std::endl;
                     }
                 }
 

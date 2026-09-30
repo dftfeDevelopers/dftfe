@@ -15,7 +15,7 @@
 // ---------------------------------------------------------------------
 //
 
-#include <dftfe/AtomCenteredSphericalFunctionValenceDensitySpline.h>
+#include "AtomCenteredSphericalFunctionValenceDensitySpline.h"
 #include "vector"
 namespace dftfe
 {

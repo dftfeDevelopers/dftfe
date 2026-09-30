@@ -15,12 +15,12 @@
 // @author Vishal Subramanian
 //
 
-#include <dftfe/functionalTest.h>
-#include <dftfe/dftParameters.h>
-#include <dftfe/triangulationManager.h>
-#include <dftfe/TransferBetweenMeshesIncompatiblePartitioning.h>
-#include <dftfe/MPIPatternP2P.h>
-#include <dftfe/vectorUtilities.h>
+#include "functionalTest.h"
+#include "dftParameters.h"
+#include "triangulationManager.h"
+#include "TransferBetweenMeshesIncompatiblePartitioning.h"
+#include "MPIPatternP2P.h"
+#include "vectorUtilities.h"
 
 namespace functionalTest
 {
@@ -303,30 +303,28 @@ namespace functionalTest
 
     dealii::AffineConstraints<double> constraintMatrix, constraintMatrixVxc;
 
+    dealii::IndexSet locallyRelevantDofs, locallyRelevantDofsVxc;
 
-    dealii::IndexSet locallyRelevantDofs =
-      dealii::DoFTools::extract_locally_relevant_dofs(dofHandlerTria);
-    dealii::IndexSet locallyOwnedDofs = dofHandlerTria.locally_owned_dofs();
+    dealii::DoFTools::extract_locally_relevant_dofs(dofHandlerTria,
+                                                    locallyRelevantDofs);
 
-    dealii::IndexSet locallyRelevantDofsVxc =
-      dealii::DoFTools::extract_locally_relevant_dofs(dofHandlerTriaVxc);
-    dealii::IndexSet locallyOwnedDofsVxc =
-      dofHandlerTriaVxc.locally_owned_dofs();
+    dealii::DoFTools::extract_locally_relevant_dofs(dofHandlerTriaVxc,
+                                                    locallyRelevantDofsVxc);
 
 
     constraintMatrix.clear();
-    constraintMatrix.reinit(locallyOwnedDofs, locallyRelevantDofs);
+    constraintMatrix.reinit(locallyRelevantDofs);
     dealii::DoFTools::make_hanging_node_constraints(dofHandlerTria,
                                                     constraintMatrix);
-    dftfe::vectorTools::makeAffineConstraintsConsistentInParallel(
-      dofHandlerTria, constraintMatrix);
+    constraintMatrix.close();
 
     constraintMatrixVxc.clear();
-    constraintMatrix.reinit(locallyOwnedDofsVxc, locallyRelevantDofsVxc);
+    constraintMatrix.reinit(locallyRelevantDofsVxc);
     dealii::DoFTools::make_hanging_node_constraints(dofHandlerTriaVxc,
                                                     constraintMatrixVxc);
-    dftfe::vectorTools::makeAffineConstraintsConsistentInParallel(
-      dofHandlerTriaVxc, constraintMatrixVxc);
+
+
+    constraintMatrixVxc.close();
 
     // create quadrature
 
@@ -373,8 +371,9 @@ namespace functionalTest
 
 
     std::map<dealii::types::global_dof_index, dealii::Point<3, double>>
-      dof_coord = dealii::DoFTools::map_dofs_to_support_points<3, 3>(
-        dealii::MappingQ1<3, 3>(), dofHandlerTria);
+      dof_coord;
+    dealii::DoFTools::map_dofs_to_support_points<3, 3>(
+      dealii::MappingQ1<3, 3>(), dofHandlerTria, dof_coord);
 
 
     dealii::types::global_dof_index numberDofsParent = dofHandlerTria.n_dofs();
@@ -559,8 +558,9 @@ namespace functionalTest
 
 
     std::map<dealii::types::global_dof_index, dealii::Point<3, double>>
-      dof_coord_child = dealii::DoFTools::map_dofs_to_support_points<3, 3>(
-        dealii::MappingQ1<3, 3>(), dofHandlerTriaVxc);
+      dof_coord_child;
+    dealii::DoFTools::map_dofs_to_support_points<3, 3>(
+      dealii::MappingQ1<3, 3>(), dofHandlerTriaVxc, dof_coord_child);
 
 
     dealii::types::global_dof_index numberDofsChild =

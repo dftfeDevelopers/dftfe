@@ -1,0 +1,72 @@
+// ---------------------------------------------------------------------
+//
+// Copyright (c) 2017-2025  The Regents of the University of Michigan and DFT-FE
+// authors.
+//
+// This file is part of the DFT-FE code.
+//
+// The DFT-FE code is free software; you can use it, redistribute
+// it, and/or modify it under the terms of the GNU Lesser General
+// Public License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+// The full text of the license can be found in the file LICENSE at
+// the top level of the DFT-FE distribution.
+//
+// ---------------------------------------------------------------------
+
+
+#ifndef meshMovementAffineTransform_H_
+#define meshMovementAffineTransform_H_
+#include "meshMovement.h"
+
+namespace dftfe
+{
+  /**
+   *  @brief Class to update triangulation under affine transformation
+   *
+   *  @author Sambit Das
+   */
+  class meshMovementAffineTransform : public meshMovementClass
+  {
+  public:
+    /** @brief Constructor
+     *
+     *  @param mpi_comm_parent parent mpi communicator
+     *  @param mpi_comm_domain mpi communicator domain decomposition
+     */
+    meshMovementAffineTransform(const MPI_Comm      &mpi_comm_parent,
+                                const MPI_Comm      &mpi_comm_domain,
+                                const dftParameters &dftParams);
+
+    /** @brief Performs affine transformation of the triangulation
+     *
+     *  @param  deformationGradient
+     *  @return std::pair<bool,double> mesh quality metrics
+     *  pair(bool for is negative jacobian, maximum jacobian ratio)
+     */
+    std::pair<bool, double>
+    transform(const dealii::Tensor<2, 3, double> &deformationGradient);
+
+    /// Not implemented, just present to override the pure virtual from base
+    /// class
+    std::pair<bool, double>
+    moveMesh(const std::vector<dealii::Point<3>> &controlPointLocations,
+             const std::vector<dealii::Tensor<1, 3, double>>
+                         &controlPointDisplacements,
+             const double controllingParameter,
+             const bool   moveSubdivided = false);
+
+  private:
+    /** @brief internal function which computes the nodal increment field in the local processor
+     *
+     */
+    void
+    computeIncrement();
+
+    /// storage for the deformation gradient to be applied to the triangulation
+    dealii::Tensor<2, 3, double> d_deformationGradient;
+  };
+
+} // namespace dftfe
+
+#endif

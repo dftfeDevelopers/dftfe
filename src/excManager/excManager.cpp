@@ -17,16 +17,15 @@
 // @author Vishal Subramanian
 //
 
-#include <dftfe/config.h>
-#include <dftfe/excManager.h>
-#include <dftfe/excDensityGGAClass.h>
-#include <dftfe/excDensityLDAClass.h>
-#include <dftfe/excDensityLLMGGAClass.h>
-#include <dftfe/excTauMGGAClass.h>
-#include <dftfe/ExcDFTPlusU.h>
-#include <dftfe/excManagerKernels.h>
+#include <excManager.h>
+#include <excDensityGGAClass.h>
+#include <excDensityLDAClass.h>
+#include <excDensityLLMGGAClass.h>
+#include <excTauMGGAClass.h>
+#include "ExcDFTPlusU.h"
+#include <excManagerKernels.h>
 #if defined(DFTFE_WITH_DEVICE)
-#  include <dftfe/DeviceAPICalls.h>
+#  include <DeviceAPICalls.h>
 #endif
 namespace dftfe
 {
@@ -107,30 +106,6 @@ namespace dftfe
             xc_func_init(funcXPtr.get(), XC_GGA_X_RPBE, XC_POLARIZED);
           exceptParamC =
             xc_func_init(funcCPtr.get(), XC_GGA_C_PBE, XC_POLARIZED);
-
-          excObj = std::make_shared<excDensityGGAClass<memorySpace>>(funcXPtr,
-                                                                     funcCPtr,
-                                                                     useLibxc,
-                                                                     XCType);
-        }
-      else if (XCType == "GGA-REVPBE")
-        {
-          exceptParamX =
-            xc_func_init(funcXPtr.get(), XC_GGA_X_PBE_R, XC_POLARIZED);
-          exceptParamC =
-            xc_func_init(funcCPtr.get(), XC_GGA_C_PBE, XC_POLARIZED);
-
-          excObj = std::make_shared<excDensityGGAClass<memorySpace>>(funcXPtr,
-                                                                     funcCPtr,
-                                                                     useLibxc,
-                                                                     XCType);
-        }
-      else if (XCType == "GGA-PBESOL")
-        {
-          exceptParamX =
-            xc_func_init(funcXPtr.get(), XC_GGA_X_PBE_SOL, XC_POLARIZED);
-          exceptParamC =
-            xc_func_init(funcCPtr.get(), XC_GGA_C_PBE_SOL, XC_POLARIZED);
 
           excObj = std::make_shared<excDensityGGAClass<memorySpace>>(funcXPtr,
                                                                      funcCPtr,

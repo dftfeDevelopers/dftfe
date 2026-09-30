@@ -16,7 +16,7 @@
 //
 // @author Sambit Das
 //
-#include <dftfe/dft.h>
+#include <dft.h>
 
 namespace dftfe
 {

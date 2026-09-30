@@ -17,9 +17,9 @@
 // @author Phani Motamarri
 //
 
-#include <dftfe/constants.h>
-#include <dftfe/kerkerSolverProblem.h>
-#include <dftfe/feevaluationWrapper.h>
+#include <constants.h>
+#include <kerkerSolverProblem.h>
+#include <feevaluationWrapper.h>
 namespace dftfe
 {
   //

@@ -17,9 +17,9 @@
 // @author Gourab Panigrahi
 //
 
-#include <dftfe/linearSolverCGDevice.h>
-#include <dftfe/MemoryTransfer.h>
-#include <dftfe/linearSolverCGDeviceKernels.h>
+#include <linearSolverCGDevice.h>
+#include <MemoryTransfer.h>
+#include "linearSolverCGDeviceKernels.h"
 
 namespace dftfe
 {
@@ -110,7 +110,6 @@ namespace dftfe
             double alpha = 0.0;
             double beta  = 0.0;
             double delta = 0.0;
-
             // r = Ax
             problem.computeAX(d_rvec, x);
 
@@ -118,8 +117,9 @@ namespace dftfe
             double mOne = -1.0;
             d_BLASWrapperPtr->xaxpy(
               d_xLocalDof, &mOne, rhsDevice.begin(), 1, d_rvec.begin(), 1);
-
             // res = r.r
+
+
             d_BLASWrapperPtr->xnrm2(
               d_xLocalDof, d_rvec.begin(), 1, mpi_communicator, &res);
             initial_res = res;
@@ -161,6 +161,8 @@ namespace dftfe
                 problem.computeAX(d_dvec, d_qvec);
 
                 // alpha = q.d
+                // alpha =
+
                 d_BLASWrapperPtr->xdot(d_xLocalDof,
                                        d_qvec.begin(),
                                        1,

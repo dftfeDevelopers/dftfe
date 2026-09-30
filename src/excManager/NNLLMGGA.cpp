@@ -1,12 +1,11 @@
-#include <dftfe/config.h>
 #ifdef DFTFE_WITH_TORCH
 #  include <torch/script.h>
-#  include <dftfe/NNLLMGGA.h>
+#  include <NNLLMGGA.h>
 #  include <iostream>
 #  include <vector>
 #  include <algorithm>
 #  include <iterator>
-#  include <dftfe/Exceptions.h>
+#  include <Exceptions.h>
 #  include <stdexcept>
 
 #  define GGA_CS 0.1616204596739955

@@ -17,13 +17,13 @@
 // @author Kartick Ramakrishnan
 //
 
-#include <dftfe/AtomicCenteredNonLocalOperatorKernelsDevice.h>
-#include <dftfe/deviceKernelsGeneric.h>
-#include <dftfe/DeviceAPICalls.h>
-#include <dftfe/DeviceDataTypeOverloads.h>
-#include <dftfe/DeviceTypeConfig.h>
-#include <dftfe/DeviceKernelLauncherHelpers.h>
-#include <dftfe/BLASWrapper.h>
+#include <AtomicCenteredNonLocalOperatorKernelsDevice.h>
+#include <deviceKernelsGeneric.h>
+#include <DeviceAPICalls.h>
+#include <DeviceDataTypeOverloads.h>
+#include <DeviceTypeConfig.h>
+#include <DeviceKernelLauncherHelpers.h>
+#include <BLASWrapper.h>
 namespace dftfe
 {
   namespace
@@ -96,28 +96,23 @@ namespace dftfe
       void,
       copyToDealiiParallelNonLocalVecKernel,
       {
-        const dftfe::uInt numberEntries = totalPseudoWfcs * numWfcs * dimension;
+        const dftfe::uInt numberEntries = totalPseudoWfcs * numWfcs;
 
         for (dftfe::uInt index = globalThreadId; index < numberEntries;
              index += nThreadsPerBlock * nThreadBlock)
           {
-            const dftfe::uInt dim        = index / (numWfcs * totalPseudoWfcs);
-            const dftfe::uInt index2     = index % (numWfcs * totalPseudoWfcs);
-            const dftfe::uInt blockIndex = index2 / numWfcs;
-            const dftfe::uInt intraBlockIndex = index2 % numWfcs;
+            const dftfe::uInt blockIndex      = index / numWfcs;
+            const dftfe::uInt intraBlockIndex = index % numWfcs;
             const dftfe::uInt mappedIndex =
               indexMapDealiiParallelNumbering[blockIndex];
 
-            sphericalFnTimesWfcDealiiParallelVec[mappedIndex * numWfcs *
-                                                   dimension +
-                                                 intraBlockIndex * dimension +
-                                                 dim] =
+            sphericalFnTimesWfcDealiiParallelVec[mappedIndex * numWfcs +
+                                                 intraBlockIndex] =
               sphericalFnTimesWfcParallelVec[index];
           }
       },
       const dftfe::uInt  numWfcs,
       const dftfe::uInt  totalPseudoWfcs,
-      const dftfe::uInt  dimension,
       const ValueType   *sphericalFnTimesWfcParallelVec,
       ValueType         *sphericalFnTimesWfcDealiiParallelVec,
       const dftfe::uInt *indexMapDealiiParallelNumbering);
@@ -191,8 +186,7 @@ namespace dftfe
           {
             const dftfe::uInt iElem =
               index / (numberWfc * numberNodesPerElement);
-            const dftfe::uInt elemIndex =
-              iElemNonLocalToElemIndexMap[iElem + offset2] - offset;
+            const dftfe::uInt elemIndex = iElemNonLocalToElemIndexMap[iElem];
             const dftfe::uInt index2 =
               index % (numberWfc * numberNodesPerElement);
             const dftfe::uInt iDof     = index2 / numberWfc;
@@ -200,12 +194,10 @@ namespace dftfe
             dftfe::utils::atomicAddWrapper(
               &yVec[elemIndex * numberNodesPerElement * numberWfc +
                     iDof * numberWfc + wfcIndex],
-              xVec[index + offset2 * numberWfc * numberNodesPerElement]);
+              xVec[index]);
           }
       },
       const dftfe::uInt  totalNonLocalElements,
-      const dftfe::uInt  offset,
-      const dftfe::uInt  offset2,
       const dftfe::uInt  numberWfc,
       const dftfe::uInt  numberNodesPerElement,
       const dftfe::uInt *iElemNonLocalToElemIndexMap,
@@ -225,8 +217,7 @@ namespace dftfe
           {
             const dftfe::uInt iElem =
               index / (numberWfc * numberNodesPerElement);
-            const dftfe::uInt elemIndex =
-              iElemNonLocalToElemIndexMap[iElem + offset2] - offset;
+            const dftfe::uInt elemIndex = iElemNonLocalToElemIndexMap[iElem];
             const dftfe::uInt index2 =
               index % (numberWfc * numberNodesPerElement);
             const dftfe::uInt iDof     = index2 / numberWfc;
@@ -234,12 +225,10 @@ namespace dftfe
             dftfe::utils::atomicAddWrapper(
               &yVec[elemIndex * numberNodesPerElement * numberWfc +
                     iDof * numberWfc + wfcIndex],
-              xVec[index + offset2 * numberWfc * numberNodesPerElement]);
+              xVec[index]);
           }
       },
       const dftfe::uInt  totalNonLocalElements,
-      const dftfe::uInt  offset,
-      const dftfe::uInt  offset2,
       const dftfe::uInt  numberWfc,
       const dftfe::uInt  numberNodesPerElement,
       const dftfe::uInt *iElemNonLocalToElemIndexMap,
@@ -259,8 +248,7 @@ namespace dftfe
           {
             const dftfe::uInt iElem =
               index / (numberWfc * numberNodesPerElement);
-            const dftfe::uInt elemIndex =
-              iElemNonLocalToElemIndexMap[iElem + offset2] - offset;
+            const dftfe::uInt elemIndex = iElemNonLocalToElemIndexMap[iElem];
             const dftfe::uInt index2 =
               index % (numberWfc * numberNodesPerElement);
             const dftfe::uInt iDof     = index2 / numberWfc;
@@ -272,18 +260,12 @@ namespace dftfe
             auto *add_imag = add_real + 1;
 
             dftfe::utils::atomicAddWrapper(
-              add_real,
-              dftfe::utils::realPartDevice(
-                xVec[index + offset2 * numberWfc * numberNodesPerElement]));
+              add_real, dftfe::utils::realPartDevice(xVec[index]));
             dftfe::utils::atomicAddWrapper(
-              add_imag,
-              dftfe::utils::imagPartDevice(
-                xVec[index + offset2 * numberWfc * numberNodesPerElement]));
+              add_imag, dftfe::utils::imagPartDevice(xVec[index]));
           }
       },
       const dftfe::uInt                        totalNonLocalElements,
-      const dftfe::uInt                        offset,
-      const dftfe::uInt                        offset2,
       const dftfe::uInt                        numberWfc,
       const dftfe::uInt                        numberNodesPerElement,
       const dftfe::uInt                       *iElemNonLocalToElemIndexMap,
@@ -303,8 +285,7 @@ namespace dftfe
           {
             const dftfe::uInt iElem =
               index / (numberWfc * numberNodesPerElement);
-            const dftfe::uInt elemIndex =
-              iElemNonLocalToElemIndexMap[iElem + offset2] - offset;
+            const dftfe::uInt elemIndex = iElemNonLocalToElemIndexMap[iElem];
             const dftfe::uInt index2 =
               index % (numberWfc * numberNodesPerElement);
             const dftfe::uInt iDof     = index2 / numberWfc;
@@ -316,18 +297,12 @@ namespace dftfe
             auto *add_imag = add_real + 1;
 
             dftfe::utils::atomicAddWrapper(
-              add_real,
-              dftfe::utils::realPartDevice(
-                xVec[index + offset2 * numberWfc * numberNodesPerElement]));
+              add_real, dftfe::utils::realPartDevice(xVec[index]));
             dftfe::utils::atomicAddWrapper(
-              add_imag,
-              dftfe::utils::imagPartDevice(
-                xVec[index + offset2 * numberWfc * numberNodesPerElement]));
+              add_imag, dftfe::utils::imagPartDevice(xVec[index]));
           }
       },
       const dftfe::uInt                       totalNonLocalElements,
-      const dftfe::uInt                       offset,
-      const dftfe::uInt                       offset2,
       const dftfe::uInt                       numberWfc,
       const dftfe::uInt                       numberNodesPerElement,
       const dftfe::uInt                      *iElemNonLocalToElemIndexMap,
@@ -566,19 +541,16 @@ namespace dftfe
       const dftfe::uInt  totalEntries,
       const ValueType   *sphericalFnTimesWfcParallelVec,
       ValueType         *sphericalFnTimesWfcDealiiParallelVec,
-      const dftfe::uInt *indexMapDealiiParallelNumbering,
-      const dftfe::uInt  dimension)
+      const dftfe::uInt *indexMapDealiiParallelNumbering)
     {
       DFTFE_LAUNCH_KERNEL(copyToDealiiParallelNonLocalVecKernel,
-                          (numWfcs * dimension +
-                           (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                          (numWfcs + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                             dftfe::utils::DEVICE_BLOCK_SIZE * totalEntries,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
                           dftfe::linearAlgebra::BLASWrapper<
                             dftfe::utils::MemorySpace::DEVICE>::d_streamId,
                           numWfcs,
                           totalEntries,
-                          dimension,
                           dftfe::utils::makeDataTypeDeviceCompatible(
                             sphericalFnTimesWfcParallelVec),
                           dftfe::utils::makeDataTypeDeviceCompatible(
@@ -639,8 +611,6 @@ namespace dftfe
     void
     addNonLocalContribution(
       const dftfe::uInt totalNonLocalElements,
-      const dftfe::uInt offset,
-      const dftfe::uInt offset2,
       const dftfe::uInt numberWfc,
       const dftfe::uInt numberNodesPerElement,
       const dftfe::utils::MemoryStorage<dftfe::uInt,
@@ -664,8 +634,6 @@ namespace dftfe
                           dftfe::linearAlgebra::BLASWrapper<
                             dftfe::utils::MemorySpace::DEVICE>::d_streamId,
                           totalNonLocalElements,
-                          offset,
-                          offset2,
                           numberWfc,
                           numberNodesPerElement,
                           iElemNonLocalToElemIndexMap_data,
@@ -727,20 +695,18 @@ namespace dftfe
                                         dftfe::utils::MemorySpace::DEVICE>
         &mapSphericalFnTimesVectorAllCellsReductionDevice,
       dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
-                 &sphericalFnTimesWavefunctionMatrix,
-      dftfe::uInt offsetSrc,
-      dftfe::uInt offsetDst)
+        &sphericalFnTimesWavefunctionMatrix)
     {
       const dftfe::uInt totalEntries =
         totalNonlocalElems * numberWaveFunctions * maxSingleAtomContribution;
       const auto *sphericalFnTimesVectorAllCellsDevice_data =
         dftfe::utils::makeDataTypeDeviceCompatible(
-          sphericalFnTimesVectorAllCellsDevice.data() + offsetSrc);
+          sphericalFnTimesVectorAllCellsDevice.begin());
       const auto *mapSphericalFnTimesVectorAllCellsReductionDevice_data =
-        mapSphericalFnTimesVectorAllCellsReductionDevice.data();
+        mapSphericalFnTimesVectorAllCellsReductionDevice.begin();
       auto *sphericalFnTimesWavefunctionMatrix_data =
         dftfe::utils::makeDataTypeDeviceCompatible(
-          sphericalFnTimesWavefunctionMatrix.data() + offsetDst);
+          sphericalFnTimesWavefunctionMatrix.begin());
       DFTFE_LAUNCH_KERNEL(assembleAtomLevelContributionsFromCellLevelKernel,
                           (dftfe::utils::DEVICE_BLOCK_SIZE + totalEntries) /
                             dftfe::utils::DEVICE_BLOCK_SIZE,
@@ -762,8 +728,7 @@ namespace dftfe
       const dftfe::uInt        totalEntries,
       const dataTypes::number *sphericalFnTimesWfcParallelVec,
       dataTypes::number       *sphericalFnTimesWfcDealiiParallelVec,
-      const dftfe::uInt       *indexMapDealiiParallelNumbering,
-      const dftfe::uInt        dimension);
+      const dftfe::uInt       *indexMapDealiiParallelNumbering);
 
     template void
     copyToDealiiParallelNonLocalVec(
@@ -771,8 +736,7 @@ namespace dftfe
       const dftfe::uInt            totalEntries,
       const dataTypes::numberFP32 *sphericalFnTimesWfcParallelVec,
       dataTypes::numberFP32       *sphericalFnTimesWfcDealiiParallelVec,
-      const dftfe::uInt           *indexMapDealiiParallelNumbering,
-      const dftfe::uInt            dimension);
+      const dftfe::uInt           *indexMapDealiiParallelNumbering);
 
     template void
     copyFromDealiiParallelNonLocalVecToPaddedVector(
@@ -873,8 +837,6 @@ namespace dftfe
     template void
     addNonLocalContribution(
       const dftfe::uInt totalNonLocalElements,
-      const dftfe::uInt offset,
-      const dftfe::uInt offset2,
       const dftfe::uInt numberWfc,
       const dftfe::uInt numberNodesPerElement,
       const dftfe::utils::MemoryStorage<dftfe::uInt,
@@ -888,8 +850,6 @@ namespace dftfe
     template void
     addNonLocalContribution(
       const dftfe::uInt totalNonLocalElements,
-      const dftfe::uInt offset,
-      const dftfe::uInt offset2,
       const dftfe::uInt numberWfc,
       const dftfe::uInt numberNodesPerElement,
       const dftfe::utils::MemoryStorage<dftfe::uInt,
@@ -913,9 +873,7 @@ namespace dftfe
         &mapSphericalFnTimesVectorAllCellsReductionDevice,
       dftfe::utils::MemoryStorage<dataTypes::number,
                                   dftfe::utils::MemorySpace::DEVICE>
-                 &sphericalFnTimesWavefunctionMatrix,
-      dftfe::uInt offsetSrc,
-      dftfe::uInt offsetDst);
+        &sphericalFnTimesWavefunctionMatrix);
 
     template void
     assembleAtomLevelContributionsFromCellLevel(
@@ -931,9 +889,7 @@ namespace dftfe
         &mapSphericalFnTimesVectorAllCellsReductionDevice,
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,
                                   dftfe::utils::MemorySpace::DEVICE>
-                 &sphericalFnTimesWavefunctionMatrix,
-      dftfe::uInt offsetSrc,
-      dftfe::uInt offsetDst);
+        &sphericalFnTimesWavefunctionMatrix);
   } // namespace AtomicCenteredNonLocalOperatorKernelsDevice
 
 } // namespace dftfe

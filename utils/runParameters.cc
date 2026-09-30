@@ -17,8 +17,7 @@
 // @author Phani Motamarri, Sambit Das
 //
 
-#include <dftfe/config.h>
-#include <dftfe/runParameters.h>
+#include <runParameters.h>
 
 
 
@@ -159,7 +158,7 @@ namespace dftfe
     if (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0 &&
         verbosity >= 1 && true)
       {
-        prm.print_parameters(std::cout, dealii::ParameterHandler::ShortPRM);
+        prm.print_parameters(std::cout, dealii::ParameterHandler::ShortText);
       }
   }
 

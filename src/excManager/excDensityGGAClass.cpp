@@ -17,16 +17,15 @@
 // @author Vishal Subramanian, Sambit Das
 //
 
-#include <dftfe/config.h>
-#include <dftfe/excDensityGGAClass.h>
-#include <dftfe/NNGGA.h>
-#include <dftfe/Exceptions.h>
-#include <dftfe/dftfeDataTypes.h>
-#include <dftfe/excManagerKernels.h>
+#include "excDensityGGAClass.h"
+#include "NNGGA.h"
+#include "Exceptions.h"
+#include <dftfeDataTypes.h>
+#include <excManagerKernels.h>
 #if defined(DFTFE_WITH_DEVICE)
-#  include <dftfe/DeviceAPICalls.h>
+#  include <DeviceAPICalls.h>
 #endif
-#include <dftfe/exchangeCorrelationFunctionalEvaluator.h>
+#include <exchangeCorrelationFunctionalEvaluator.h>
 namespace dftfe
 {
   template <dftfe::utils::MemorySpace memorySpace>
@@ -302,6 +301,8 @@ namespace dftfe
         // std::cout << "sigma_thresholdX: " << d_funcXPtr->sigma_threshold
         //           << std::endl;
 
+	      if (this->d_flagForVxComp)
+                {
         exValues.setValue(0.0);
         ecValues.setValue(0.0);
 
@@ -318,6 +319,10 @@ namespace dftfe
                        exValues.data(),
                        pdexDensityValuesNonNN.data(),
                        pdexSigmaValues.data());
+		}
+
+	      if (this->d_flagForVcComp)
+                {
         xc_gga_exc_vxc(d_funcCPtr.get(),
                        nquad,
                        densityValues.data(),
@@ -325,6 +330,7 @@ namespace dftfe
                        ecValues.data(),
                        pdecDensityValuesNonNN.data(),
                        pdecSigmaValues.data());
+		}
       }
     else
       {
@@ -401,35 +407,49 @@ namespace dftfe
         auto &pdexSigmaValuesTemp = pdexSigmaValues;
 #endif
         if (d_XCType == "GGA-PBE")
-          {
+        {
+		if (this->d_flagForVxComp)
+      		{ 
             GGAX_PBE(nquad,
                      densityValuesTemp,
                      sigmaValuesTemp,
                      exValuesTemp,
                      pdexDensityTemp,
                      pdexSigmaValuesTemp);
-            GGAC_PBE(nquad,
+		}
+
+		if (this->d_flagForVcComp)
+    		{
+	    GGAC_PBE(nquad,
                      densityValuesTemp,
                      sigmaValuesTemp,
                      ecValuesTemp,
                      pdecDensityTemp,
                      pdecSigmaValuesTemp);
+    		}
           }
         else if (d_XCType == "GGA-RPBE")
           {
+		  if (this->d_flagForVxComp)
+                {
             GGAX_RPBE(nquad,
                       densityValuesTemp,
                       sigmaValuesTemp,
                       exValuesTemp,
                       pdexDensityTemp,
                       pdexSigmaValuesTemp);
+		}
+
+		  if (this->d_flagForVcComp)
+                {
             GGAC_PBE(nquad,
                      densityValuesTemp,
                      sigmaValuesTemp,
                      ecValuesTemp,
                      pdecDensityTemp,
                      pdecSigmaValuesTemp);
-          }
+		}
+	}
 
         // else if (d_XCType == "GGA-LBxPBEc")
         //   {

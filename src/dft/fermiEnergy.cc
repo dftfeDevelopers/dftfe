@@ -17,8 +17,7 @@
 // @author Shiva Rudraraju, Phani Motamarri
 //
 
-#include <dftfe/config.h>
-#include <dftfe/dft.h>
+#include <dft.h>
 
 namespace dftfe
 {
@@ -45,18 +44,14 @@ namespace dftfe
               if (temp1 <= 0.0)
                 {
                   temp2 = 1.0 / (1.0 + exp(temp1));
-                  functionValue +=
-                    (2.0 - dftParams.spinPolarized -
-                     ((dftParams.noncolin || dftParams.hasSOC) ? 1.0 : 0.0)) *
-                    kPointWeights[kPoint] * temp2;
+                  functionValue += (2.0 - dftParams.spinPolarized) *
+                                   kPointWeights[kPoint] * temp2;
                 }
               else
                 {
                   temp2 = 1.0 / (1.0 + exp(-temp1));
-                  functionValue +=
-                    (2.0 - dftParams.spinPolarized -
-                     ((dftParams.noncolin || dftParams.hasSOC) ? 1.0 : 0.0)) *
-                    kPointWeights[kPoint] * exp(-temp1) * temp2;
+                  functionValue += (2.0 - dftParams.spinPolarized) *
+                                   kPointWeights[kPoint] * exp(-temp1) * temp2;
                 }
             }
         }
@@ -86,19 +81,15 @@ namespace dftfe
                 {
                   temp2 = 1.0 / (1.0 + exp(temp1));
                   functionDerivative +=
-                    (2.0 - dftParams.spinPolarized -
-                     ((dftParams.noncolin || dftParams.hasSOC) ? 1.0 : 0.0)) *
-                    kPointWeights[kPoint] * (exp(temp1) / (C_kb * TVal)) *
-                    temp2 * temp2;
+                    (2.0 - dftParams.spinPolarized) * kPointWeights[kPoint] *
+                    (exp(temp1) / (C_kb * TVal)) * temp2 * temp2;
                 }
               else
                 {
                   temp2 = 1.0 / (1.0 + exp(-temp1));
                   functionDerivative +=
-                    (2.0 - dftParams.spinPolarized -
-                     ((dftParams.noncolin || dftParams.hasSOC) ? 1.0 : 0.0)) *
-                    kPointWeights[kPoint] * (exp(-temp1) / (C_kb * TVal)) *
-                    temp2 * temp2;
+                    (2.0 - dftParams.spinPolarized) * kPointWeights[kPoint] *
+                    (exp(-temp1) / (C_kb * TVal)) * temp2 * temp2;
                 }
             }
         }
@@ -709,81 +700,6 @@ namespace dftfe
                 d_dftParamsPtr->TVal);
         }
   }
-
-  // To calculate the LDOS occupancies and the total dos (f' and D)
-  template <dftfe::utils::MemorySpace memorySpace>
-  void
-  dftClass<memorySpace>::compute_ldosOccupanciesAndTotalDOS()
-  {
-    const double kBT =
-      C_kb * d_dftParamsPtr->LDOSTemperature; // k_B * T in Hartree
-
-    const dftfe::uInt numSpinComponents = 1 + d_dftParamsPtr->spinPolarized;
-
-    const double spinPolarizedFactor =
-      (d_dftParamsPtr->spinPolarized == 1 || d_dftParamsPtr->noncolin ||
-       d_dftParamsPtr->hasSOC) ?
-        1.0 :
-        2.0;
-
-    // Resize to exactly the same shape as d_partialOccupancies
-    d_ldosOccupancies.assign(
-      d_kPointWeights.size(),
-      std::vector<double>(d_numEigenValues * numSpinComponents, 0.0));
-    d_totalDOS = 0.0;
-
-    for (dftfe::uInt kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-      for (dftfe::uInt spinIndex = 0; spinIndex < numSpinComponents;
-           ++spinIndex)
-        for (dftfe::uInt iEigenVec = 0; iEigenVec < d_numEigenValues;
-             ++iEigenVec)
-          {
-            const double eps =
-              eigenValues[kPoint][d_numEigenValues * spinIndex + iEigenVec];
-
-            const double fermiEnergySpinIndex =
-              d_dftParamsPtr->constraintMagnetization &&
-                  d_dftParamsPtr->spinPolarized == 1 ?
-                (spinIndex == 0 ? fermiEnergyUp : fermiEnergyDown) :
-                fermiEnergy;
-
-            // Numerically stable -f'_i = -(df/dε_i)  ≥ 0
-            const double temp1 = (eps - fermiEnergySpinIndex) / kBT;
-            double       neg_fprime;
-
-            if (temp1 <= 0.0)
-              {
-                // ε_i ≤ ε_F: use e^{temp1}
-                const double ex = std::exp(temp1);
-                const double f  = 1.0 / (1.0 + ex);
-                neg_fprime      = ex / kBT * f * f;
-              }
-            else
-              {
-                // ε_i > ε_F: use e^{-temp1}
-                const double emx   = std::exp(-temp1);
-                const double denom = 1.0 + emx;
-                neg_fprime         = emx / kBT / (denom * denom);
-              }
-
-            d_ldosOccupancies[kPoint][d_numEigenValues * spinIndex +
-                                      iEigenVec] = neg_fprime;
-
-            d_totalDOS +=
-              neg_fprime * d_kPointWeights[kPoint] * spinPolarizedFactor;
-          }
-
-    // Reduce d_totalDOS across k-points
-    int size;
-    MPI_Comm_size(interpoolcomm, &size);
-    if (size > 1)
-      MPI_Allreduce(
-        MPI_IN_PLACE, &d_totalDOS, 1, MPI_DOUBLE, MPI_SUM, interpoolcomm);
-
-    if (d_dftParamsPtr->verbosity >= 4)
-      pcout << "LDOS totalDOS D = " << d_totalDOS << std::endl;
-  }
-
 #include "dft.inst.cc"
 
 } // namespace dftfe

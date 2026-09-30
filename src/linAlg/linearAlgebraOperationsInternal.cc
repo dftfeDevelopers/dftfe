@@ -18,13 +18,12 @@
 //
 
 
-#include <dftfe/config.h>
-#include <dftfe/dftUtils.h>
-#include <dftfe/linearAlgebraOperations.h>
-#include <dftfe/linearAlgebraOperationsInternal.h>
-#include <dftfe/BLASWrapper.h>
+#include <dftUtils.h>
+#include <linearAlgebraOperations.h>
+#include <linearAlgebraOperationsInternal.h>
+#include <BLASWrapper.h>
 #ifdef DFTFE_WITH_DEVICE
-#  include <dftfe/DeviceAPICalls.h>
+#  include <DeviceAPICalls.h>
 #endif
 /** @file linearAlgebraOperationsInternal.cc
  *  @brief Contains small internal functions used in linearAlgebraOperations
@@ -79,10 +78,8 @@ namespace dftfe
         // Note that on all the inactive processs the resulting MPI_Comm
         // processGridCommunicatorActive will be MPI_COMM_NULL.
         // MPI_Comm processGridCommunicatorActive;
-        ierr = MPI_Comm_create_group(mpi_communicator,
-                                     active_group,
-                                     50,
-                                     &processGridCommunicatorActive);
+        ierr = dealii::Utilities::MPI::create_group(
+          mpi_communicator, active_group, 50, &processGridCommunicatorActive);
         AssertThrowMPI(ierr);
 
         ierr = MPI_Group_free(&all_group);

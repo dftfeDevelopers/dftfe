@@ -17,16 +17,15 @@
 // @author Vishal Subramanian, Sambit Das
 //
 
-#include <dftfe/config.h>
-#include <dftfe/excDensityLDAClass.h>
-#include <dftfe/NNLDA.h>
-#include <dftfe/Exceptions.h>
-#include <dftfe/dftfeDataTypes.h>
-#include <dftfe/excManagerKernels.h>
+#include <excDensityLDAClass.h>
+#include <NNLDA.h>
+#include <Exceptions.h>
+#include <dftfeDataTypes.h>
+#include <excManagerKernels.h>
 #if defined(DFTFE_WITH_DEVICE)
-#  include <dftfe/DeviceAPICalls.h>
+#  include <DeviceAPICalls.h>
 #endif
-#include <dftfe/exchangeCorrelationFunctionalEvaluator.h>
+#include <exchangeCorrelationFunctionalEvaluator.h>
 namespace dftfe
 {
   template <dftfe::utils::MemorySpace memorySpace>
@@ -273,16 +272,22 @@ namespace dftfe
         pdexDensityValuesNonNN.setValue(0.0);
         pdecDensityValuesNonNN.setValue(0.0);
 
+	      if (this->d_flagForVxComp)
+      {
         xc_lda_exc_vxc(d_funcXPtr.get(),
                        nquad,
                        densityValues.data(),
                        exValues.data(),
                        pdexDensityValuesNonNN.data());
+      }
+	      if (this->d_flagForVcComp)
+    {
         xc_lda_exc_vxc(d_funcCPtr.get(),
                        nquad,
                        densityValues.data(),
                        ecValues.data(),
                        pdecDensityValuesNonNN.data());
+    }
       }
     else
       {
@@ -341,29 +346,48 @@ namespace dftfe
 #endif
         if (d_XCType == "LDA-PW")
           {
-            LDAX_SLATER(nquad,
+            if (this->d_flagForVxComp)
+	    {
+		    LDAX_SLATER(nquad,
                         densityValuesTemp,
                         exValuesTemp,
                         pdexDensityTemp);
-            LDAC_PW(nquad, densityValuesTemp, ecValuesTemp, pdecDensityTemp);
-          }
+	    }
+          if (this->d_flagForVcComp)
+    {
+	    LDAC_PW(nquad, densityValuesTemp, ecValuesTemp, pdecDensityTemp);
+    }      
+    	}
 
         else if (d_XCType == "LDA-PZ")
           {
+		  if (this->d_flagForVxComp)
+            {
             LDAX_SLATER(nquad,
                         densityValuesTemp,
                         exValuesTemp,
                         pdexDensityTemp);
+	    }
+
+		  if (this->d_flagForVcComp)
+    {
             LDAC_PZ(nquad, densityValuesTemp, ecValuesTemp, pdecDensityTemp);
-          }
+    }      
+    	}
 
         else if (d_XCType == "LDA-VWN")
           {
-            LDAX_SLATER(nquad,
+            if (this->d_flagForVxComp)
+            {
+		  LDAX_SLATER(nquad,
                         densityValuesTemp,
                         exValuesTemp,
                         pdexDensityTemp);
+	    }
+	    if (this->d_flagForVcComp)
+    {
             LDAC_VWN(nquad, densityValuesTemp, ecValuesTemp, pdecDensityTemp);
+    }
           }
         else
           {

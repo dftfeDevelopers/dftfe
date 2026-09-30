@@ -1,13 +1,12 @@
-#include <dftfe/config.h>
-#include <dftfe/excDensityLLMGGAClass.h>
-#include <dftfe/NNLLMGGA.h>
+#include <excDensityLLMGGAClass.h>
+#include <NNLLMGGA.h>
 #include <algorithm>
 #include <cmath>
-#include <dftfe/Exceptions.h>
-#include <dftfe/FiniteDifference.h>
-#include <dftfe/excManagerKernels.h>
+#include "Exceptions.h"
+#include "FiniteDifference.h"
+#include <excManagerKernels.h>
 #if defined(DFTFE_WITH_DEVICE)
-#  include <dftfe/DeviceAPICalls.h>
+#  include <DeviceAPICalls.h>
 #endif
 namespace dftfe
 {

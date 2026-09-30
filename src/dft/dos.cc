@@ -16,10 +16,9 @@
 //
 // @author Phani Motamarri
 //
-#include <dftfe/config.h>
-#include <dftfe/dft.h>
-#include <dftfe/fileReaders.h>
-#include <dftfe/vectorUtilities.h>
+#include <dft.h>
+#include <fileReaders.h>
+#include <vectorUtilities.h>
 #include <sys/stat.h>
 
 namespace dftfe

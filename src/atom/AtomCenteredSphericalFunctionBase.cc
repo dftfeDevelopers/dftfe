@@ -15,8 +15,8 @@
 // ---------------------------------------------------------------------
 //
 
-#include <dftfe/AtomCenteredSphericalFunctionBase.h>
-#include <dftfe/dftUtils.h>
+#include "AtomCenteredSphericalFunctionBase.h"
+#include <dftUtils.h>
 
 namespace dftfe
 {

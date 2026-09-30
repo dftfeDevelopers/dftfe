@@ -15,7 +15,7 @@
 // ---------------------------------------------------------------------
 //
 
-#include <dftfe/AtomCenteredSphericalFunctionGaussian.h>
+#include "AtomCenteredSphericalFunctionGaussian.h"
 #include "vector"
 namespace dftfe
 {

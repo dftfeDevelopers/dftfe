@@ -16,9 +16,8 @@
 //
 // @author  Phani Motamarri
 //
-#include <dftfe/config.h>
-#include <dftfe/constraintMatrixInfo.h>
-#include <dftfe/linearAlgebraOperations.h>
+#include <constraintMatrixInfo.h>
+#include <linearAlgebraOperations.h>
 
 namespace dftfe
 {
@@ -144,10 +143,8 @@ namespace dftfe
                     }
                 }
 
-              Assert(
-                !isConstraintRhsExpandingOutOfIndexSet,
-                dealii::ExcMessage(
-                  "Master nodes are not locally available for constraints"));
+              if (isConstraintRhsExpandingOutOfIndexSet)
+                continue;
 
               d_rowIdsLocal.push_back(partitioner->global_to_local(lineDof));
               d_rowIdsGlobal.push_back(lineDof);
@@ -190,10 +187,8 @@ namespace dftfe
                     }
                 }
 
-              Assert(
-                !isConstraintRhsExpandingOutOfIndexSet,
-                dealii::ExcMessage(
-                  "Master nodes are not locally available for constraints"));
+              if (isConstraintRhsExpandingOutOfIndexSet)
+                continue;
 
               d_rowIdsLocal.push_back(partitioner->global_to_local(lineDof));
               d_rowIdsGlobal.push_back(lineDof);

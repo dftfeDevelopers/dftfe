@@ -15,7 +15,7 @@
 // ---------------------------------------------------------------------
 //
 
-#include <dftfe/AtomCenteredSphericalFunctionSinc.h>
+#include "AtomCenteredSphericalFunctionSinc.h"
 #include "vector"
 namespace dftfe
 {

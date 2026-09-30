@@ -1,4 +1,4 @@
-#include <dftfe/solveVselfInBinsDeviceKernels.h>
+#include "solveVselfInBinsDeviceKernels.h"
 
 namespace dftfe
 {

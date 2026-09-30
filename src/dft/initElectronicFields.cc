@@ -16,9 +16,8 @@
 //
 // @author  Phani Motamarri, Sambit Das
 //
-#include <dftfe/config.h>
-#include <dftfe/dft.h>
-#include <dftfe/dftUtils.h>
+#include <dft.h>
+#include <dftUtils.h>
 
 namespace dftfe
 {
@@ -39,12 +38,8 @@ namespace dftfe
     d_matrixFreeDataPRefined.initialize_dof_vector(
       d_phiExt, d_phiExtDofHandlerIndexElectro);
 
-    d_densityInNodalValues.resize(
-      d_dftParamsPtr->noncolin ? 4 :
-                                 (d_dftParamsPtr->spinPolarized == 1 ? 2 : 1));
-    d_densityOutNodalValues.resize(
-      d_dftParamsPtr->noncolin ? 4 :
-                                 (d_dftParamsPtr->spinPolarized == 1 ? 2 : 1));
+    d_densityInNodalValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
+    d_densityOutNodalValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
 
     d_matrixFreeDataPRefined.initialize_dof_vector(
       d_densityInNodalValues[0], d_densityDofHandlerIndexElectro);
@@ -59,10 +54,7 @@ namespace dftfe
       d_densityOutNodalValues[iComp] = 0;
     if (d_dftParamsPtr->useSymm)
       {
-        d_tauOutNodalValues.resize(
-          d_dftParamsPtr->noncolin ?
-            4 :
-            (d_dftParamsPtr->spinPolarized == 1 ? 2 : 1));
+        d_tauOutNodalValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
         for (dftfe::uInt iComp = 0; iComp < d_tauOutNodalValues.size(); ++iComp)
           d_tauOutNodalValues[iComp].reinit(d_densityInNodalValues[0]);
       }
@@ -107,22 +99,19 @@ namespace dftfe
     if (d_dftParamsPtr->solverMode == "BANDS")
       {
         AssertThrow(
-          ((d_dftParamsPtr->noncolin || d_dftParamsPtr->hasSOC) ? 2 : 1) *
-              matrix_free_data.get_vector_partitioner()->locally_owned_size() <
+          matrix_free_data.get_vector_partitioner()->locally_owned_size() <
             std::numeric_limits<dftfe::Int>::max() / d_numEigenValues,
           dealii::ExcMessage(
             "DFT-FE error: size of local wavefunctions storage exceeds integer bounds. Please increase number of MPI tasks"));
         d_eigenVectorsFlattenedHost.resize(
           (d_numEigenValues *
-           matrix_free_data.get_vector_partitioner()->locally_owned_size()) *
-            ((d_dftParamsPtr->noncolin || d_dftParamsPtr->hasSOC) ? 2 : 1),
+           matrix_free_data.get_vector_partitioner()->locally_owned_size()),
           dataTypes::number(0.0));
       }
     else
       {
         AssertThrow(
-          ((d_dftParamsPtr->noncolin || d_dftParamsPtr->hasSOC) ? 2 : 1) *
-              (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size() *
+          (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size() *
               matrix_free_data.get_vector_partitioner()->locally_owned_size() <
             std::numeric_limits<dftfe::Int>::max() / d_numEigenValues,
           dealii::ExcMessage(
@@ -130,8 +119,7 @@ namespace dftfe
         d_eigenVectorsFlattenedHost.resize(
           (d_numEigenValues *
            matrix_free_data.get_vector_partitioner()->locally_owned_size()) *
-            (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size() *
-            ((d_dftParamsPtr->noncolin || d_dftParamsPtr->hasSOC) ? 2 : 1),
+            (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size(),
           dataTypes::number(0.0));
       }
 
@@ -186,8 +174,6 @@ namespace dftfe
 
     if (d_dftParamsPtr->verbosity >= 2 && d_dftParamsPtr->spinPolarized == 1)
       totalMagnetization(d_densityInQuadValues[1]);
-    if (d_dftParamsPtr->verbosity >= 2 && d_dftParamsPtr->noncolin)
-      totalNonCollinearMagnetization(d_densityInQuadValues);
   }
 #include "dft.inst.cc"
 } // namespace dftfe

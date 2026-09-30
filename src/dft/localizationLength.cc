@@ -17,8 +17,8 @@
 // @author Phani Motamarri
 //
 
-#include <dftfe/dft.h>
-#include <dftfe/vectorUtilities.h>
+#include <dft.h>
+#include <vectorUtilities.h>
 
 namespace dftfe
 {

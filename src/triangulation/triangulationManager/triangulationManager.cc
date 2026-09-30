@@ -22,12 +22,12 @@
  */
 
 
-#include <dftfe/constants.h>
-#include <dftfe/dftUtils.h>
-#include <dftfe/fileReaders.h>
-#include <dftfe/meshGenUtils.h>
-#include <dftfe/triangulationManager.h>
-#include <dftfe/vectorUtilities.h>
+#include <constants.h>
+#include <dftUtils.h>
+#include <fileReaders.h>
+#include <meshGenUtils.h>
+#include <triangulationManager.h>
+
 #include "generateMesh.cc"
 #include "restartUtils.cc"
 

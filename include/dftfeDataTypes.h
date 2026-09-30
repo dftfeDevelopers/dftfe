@@ -1,0 +1,159 @@
+// ---------------------------------------------------------------------
+//
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
+// authors.
+//
+// This file is part of the DFT-FE code.
+//
+// The DFT-FE code is free software; you can use it, redistribute
+// it, and/or modify it under the terms of the GNU Lesser General
+// Public License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+// The full text of the license can be found in the file LICENSE at
+// the top level of the DFT-FE distribution.
+//
+// ---------------------------------------------------------------------
+//
+// @author Sambit Das
+//
+
+#ifndef dftfeDataTypes_H_
+#define dftfeDataTypes_H_
+
+// Include generic C++ headers
+#include <fstream>
+#include <iostream>
+#include <fenv.h>
+#include <complex>
+#include <mpi.h>
+#include <cstdint>
+// commonly used  typedefs used in dftfe go here
+namespace dftfe
+{
+  namespace dataTypes
+  {
+#ifdef USE_COMPLEX
+    typedef std::complex<double> number;
+    typedef std::complex<float>  numberFP32;
+    typedef double               numberValueType;
+    typedef float                numberFP32ValueType;
+#else
+    typedef double number;
+    typedef float  numberFP32;
+    typedef double numberValueType;
+    typedef float  numberFP32ValueType;
+#endif
+
+    inline MPI_Datatype
+    mpi_type_id(const int *)
+    {
+      return MPI_INT;
+    }
+
+    inline MPI_Datatype
+    mpi_type_id(const long int *)
+    {
+      return MPI_LONG;
+    }
+
+    inline MPI_Datatype
+    mpi_type_id(const unsigned int *)
+    {
+      return MPI_UNSIGNED;
+    }
+
+    inline MPI_Datatype
+    mpi_type_id(const unsigned long int *)
+    {
+      return MPI_UNSIGNED_LONG;
+    }
+
+    inline MPI_Datatype
+    mpi_type_id(const unsigned long long int *)
+    {
+      return MPI_UNSIGNED_LONG_LONG;
+    }
+
+
+    inline MPI_Datatype
+    mpi_type_id(const float *)
+    {
+      return MPI_FLOAT;
+    }
+
+
+    inline MPI_Datatype
+    mpi_type_id(const double *)
+    {
+      return MPI_DOUBLE;
+    }
+
+    inline MPI_Datatype
+    mpi_type_id(const long double *)
+    {
+      return MPI_LONG_DOUBLE;
+    }
+
+    inline MPI_Datatype
+    mpi_type_id(const std::complex<float> *)
+    {
+      return MPI_COMPLEX;
+    }
+
+    inline MPI_Datatype
+    mpi_type_id(const std::complex<double> *)
+    {
+      return MPI_DOUBLE_COMPLEX;
+    }
+
+    template <typename T>
+    struct singlePrecType
+    {
+      typedef T type;
+    };
+
+    template <>
+    struct singlePrecType<double>
+    {
+      typedef float type;
+    };
+
+    template <>
+    struct singlePrecType<std::complex<double>>
+    {
+      typedef std::complex<float> type;
+    };
+
+    template <typename T>
+    struct halfPrecType
+    {
+      typedef T type;
+    };
+
+    template <>
+    struct halfPrecType<double>
+    {
+      typedef uint16_t type;
+    };
+
+    template <>
+    struct halfPrecType<std::complex<double>>
+    {
+      typedef std::complex<uint16_t> type;
+    };
+
+    template <>
+    struct halfPrecType<float>
+    {
+      typedef uint16_t type;
+    };
+
+    template <>
+    struct halfPrecType<std::complex<float>>
+    {
+      typedef std::complex<uint16_t> type;
+    };
+  } // namespace dataTypes
+} // namespace dftfe
+
+#endif

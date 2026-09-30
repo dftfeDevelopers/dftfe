@@ -16,7 +16,7 @@
 //
 // @author Sambit Das and Phani Motamarri
 //
-#include <dftfe/dft.h>
+#include <dft.h>
 
 namespace dftfe
 {
@@ -199,19 +199,6 @@ namespace dftfe
           d_gaussianMovementAtomsNetDisplacements;
       }
 
-
-    if (d_dftParamsPtr->floatingNuclearCharges)
-      {
-        const dftfe::uInt floatingDisplacementSize = numberGlobalAtoms * 3;
-        if (d_netFloatingDispSinceLastBinsUpdate.size() !=
-            floatingDisplacementSize)
-          d_netFloatingDispSinceLastBinsUpdate.assign(floatingDisplacementSize,
-                                                      0.0);
-        if (d_netFloatingDispSinceLastCheckForSmearedChargeOverlaps.size() !=
-            floatingDisplacementSize)
-          d_netFloatingDispSinceLastCheckForSmearedChargeOverlaps.assign(
-            floatingDisplacementSize, 0.0);
-      }
 
     if (d_dftParamsPtr->floatingNuclearCharges)
       for (dftfe::uInt iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
@@ -441,7 +428,8 @@ namespace dftfe
               }
             else
               {
-                atomId = d_imageIdsTrunc[iAtom - numberGlobalAtoms];
+                const dftfe::Int atomId =
+                  d_imageIdsTrunc[iAtom - numberGlobalAtoms];
                 d_gaussianMovementAtomsNetDisplacements.push_back(
                   d_gaussianMovementAtomsNetDisplacements[atomId]);
               }
@@ -507,11 +495,13 @@ namespace dftfe
             MPI_Barrier(d_mpiCommParent);
             resetmesh_time = MPI_Wtime();
 
-            if (d_dftParamsPtr->createConstraintsFromSerialDofhandler)
+            if (d_dftParamsPtr->useSymm ||
+                d_dftParamsPtr->createConstraintsFromSerialDofhandler)
               {
                 d_mesh.generateResetMeshes(
                   d_domainBoundingVectors,
-                  d_dftParamsPtr->createConstraintsFromSerialDofhandler);
+                  d_dftParamsPtr->useSymm ||
+                    d_dftParamsPtr->createConstraintsFromSerialDofhandler);
 
                 // initUnmovedTriangulation(d_mesh.getParallelMeshMoved());
 
@@ -534,10 +524,16 @@ namespace dftfe
                 d_dofHandlerRhoNodal.distribute_dofs(
                   dealii::FE_Q<3>(dealii::QGaussLobatto<1>(
                     d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal + 1)));
-                d_configForcePtr->setUnmovedTriangulation(
-                  d_mesh.getParallelMeshMoved(),
-                  d_mesh.getSerialMeshUnmoved(),
-                  d_domainBoundingVectors);
+
+                forcePtr->initUnmoved(d_mesh.getParallelMeshMoved(),
+                                      d_mesh.getSerialMeshUnmoved(),
+                                      d_domainBoundingVectors,
+                                      false);
+
+                forcePtr->initUnmoved(d_mesh.getParallelMeshMoved(),
+                                      d_mesh.getSerialMeshUnmoved(),
+                                      d_domainBoundingVectors,
+                                      true);
 
                 // meshMovementGaussianClass gaussianMove(mpi_communicator);
                 d_gaussianMovePar.init(d_mesh.getParallelMeshMoved(),

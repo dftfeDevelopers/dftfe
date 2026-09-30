@@ -16,12 +16,13 @@
 //
 // @author Phani Motamarri, Sambit Das
 //
-#include <dftfe/config.h>
 #include <deal.II/base/data_out_base.h>
 #include <deal.II/base/parameter_handler.h>
-#include <dftfe/dftParameters.h>
+#include <dftParameters.h>
 #include <fstream>
 #include <iostream>
+
+
 
 namespace dftfe
 {
@@ -81,13 +82,13 @@ namespace dftfe
           "USE GPUDIRECT MPI ALL REDUCE",
           "false",
           dealii::Patterns::Bool(),
-          R"([Advanced] Use GPUDIRECT MPI\_Allreduce. This route will only work if DFT-FE is compiled with a device collective communications library (NVIDIA NCCL or AMD RCCL) or withGPUAwareMPI=ON. If a DCCL library and withGPUAwareMPI modes are both enabled, the DCCL mode takes precedence. Also note that one MPI rank per GPU can be used when using this option. Default: false.)");
+          R"([Adavanced] Use GPUDIRECT MPI\_Allreduce. This route will only work if DFT-FE is either compiled with NVIDIA NCCL library or withGPUAwareMPI=ON. Both these routes require GPU Aware MPI library to be available as well relevant hardware. If both NVIDIA NCCL library and withGPUAwareMPI modes are toggled on, the NCCL mode takes precedence. Also note that one MPI rank per GPU can be used when using this option. Default: false.)");
 
         prm.declare_entry(
           "USE DCCL",
           "false",
           dealii::Patterns::Bool(),
-          R"([Advanced] Use device collective communications library (NVIDIA NCCL or AMD RCCL) for GPU-direct allreduce. Default: false.)");
+          R"([Adavanced] Use NCCL/RCCL for GPUDIRECT communications. Default: false.)");
 
         prm.declare_entry(
           "USE ELPA GPU KERNEL",
@@ -109,7 +110,7 @@ namespace dftfe
           "PRINT KINETIC ENERGY",
           "false",
           dealii::Patterns::Bool(),
-          R"([Standard] Prints the Kinetic energy of the electrons. Default: false.)");
+          R"([Standard] Prints the Kinetic energy of the electrons.  Default: false.)");
 
         prm.declare_entry(
           "WRITE DENSITY FE MESH",
@@ -224,25 +225,7 @@ namespace dftfe
           "RESTART SP FROM NO SP",
           "false",
           dealii::Patterns::Bool(),
-          "[Standard] Enables ground-state solve for SPIN POLARIZED case reading the SPIN UNPOLARIZED density from the checkpoint files, and use the TOTAL MAGNETIZATION to compute the spin up and spin down densities. This option is used in conjuction with LOAD QUAD DATA. Default false.");
-
-        prm.declare_entry(
-          "RESTART NONCOLLINEAR FROM COLLINEAR",
-          "false",
-          dealii::Patterns::Bool(),
-          "[Standard] Enables ground-state solve for NONCOLLINEAR case reading the COLLINEAR SPIN POLARIZED charge and magnetization densities from the checkpoint files, and use the MAG PHI and MAG THETA variable to rotate the collinear magentization density. This option is used in conjuction with LOAD QUAD DATA. Default false.");
-
-        prm.declare_entry(
-          "MAG PHI",
-          "0",
-          dealii::Patterns::Double(0),
-          "[Standard] The angle (in degrees) with z-axis for rotating the COLLINEAR SPIN POLARIZED magnetization density when using RESTART NONCOLLINEAR FROM COLLINEAR. Default 0");
-
-        prm.declare_entry(
-          "MAG THETA",
-          "0",
-          dealii::Patterns::Double(0),
-          "[Standard] The angle (in degrees) with between the projection of the magnetization density onto the xy plane and the x-axis for rotating the COLLINEAR SPIN POLARIZED magnetization density when using RESTART NONCOLLINEAR FROM COLLINEAR. Default 0");
+          "[Standard] Enables ground-state solve for SPIN POLARIZED case reading the SPIN UNPOLARIZED density from the checkpoint files, and use the TOTAL MAGNETIZATION to compute the spin up and spin down densities. This option is used in conjuction with LOAD QUAD DATA or LOAD RHO DATA. Default false.");
       }
       prm.leave_subsection();
 
@@ -463,18 +446,6 @@ namespace dftfe
           "true",
           dealii::Patterns::Bool(),
           "[Developer] Nuclear charges are allowed to float independent of the FEM mesh nodal positions. Only allowed for pseudopotential calculations. Internally set to false for all-electron calculations.");
-
-        prm.declare_entry(
-          "SMEARED NUCLEAR CHARGE PATHWAY",
-          "ANALYTIC_SMEARED_LOAD",
-          dealii::Patterns::Selection("LEGACY_VSELF|ANALYTIC_SMEARED_LOAD"),
-          "[Developer] Selector for pseudopotential electrostatics charge handling. LEGACY_VSELF preserves the per-bin smeared nuclear self-potential solve. ANALYTIC_SMEARED_LOAD assembles the ionic Poisson load directly from the analytic smeared charge on quadrature points and uses the corresponding analytic self-potential in local-PSP energy, force, and stress terms.");
-
-        prm.declare_entry(
-          "ANALYTIC SMEARED LOAD RADIUS",
-          "0.0",
-          dealii::Patterns::Double(0.0),
-          "[Developer] Broad smeared-charge support radius R_g used by SMEARED NUCLEAR CHARGE PATHWAY=ANALYTIC_SMEARED_LOAD. Set to 0 to choose atom-type widths from the local pseudopotential tail radii.");
       }
       prm.leave_subsection();
 
@@ -502,16 +473,6 @@ namespace dftfe
           "0",
           dealii::Patterns::Integer(0, 24),
           "[Standard] The quadrtaure rule used for computing the electron density. It is automatically set to 16 for MGGA exchange-correlation functional or max of POLYNOMIAL ORDER DENSITY NODAL +1 for other exchange-correlation functionals if DENSITY QUADTRATURE RULE set to default value of zero.");
-        prm.declare_entry(
-          "INTERMEDIATE DENSITY QUADRATURE RULE",
-          "0",
-          dealii::Patterns::Integer(0, 24),
-          "[Standard] The intermediate quadrtaure rule used for computing the electron density. From this, the electron density is computed at the quadrature points corresponding to DENSITY QUADRATURE RULE using FEM interpolation.");
-        prm.declare_entry(
-          "USE INTERMEDIATE DENSITY QUADRATURE",
-          "false",
-          dealii::Patterns::Bool(),
-          "[Standard] If set to true, uses INTERMEDIATE DENSITY QUADRATURE RULE for computing the electron density from wavefunctions, then interpolates to the target density quadrature rule using FEM interpolation.");
         prm.enter_subsection("Auto mesh generation parameters");
         {
           prm.declare_entry(
@@ -546,6 +507,12 @@ namespace dftfe
             "[Advanced] Mesh size of the finite elements in the immediate vicinity of the atom. For the default value of 0.0, a heuristically determined MESH SIZE AT ATOM is used for all-electron calculations. For pseudopotential calculations, the default value of 0.0, sets the MESH SIZE AT ATOM to be the same value as MESH SIZE AROUND ATOM. Standard users do not need to tune this parameter. Units: a.u.");
 
           prm.declare_entry(
+            "MESH ADAPTION",
+            "false",
+            dealii::Patterns::Bool(),
+            "[Developer] Generates adaptive mesh based on a-posteriori mesh adaption strategy using single atom wavefunctions before computing the ground-state. Default: false.");
+
+          prm.declare_entry(
             "AUTO ADAPT BASE MESH SIZE",
             "true",
             dealii::Patterns::Bool(),
@@ -562,6 +529,18 @@ namespace dftfe
                             "10",
                             dealii::Patterns::Integer(0, 30),
                             "[Developer] Number of times to be refined.");
+
+          prm.declare_entry(
+            "TOLERANCE FOR MESH ADAPTION",
+            "1",
+            dealii::Patterns::Double(0.0, 1),
+            "[Developer] Tolerance criteria used for stopping the multi-level mesh adaption done apriori using single atom wavefunctions. This is used as Kinetic energy change between two successive iterations");
+
+          prm.declare_entry(
+            "ERROR ESTIMATE WAVEFUNCTIONS",
+            "5",
+            dealii::Patterns::Integer(0),
+            "[Developer] Number of wavefunctions to be used for error estimation.");
 
           prm.declare_entry(
             "GAUSSIAN CONSTANT FORCE GENERATOR",
@@ -724,9 +703,56 @@ namespace dftfe
           R"([Standard] Pseudopotential file. This file contains the list of pseudopotential file names in UPF format corresponding to the atoms involved in the calculations. UPF version 2.0 or greater and norm-conserving pseudopotentials(ONCV and Troullier Martins) in UPF format are only accepted. File format (example for two atoms Mg(z=12), Al(z=13)): 12 filename1.upf(row1), 13 filename2.upf (row2). Important Note: ONCV pseudopotentials data base in UPF format can be downloaded from http://www.quantum-simulation.org/potentials/sg15\_oncv or http://www.pseudo-dojo.org/.  Troullier-Martins pseudopotentials in UPF format can be downloaded from http://www.quantum-espresso.org/pseudopotentials/fhi-pp-from-abinit-web-site.)");
 
         prm.declare_entry(
-          "EXCHANGE CORRELATION TYPE", "GGA-PBE", dealii::Patterns::Selection("LDA-PZ|LDA-PW|LDA-VWN|GGA-PBE|GGA-RPBE|GGA-LBxPBEc|MLXC-NNLDA|MLXC-NNGGA|MLXC-NNLLMGGA|LDA-PZ+U|LDA-PW+U|LDA-VWN+U|GGA-PBE+U|GGA-RPBE+U|GGA-PBESOL|GGA-REVPBE|GGA-LBxPBEc+U|MLXC-NNLDA+U|MLXC-NNGGA+U|MLXC-NNLLMGGA+U|MGGA-SCAN|MGGA-R2SCAN"), R"([Standard] Parameter specifying the type of exchange-correlation to be used: LDA-PZ (Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)]), LDA-PW (Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)]), LDA-VWN (Vosko, Wilk \& Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)]), GGA-PBE (Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)]), GGA-RPBE (RPBE: B. Hammer, L. B. Hansen, and J. K. N�rskov, Phys. Rev. B 59, 7413 (1999)), GGA-LBxPBEc van Leeuwen \& Baerends exchange [Phys. Rev. A 49, 2421 (1994)] with  PBE correlation [Phys. Rev. Lett. 77, 3865 (1996)], MLXC-NNLDA (LDA-PW + NN-LDA), MLXC-NNGGA (GGA-PBE + NN-GGA), MLXC-NNLLMGGA (GGA-PBE + NN Laplacian level MGGA), MGGA-SCAN (Strongly Constrained and Appropriately Normed functional [Phys. Rev. Lett. 115, 03640 (2015)]), MGGA-R2SCAN (regularized-restored SCAN [J. Phys. Chem. Lett. 19, 8208-8215 (2020)]). Caution: MLXC options are experimental. Add +U to use hubbard correction)");
+          "EXCHANGE CORRELATION TYPE", "GGA-PBE", dealii::Patterns::Selection("LDA-PZ|LDA-PW|LDA-VWN|GGA-PBE|GGA-RPBE|GGA-LBxPBEc|MLXC-NNLDA|MLXC-NNGGA|MLXC-NNLLMGGA|LDA-PZ+U|LDA-PW+U|LDA-VWN+U|GGA-PBE+U|GGA-RPBE+U|GGA-LBxPBEc+U|MLXC-NNLDA+U|MLXC-NNGGA+U|MLXC-NNLLMGGA+U|MGGA-SCAN|MGGA-R2SCAN"), R"([Standard] Parameter specifying the type of exchange-correlation to be used: LDA-PZ (Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)]), LDA-PW (Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)]), LDA-VWN (Vosko, Wilk \& Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)]), GGA-PBE (Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)]), GGA-RPBE (RPBE: B. Hammer, L. B. Hansen, and J. K. N�rskov, Phys. Rev. B 59, 7413 (1999)), GGA-LBxPBEc van Leeuwen \& Baerends exchange [Phys. Rev. A 49, 2421 (1994)] with  PBE correlation [Phys. Rev. Lett. 77, 3865 (1996)], MLXC-NNLDA (LDA-PW + NN-LDA), MLXC-NNGGA (GGA-PBE + NN-GGA), MLXC-NNLLMGGA (GGA-PBE + NN Laplacian level MGGA), MGGA-SCAN (Strongly Constrained and Appropriately Normed functional [Phys. Rev. Lett. 115, 03640 (2015)]), MGGA-R2SCAN (regularized-restored SCAN [J. Phys. Chem. Lett. 19, 8208-8215 (2020)]). Caution: MLXC options are experimental. Add +U to use hubbard correction)");
 
-        prm.declare_entry(
+
+	prm.declare_entry( "FRACTION OF EXACT EXCHANGE IN FORWARD CALC",
+        "-0.25",
+          dealii::Patterns::Double(-1.1,1.1),
+          "[standard] Fraction of exact exchange added in the forward calc");
+
+	prm.declare_entry( "FRACTION OF EXACT EXCHANGE IN INV CALC",
+        "-1.0",
+          dealii::Patterns::Double(-1.1,1.1),
+          "[standard] Fraction of exact exchange added ");
+
+  prm.declare_entry( "MIXING PARAMETER FOR EXACT EXCHANGE OPERATOR",
+                    "1.0",
+                    dealii::Patterns::Double(-0.1,1.1),
+                    "[standard] Mixing paramter for the simple mixing of the Exact exchange operator");
+
+    prm.declare_entry(
+    "Hartree Fock Calculation IN INV CALC",
+      "true",
+      dealii::Patterns::Bool(),
+      "[Standard] Perform Hartree Fock calculation.");
+
+    prm.declare_entry(
+            "MAX OUTER ITERATIONS DURING INV CALC",
+            "100",
+            dealii::Patterns::Integer(1, 1000),
+            "[Standard] Maximum outer iterations for the ACE calculation during inverse calculation.");
+
+    prm.declare_entry(              
+    "Hartree Fock Calculation in Forward Solve",     
+      "true",
+      dealii::Patterns::Bool(),
+      "[Standard] Perform Hartree Fock calculation.");
+
+    prm.declare_entry(
+		    "Add Correlation Potential to HF Calculation",
+		    "false",
+		    dealii::Patterns::Bool(),
+      "[Standard] Add LDA correlation potential to the Hartree Fock calculation.");
+
+    prm.declare_entry(
+      "TOL EXACT EXCHANGE ENERGY",
+      "1E-4",
+      dealii::Patterns::Double(0.0),
+      "[Advanced] Tolerance for exact exchange energy at convergence");
+
+			
+			prm.declare_entry(
           "MODEL XC INPUT FILE",
           "",
           dealii::Patterns::Anything(),
@@ -756,17 +782,7 @@ namespace dftfe
           dealii::Patterns::Integer(0, 1),
           "[Standard] Spin polarization: 0 for no spin polarization and 1 for collinear spin polarization calculation. Default option is 0.");
 
-        prm.declare_entry(
-          "NONCOLLINEAR SPIN",
-          "false",
-          dealii::Patterns::Bool(),
-          "[Standard] Perform a noncollinear spin calculation. Default option is false.");
 
-        prm.declare_entry(
-          "SPIN-ORBIT COUPLING",
-          "false",
-          dealii::Patterns::Bool(),
-          "[Standard] Perform a an SOC calculation, requires fully relativistic pseudopotentials. Recommended pseudopotential databases are http://www.quantum-simulation.org/potentials/sg15\_oncv or http://www.pseudo-dojo.org/. Default option is false.");
 
         prm.declare_entry(
           "TOTAL MAGNETIZATION",
@@ -862,12 +878,6 @@ namespace dftfe
           "[Standard] Fermi-Dirac smearing temperature (in Kelvin).");
 
         prm.declare_entry(
-          "LDOS TEMPERATURE",
-          "10000.0",
-          dealii::Patterns::Double(1e-5),
-          "[Standard] Temperature for LDOS calculation (in Kelvin).");
-
-        prm.declare_entry(
           "MAXIMUM ITERATIONS",
           "200",
           dealii::Patterns::Integer(1, 1000),
@@ -898,16 +908,10 @@ namespace dftfe
           "[Standard] Mixing parameter to be used in density mixing schemes. For default value of 0.0, it is heuristically set for different mixing schemes (0.2 for Anderson, and 0.5 for Kerker and LRD.");
 
         prm.declare_entry(
-          "INVERSE KERKER MIXING PARAMETER",
-          "0.0",
-          dealii::Patterns::Double(-1e-12, 1000.0),
-          "[Standard] Mixing parameter to be used in for gradient of potential in density mixing schemes. Setting this parameter to a non-zero value enables the use of inner products of gradient of the electrostatic potential similiar to the inverse Kerker metric in VASP. For default value of 0.0, this feature is disabled.");
-
-        prm.declare_entry(
           "SPIN MIXING ENHANCEMENT FACTOR",
           "1.0",
           dealii::Patterns::Double(-1e-12, 100.0),
-          R"([Standard] Scales the mixing parameter for the spin densities as SPIN MIXING ENHANCEMENT FACTOR times MIXING PARAMETER. This parameter is not used for LOW\_RANK\_DIELECM\_PRECOND mixing method.)");
+          "[Standard] Scales the mixing parameter for the spin densities as SPIN MIXING ENHANCEMENT FACTOR times MIXING PARAMETER. This parameter is not used for LOW\_RANK\_DIELECM\_PRECOND mixing method.");
 
         prm.declare_entry(
           "ADAPT ANDERSON MIXING PARAMETER",
@@ -937,7 +941,7 @@ namespace dftfe
           "MIXING METHOD",
           "ANDERSON",
           dealii::Patterns::Selection(
-            "ANDERSON|ANDERSON_WITH_KERKER|ANDERSON_WITH_RESTA|LOW_RANK_DIELECM_PRECOND|ANDERSON_WITH_LDOS"),
+            "ANDERSON|ANDERSON_WITH_KERKER|ANDERSON_WITH_RESTA|LOW_RANK_DIELECM_PRECOND"),
           "[Standard] Method for density mixing. ANDERSON is the default option.");
 
 
@@ -1064,9 +1068,9 @@ namespace dftfe
 
           prm.declare_entry(
             "CHEBY WFC BLOCK SIZE",
-            "400",
+            "200",
             dealii::Patterns::Integer(1),
-            "[Advanced] Chebyshev filtering procedure involves the matrix-matrix multiplication where one matrix corresponds to the discretized Hamiltonian and the other matrix corresponds to the wavefunction matrix. The matrix-matrix multiplication is accomplished in a loop over the number of blocks of the wavefunction matrix to reduce the memory footprint of the code. This parameter specifies the block size of the wavefunction matrix to be used in the matrix-matrix multiplication. The optimum value is dependent on the computing architecture. For optimum work sharing during band parallelization (NPBAND > 1), we recommend adjusting CHEBY WFC BLOCK SIZE and NUMBER OF KOHN-SHAM WAVEFUNCTIONS such that NUMBER OF KOHN-SHAM WAVEFUNCTIONS/NPBAND/CHEBY WFC BLOCK SIZE equals an integer value. Default value is 400.");
+            "[Advanced] Chebyshev filtering procedure involves the matrix-matrix multiplication where one matrix corresponds to the discretized Hamiltonian and the other matrix corresponds to the wavefunction matrix. The matrix-matrix multiplication is accomplished in a loop over the number of blocks of the wavefunction matrix to reduce the memory footprint of the code. This parameter specifies the block size of the wavefunction matrix to be used in the matrix-matrix multiplication. The optimum value is dependent on the computing architecture. For optimum work sharing during band parallelization (NPBAND > 1), we recommend adjusting CHEBY WFC BLOCK SIZE and NUMBER OF KOHN-SHAM WAVEFUNCTIONS such that NUMBER OF KOHN-SHAM WAVEFUNCTIONS/NPBAND/CHEBY WFC BLOCK SIZE equals an integer value. Default value is 200.");
 
           prm.declare_entry(
             "WFC BLOCK SIZE",
@@ -1146,14 +1150,8 @@ namespace dftfe
           prm.declare_entry(
             "COMMUN PREC CHEBY",
             "STANDARD",
-            dealii::Patterns::Selection("STANDARD|FP32|BF16|COMPRESSED"),
-            "[Advanced] Sets communication precision for residual based Chebyshev filtering. Default setting is STANDARD. FP32, BF16 and COMPRESSED are ignored if USE SINGLE PREC CHEBY and USE GPU are false.");
-
-          prm.declare_entry(
-            "COMPRESS BITS PER VALUE",
-            "16",
-            dealii::Patterns::Selection("8|10|12|16"),
-            "[Advanced] Bits per value for compression. Allowed values: 8, 10, 12, 16. Default 16");
+            dealii::Patterns::Selection("STANDARD|FP32|BF16"),
+            "[Advanced] Sets communication precision for residual based Chebyshev filtering. Default setting is STANDARD. FP32 and BF16 are ignored if USE SINGLE PREC CHEBY and USE GPU are false.");
 
           prm.declare_entry(
             "USE MIXED PREC COMMUN ONLY XTOX XTHX",
@@ -1336,6 +1334,14 @@ namespace dftfe
     finiteElementPolynomialOrderElectrostatics = 1;
     n_refinement_steps                         = 1;
     numberEigenValues                          = 1;
+    exxFractionForwardCalc = -0.25;
+    exxFractionInvCalc = -1.0;
+    mixingParameterForExactExchange = 1.0;
+    HFInInvCalc = true;
+    maxOuterSCFIterationsInInvCalc = 100;
+    HFInForwardCalc = true;
+    tolExactExchange = 1e-4;
+    addLDAVcToHFCalc = false;
     XCType                                     = "GGA-PBE";
     useLibXCForXCEvaluation                    = true;
     spinPolarized                              = 0;
@@ -1365,7 +1371,6 @@ namespace dftfe
     absLinearSolverTolerance                 = 1e-10;
     selfConsistentSolverTolerance            = 1e-10;
     TVal                                     = 500;
-    LDOSTemperature                          = 10000.0;
     tot_magnetization                        = 0.0;
     useAtomicMagnetizationGuessConstraintMag = false;
     absLinearSolverToleranceHelmholtz        = 1e-10;
@@ -1401,14 +1406,15 @@ namespace dftfe
 
     std::string coordinatesGaussianDispFile = "";
 
-    outerAtomBallRadius = 2.5;
-    innerAtomBallRadius = 0.0;
-    meshSizeOuterDomain = 10.0;
-    meshSizeInnerBall   = 1.0;
-    meshSizeOuterBall   = 1.0;
-    numLevels           = 1;
-    topfrac             = 0.1;
-    kerkerParameter     = 0.05;
+    outerAtomBallRadius            = 2.5;
+    innerAtomBallRadius            = 0.0;
+    meshSizeOuterDomain            = 10.0;
+    meshSizeInnerBall              = 1.0;
+    meshSizeOuterBall              = 1.0;
+    numLevels                      = 1;
+    numberWaveFunctionsForEstimate = 5;
+    topfrac                        = 0.1;
+    kerkerParameter                = 0.05;
 
     isIonForce             = false;
     isCellStress           = false;
@@ -1416,7 +1422,8 @@ namespace dftfe
     nonSelfConsistentForce = false;
     forceRelaxTol          = 1e-4; // Hartree/Bohr
     stressRelaxTol         = 1e-6; // Hartree/Bohr^3
-    cellConstraintType     = 12;   // all cell components to be relaxed
+    toleranceKinetic       = 1e-03;
+    cellConstraintType     = 12; // all cell components to be relaxed
 
     verbosity                                      = 0;
     keepScratchFolder                              = false;
@@ -1425,6 +1432,7 @@ namespace dftfe
     loadQuadData                                   = false;
     restartSpinFromNoSpin                          = false;
     reproducible_output                            = false;
+    meshAdaption                                   = false;
     pinnedNodeForPBC                               = true;
     startingWFCType                                = "";
     restrictToOnePass                              = false;
@@ -1479,8 +1487,6 @@ namespace dftfe
     useDensityMatrixPerturbationRankUpdates        = false;
     smearedNuclearCharges                          = false;
     floatingNuclearCharges                         = false;
-    smearedNuclearChargePathway                    = "ANALYTIC_SMEARED_LOAD";
-    analyticSmearedLoadRadius                      = 0.0;
     multipoleBoundaryConditions                    = false;
     nonLinearCoreCorrection                        = false;
     maxLineSearchIterCGPRP                         = 5;
@@ -1621,10 +1627,6 @@ namespace dftfe
       saveQuadData          = prm.get_bool("SAVE QUAD DATA");
       loadQuadData          = prm.get_bool("LOAD QUAD DATA");
       restartSpinFromNoSpin = prm.get_bool("RESTART SP FROM NO SP");
-      restartNonCollinartFromCollinear =
-        prm.get_bool("RESTART NONCOLLINEAR FROM COLLINEAR");
-      magPhi   = prm.get_double("MAG PHI");
-      magTheta = prm.get_double("MAG THETA");
       if (solverMode == "NEB")
         saveQuadData = true;
     }
@@ -1682,9 +1684,6 @@ namespace dftfe
       pinnedNodeForPBC       = prm.get_bool("POINT WISE DIRICHLET CONSTRAINT");
       smearedNuclearCharges  = prm.get_bool("SMEARED NUCLEAR CHARGES");
       floatingNuclearCharges = prm.get_bool("FLOATING NUCLEAR CHARGES");
-      smearedNuclearChargePathway = prm.get("SMEARED NUCLEAR CHARGE PATHWAY");
-      analyticSmearedLoadRadius =
-        prm.get_double("ANALYTIC SMEARED LOAD RADIUS");
       multipoleBoundaryConditions =
         prm.get_bool("MULTIPOLE BOUNDARY CONDITIONS");
     }
@@ -1705,10 +1704,6 @@ namespace dftfe
              finiteElementPolynomialOrderElectrostatics) :
           prm.get_integer("POLYNOMIAL ORDER DENSITY NODAL");
       densityQuadratureRule = prm.get_integer("DENSITY QUADRATURE RULE");
-      intermediateDensityQuadratureRule =
-        prm.get_integer("INTERMEDIATE DENSITY QUADRATURE RULE");
-      useIntermediateDensityQuadrature =
-        prm.get_bool("USE INTERMEDIATE DENSITY QUADRATURE");
       prm.enter_subsection("Auto mesh generation parameters");
       {
         outerAtomBallRadius   = prm.get_double("ATOM BALL RADIUS");
@@ -1716,9 +1711,13 @@ namespace dftfe
         meshSizeOuterDomain   = prm.get_double("BASE MESH SIZE");
         meshSizeInnerBall     = prm.get_double("MESH SIZE AT ATOM");
         meshSizeOuterBall     = prm.get_double("MESH SIZE AROUND ATOM");
+        meshAdaption          = prm.get_bool("MESH ADAPTION");
         autoAdaptBaseMeshSize = prm.get_bool("AUTO ADAPT BASE MESH SIZE");
         topfrac               = prm.get_double("TOP FRAC");
         numLevels             = prm.get_double("NUM LEVELS");
+        numberWaveFunctionsForEstimate =
+          prm.get_integer("ERROR ESTIMATE WAVEFUNCTIONS");
+        toleranceKinetic = prm.get_double("TOLERANCE FOR MESH ADAPTION");
         gaussianConstantForce =
           prm.get_double("GAUSSIAN CONSTANT FORCE GENERATOR");
         gaussianOrderForce = prm.get_double("GAUSSIAN ORDER FORCE GENERATOR");
@@ -1775,21 +1774,22 @@ namespace dftfe
         dc_d3cutoff3                = prm.get_double("THREE BODY CUTOFF");
         dc_d3cutoffCN               = prm.get_double("CN CUTOFF");
       }
-
       prm.leave_subsection();
-      isPseudopotential = prm.get_bool("PSEUDOPOTENTIAL CALCULATION");
-      // Both compatibility inputs are known only at this point in parsing.
-      if (!isPseudopotential || !smearedNuclearCharges)
-        smearedNuclearChargePathway = "LEGACY_VSELF";
+      isPseudopotential   = prm.get_bool("PSEUDOPOTENTIAL CALCULATION");
       pseudoTestsFlag     = prm.get_bool("PSEUDO TESTS FLAG");
       pseudoPotentialFile = prm.get("PSEUDOPOTENTIAL FILE NAMES LIST");
       XCType              = prm.get("EXCHANGE CORRELATION TYPE");
+      exxFractionForwardCalc = prm.get_double("FRACTION OF EXACT EXCHANGE IN FORWARD CALC");
+      exxFractionInvCalc = prm.get_double("FRACTION OF EXACT EXCHANGE IN INV CALC");
+      mixingParameterForExactExchange = prm.get_double("MIXING PARAMETER FOR EXACT EXCHANGE OPERATOR");
+      HFInInvCalc  = prm.get_bool("Hartree Fock Calculation IN INV CALC");
+      HFInForwardCalc = prm.get_bool("Hartree Fock Calculation in Forward Solve");
+      maxOuterSCFIterationsInInvCalc = prm.get_integer("MAX OUTER ITERATIONS DURING INV CALC");
+      addLDAVcToHFCalc = prm.get_bool("Add Correlation Potential to HF Calculation");
+      tolExactExchange = prm.get_double("TOL EXACT EXCHANGE ENERGY");
       useLibXCForXCEvaluation =
         prm.get_bool("USE LIBXC FOR XC FUNCTIONAL EVALUATION");
-      noncolin = prm.get_bool("NONCOLLINEAR SPIN");
-      hasSOC   = prm.get_bool("SPIN-ORBIT COUPLING");
-      spinPolarized =
-        noncolin || hasSOC ? 0 : prm.get_integer("SPIN POLARIZATION");
+      spinPolarized     = prm.get_integer("SPIN POLARIZATION");
       modelXCInputFile  = prm.get("MODEL XC INPUT FILE");
       auxBasisTypeXC    = prm.get("AUX BASIS TYPE");
       auxBasisDataXC    = prm.get("AUX BASIS DATA");
@@ -1810,14 +1810,11 @@ namespace dftfe
     prm.enter_subsection("SCF parameters");
     {
       TVal                          = prm.get_double("TEMPERATURE");
-      LDOSTemperature               = prm.get_double("LDOS TEMPERATURE");
       numSCFIterations              = prm.get_integer("MAXIMUM ITERATIONS");
       selfConsistentSolverTolerance = prm.get_double("TOLERANCE");
       selfConsistentSolverEnergyTolerance = prm.get_double("ENERGY TOLERANCE");
       mixingHistory                       = prm.get_integer("MIXING HISTORY");
       mixingParameter                     = prm.get_double("MIXING PARAMETER");
-      inverseKerkerMixingParameter =
-        prm.get_double("INVERSE KERKER MIXING PARAMETER");
       spinMixingEnhancementFactor =
         prm.get_double("SPIN MIXING ENHANCEMENT FACTOR");
       adaptAndersonMixingParameter =
@@ -1872,10 +1869,7 @@ namespace dftfe
           prm.get_bool("USE MIXED PREC COMMUN ONLY XTOX XTHX");
         communPrecCheby    = prm.get("COMMUN PREC CHEBY");
         useSinglePrecCheby = prm.get_bool("USE SINGLE PREC CHEBY");
-
-        compressBitsPerValue = prm.get_integer("COMPRESS BITS PER VALUE");
-
-        tensorOpType = prm.get("TENSOR OP TYPE SINGLE PREC CHEBY");
+        tensorOpType       = prm.get("TENSOR OP TYPE SINGLE PREC CHEBY");
         overlapComputeCommunCheby =
           prm.get_bool("OVERLAP COMPUTE COMMUN CHEBY");
         overlapComputeCommunOrthoRR =
@@ -1896,6 +1890,7 @@ namespace dftfe
       prm.leave_subsection();
     }
     prm.leave_subsection();
+
 
     prm.enter_subsection("Poisson problem parameters");
     {
@@ -1927,7 +1922,10 @@ namespace dftfe
       startingTempBOMD            = prm.get_double("STARTING TEMPERATURE");
       thermostatTimeConstantBOMD  = prm.get_double("THERMOSTAT TIME CONSTANT");
       MaxWallTime                 = prm.get_double("MAX WALL TIME");
-      tempControllerTypeBOMD      = prm.get("TEMPERATURE CONTROLLER TYPE");
+
+
+
+      tempControllerTypeBOMD = prm.get("TEMPERATURE CONTROLLER TYPE");
     }
     prm.leave_subsection();
 
@@ -1945,46 +1943,41 @@ namespace dftfe
     if (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0 &&
         verbosity >= 1 && printParams)
       {
-        prm.print_parameters(std::cout, dealii::ParameterHandler::ShortPRM);
+        prm.print_parameters(std::cout, dealii::ParameterHandler::ShortText);
       }
 
     //
     setAutoParameters(mpi_comm_parent);
   }
 
+
+
   void
   dftParameters::check_parameters(const MPI_Comm &mpi_comm_parent) const
   {
+
+    if (HFInForwardCalc && (exxFractionForwardCalc < -0.1 ))
+    { 
+	    AssertThrow(false, dealii::ExcMessage(
+          "DFT-FE Error: exxFractionForwardCalc is not set properly"));
+    }
+
+    if (HFInInvCalc  &&(exxFractionInvCalc < -0.1))
+    {
+    AssertThrow(false, dealii::ExcMessage(
+          "DFT-FE Error: exxFractionInvCalc is not set properly"));
+    }
     AssertThrow(
       !((periodicX || periodicY || periodicZ) && writeLdosFile),
       dealii::ExcMessage(
         "DFT-FE Error: LOCAL DENSITY OF STATES is currently not implemented in the case of periodic and semi-periodic boundary conditions."));
 
-    if (!useLibXCForXCEvaluation)
-      AssertThrow(
-        !(XCType == "GGA-REVPBE" || XCType == "GGA-PBESOL"),
-        dealii::ExcMessage(
-          "DFT-FE Error: USE LIBXC FOR XC FUNCTIONAL EVALUATION has to be set to true for this XC functional"));
+
     if (floatingNuclearCharges)
       AssertThrow(
         smearedNuclearCharges,
         dealii::ExcMessage(
           "DFT-FE Error: FLOATING NUCLEAR CHARGES can only be used if SMEARED NUCLEAR CHARGES is set to true."));
-    if (smearedNuclearChargePathway == "ANALYTIC_SMEARED_LOAD")
-      {
-        AssertThrow(
-          isPseudopotential,
-          dealii::ExcMessage(
-            "DFT-FE Error: the selected SMEARED NUCLEAR CHARGE PATHWAY is only supported for pseudopotential calculations."));
-        AssertThrow(
-          smearedNuclearCharges,
-          dealii::ExcMessage(
-            "DFT-FE Error: the selected SMEARED NUCLEAR CHARGE PATHWAY requires SMEARED NUCLEAR CHARGES=true."));
-        AssertThrow(
-          analyticSmearedLoadRadius >= 0.0,
-          dealii::ExcMessage(
-            "DFT-FE Error: ANALYTIC SMEARED LOAD RADIUS must be non-negative for ANALYTIC_SMEARED_LOAD."));
-      }
 #ifdef USE_COMPLEX
     if (solverMode == "BANDS")
       AssertThrow(
@@ -2001,16 +1994,7 @@ namespace dftfe
     AssertThrow(solverMode != "BANDS",
                 dealii::ExcMessage(
                   "DFT-FE Error: Real executable cannot be used for bands."));
-    AssertThrow(
-      !(noncolin || hasSOC),
-      dealii::ExcMessage(
-        "DFT-FE Error: Real executable cannot be used noncollinear magnetism and spin-orbit coupling."));
 #endif
-    if (noncolin || hasSOC)
-      AssertThrow(
-        mixingMethod != "LOW_RANK_DIELECM_PRECOND",
-        dealii::ExcMessage(
-          "DFT-FE Error: LRDM mixing scheme for noncollinear magnetism and spin-orbit coupling is not implemented yet."));
     if (numberEigenValues != 0)
       AssertThrow(
         nbandGrps <= numberEigenValues,
@@ -2078,28 +2062,21 @@ namespace dftfe
         wfcBlockSize == chebyWfcBlockSize,
         dealii::ExcMessage(
           "DFT-FE Error: WFC BLOCK SIZE and CHEBY WFC BLOCK SIZE must be same for band parallelization."));
-
-    if (communPrecCheby == "COMPRESSED")
-      {
-        // BFP kernels lay out data in fixed-size 4-value blocks; the
-        // MPICommunicatorP2P compressed buffer is sized assuming the per-rank
-        // total (num_indices * blockSize) is a multiple of 4.
-        AssertThrow(
-          chebyWfcBlockSize % 4 == 0,
-          dealii::ExcMessage(
-            "DFT-FE Error: CHEBY WFC BLOCK SIZE must be a multiple of 4 when COMMUN PREC CHEBY = COMPRESSED."));
-      }
-
     if (XCType.substr(0, 4) == "MGGA")
       {
+        AssertThrow(
+          !isCellStress,
+          dealii::ExcMessage(
+            "DFT-FE Error: Computation of CELL STRESS with MGGA functional is not completed yet."));
+        if (!floatingNuclearCharges)
+          AssertThrow(
+            !isIonForce,
+            dealii::ExcMessage(
+              "DFT-FE Error: Computation of ION FORCE with MGGA functional in all-electron calculation is not completed yet."));
         AssertThrow(
           mixingMethod != "LOW_RANK_DIELECM_PRECOND",
           dealii::ExcMessage(
             "DFT-FE Error: LRDM mixing scheme in MGGA functional is not completed yet."));
-        AssertThrow(
-          !(noncolin || hasSOC),
-          dealii::ExcMessage(
-            "DFT-FE Error: Non-collinear magnetism and spin-orbit coupling with MGGA functional is not implemented yet."));
       }
 
     bool isHubbard = (XCType.substr(XCType.size() - 2) == "+U");
@@ -2115,12 +2092,6 @@ namespace dftfe
         !(useSymm),
         dealii::ExcMessage(
           "DFT-FE Error: Group symmetry for Hubbard is not implemented yet."));
-
-    if (isHubbard)
-      AssertThrow(
-        !(noncolin || hasSOC),
-        dealii::ExcMessage(
-          "DFT-FE Error: Non-collinear magnetism and spin-orbit coupling with Hubbard is not implemented yet."));
 
     if (dc_dispersioncorrectiontype == 1 || dc_dispersioncorrectiontype == 2)
       {
@@ -2157,6 +2128,7 @@ namespace dftfe
                     dealii::ExcMessage(std::string(
                       "D4 MBD has not been parametrized for this functional.")));
               }
+
             else if (XCType == "MGGA-SCAN")
               {
                 if (dc_dispersioncorrectiontype == 1)
@@ -2176,12 +2148,14 @@ namespace dftfe
       }
   }
 
+
   void
   dftParameters::setAutoParameters(const MPI_Comm &mpi_comm_parent)
   {
     //
     // Automated choice of mesh related parameters
     //
+
     if (isBOMD)
       isIonForce = true;
 
@@ -2241,6 +2215,7 @@ namespace dftfe
       {
         gaussianOrderMoveMeshToAtoms = 4.0;
       }
+
     //
     // Automated choice of eigensolver parameters
     //
@@ -2255,7 +2230,7 @@ namespace dftfe
       }
     else if (!isPseudopotential && orthogType == "Auto" && !useDevice)
       {
-#ifdef USE_PETSC
+#ifdef USE_PETSC;
         if (verbosity >= 1 &&
             dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0)
           std::cout
@@ -2275,7 +2250,7 @@ namespace dftfe
       }
     else if (orthogType == "GS" && !useDevice)
       {
-#ifndef USE_PETSC
+#ifndef USE_PETSC;
         AssertThrow(
           orthogType != "GS",
           dealii::ExcMessage(
@@ -2299,6 +2274,7 @@ namespace dftfe
             "DFT-FE Error: GS is not implemented on GPUs. Use Auto option."));
       }
 
+
     if (algoType == "FAST")
       {
         useMixedPrecXtOX                    = true;
@@ -2314,6 +2290,7 @@ namespace dftfe
         overlapComputeCommunCheby = false;
       }
 #endif
+
 
 #ifndef DFTFE_WITH_DEVICE
     useDevice           = false;
@@ -2353,13 +2330,10 @@ namespace dftfe
         else if (mixingMethod == "LOW_RANK_DIELECM_PRECOND")
           chebyshevTolerance = 2.0e-3;
         else if (mixingMethod == "ANDERSON_WITH_KERKER" ||
-                 mixingMethod == "ANDERSON_WITH_RESTA" ||
-                 mixingMethod == "ANDERSON_WITH_LDOS")
+                 mixingMethod == "ANDERSON_WITH_RESTA")
           chebyshevTolerance = 1.0e-2;
         else if (solverMode != "NSCF" && solverMode != "BANDS")
           chebyshevTolerance = 5.0e-2;
-        else
-          chebyshevTolerance = 1.0e-8;
       }
 
     if (std::fabs(mixingParameter - 0.0) < 1.0e-12)
@@ -2367,8 +2341,7 @@ namespace dftfe
         if (mixingMethod == "LOW_RANK_DIELECM_PRECOND")
           mixingParameter = 0.5;
         else if (mixingMethod == "ANDERSON_WITH_KERKER" ||
-                 mixingMethod == "ANDERSON_WITH_RESTA" ||
-                 mixingMethod == "ANDERSON_WITH_LDOS")
+                 mixingMethod == "ANDERSON_WITH_RESTA")
           mixingParameter = 0.5;
         else
           mixingParameter = 0.2;
@@ -2391,16 +2364,6 @@ namespace dftfe
                                   finiteElementPolynomialOrderRhoNodal + 1;
       }
 
-    if (useIntermediateDensityQuadrature)
-      {
-        if (intermediateDensityQuadratureRule == 0)
-          intermediateDensityQuadratureRule =
-            2 * finiteElementPolynomialOrder + 1;
-
-        if (intermediateDensityQuadratureRule >= densityQuadratureRule)
-          useIntermediateDensityQuadrature = false;
-      }
-
 
     // checking if the XC type is compatible with
     // overlap compute communication cheby
@@ -2421,4 +2384,6 @@ namespace dftfe
           }
       }
   }
+
+
 } // namespace dftfe

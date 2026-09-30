@@ -1,5 +1,4 @@
-#include <dftfe/config.h>
-#include <dftfe/linearSolverCGDeviceKernels.h>
+#include "linearSolverCGDeviceKernels.h"
 
 namespace dftfe
 {

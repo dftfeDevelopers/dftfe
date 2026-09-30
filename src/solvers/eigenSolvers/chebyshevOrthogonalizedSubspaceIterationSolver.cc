@@ -16,12 +16,11 @@
 //
 // @author Phani Motamarri, Sambit Das
 
-#include <dftfe/config.h>
-#include <dftfe/chebyshevOrthogonalizedSubspaceIterationSolver.h>
-#include <dftfe/dftUtils.h>
-#include <dftfe/linearAlgebraOperations.h>
-#include <dftfe/linearAlgebraOperationsCPU.h>
-#include <dftfe/vectorUtilities.h>
+#include <chebyshevOrthogonalizedSubspaceIterationSolver.h>
+#include <dftUtils.h>
+#include <linearAlgebraOperations.h>
+#include <linearAlgebraOperationsCPU.h>
+#include <vectorUtilities.h>
 
 static const dftfe::uInt order_lookup[][2] = {
   {500, 24}, // <= 500 ~> chebyshevOrder = 24
@@ -180,8 +179,6 @@ namespace dftfe
         if (d_dftParams.orthogType.compare("CGS") == 0 &&
             !d_dftParams.isPseudopotential)
           chebyshevOrder *= 0.5;
-        if (d_dftParams.noncolin || d_dftParams.hasSOC)
-          chebyshevOrder *= 2.0;
       }
 
     chebyshevOrder =
@@ -272,6 +269,8 @@ namespace dftfe
           NULL;
 
     std::vector<double> eigenValuesBlock(vectorsBlockSize);
+    /// storage for cell wavefunction matrix
+    std::vector<dataTypes::number> cellWaveFunctionMatrix;
 
     dftfe::Int startIndexBandParal = totalNumberWaveFunctions;
     dftfe::Int numVectorsBandParal = 0;
@@ -524,7 +523,7 @@ namespace dftfe
       }
 
     computingTimerStandard.leave_subsection("Chebyshev filtering on CPU");
-    if (d_dftParams.verbosity >= 3)
+    if (d_dftParams.verbosity >= 4)
       pcout << "ChebyShev Filtering Done: " << std::endl;
 
     if (d_dftParams.orthogType.compare("CGS") == 0)
@@ -588,7 +587,7 @@ namespace dftfe
           eigenVectorsFlattened);
         computing_timer.leave_subsection("Gram-Schmidt Orthogn Opt");
 
-        if (d_dftParams.verbosity >= 3)
+        if (d_dftParams.verbosity >= 4)
           pcout << "Orthogonalization Done: " << std::endl;
 
         computing_timer.enter_subsection("Rayleigh-Ritz proj Opt");
@@ -610,7 +609,7 @@ namespace dftfe
 
         computing_timer.leave_subsection("Rayleigh-Ritz proj Opt");
 
-        if (d_dftParams.verbosity >= 3)
+        if (d_dftParams.verbosity >= 4)
           {
             pcout << "Rayleigh-Ritz Done: " << std::endl;
             pcout << std::endl;
@@ -637,7 +636,7 @@ namespace dftfe
       }
 
 
-    if (d_dftParams.verbosity >= 3)
+    if (d_dftParams.verbosity >= 4)
       {
         pcout << "EigenVector Residual Computation Done: " << std::endl;
         pcout << std::endl;

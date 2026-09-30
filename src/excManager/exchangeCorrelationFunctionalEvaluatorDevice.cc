@@ -15,13 +15,13 @@
 // ---------------------------------------------------------------------
 //
 
-#include <dftfe/exchangeCorrelationFunctionalEvaluator.h>
-#include <dftfe/deviceKernelsGeneric.h>
-#include <dftfe/DeviceAPICalls.h>
-#include <dftfe/DeviceDataTypeOverloads.h>
-#include <dftfe/DeviceTypeConfig.h>
-#include <dftfe/DeviceKernelLauncherHelpers.h>
-#include <dftfe/BLASWrapper.h>
+#include <exchangeCorrelationFunctionalEvaluator.h>
+#include <deviceKernelsGeneric.h>
+#include <DeviceAPICalls.h>
+#include <DeviceDataTypeOverloads.h>
+#include <DeviceTypeConfig.h>
+#include <DeviceKernelLauncherHelpers.h>
+#include <BLASWrapper.h>
 
 namespace dftfe
 {
@@ -326,12 +326,7 @@ namespace dftfe
     bool              tauNeededC,                                          \
     bool              enforceFHCC);
   } // namespace
-
-#include <dftfe/XCfunctionalDefs/gga_pbe_correlation_device_helpers.h>
-#include <dftfe/XCfunctionalDefs/mgga_r2scan_device_helpers.h>
-#include <dftfe/XCfunctionalDefs/mgga_scan_device_helpers.h>
-
-#include <dftfe/exchangeCorrelationFunctionalEvaluation.def>
+#include <exchangeCorrelationFunctionalEvaluation.def>
 } // namespace dftfe
 
 #undef DFTFE_FUNCTIONALEVALUATOR_LDA_X
@@ -596,7 +591,7 @@ namespace dftfe
                         tauNeededC,                                         \
                         enforceFHCC);                                       \
   }
-#include <dftfe/exchangeCorrelationFunctionalEvaluation.def>
+#include <exchangeCorrelationFunctionalEvaluation.def>
 } // namespace dftfe
 
 #undef DFTFE_FUNCTIONALEVALUATOR_LDA_X

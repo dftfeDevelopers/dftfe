@@ -17,10 +17,10 @@
 // @author Vishal Subramanian
 //
 
-#include <dftfe/MultiVectorPoissonLinearSolverProblem.h>
-#include <dftfe/dftUtils.h>
-#include <dftfe/vectorUtilities.h>
-#include <dftfe/poissonSolverProblem.h>
+#include "MultiVectorPoissonLinearSolverProblem.h"
+#include "dftUtils.h"
+#include "vectorUtilities.h"
+#include "poissonSolverProblem.h"
 
 namespace dftfe
 {
@@ -145,6 +145,7 @@ namespace dftfe
 
 
 
+    /*
     double l2NormStiff = 0.0;
     for (dftfe::uInt iNode = 0;
          iNode < d_numCells * d_numberDofsPerElement * d_numberDofsPerElement;
@@ -157,7 +158,7 @@ namespace dftfe
 
     MPI_Allreduce(
       MPI_IN_PLACE, &l2NormStiff, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
-
+*/
 
     d_constraintsInfo.initialize(d_matrixFreeDataPtr->get_vector_partitioner(
                                    matrixFreeVectorComponent),
@@ -176,6 +177,8 @@ namespace dftfe
   void
   MultiVectorPoissonLinearSolverProblem<memorySpace>::distributeX()
   {
+    d_blockedXPtr->updateGhostValues();
+    d_constraintsInfo.distribute(*d_blockedXPtr);
     d_BLASWrapperPtr->axpby(d_locallyOwnedSize * d_blockSize,
                             d_alpha,
                             d_blockedNDBCPtr->data(),
@@ -183,7 +186,7 @@ namespace dftfe
                             d_blockedXPtr->data());
 
     d_blockedXPtr->updateGhostValues();
-    d_constraintsInfo.distribute(*d_blockedXPtr);
+//    d_constraintsInfo.distribute(*d_blockedXPtr);
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
@@ -202,6 +205,7 @@ namespace dftfe
     d_diagonalSqrtA =
       d_basisOperationsPtr->inverseSqrtStiffnessVectorBasisData();
 
+    /*
     d_blockSize = 1;
 
     dftfe::poissonSolverProblem<2> phiTotalSolverProblem(mpi_communicator);
@@ -271,6 +275,8 @@ namespace dftfe
       }
 
     d_blockSize = 0;
+
+    */
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
@@ -479,6 +485,7 @@ namespace dftfe
         }
   }
 
+  /*
   template <dftfe::utils::MemorySpace memorySpace>
   void
   MultiVectorPoissonLinearSolverProblem<memorySpace>::tempRhsVecCalc(
@@ -511,13 +518,6 @@ namespace dftfe
     std::vector<dftfe::uInt> flattenedArrayMacroCellLocalProcIndexIdMap,
       flattenedArrayCellLocalProcIndexIdMap;
 
-    vectorTools::computeCellLocalIndexSetMap(
-      rhs.getMPIPatternP2P(),
-      *d_matrixFreeDataPtr,
-      d_matrixFreeVectorComponent,
-      d_blockSize,
-      flattenedArrayCellLocalProcIndexIdMap);
-
     d_basisOperationsPtr->reinit(d_blockSize,
                                  d_cellBlockSize,
                                  d_matrixFreeQuadratureComponentRhs,
@@ -525,6 +525,9 @@ namespace dftfe
                                  false); // TODO should this be set to true
                                          //
 
+    flattenedArrayCellLocalProcIndexIdMap = d_basisOperationsPtr->getFlattenedMapsHost();
+   
+    
     double l2ErrorIndex = 0.0;
     for (dftfe::uInt i = 0; i < flattenedArrayCellLocalProcIndexIdMap.size();
          i++)
@@ -587,12 +590,18 @@ namespace dftfe
             }
           iElem++;
         }
+
+    accumulateFromCellNodalData(
+        const ValueTypeBasisCoeff *cellNodalDataPtr,
+        dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
+          &nodalData)
     d_constraintsInfo.distribute_slave_to_master(rhs);
 
     // MPI operation to sync data
     //    rhs.compress(dealii::VectorOperation::add);
     rhs.accumulateAddLocallyOwned();
   }
+*/
 
   template <dftfe::utils::MemorySpace memorySpace>
   dftfe::linearAlgebra::MultiVector<double, memorySpace> &
@@ -601,6 +610,7 @@ namespace dftfe
     dftfe::linearAlgebra::MultiVector<double, memorySpace> &outputVec,
     dftfe::uInt                                             blockSizeInput)
   {
+
     d_basisOperationsPtr->reinit(blockSizeInput,
                                  d_cellBlockSize,
                                  d_matrixFreeQuadratureComponentRhs,
@@ -698,12 +708,42 @@ namespace dftfe
     d_basisOperationsPtr->accumulateFromCellNodalData(
       rhsCellLLevelNodalData.data(), d_rhsVec);
 
+    /*
+    dftfe::linearAlgebra::MultiVector<double, memorySpace> tempVec(d_rhsVec, 0);
+    dftfe::utils::MemoryStorage<double, memorySpace> d_onesMemSpace;
+    d_onesMemSpace.resize(d_locallyOwnedSize);
+    d_onesMemSpace.setValue(1.0);
+
+    dftfe::utils::MemoryStorage<double, memorySpace> rhsL2NormMemSpace;
+    rhsL2NormMemSpace.resize(d_blockSize);
+    rhsL2NormMemSpace.setValue(0.0);
+
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> rhsL2NormHost;
+    rhsL2NormHost.resize(d_blockSize);
+    rhsL2NormHost.setValue(0.0);
+
+    d_BLASWrapperPtr->MultiVectorXDot(d_blockSize,
+                                    d_locallyOwnedSize,
+                                    d_rhsVec.data(),
+                                    d_rhsVec.data(),
+                                    d_onesMemSpace.data(),
+                                    tempVec.data(),
+                                    rhsL2NormMemSpace.data(),
+                                    mpi_communicator,
+                                    rhsL2NormHost.data());
+
+    pcout<<" Norm of rhs after cell:\n";
+   for( unsigned int iBlock = 0 ; iBlock < d_blockSize; iBlock++)
+   {
+	   pcout<<" iBlock = "<<iBlock<<" norm = "<<rhsL2NormHost[iBlock] <<"\n";
+   } 
+   */
 
     d_basisOperationsPtr->reinit(d_blockSize,
                                  d_cellBlockSize,
                                  d_matrixFreeQuadratureComponentRhs,
                                  true,   // TODO should this be set to true
-                                 false); // TODO should this be set to true
+                                 true); // TODO should this be set to true
                                          //
 
 
@@ -715,11 +755,30 @@ namespace dftfe
                                              d_mapQuadIdToProcId);
     d_constraintsInfo.distribute_slave_to_master(d_rhsVec);
     d_rhsVec.accumulateAddLocallyOwned();
+/*
+    d_BLASWrapperPtr->MultiVectorXDot(d_blockSize,
+                                    d_locallyOwnedSize,
+                                    d_rhsVec.data(),
+                                    d_rhsVec.data(),
+                                    d_onesMemSpace.data(),
+                                    tempVec.data(),
+                                    rhsL2NormMemSpace.data(),
+                                    mpi_communicator,
+                                    rhsL2NormHost.data());
 
+    pcout<<" Norm of rhs after cell:\n";
+   for( unsigned int iBlock = 0 ; iBlock < d_blockSize; iBlock++)
+   {
+           pcout<<" iBlock = "<<iBlock<<" norm = "<<rhsL2NormHost[iBlock] <<"\n";
+   }
+   */
     return d_rhsVec;
   }
 
   template class MultiVectorPoissonLinearSolverProblem<
     dftfe::utils::MemorySpace::HOST>;
-
+#if defined(DFTFE_WITH_DEVICE)
+    template class MultiVectorPoissonLinearSolverProblem<
+    dftfe::utils::MemorySpace::DEVICE>;
+#endif  
 } // namespace dftfe

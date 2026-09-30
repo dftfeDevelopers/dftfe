@@ -1,0 +1,81 @@
+// ---------------------------------------------------------------------
+//
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
+// authors.
+//
+// This file is part of the DFT-FE code.
+//
+// The DFT-FE code is free software; you can use it, redistribute
+// it, and/or modify it under the terms of the GNU Lesser General
+// Public License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+// The full text of the license can be found in the file LICENSE at
+// the top level of the DFT-FE distribution.
+//
+// ---------------------------------------------------------------------
+//
+//
+
+// Few macro definitions in this file are reused from Libxc 7.0.0
+
+#include <XCfunctionalDefs/lda_x_slater.h>
+#include <XCfunctionalDefs/lda_c_pw.h>
+#include <XCfunctionalDefs/lda_c_pz.h>
+#include <XCfunctionalDefs/lda_c_vwn.h>
+#include <XCfunctionalDefs/gga_x_pbe.h>
+#include <XCfunctionalDefs/gga_c_pbe.h>
+#include <XCfunctionalDefs/gga_x_rpbe.h>
+#include <XCfunctionalDefs/mgga_x_r2scan.h>
+#include <XCfunctionalDefs/mgga_c_r2scan.h>
+#include <XCfunctionalDefs/mgga_x_scan.h>
+#include <XCfunctionalDefs/mgga_c_scan.h>
+
+#ifndef UTILS
+#define UTILS
+
+#define M_SQRTPI        1.772453850905516027298167483341145182798
+#define M_CBRTPI        1.464591887561523263020142527263790391739
+#define M_SQRT3         1.732050807568877293527446341505872366943
+#define M_CBRT2         1.259921049894873164767210607278228350570
+#define M_CBRT3         1.442249570307408382321638310780109588392
+#define M_CBRT4         1.587401051968199474751705639272308260391
+#define M_CBRT5         1.709975946676696989353108872543860109868
+#define M_CBRT6         1.817120592832139658891211756327260502428
+#define M_CBRT7         1.912931182772389101199116839548760282862
+#define M_CBRT9         2.080083823051904114530056824357885386338
+#define M_PI            3.14159265358979323846
+#define POW_1_3(x) pow((x), 1.0/3.0)
+#define POW_3_2(x) pow((x), 3.0/2.0)
+#define POW_1_4(x) pow((x), 1.0/4.0)
+
+#define LOG_DBL_MIN        (std::log(DBL_MIN))
+#define LOG_DBL_MAX        (std::log(DBL_MAX))
+#define SQRT_DBL_EPSILON   (std::sqrt(DBL_EPSILON))
+#define DBL_EPSILON        2.2204460492503131e-16
+
+#define my_piecewise3(c, x1, x2) ((c) ? (x1) : (x2))
+#define my_piecewise5(c1, x1, c2, x2, x3) ((c1) ? (x1) : ((c2) ? (x2) : (x3)))
+#define m_min(x,y)  (((x)<(y)) ? (x) : (y))
+#define m_max(x,y)  (((x)>(y)) ? (x) : (y))
+
+#define DFTFE_KERNEL_ARGUMENT(...) __VA_ARGS__
+#endif
+DFTFE_FUNCTIONALEVALUATOR_LDA_X(SLATER,DFTFE_KERNEL_ARGUMENT(LDA_X_SLATER)) 
+
+DFTFE_FUNCTIONALEVALUATOR_LDA_C(PW,DFTFE_KERNEL_ARGUMENT(LDA_C_PW))   
+
+DFTFE_FUNCTIONALEVALUATOR_LDA_C(PZ,DFTFE_KERNEL_ARGUMENT(LDA_C_PZ))  
+
+DFTFE_FUNCTIONALEVALUATOR_LDA_C(VWN,DFTFE_KERNEL_ARGUMENT(LDA_C_VWN))  
+
+DFTFE_FUNCTIONALEVALUATOR_GGA_X(PBE, DFTFE_KERNEL_ARGUMENT(GGA_X_PBE))
+DFTFE_FUNCTIONALEVALUATOR_GGA_C(PBE, DFTFE_KERNEL_ARGUMENT(GGA_C_PBE))
+
+DFTFE_FUNCTIONALEVALUATOR_GGA_X(RPBE, DFTFE_KERNEL_ARGUMENT(GGA_X_RPBE))
+
+
+DFTFE_FUNCTIONALEVALUATOR_MGGA_X(R2SCAN, DFTFE_KERNEL_ARGUMENT(MGGA_X_R2SCAN))
+DFTFE_FUNCTIONALEVALUATOR_MGGA_C(R2SCAN, DFTFE_KERNEL_ARGUMENT(MGGA_C_R2SCAN))
+
+DFTFE_FUNCTIONALEVALUATOR_MGGA_X(SCAN, DFTFE_KERNEL_ARGUMENT(MGGA_X_SCAN))
+DFTFE_FUNCTIONALEVALUATOR_MGGA_C(SCAN, DFTFE_KERNEL_ARGUMENT(MGGA_C_SCAN))

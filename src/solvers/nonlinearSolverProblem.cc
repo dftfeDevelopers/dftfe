@@ -17,7 +17,7 @@
 // @author Sambit Das
 //
 
-#include <dftfe/nonlinearSolverProblem.h>
+#include <nonlinearSolverProblem.h>
 
 namespace dftfe
 {

@@ -20,7 +20,6 @@
 
 // deal.II header
 //
-#include <dftfe/config.h>
 #include <deal.II/base/data_out_base.h>
 #include <deal.II/base/multithread_info.h>
 #include <p4est_bits.h>
@@ -42,14 +41,14 @@
 #include <sys/time.h>
 #include <ctime>
 
-#include <dftfe/dft.h>
-#include <dftfe/dftParameters.h>
-#include <dftfe/deviceKernelsGeneric.h>
-#include <dftfe/dftUtils.h>
-#include <dftfe/dftfeWrapper.h>
-#include <dftfe/fileReaders.h>
-#include <dftfe/PeriodicTable.h>
-#include <dftfe/MemorySpaceType.h>
+#include "dft.h"
+#include "dftParameters.h"
+#include "deviceKernelsGeneric.h"
+#include "dftUtils.h"
+#include "dftfeWrapper.h"
+#include "fileReaders.h"
+#include "PeriodicTable.h"
+#include "MemorySpaceType.h"
 
 namespace dftfe
 {
@@ -844,6 +843,17 @@ namespace dftfe
     return std::make_tuple(d_dftfeBasePtr->getFreeEnergy(),
                            std::get<0>(t),
                            std::get<1>(t));
+  }
+
+  void
+  dftfeWrapper::computeStress()
+  {
+    AssertThrow(
+      d_mpi_comm_parent != MPI_COMM_NULL,
+      dealii::ExcMessage(
+        "DFT-FE Error: dftfeWrapper cannot be used on MPI_COMM_NULL."));
+
+    d_dftfeBasePtr->computeStress();
   }
 
   double

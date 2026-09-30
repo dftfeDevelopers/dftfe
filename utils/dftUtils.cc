@@ -31,8 +31,7 @@
  *
  */
 
-#include <dftfe/config.h>
-#include <dftfe/dftUtils.h>
+#include <dftUtils.h>
 
 #include <fstream>
 #include <iostream>

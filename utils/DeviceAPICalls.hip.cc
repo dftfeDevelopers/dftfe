@@ -1,4 +1,3 @@
-#include <dftfe/config.h>
 #include "hip/hip_runtime.h"
 // ---------------------------------------------------------------------
 //
@@ -18,13 +17,13 @@
 
 
 #ifdef DFTFE_WITH_DEVICE_LANG_HIP
-#  include <dftfe/DeviceAPICalls.h>
+#  include <DeviceAPICalls.h>
 #  include <stdio.h>
 #  include <vector>
-#  include <dftfe/DeviceDataTypeOverloads.h>
-#  include <dftfe/DeviceKernelLauncherHelpers.h>
-#  include <dftfe/DeviceTypeConfigHalfPrec.h>
-#  include <dftfe/Exceptions.h>
+#  include <DeviceDataTypeOverloads.h>
+#  include <DeviceTypeConfigHalfPrec.h>
+#  include <DeviceKernelLauncherHelpers.h>
+#  include <Exceptions.h>
 namespace dftfe
 {
   namespace utils
@@ -157,14 +156,6 @@ namespace dftfe
     deviceSetValue(std::complex<double> *devPtr,
                    std::complex<double>  value,
                    std::size_t           size);
-
-    template void
-    deviceSetValue(uint8_t *devPtr, uint8_t value, std::size_t size);
-
-    template void
-    deviceSetValue(std::complex<uint8_t> *devPtr,
-                   std::complex<uint8_t>  value,
-                   std::size_t            size);
 
     template void
     deviceSetValue(uint16_t *devPtr, uint16_t value, std::size_t size);

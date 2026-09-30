@@ -16,12 +16,11 @@
 // @author Sambit Das
 
 
-#include <dftfe/config.h>
-#include <dftfe/dftUtils.h>
-#include <dftfe/dftParameters.h>
-#include <dftfe/linearAlgebraOperationsDevice.h>
-#include <dftfe/linearAlgebraOperationsInternal.h>
-#include <dftfe/linearAlgebraOperationsDeviceKernels.h>
+#include <dftUtils.h>
+#include <dftParameters.h>
+#include <linearAlgebraOperationsDevice.h>
+#include <linearAlgebraOperationsInternal.h>
+#include "linearAlgebraOperationsDeviceKernels.h"
 
 
 namespace dftfe
@@ -43,10 +42,9 @@ namespace dftfe
       const MPI_Comm          &interBandGroupComm,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-                                       &BLASWrapperPtr,
-      const dftParameters              &dftParams,
-      DeviceNumberScratchMemoryStorage &scratchMemoryStorage,
-      const bool                        useMixedPrecOverall)
+                          &BLASWrapperPtr,
+      const dftParameters &dftParams,
+      const bool           useMixedPrecOverall)
     {
       dealii::ConditionalOStream pcout(
         std::cout,
@@ -55,7 +53,7 @@ namespace dftfe
       dealii::TimerOutput computing_timer(mpiCommDomain,
                                           pcout,
                                           dftParams.reproducible_output ||
-                                              dftParams.verbosity < 3 ?
+                                              dftParams.verbosity < 4 ?
                                             dealii::TimerOutput::never :
                                             dealii::TimerOutput::summary,
                                           dealii::TimerOutput::wall_times);
@@ -106,8 +104,7 @@ namespace dftfe
                     interBandGroupComm,
                     processGrid,
                     overlapMatPar,
-                    dftParams,
-                    scratchMemoryStorage);
+                    dftParams);
               else
                 linearAlgebraOperationsDevice::
                   fillParallelOverlapMatMixedPrecScalapackAsyncComputeCommun(
@@ -124,8 +121,7 @@ namespace dftfe
                     interBandGroupComm,
                     processGrid,
                     overlapMatPar,
-                    dftParams,
-                    scratchMemoryStorage);
+                    dftParams);
             }
           else
             linearAlgebraOperationsDevice::
@@ -143,8 +139,7 @@ namespace dftfe
                 interBandGroupComm,
                 processGrid,
                 overlapMatPar,
-                dftParams,
-                scratchMemoryStorage);
+                dftParams);
         }
       else
         {
@@ -163,8 +158,7 @@ namespace dftfe
                 interBandGroupComm,
                 processGrid,
                 overlapMatPar,
-                dftParams,
-                scratchMemoryStorage);
+                dftParams);
           else
             linearAlgebraOperationsDevice::fillParallelOverlapMatScalapack(
               operatorMatrix,
@@ -179,8 +173,7 @@ namespace dftfe
               interBandGroupComm,
               processGrid,
               overlapMatPar,
-              dftParams,
-              scratchMemoryStorage);
+              dftParams);
         }
 
       if (dftParams.deviceFineGrainedTimings)
@@ -332,7 +325,6 @@ namespace dftfe
                                               interBandGroupComm,
                                               LMatPar,
                                               dftParams,
-                                              scratchMemoryStorage,
                                               false);
       else
         subspaceRotationScalapack(X,
@@ -345,7 +337,6 @@ namespace dftfe
                                   interBandGroupComm,
                                   LMatPar,
                                   dftParams,
-                                  scratchMemoryStorage,
                                   false,
                                   true);
 

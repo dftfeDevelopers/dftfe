@@ -23,14 +23,13 @@
  *
  */
 
-#include <dftfe/config.h>
-#include <dftfe/dftParameters.h>
-#include <dftfe/dftUtils.h>
-#include <dftfe/linearAlgebraOperations.h>
-#include <dftfe/linearAlgebraOperationsCPU.h>
-#include <dftfe/linearAlgebraOperationsInternal.h>
-#include <dftfe/constants.h>
-#include <dftfe/elpaScalaManager.h>
+#include "dftParameters.h"
+#include "dftUtils.h"
+#include "linearAlgebraOperations.h"
+#include "linearAlgebraOperationsCPU.h"
+#include "linearAlgebraOperationsInternal.h"
+#include "constants.h"
+#include "elpaScalaManager.h"
 #include "pseudoGS.cc"
 #ifdef USE_PETSC
 #  include <deal.II/lac/slepc_solver.h>
@@ -1595,25 +1594,12 @@ namespace dftfe
               operatorMatrix.HX(*XBlock, 1.0, -1.0, 0.0, *HXBlock);
               if (dftParams.approxOverlapMatrix)
                 {
-                  operatorMatrix.overlapSqrtInverseMatrixTimesX(
-                    *HXBlock, 1.0, 0.0, 0.0, *XBlock);
-                  for (dftfe::uInt iDof = 0; iDof < localVectorSize; ++iDof)
-                    for (dftfe::uInt iWave = 0; iWave < B; iWave++)
-                      {
-                        const double temp =
-                          std::abs(XBlock->data()[B * iDof + iWave]);
-                        residualNormSquare[jvec + iWave] += temp * temp;
-                      }
-                }
-              else
-                {
-                  for (dftfe::uInt iDof = 0; iDof < localVectorSize; ++iDof)
-                    for (dftfe::uInt iWave = 0; iWave < B; iWave++)
-                      {
-                        const double temp =
-                          std::abs(HXBlock->data()[B * iDof + iWave]);
-                        residualNormSquare[jvec + iWave] += temp * temp;
-                      }
+                  BLASWrapperPtr->stridedBlockScale(
+                    B,
+                    localVectorSize,
+                    1.0,
+                    operatorMatrix.getInverseSqrtMassVector().data(),
+                    HXBlock->data());
                 }
               //   pointWiseScaleWithDiagonal(
               //     operatorMatrix.getInverseSqrtMassVector().data(),
@@ -1621,6 +1607,13 @@ namespace dftfe
               //     localVectorSize,
               //     HXBlock->data());
               // compute residual norms:
+              for (dftfe::uInt iDof = 0; iDof < localVectorSize; ++iDof)
+                for (dftfe::uInt iWave = 0; iWave < B; iWave++)
+                  {
+                    const double temp =
+                      std::abs(HXBlock->data()[B * iDof + iWave]);
+                    residualNormSquare[jvec + iWave] += temp * temp;
+                  }
             }
         }
 

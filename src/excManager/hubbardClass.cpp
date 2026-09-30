@@ -17,23 +17,22 @@
 // @author Vishal Subramanian
 //
 
-#include <dftfe/config.h>
-#include <dftfe/hubbardClass.h>
-#include <dftfe/AtomCenteredSphericalFunctionProjectorSpline.h>
-#include <dftfe/dftParameters.h>
-#include <dftfe/DataTypeOverloads.h>
-#include <dftfe/constants.h>
-#include <dftfe/BLASWrapper.h>
-#include <dftfe/AtomCenteredPseudoWavefunctionSpline.h>
-#include <dftfe/AuxDensityMatrixFE.h>
+#include "hubbardClass.h"
+#include "AtomCenteredSphericalFunctionProjectorSpline.h"
+#include "dftParameters.h"
+#include "DataTypeOverloads.h"
+#include "constants.h"
+#include "BLASWrapper.h"
+#include "AtomCenteredPseudoWavefunctionSpline.h"
+#include "AuxDensityMatrixFE.h"
 
-#include <dftfe/CompositeData.h>
-#include <dftfe/MPIWriteOnFile.h>
-#include <dftfe/NodalData.h>
+#include "CompositeData.h"
+#include "MPIWriteOnFile.h"
+#include "NodalData.h"
 
 
 #if defined(DFTFE_WITH_DEVICE)
-#  include <dftfe/deviceKernelsGeneric.h>
+#  include "deviceKernelsGeneric.h"
 #endif
 
 namespace dftfe
@@ -168,18 +167,15 @@ namespace dftfe
                                         d_atomicProjectorFnsMap);
 
     // set up the non local operator.
-    //@Kartick modify this to compute Ion forces and stresses.
     d_nonLocalOperator =
       std::make_shared<AtomicCenteredNonLocalOperator<ValueType, memorySpace>>(
         d_BLASWrapperMemPtr,
         d_BasisOperatorMemPtr,
         d_atomicProjectorFnsContainer,
         d_mpi_comm_domain,
-        d_dftParamsPtr->memOptMode,
-        d_dftParamsPtr->floatingNuclearCharges,
         true,
-        d_dftParamsPtr->isIonForce,
-        d_dftParamsPtr->isCellStress);
+        true,
+        true);
 
     if (d_useSinglePrec)
       {
@@ -190,7 +186,7 @@ namespace dftfe
                           d_BasisOperatorMemPtr,
                           d_atomicProjectorFnsContainer,
                           d_mpi_comm_domain,
-                          d_dftParamsPtr->memOptMode,
+                          true,
                           true,
                           true);
       }
@@ -1361,13 +1357,6 @@ namespace dftfe
   hubbard<ValueType, memorySpace>::getExpectationOfHubbardPotential()
   {
     return d_expectationOfHubbardPotential;
-  }
-
-  template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
-  const std::map<dftfe::uInt, dftfe::uInt> &
-  hubbard<ValueType, memorySpace>::getHubbardAtomIdToGloablIdMap()
-  {
-    return d_mapHubbardAtomToGlobalAtomId;
   }
 
   template class hubbard<dataTypes::number, dftfe::utils::MemorySpace::HOST>;

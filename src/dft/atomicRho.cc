@@ -16,8 +16,8 @@
 //
 // @author Sambit Das
 //
-#include <dftfe/dft.h>
-#include <dftfe/fileReaders.h>
+#include <dft.h>
+#include <fileReaders.h>
 
 namespace dftfe
 {

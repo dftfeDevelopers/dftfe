@@ -19,9 +19,8 @@
  * @author Sambit Das.
  */
 
-#include <dftfe/config.h>
-#include <dftfe/MPICommunicatorP2PKernels.h>
-#include <dftfe/Exceptions.h>
+#include <MPICommunicatorP2PKernels.h>
+#include <Exceptions.h>
 #include <complex>
 #include <algorithm>
 

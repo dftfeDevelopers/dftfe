@@ -13,9 +13,9 @@
 //
 // ---------------------------------------------------------------------
 
-#include <dftfe/process_grid.h>
-#include <dftfe/dftfeDataTypes.h>
-#include <dftfe/scalapack.templates.h>
+#include "process_grid.h"
+#include "dftfeDataTypes.h"
+#include "scalapack.templates.h"
 #include <deal.II/base/mpi.templates.h>
 
 namespace dftfe
@@ -184,10 +184,11 @@ namespace dftfe
     const int mpi_tag =
       dealii::Utilities::MPI::internal::Tags::process_grid_constructor;
 
-    ierr = MPI_Comm_create_group(mpi_communicator,
-                                 inactive_with_root_group,
-                                 mpi_tag,
-                                 &mpi_communicator_inactive_with_root);
+    ierr = dealii::Utilities::MPI::create_group(
+      mpi_communicator,
+      inactive_with_root_group,
+      mpi_tag,
+      &mpi_communicator_inactive_with_root);
     AssertThrowMPI(ierr);
 
     ierr = MPI_Group_free(&all_group);

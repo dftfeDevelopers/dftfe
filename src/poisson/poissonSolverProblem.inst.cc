@@ -1,4 +1,3 @@
-template class poissonSolverProblem<1>;
 template class poissonSolverProblem<2>;
 template class poissonSolverProblem<3>;
 template class poissonSolverProblem<4>;

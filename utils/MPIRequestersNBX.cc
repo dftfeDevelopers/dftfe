@@ -19,11 +19,11 @@
  * @author Bikash Kanungo
  */
 
-#include <dftfe/MPIRequestersNBX.h>
-#include <dftfe/MPITags.h>
-#include <dftfe/Exceptions.h>
+#include <MPIRequestersNBX.h>
+#include <MPITags.h>
+#include <Exceptions.h>
 #include <string>
-#include <dftfe/dftfeDataTypes.h>
+#include <dftfeDataTypes.h>
 
 namespace dftfe
 {
@@ -228,7 +228,7 @@ namespace dftfe
             for (dftfe::uInt i = 0; i < d_recvRequests.size(); i++)
               {
                 const dftfe::Int err =
-                  MPI_Wait(d_recvRequests[i].get(), MPI_STATUS_IGNORE);
+                  MPI_Wait(d_recvRequests.back().get(), MPI_STATUS_IGNORE);
                 std::string errMsg = "Error occured while using MPI_Waitall. "
                                      " Error code: " +
                                      std::to_string(err);

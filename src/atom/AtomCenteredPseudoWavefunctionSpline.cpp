@@ -15,7 +15,7 @@
 // ---------------------------------------------------------------------
 //
 
-#include <dftfe/AtomCenteredPseudoWavefunctionSpline.h>
+#include "AtomCenteredPseudoWavefunctionSpline.h"
 #include "vector"
 namespace dftfe
 {

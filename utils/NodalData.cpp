@@ -2,7 +2,7 @@
 // Created by nelrufus on 7/17/18.
 //
 
-#include <dftfe/NodalData.h>
+#include "NodalData.h"
 #include <cstdio>
 
 namespace dftfe

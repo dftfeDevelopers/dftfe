@@ -19,10 +19,9 @@
  * @author Vishal Subramanian, Bikash Kanungo
  */
 
-#include <dftfe/config.h>
-#include <dftfe/TransferBetweenMeshesIncompatiblePartitioning.h>
-#include <dftfe/FECell.h>
-#include <dftfe/InterpolateFromCellToLocalPoints.h>
+#include "TransferBetweenMeshesIncompatiblePartitioning.h"
+#include "FECell.h"
+#include "InterpolateFromCellToLocalPoints.h"
 
 namespace dftfe
 {

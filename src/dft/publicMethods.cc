@@ -16,7 +16,7 @@
 //
 // @author Phani Motamarri
 //
-#include <dftfe/dft.h>
+#include <dft.h>
 
 namespace dftfe
 {

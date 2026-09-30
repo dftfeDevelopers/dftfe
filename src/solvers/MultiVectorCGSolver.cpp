@@ -17,8 +17,8 @@
 // @author Vishal Subramanian
 //
 
-#include <dftfe/MultiVectorCGSolver.h>
-#include <dftfe/MemoryTransfer.h>
+#include "MultiVectorCGSolver.h"
+#include "MemoryTransfer.h"
 namespace dftfe
 {
   // constructor
@@ -52,6 +52,10 @@ namespace dftfe
     MPI_Comm_rank(mpi_communicator, &this_process);
     MPI_Barrier(mpi_communicator);
 
+    const dftfe::utils::MemorySpace
+            memorySpaceHostTransfer = (dftfe::utils::MemorySpace::HOST == memorySpace) ? dftfe::utils::MemorySpace::HOST :
+	    dftfe::utils::MemorySpace::HOST_PINNED;
+
     dealii::TimerOutput computing_timer(mpi_communicator,
                                         pcout,
                                         dealii::TimerOutput::summary,
@@ -76,7 +80,7 @@ namespace dftfe
     dftfe::Int                                       it = 0;
     dftfe::utils::MemoryStorage<double, memorySpace> resMemSpace, alphaMemSpace,
       initial_resMemSpace;
-    std::vector<double> resHost, alphaHost, initial_resHost;
+    dftfe::utils::MemoryStorage<double, memorySpaceHostTransfer> resHost, alphaHost, initial_resHost;
 
 
     dftfe::utils::MemoryStorage<double, memorySpace> d_onesMemSpace;
@@ -109,7 +113,7 @@ namespace dftfe
     betaMemSpace.resize(blockSize);
 
 
-    std::vector<double> ghHost, betaHost;
+    dftfe::utils::MemoryStorage<double, memorySpaceHostTransfer> ghHost, betaHost;
     ghHost.resize(blockSize);
     betaHost.resize(blockSize);
 
@@ -129,9 +133,10 @@ namespace dftfe
     for (dftfe::uInt i = 0; i < blockSize; i++)
       {
         initial_resHost[i] = resHost[i];
-        pcout << initial_resHost[i] << "\n";
+        //pcout << initial_resHost[i] << "\n";
       }
-    pcout << "\n";
+      
+    //pcout << "\n";
     // g = g - rhs;
     BLASWrapperPtr->axpby(
       locallyOwned * blockSize, -1.0, rhs.data(), 1.0, g.data());
@@ -147,14 +152,17 @@ namespace dftfe
                                     mpi_communicator,
                                     resHost.data());
 
+    double maxInitialRes = 0.0;
     pcout << "initial residuals = \n";
     for (dftfe::uInt i = 0; i < blockSize; i++)
       {
         resHost[i]         = std::sqrt(resHost[i]);
         initial_resHost[i] = resHost[i];
-        pcout << initial_resHost[i] << "\n";
+        //pcout << initial_resHost[i] << "\n";
+	if (maxInitialRes < initial_resHost[i])
+		maxInitialRes = initial_resHost[i];
       }
-    pcout << "\n";
+    //pcout << "\n";
 
 
     problem.precondition_Jacobi(h, g, omega);
@@ -173,6 +181,9 @@ namespace dftfe
                                     ghMemSpace.data(),
                                     mpi_communicator,
                                     ghHost.data());
+    
+    if(maxInitialRes < absTolerance)
+	    iterate = false;
     while (iterate)
       {
         it++;
@@ -189,8 +200,12 @@ namespace dftfe
                                         alphaHost.data());
         for (dftfe::uInt i = 0; i < blockSize; i++)
           {
+		  if (std::abs(alphaHost[i]) > absTolerance*absTolerance/100)
             alphaHost[i] = ghHost[i] / alphaHost[i];
+		  else 
+			  alphaHost[i] = 0.0;
           }
+
 
         alphaMemSpace.copyFrom(alphaHost);
         //        dftfe::utils::MemoryTransfer::copy<memorySpace,dftfe::utils::MemorySpace::HOST>(blockSize,
@@ -236,7 +251,10 @@ namespace dftfe
 
         for (dftfe::uInt i = 0; i < blockSize; i++)
           {
+		  if (std::abs(betaHost[i]) > absTolerance*absTolerance/100)
             betaHost[i] = (ghHost[i] / betaHost[i]);
+		  else 
+			  betaHost[i] = 0.0;
           }
 
         betaMemSpace.copyFrom(betaHost);
@@ -291,11 +309,30 @@ namespace dftfe
     dftfe::linearAlgebra::MultiVector<double, dftfe::utils::MemorySpace::HOST>
       &x,
     dftfe::linearAlgebra::MultiVector<double, dftfe::utils::MemorySpace::HOST>
-                     &NDBCVec,
+                    &NDBCVec,
     dftfe::uInt       locallyOwned,
     dftfe::uInt       blockSize,
     const double      absTolerance,
     const dftfe::uInt maxNumberIterations,
     const dftfe::uInt debugLevel,
     bool              distributeFlag);
+
+  #if defined(DFTFE_WITH_DEVICE)
+  template void
+  MultiVectorCGSolver::solve<dftfe::utils::MemorySpace::DEVICE>(
+    MultiVectorLinearSolverProblem<dftfe::utils::MemorySpace::DEVICE> &problem,
+    std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+      BLASWrapperPtr,
+    dftfe::linearAlgebra::MultiVector<double, dftfe::utils::MemorySpace::DEVICE>
+      &x,
+    dftfe::linearAlgebra::MultiVector<double, dftfe::utils::MemorySpace::DEVICE>
+                    &NDBCVec,
+    dftfe::uInt       locallyOwned,
+    dftfe::uInt       blockSize,
+    const double      absTolerance,
+    const dftfe::uInt maxNumberIterations,
+    const dftfe::uInt debugLevel,
+    bool              distributeFlag);
+#endif
 } // namespace dftfe

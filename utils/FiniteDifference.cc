@@ -1,7 +1,7 @@
-#include <dftfe/FiniteDifference.h>
+#include <FiniteDifference.h>
 #include <cmath>
 #include <string>
-#include <dftfe/Exceptions.h>
+#include "Exceptions.h"
 
 namespace dftfe
 {

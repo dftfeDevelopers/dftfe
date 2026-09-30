@@ -14,9 +14,9 @@
 //
 // ---------------------------------------------------------------------
 //
-#include <dftfe/BLASWrapper.h>
-#include <dftfe/linearAlgebraOperations.h>
-#include <dftfe/dftUtils.h>
+#include <BLASWrapper.h>
+#include <linearAlgebraOperations.h>
+#include <dftUtils.h>
 namespace dftfe
 {
   namespace linearAlgebra
@@ -647,20 +647,6 @@ namespace dftfe
       unsigned int incyTmp = INCY;
       *result              = ddot_(&nTmp, X, &incxTmp, Y, &incyTmp);
     }
-
-    void
-    BLASWrapper<dftfe::utils::MemorySpace::HOST>::xdot(const dftfe::uInt N,
-                                                       const float      *X,
-                                                       const dftfe::uInt INCX,
-                                                       const float      *Y,
-                                                       const dftfe::uInt INCY,
-                                                       float            *result)
-    {
-      unsigned int nTmp    = N;
-      unsigned int incxTmp = INCX;
-      unsigned int incyTmp = INCY;
-      *result              = sdot_(&nTmp, X, &incxTmp, Y, &incyTmp);
-    }
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xdot(
       const dftfe::uInt           N,
@@ -675,21 +661,6 @@ namespace dftfe
       unsigned int incyTmp = INCY;
       *result              = zdotc_(&nTmp, X, &incxTmp, Y, &incyTmp);
     }
-    void
-    BLASWrapper<dftfe::utils::MemorySpace::HOST>::xdot(
-      const dftfe::uInt          N,
-      const std::complex<float> *X,
-      const dftfe::uInt          INCX,
-      const std::complex<float> *Y,
-      const dftfe::uInt          INCY,
-      std::complex<float>       *result)
-    {
-      unsigned int nTmp    = N;
-      unsigned int incxTmp = INCX;
-      unsigned int incyTmp = INCY;
-      *result              = cdotc_(&nTmp, X, &incxTmp, Y, &incyTmp);
-    }
-
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xdot(
@@ -1039,58 +1010,10 @@ namespace dftfe
       const dftfe::uInt ldc,
       const dftfe::Int  batchCount)
     {
-      for (dftfe::Int iBatch = 0; iBatch < batchCount; iBatch++)
-        {
-          xgemm(transA,
-                transB,
-                m,
-                n,
-                k,
-                alpha,
-                A[iBatch],
-                lda,
-                B[iBatch],
-                ldb,
-                beta,
-                C[iBatch],
-                ldc);
-        }
+      AssertThrow(false, dftUtils::ExcNotImplementedYet());
     }
 
-    void
-    BLASWrapper<dftfe::utils::MemorySpace::HOST>::xgemmBatched(
-      const char        transA,
-      const char        transB,
-      const dftfe::uInt m,
-      const dftfe::uInt n,
-      const dftfe::uInt k,
-      const float      *alpha,
-      const float      *A[],
-      const dftfe::uInt lda,
-      const float      *B[],
-      const dftfe::uInt ldb,
-      const float      *beta,
-      float            *C[],
-      const dftfe::uInt ldc,
-      const dftfe::Int  batchCount)
-    {
-      for (dftfe::Int iBatch = 0; iBatch < batchCount; iBatch++)
-        {
-          xgemm(transA,
-                transB,
-                m,
-                n,
-                k,
-                alpha,
-                A[iBatch],
-                lda,
-                B[iBatch],
-                ldb,
-                beta,
-                C[iBatch],
-                ldc);
-        }
-    }
+
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xgemmBatched(
@@ -1109,57 +1032,9 @@ namespace dftfe
       const dftfe::uInt           ldc,
       const dftfe::Int            batchCount)
     {
-      for (dftfe::Int iBatch = 0; iBatch < batchCount; iBatch++)
-        {
-          xgemm(transA,
-                transB,
-                m,
-                n,
-                k,
-                alpha,
-                A[iBatch],
-                lda,
-                B[iBatch],
-                ldb,
-                beta,
-                C[iBatch],
-                ldc);
-        }
+      AssertThrow(false, dftUtils::ExcNotImplementedYet());
     }
-    void
-    BLASWrapper<dftfe::utils::MemorySpace::HOST>::xgemmBatched(
-      const char                 transA,
-      const char                 transB,
-      const dftfe::uInt          m,
-      const dftfe::uInt          n,
-      const dftfe::uInt          k,
-      const std::complex<float> *alpha,
-      const std::complex<float> *A[],
-      const dftfe::uInt          lda,
-      const std::complex<float> *B[],
-      const dftfe::uInt          ldb,
-      const std::complex<float> *beta,
-      std::complex<float>       *C[],
-      const dftfe::uInt          ldc,
-      const dftfe::Int           batchCount)
-    {
-      for (dftfe::Int iBatch = 0; iBatch < batchCount; iBatch++)
-        {
-          xgemm(transA,
-                transB,
-                m,
-                n,
-                k,
-                alpha,
-                A[iBatch],
-                lda,
-                B[iBatch],
-                ldb,
-                beta,
-                C[iBatch],
-                ldc);
-        }
-    }
+
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xgemmStridedBatched(
