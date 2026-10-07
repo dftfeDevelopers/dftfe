@@ -3178,6 +3178,23 @@ namespace dftfe
           d_phiTotRhoIn = d_phiTotRhoOut;
         computing_timer.leave_subsection("density mixing");
 
+        // Pool divergence deadlock guard: `norm` (and `energyResidual`) are
+        // reduced only over each k-point pool's domain communicator, so
+        // pools can compute slightly different values. Without this,
+        // different pools could reach different converged/not-converged
+        // decisions and deadlock on the next collective call some pools
+        // skip. Sync to the max across all pools right before the check so
+        // every pool makes an identical convergence decision.
+        MPI_Allreduce(
+          MPI_IN_PLACE, &norm, 1, MPI_DOUBLE, MPI_MAX, d_mpiCommParent);
+        if (d_dftParamsPtr->useEnergyResidualTolerance)
+          MPI_Allreduce(MPI_IN_PLACE,
+                        &energyResidual,
+                        1,
+                        MPI_DOUBLE,
+                        MPI_MAX,
+                        d_mpiCommParent);
+
         if (!((norm > d_dftParamsPtr->selfConsistentSolverTolerance) ||
               (d_dftParamsPtr->useEnergyResidualTolerance &&
                energyResidual >
@@ -3730,24 +3747,6 @@ namespace dftfe
                     << energyResidual << std::endl;
             computing_timer.leave_subsection("Energy residual computation");
           }
-
-        // Pool divergence deadlock guard: `norm` (and `energyResidual`) are
-        // reduced only over each k-point pool's domain communicator, so
-        // floating-point summation-order differences across pools can leave
-        // them differing by a few ULPs right at the convergence tolerance
-        // boundary. Without this, different pools could reach different
-        // converged/not-converged decisions and deadlock on the next
-        // collective call some pools skip. Sync to the max across all pools
-        // so every pool makes an identical convergence decision.
-        MPI_Allreduce(
-          MPI_IN_PLACE, &norm, 1, MPI_DOUBLE, MPI_MAX, d_mpiCommParent);
-        if (d_dftParamsPtr->useEnergyResidualTolerance)
-          MPI_Allreduce(MPI_IN_PLACE,
-                        &energyResidual,
-                        1,
-                        MPI_DOUBLE,
-                        MPI_MAX,
-                        d_mpiCommParent);
 
         if (d_dftParamsPtr->computeEnergyEverySCF)
           {
