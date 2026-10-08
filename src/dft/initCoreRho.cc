@@ -23,6 +23,8 @@
 #include <dftfe/dftParameters.h>
 #include <dftfe/dft.h>
 #include <dftfe/fileReaders.h>
+#include <dftfe/atomicInitKernels.h>
+#include <dftfe/atomTypeSplineTables.h>
 
 namespace dftfe
 {
@@ -38,7 +40,6 @@ namespace dftfe
       d_dftParamsPtr->isIonForce || d_dftParamsPtr->isCellStress;
 
     d_gradRhoCoreAtoms.clear();
-    d_hessianRhoCore.clear();
     d_hessianRhoCoreAtoms.clear();
 
     // Reading single atom rho initial guess
@@ -109,10 +110,217 @@ namespace dftfe
       (d_excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
        densityFamilyType::GGA);
 
+    // Totals at every quadrature point, and the per-atom maps the force and
+    // stress read at every (center-cell pair, quadrature point); a device run
+    // dispatches to the device specialization and a CPU run to the host one.
+    // The loop further down covers any species that is not spline backed.
+    const std::function<const AtomCenteredSphericalFunctionBase *(
+      const dftfe::uInt)>
+      getCoreDensityFunction = [this](const dftfe::uInt Znum) {
+        return d_oncvClassPtr->getRadialCoreDensityFunction(Znum, 0);
+      };
+    const bool coreRhoComputed =
+      computeRadialDensityQuadTotals(getCoreDensityFunction,
+                                     d_rhoCore,
+                                     d_gradRhoCore);
+
+    if (coreRhoComputed && storePerAtomCoreData)
+      {
+        splineHostTableUtils::SplineTableGroup coreTables;
+        std::map<dftfe::uInt, dftfe::uInt>     znumToCoreSplineId;
+        const bool coreTablesBuilt = buildAtomTypeSplineTables(
+          atomTypes, getCoreDensityFunction, coreTables, znumToCoreSplineId);
+        AssertThrow(coreTablesBuilt,
+                    dealii::ExcMessage(
+                      "DFT-FE Error: core density tables failed to build"));
+        AtomTypeSplineTables<memorySpace> coreTablesMem;
+        coreTablesMem.stage(coreTables);
+
+        const dftfe::uInt nCells = d_basisOperationsPtrHost->nCells();
+        const dftfe::uInt nQuadsPerCell =
+          d_basisOperationsPtrHost->nQuadsPerCell();
+        const double *quadPointsHost =
+          d_basisOperationsPtrHost->quadPoints().data();
+
+        // bounding sphere of each cell, so a center can be rejected without
+        // touching its quadrature points
+        std::vector<dealii::Point<3>> cellCentroids(nCells);
+        std::vector<double>           cellRadii(nCells, 0.0);
+        for (dftfe::uInt iCell = 0; iCell < nCells; ++iCell)
+          {
+            const double *qp =
+              quadPointsHost + (std::size_t)iCell * nQuadsPerCell * 3;
+            dealii::Point<3> centroid;
+            for (dftfe::uInt q = 0; q < nQuadsPerCell; ++q)
+              for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
+                centroid[iDim] += qp[q * 3 + iDim];
+            centroid /= static_cast<double>(nQuadsPerCell);
+            double r2max = 0.0;
+            for (dftfe::uInt q = 0; q < nQuadsPerCell; ++q)
+              {
+                const dealii::Point<3> p(qp[q * 3 + 0],
+                                         qp[q * 3 + 1],
+                                         qp[q * 3 + 2]);
+                r2max = std::max(r2max, p.distance_square(centroid));
+              }
+            cellCentroids[iCell] = centroid;
+            cellRadii[iCell]     = std::sqrt(r2max);
+          }
+
+        // a pair returns three gradient doubles per point, and nine hessian
+        // doubles more for GGA
+        constexpr std::size_t maxBlockBytes = 256000000;
+        const dftfe::uInt     pairsBlockSize =
+          std::max<dftfe::uInt>(1,
+                                maxBlockBytes /
+                                  (std::size_t)(
+                                    nQuadsPerCell *
+                                    (3 + (isGradDensityDataDependent ? 9 : 0)) *
+                                    sizeof(double)));
+
+        std::vector<double>      blockCoords, blockCenters;
+        std::vector<dftfe::uInt> blockCellSlot, blockSplineId, blockCenterId,
+          blockCellId;
+        std::map<dftfe::uInt, dftfe::uInt> cellToSlot;
+
+        dftfe::utils::MemoryStorage<double, memorySpace> dCoords, dCenters,
+          dGrad, dHess;
+        dftfe::utils::MemoryStorage<dftfe::uInt, memorySpace> dCellSlot,
+          dSplineId, dHasSupport;
+        std::vector<double>      hGrad, hHess;
+        std::vector<dftfe::uInt> hHasSupport;
+
+        auto flushBlock = [&]() {
+          const dftfe::uInt nPairs = blockCenterId.size();
+          if (nPairs == 0)
+            return;
+          const std::size_t nPointsInBlock =
+            (std::size_t)nPairs * nQuadsPerCell;
+          stageHostVector(blockCoords, dCoords);
+          stageHostVector(blockCenters, dCenters);
+          stageHostVector(blockCellSlot, dCellSlot);
+          stageHostVector(blockSplineId, dSplineId);
+          dGrad.resize(nPointsInBlock * 3);
+          if (isGradDensityDataDependent)
+            dHess.resize(nPointsInBlock * 9);
+          dHasSupport.resize(nPairs);
+          dHasSupport.setValue(0);
+
+          atomicInitKernels::atomicRadialDensityPairDerivatives<memorySpace>(
+            nPairs,
+            nQuadsPerCell,
+            d_dftParamsPtr->floatingNuclearCharges,
+            dCoords.data(),
+            dCenters.data(),
+            dCellSlot.data(),
+            dSplineId.data(),
+            coreTablesMem.knotX.data(),
+            coreTablesMem.knotY.data(),
+            coreTablesMem.coefB.data(),
+            coreTablesMem.coefC.data(),
+            coreTablesMem.coefD.data(),
+            coreTablesMem.offsets.data(),
+            coreTablesMem.nKnots.data(),
+            coreTablesMem.gpParams.data(),
+            coreTablesMem.cutoffs.data(),
+            coreTablesMem.rMins.data(),
+            dGrad.data(),
+            isGradDensityDataDependent ? dHess.data() : nullptr,
+            dHasSupport.data());
+
+          hGrad.resize(nPointsInBlock * 3);
+          dGrad.copyTo(hGrad);
+          if (isGradDensityDataDependent)
+            {
+              hHess.resize(nPointsInBlock * 9);
+              dHess.copyTo(hHess);
+            }
+          hHasSupport.resize(nPairs);
+          dHasSupport.copyTo(hHasSupport);
+
+          for (dftfe::uInt iPair = 0; iPair < nPairs; ++iPair)
+            {
+              if (hHasSupport[iPair] != 1)
+                continue;
+              const dealii::CellId cid =
+                d_basisOperationsPtrHost->cellID(blockCellId[iPair]);
+              const std::size_t offset = (std::size_t)iPair * nQuadsPerCell;
+              d_gradRhoCoreAtoms[blockCenterId[iPair]][cid].assign(
+                hGrad.begin() + offset * 3,
+                hGrad.begin() + (offset + nQuadsPerCell) * 3);
+              std::vector<double> &hessianRhoCoreAtomCell =
+                d_hessianRhoCoreAtoms[blockCenterId[iPair]][cid];
+              if (isGradDensityDataDependent)
+                hessianRhoCoreAtomCell.assign(hHess.begin() + offset * 9,
+                                              hHess.begin() +
+                                                (offset + nQuadsPerCell) * 9);
+            }
+
+          blockCoords.clear();
+          blockCenters.clear();
+          blockCellSlot.clear();
+          blockSplineId.clear();
+          blockCenterId.clear();
+          blockCellId.clear();
+          cellToSlot.clear();
+        };
+
+        // atoms first, then their periodic images, matching the per-atom
+        // indexing of the loop below
+        const dftfe::uInt nCenters = numberGlobalCharges + numberImageCharges;
+        for (dftfe::uInt iCell = 0; iCell < nCells; ++iCell)
+          for (dftfe::uInt iCenter = 0; iCenter < nCenters; ++iCenter)
+            {
+              const bool isImage = iCenter >= (dftfe::uInt)numberGlobalCharges;
+              const dftfe::uInt iAtom =
+                isImage ? d_imageIdsTrunc[iCenter - numberGlobalCharges] :
+                          iCenter;
+              dealii::Point<3> center;
+              for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
+                center[iDim] =
+                  isImage ?
+                    d_imagePositionsTrunc[iCenter - numberGlobalCharges][iDim] :
+                    atomLocations[iAtom][2 + iDim];
+
+              // a center whose tail cannot reach the nearest point of the
+              // cell contributes nothing and is never stored
+              if (cellCentroids[iCell].distance(center) - cellRadii[iCell] >
+                  maxCoreRhoTail + 1e-9)
+                continue;
+
+              if (blockCenterId.size() >= pairsBlockSize)
+                flushBlock();
+
+              auto slotIt = cellToSlot.find(iCell);
+              if (slotIt == cellToSlot.end())
+                {
+                  const dftfe::uInt slot = cellToSlot.size();
+                  cellToSlot[iCell]      = slot;
+                  const double *qp =
+                    quadPointsHost + (std::size_t)iCell * nQuadsPerCell * 3;
+                  blockCoords.insert(blockCoords.end(),
+                                     qp,
+                                     qp + nQuadsPerCell * 3);
+                  blockCellSlot.push_back(slot);
+                }
+              else
+                blockCellSlot.push_back(slotIt->second);
+
+              blockCenters.push_back(center[0]);
+              blockCenters.push_back(center[1]);
+              blockCenters.push_back(center[2]);
+              blockSplineId.push_back(
+                znumToCoreSplineId[std::round(atomLocations[iAtom][0])]);
+              blockCenterId.push_back(iCenter);
+              blockCellId.push_back(iCell);
+            }
+        flushBlock();
+      }
+
     // loop over elements
     //
     cell = dofHandler.begin_active();
-    for (; cell != endc; ++cell)
+    for (; cell != endc && !coreRhoComputed; ++cell)
       {
         if (cell->is_locally_owned())
           {
@@ -124,11 +332,6 @@ namespace dftfe
             std::vector<double> &gradRhoCoreQuadValues =
               d_gradRhoCore[cell->id()];
             gradRhoCoreQuadValues.resize(n_q_points * 3, 0.0);
-
-            std::vector<double> &hessianRhoCoreQuadValues =
-              d_hessianRhoCore[cell->id()];
-            if (isGradDensityDataDependent)
-              hessianRhoCoreQuadValues.resize(n_q_points * 9, 0.0);
 
             std::vector<dealii::Tensor<1, 3, double>> gradRhoCoreAtom(
               n_q_points, zeroTensor1);
@@ -217,8 +420,6 @@ namespace dftfe
                                           distanceToAtom;
 
                                 hessianRhoCoreAtom[q][iDim][jDim] = temp;
-                                hessianRhoCoreQuadValues[9 * q + 3 * iDim +
-                                                         jDim] += temp;
                               }
                           }
                       }
@@ -337,8 +538,6 @@ namespace dftfe
                                   temp += radialDensityFirstDerivative /
                                           distanceToAtom;
                                 hessianRhoCoreAtom[q][iDim][jDim] = temp;
-                                hessianRhoCoreQuadValues[9 * q + 3 * iDim +
-                                                         jDim] += temp;
                               }
                           }
                       }

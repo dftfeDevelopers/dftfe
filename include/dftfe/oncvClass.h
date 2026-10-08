@@ -171,6 +171,21 @@ namespace dftfe
     double
     getRmaxCoreDensity(dftfe::uInt Znum);
 
+    /**
+     * @brief The atomic core-density radial function for an atomic number,
+     * for callers that resolve it once outside a loop.
+     */
+    const AtomCenteredSphericalFunctionBase *
+    getRadialCoreDensityFunction(dftfe::uInt Znum, dftfe::uInt threadId) const
+    {
+      const auto &mapForThread =
+        d_atomicCoreDensityVector[threadId < d_atomicCoreDensityVector.size() ?
+                                    threadId :
+                                    0];
+      const auto it = mapForThread.find(Znum);
+      return it == mapForThread.end() ? nullptr : it->second.get();
+    }
+
     double
     getRadialLocalPseudo(dftfe::uInt Znum, double rad);
 

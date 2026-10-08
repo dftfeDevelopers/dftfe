@@ -193,6 +193,107 @@ namespace dftfe
 
 
 
+    // Atoms and their periodic images whose density tail can reach a
+    // locally owned point, with the per-center density and magnetization
+    // factors of the initial guess; shared by the nodal and quadrature
+    // initializations below.
+    const dftfe::uInt      numberMagComponents = nDensityComponents - 1;
+    dealii::BoundingBox<3> boundingBoxTria(
+      vectorTools::createBoundingBoxTriaLocallyOwned(d_dofHandlerRhoNodal));
+    dealii::Tensor<1, 3, double> tempDisp;
+    tempDisp[0] = maxRhoTail;
+    tempDisp[1] = maxRhoTail;
+    tempDisp[2] = maxRhoTail;
+
+    std::vector<double> atomsImagesPositions;
+    std::vector<double> atomsImagesChargeIds;
+    for (dftfe::uInt iAtom = 0;
+         iAtom < numberGlobalCharges + numberImageCharges;
+         iAtom++)
+      {
+        dealii::Point<3> atomCoord;
+        dftfe::Int       chargeId;
+        if (iAtom < numberGlobalCharges)
+          {
+            atomCoord[0] = atomLocations[iAtom][2];
+            atomCoord[1] = atomLocations[iAtom][3];
+            atomCoord[2] = atomLocations[iAtom][4];
+            chargeId     = iAtom;
+          }
+        else
+          {
+            const dftfe::uInt iImageCharge = iAtom - numberGlobalCharges;
+            atomCoord[0] = d_imagePositionsTrunc[iImageCharge][0];
+            atomCoord[1] = d_imagePositionsTrunc[iImageCharge][1];
+            atomCoord[2] = d_imagePositionsTrunc[iImageCharge][2];
+            chargeId     = d_imageIdsTrunc[iImageCharge];
+          }
+
+        std::pair<dealii::Point<3, double>, dealii::Point<3, double>>
+          boundaryPoints;
+        boundaryPoints.first  = atomCoord - tempDisp;
+        boundaryPoints.second = atomCoord + tempDisp;
+        dealii::BoundingBox<3> boundingBoxAroundAtom(boundaryPoints);
+
+        // centers beyond maxRhoTail of every locally owned point
+        // contribute nothing to the superposition
+        if (boundingBoxTria.get_neighbor_type(boundingBoxAroundAtom) !=
+            dealii::NeighborType::not_neighbors)
+          {
+            atomsImagesPositions.push_back(atomCoord[0]);
+            atomsImagesPositions.push_back(atomCoord[1]);
+            atomsImagesPositions.push_back(atomCoord[2]);
+            atomsImagesChargeIds.push_back(chargeId);
+          }
+      }
+    // per-center quantities, independent of the evaluation point
+    const dftfe::uInt        nCentersRho = atomsImagesChargeIds.size();
+    std::vector<double>      atomsImagesRhoFactor(nCentersRho, 1.0);
+    std::vector<double>      atomsImagesMagZFactor(nCentersRho, 0.0);
+    std::vector<double>      atomsImagesMagYFactor(nCentersRho, 0.0);
+    std::vector<double>      atomsImagesMagXFactor(nCentersRho, 0.0);
+    std::vector<double>      atomsImagesDenCutoff(nCentersRho, 0.0);
+    std::vector<dftfe::uInt> atomsImagesDenZ(nCentersRho, 0);
+    for (dftfe::uInt iAtom = 0; iAtom < nCentersRho; ++iAtom)
+      {
+        const dftfe::Int  chargeId  = atomsImagesChargeIds[iAtom];
+        const auto       &atomLoc   = atomLocations[chargeId];
+        const dftfe::uInt Znum      = atomLoc[0];
+        atomsImagesDenZ[iAtom]      = Znum;
+        atomsImagesDenCutoff[iAtom] = outerMostPointDen[Znum];
+        if (numberMagComponents == 1)
+          {
+            if (atomLoc.size() == 6)
+              atomsImagesMagZFactor[iAtom] = atomLoc[5];
+            else if (atomLoc.size() == 7)
+              {
+                atomsImagesRhoFactor[iAtom]  = atomLoc[6];
+                atomsImagesMagZFactor[iAtom] = atomLoc[5];
+              }
+          }
+        else if (numberMagComponents == 3)
+          {
+            if (atomLoc.size() == 8 || atomLoc.size() == 9)
+              {
+                if (atomLoc.size() == 9)
+                  atomsImagesRhoFactor[iAtom] = atomLoc[8];
+                atomsImagesMagZFactor[iAtom] =
+                  std::cos(M_PI / 180.0 * atomLoc[6]) * atomLoc[5];
+                atomsImagesMagYFactor[iAtom] =
+                  std::sin(M_PI / 180.0 * atomLoc[6]) *
+                  std::sin(M_PI / 180.0 * atomLoc[7]) * atomLoc[5];
+                atomsImagesMagXFactor[iAtom] =
+                  std::sin(M_PI / 180.0 * atomLoc[6]) *
+                  std::cos(M_PI / 180.0 * atomLoc[7]) * atomLoc[5];
+              }
+          }
+        else
+          {
+            if (atomLoc.size() == 6)
+              atomsImagesRhoFactor[iAtom] = atomLoc[5];
+          }
+      }
+
     if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
         d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA" ||
         d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND" ||
@@ -208,57 +309,6 @@ namespace dftfe
           supportPointsRhoNodal = dealii::DoFTools::map_dofs_to_support_points(
             dealii::MappingQ1<3, 3>(), d_dofHandlerRhoNodal);
 
-        dealii::BoundingBox<3> boundingBoxTria(
-          vectorTools::createBoundingBoxTriaLocallyOwned(d_dofHandlerRhoNodal));
-        dealii::Tensor<1, 3, double> tempDisp;
-        tempDisp[0] = maxRhoTail;
-        tempDisp[1] = maxRhoTail;
-        tempDisp[2] = maxRhoTail;
-
-        std::vector<double> atomsImagesPositions;
-        std::vector<double> atomsImagesChargeIds;
-        for (dftfe::uInt iAtom = 0;
-             iAtom < numberGlobalCharges + numberImageCharges;
-             iAtom++)
-          {
-            dealii::Point<3> atomCoord;
-            dftfe::Int       chargeId;
-            if (iAtom < numberGlobalCharges)
-              {
-                atomCoord[0] = atomLocations[iAtom][2];
-                atomCoord[1] = atomLocations[iAtom][3];
-                atomCoord[2] = atomLocations[iAtom][4];
-                chargeId     = iAtom;
-              }
-            else
-              {
-                const dftfe::uInt iImageCharge = iAtom - numberGlobalCharges;
-                atomCoord[0] = d_imagePositionsTrunc[iImageCharge][0];
-                atomCoord[1] = d_imagePositionsTrunc[iImageCharge][1];
-                atomCoord[2] = d_imagePositionsTrunc[iImageCharge][2];
-                chargeId     = d_imageIdsTrunc[iImageCharge];
-              }
-
-            std::pair<dealii::Point<3, double>, dealii::Point<3, double>>
-              boundaryPoints;
-            boundaryPoints.first  = atomCoord - tempDisp;
-            boundaryPoints.second = atomCoord + tempDisp;
-            dealii::BoundingBox<3> boundingBoxAroundAtom(boundaryPoints);
-
-            // centers beyond maxRhoTail of every locally owned point
-            // contribute nothing to the superposition
-            if (boundingBoxTria.get_neighbor_type(boundingBoxAroundAtom) !=
-                dealii::NeighborType::not_neighbors)
-              {
-                atomsImagesPositions.push_back(atomCoord[0]);
-                atomsImagesPositions.push_back(atomCoord[1]);
-                atomsImagesPositions.push_back(atomCoord[2]);
-                atomsImagesChargeIds.push_back(chargeId);
-              }
-          }
-
-        const dftfe::uInt numberMagComponents =
-          d_densityInNodalValues.size() - 1;
         // kpoint group parallelization data structures
         const dftfe::uInt numberKptGroups =
           dealii::Utilities::MPI::n_mpi_processes(interpoolcomm);
@@ -273,53 +323,6 @@ namespace dftfe
         for (dftfe::uInt iComp = 0; iComp < d_densityInNodalValues.size();
              ++iComp)
           d_densityInNodalValues[iComp] = 0;
-        // per-center quantities, independent of the nodal point
-        const dftfe::uInt        nCentersRho = atomsImagesChargeIds.size();
-        std::vector<double>      atomsImagesRhoFactor(nCentersRho, 1.0);
-        std::vector<double>      atomsImagesMagZFactor(nCentersRho, 0.0);
-        std::vector<double>      atomsImagesMagYFactor(nCentersRho, 0.0);
-        std::vector<double>      atomsImagesMagXFactor(nCentersRho, 0.0);
-        std::vector<double>      atomsImagesDenCutoff(nCentersRho, 0.0);
-        std::vector<dftfe::uInt> atomsImagesDenZ(nCentersRho, 0);
-        for (dftfe::uInt iAtom = 0; iAtom < nCentersRho; ++iAtom)
-          {
-            const dftfe::Int  chargeId  = atomsImagesChargeIds[iAtom];
-            const auto       &atomLoc   = atomLocations[chargeId];
-            const dftfe::uInt Znum      = atomLoc[0];
-            atomsImagesDenZ[iAtom]      = Znum;
-            atomsImagesDenCutoff[iAtom] = outerMostPointDen[Znum];
-            if (numberMagComponents == 1)
-              {
-                if (atomLoc.size() == 6)
-                  atomsImagesMagZFactor[iAtom] = atomLoc[5];
-                else if (atomLoc.size() == 7)
-                  {
-                    atomsImagesRhoFactor[iAtom]  = atomLoc[6];
-                    atomsImagesMagZFactor[iAtom] = atomLoc[5];
-                  }
-              }
-            else if (numberMagComponents == 3)
-              {
-                if (atomLoc.size() == 8 || atomLoc.size() == 9)
-                  {
-                    if (atomLoc.size() == 9)
-                      atomsImagesRhoFactor[iAtom] = atomLoc[8];
-                    atomsImagesMagZFactor[iAtom] =
-                      std::cos(M_PI / 180.0 * atomLoc[6]) * atomLoc[5];
-                    atomsImagesMagYFactor[iAtom] =
-                      std::sin(M_PI / 180.0 * atomLoc[6]) *
-                      std::sin(M_PI / 180.0 * atomLoc[7]) * atomLoc[5];
-                    atomsImagesMagXFactor[iAtom] =
-                      std::sin(M_PI / 180.0 * atomLoc[6]) *
-                      std::cos(M_PI / 180.0 * atomLoc[7]) * atomLoc[5];
-                  }
-              }
-            else
-              {
-                if (atomLoc.size() == 6)
-                  atomsImagesRhoFactor[iAtom] = atomLoc[5];
-              }
-          }
         const bool isPseudoRhoRun = d_dftParamsPtr->isPseudopotential;
 
 
@@ -643,11 +646,146 @@ namespace dftfe
       }
     else
       {
-        const dftfe::uInt numberMagComponents =
-          d_densityInQuadValues.size() - 1;
-        // loop over elements
+        // One thread or iteration per quadrature point, the centers looped
+        // inside; a device run dispatches to the device specialization and a
+        // CPU run to the host one. The loops further down cover the cases
+        // this cannot handle.
+        bool                                   rhoQuadComputed = false;
+        splineHostTableUtils::SplineTableGroup denTables;
+        std::map<dftfe::uInt, dftfe::uInt>     znumToDenSplineId;
+        if (d_dftParamsPtr->isPseudopotential && nCells > 0 &&
+            buildAtomTypeSplineTables(
+              atomTypes,
+              [this](const dftfe::uInt Znum) {
+                return d_oncvClassPtr->getRadialValenceDensityFunction(Znum, 0);
+              },
+              denTables,
+              znumToDenSplineId))
+          {
+            std::vector<dftfe::uInt> centerSplineIdHost(nCentersRho);
+            for (dftfe::uInt iAtom = 0; iAtom < nCentersRho; ++iAtom)
+              centerSplineIdHost[iAtom] =
+                znumToDenSplineId[atomsImagesDenZ[iAtom]];
+
+            AtomTypeSplineTables<memorySpace> denTablesMem;
+            denTablesMem.stage(denTables);
+            dftfe::utils::MemoryStorage<double, memorySpace> dCenters, dRhoFac,
+              dMagZFac, dMagYFac, dMagXFac, dQuad;
+            dftfe::utils::MemoryStorage<dftfe::uInt, memorySpace> dSplineId;
+            stageHostVector(atomsImagesPositions, dCenters);
+            stageHostVector(atomsImagesRhoFactor, dRhoFac);
+            stageHostVector(atomsImagesMagZFactor, dMagZFac);
+            stageHostVector(atomsImagesMagYFactor, dMagYFac);
+            stageHostVector(atomsImagesMagXFactor, dMagXFac);
+            stageHostVector(centerSplineIdHost, dSplineId);
+            // one per density component, in the order of
+            // d_densityInQuadValues: rho, magZ, magY, magX
+            std::vector<dftfe::utils::MemoryStorage<double, memorySpace>> dOut(
+              nDensityComponents),
+              dGradOut(isGradDensityDataDependent ? nDensityComponents : 0);
+
+            const bool applyConstraintMag =
+              d_dftParamsPtr->spinPolarized == 1 &&
+              d_dftParamsPtr->constraintMagnetization &&
+              !d_dftParamsPtr->useAtomicMagnetizationGuessConstraintMag &&
+              !d_dftParamsPtr->noncolin;
+
+            // block over cells so the device transient stays bounded. Each
+            // point stages three coordinates and returns every density
+            // component, and for GGA three gradient values per component.
+            constexpr std::size_t maxBlockBytes  = 256000000;
+            const dftfe::uInt     cellsBlockSize = std::max<dftfe::uInt>(
+              1,
+              maxBlockBytes /
+                (std::size_t)((3 + nDensityComponents *
+                                     (isGradDensityDataDependent ? 4 : 1)) *
+                              n_q_points * sizeof(double)));
+            for (dftfe::uInt cellBlockStart = 0; cellBlockStart < nCells;
+                 cellBlockStart += cellsBlockSize)
+              {
+                const dftfe::uInt nCellsInBlock =
+                  std::min(cellsBlockSize, nCells - cellBlockStart);
+                const std::size_t nPointsInBlock =
+                  (std::size_t)nCellsInBlock * n_q_points;
+                const std::size_t blockOffset =
+                  (std::size_t)cellBlockStart * n_q_points;
+                dQuad.resize(nPointsInBlock * 3);
+                dQuad.template copyFrom<dftfe::utils::MemorySpace::HOST>(
+                  d_basisOperationsPtrHost->quadPoints().data() +
+                  blockOffset * 3);
+                for (dftfe::uInt iComp = 0; iComp < nDensityComponents; ++iComp)
+                  {
+                    dOut[iComp].resize(nPointsInBlock);
+                    if (isGradDensityDataDependent)
+                      dGradOut[iComp].resize(nPointsInBlock * 3);
+                  }
+                auto outPtr = [&](const dftfe::uInt iComp) {
+                  return iComp < nDensityComponents ? dOut[iComp].data() :
+                                                      nullptr;
+                };
+                auto gradOutPtr = [&](const dftfe::uInt iComp) {
+                  return isGradDensityDataDependent &&
+                             iComp < nDensityComponents ?
+                           dGradOut[iComp].data() :
+                           nullptr;
+                };
+
+                atomicInitKernels::atomicDensityQuadSuperposition<memorySpace>(
+                  nPointsInBlock,
+                  nCentersRho,
+                  numberMagComponents,
+                  d_dftParamsPtr->floatingNuclearCharges,
+                  applyConstraintMag,
+                  d_dftParamsPtr->tot_magnetization,
+                  dQuad.data(),
+                  dCenters.data(),
+                  dSplineId.data(),
+                  dRhoFac.data(),
+                  dMagZFac.data(),
+                  dMagYFac.data(),
+                  dMagXFac.data(),
+                  denTablesMem.knotX.data(),
+                  denTablesMem.knotY.data(),
+                  denTablesMem.coefB.data(),
+                  denTablesMem.coefC.data(),
+                  denTablesMem.coefD.data(),
+                  denTablesMem.offsets.data(),
+                  denTablesMem.nKnots.data(),
+                  denTablesMem.gpParams.data(),
+                  denTablesMem.cutoffs.data(),
+                  denTablesMem.rMins.data(),
+                  outPtr(0),
+                  outPtr(1),
+                  outPtr(2),
+                  outPtr(3),
+                  gradOutPtr(0),
+                  gradOutPtr(1),
+                  gradOutPtr(2),
+                  gradOutPtr(3));
+
+                for (dftfe::uInt iComp = 0; iComp < nDensityComponents; ++iComp)
+                  {
+                    dOut[iComp]
+                      .template copyTo<dftfe::utils::MemorySpace::HOST>(
+                        d_densityInQuadValues[iComp].data(),
+                        nPointsInBlock,
+                        0,
+                        blockOffset);
+                    if (isGradDensityDataDependent)
+                      dGradOut[iComp]
+                        .template copyTo<dftfe::utils::MemorySpace::HOST>(
+                          d_gradDensityInQuadValues[iComp].data(),
+                          nPointsInBlock * 3,
+                          0,
+                          blockOffset * 3);
+                  }
+              }
+            rhoQuadComputed = true;
+          }
+
+          // loop over elements
 #pragma omp parallel for num_threads(d_nOMPThreads) firstprivate(denSpline)
-        for (auto iCell = 0; iCell < nCells; ++iCell)
+        for (auto iCell = 0; iCell < (rhoQuadComputed ? 0 : nCells); ++iCell)
           {
             auto    cellid = d_basisOperationsPtrHost->cellID(iCell);
             double *rhoInValuesPtr =
@@ -888,7 +1026,7 @@ namespace dftfe
 
 
         // loop over elements
-        if (isGradDensityDataDependent)
+        if (isGradDensityDataDependent && !rhoQuadComputed)
           {
 #pragma omp parallel for num_threads(d_nOMPThreads) firstprivate(denSpline)
             for (dftfe::uInt iCell = 0;
@@ -1167,7 +1305,7 @@ namespace dftfe
                                 d_imagePositionsTrunc[iImageCharge][1]) /
                                distanceToAtom);
                             double tempGradRhoZValueAtQuadPt =
-                              radialDensityFirstDerivative *
+                              rhoAtomFactor * radialDensityFirstDerivative *
                               ((quadPoint[2] -
                                 d_imagePositionsTrunc[iImageCharge][2]) /
                                distanceToAtom);

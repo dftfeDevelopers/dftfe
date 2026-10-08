@@ -77,6 +77,7 @@
 #include <dftfe/kerkerSolverProblemWrapper.h>
 #include <dftfe/ldosSolverProblemWrapper.h>
 #include <dftfe/groupSymmetry.h>
+#include <functional>
 
 namespace dftfe
 {
@@ -992,6 +993,21 @@ namespace dftfe
     void
     initAtomicRho();
 
+    /**
+     * @brief Radial density and its gradient summed over every atom and
+     * periodic image, at every density quadrature point of every locally
+     * owned cell, through atomicInitKernels::atomicRadialDensityQuadTotal.
+     * getRadialFunction maps an atomic number to its radial function. Fills
+     * valueMap and gradMap and returns true, or returns false with nothing
+     * written when a species is not spline backed.
+     */
+    bool
+    computeRadialDensityQuadTotals(
+      const std::function<const AtomCenteredSphericalFunctionBase *(
+        const dftfe::uInt)>                         &getRadialFunction,
+      std::map<dealii::CellId, std::vector<double>> &valueMap,
+      std::map<dealii::CellId, std::vector<double>> &gradMap);
+
     double d_atomicRhoScalingFac;
 
     void
@@ -1823,10 +1839,7 @@ namespace dftfe
 
     /// for xl-bomd
     std::map<dealii::CellId, std::vector<double>> d_rhoAtomsValues,
-      d_gradRhoAtomsValues, d_hessianRhoAtomsValues;
-    std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
-      d_rhoAtomsValuesSeparate, d_gradRhoAtomsValuesSeparate,
-      d_hessianRhoAtomsValuesSeparate;
+      d_gradRhoAtomsValues;
 
     std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
@@ -1870,8 +1883,6 @@ namespace dftfe
 
     std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
       d_gradRhoCoreAtoms;
-
-    std::map<dealii::CellId, std::vector<double>> d_hessianRhoCore;
 
     std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
       d_hessianRhoCoreAtoms;

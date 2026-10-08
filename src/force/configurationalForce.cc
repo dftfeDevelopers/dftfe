@@ -329,7 +329,6 @@ namespace dftfe
       auxDensityXCOutRepresentationPtr,
     const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
     const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues,
-    const std::map<dealii::CellId, std::vector<double>> &hessianRhoCoreValues,
     const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
       &gradRhoCoreAtoms,
     const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>

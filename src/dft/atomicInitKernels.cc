@@ -225,6 +225,199 @@ namespace dftfe
     }
     template <>
     void
+    atomicRadialDensityQuadTotal<dftfe::utils::MemorySpace::HOST>(
+      const dftfe::uInt  numCells,
+      const dftfe::uInt  numQuadPoints,
+      const dftfe::uInt  numCenters,
+      const bool         floatingNuclearCharges,
+      const double      *quadCoords,
+      const double      *centerCoords,
+      const dftfe::uInt *centerSplineId,
+      const double      *knotXAll,
+      const double      *knotYAll,
+      const double      *coefBAll,
+      const double      *coefCAll,
+      const double      *coefDAll,
+      const dftfe::uInt *splineOffsets,
+      const dftfe::uInt *splineNKnots,
+      const double      *splineGPParams,
+      const double      *splineCutoff,
+      const double      *splineRMin,
+      double            *valueOut,
+      double            *gradOut)
+    {
+      const dftfe::uInt numberEntries = numCells * numQuadPoints;
+#pragma omp parallel for num_threads(hostThreadCount())
+      for (dftfe::uInt index = 0; index < numberEntries; ++index)
+        {
+          const double *qp    = quadCoords + index * 3;
+          double        value = 0.0;
+          double        grad[3];
+          grad[0] = 0.0;
+          grad[1] = 0.0;
+          grad[2] = 0.0;
+          for (dftfe::uInt iCenter = 0; iCenter < numCenters; ++iCenter)
+            {
+              double v;
+              double g[3];
+              radialDensityQuadPoint(qp,
+                                     centerCoords + iCenter * 3,
+                                     centerSplineId[iCenter],
+                                     floatingNuclearCharges,
+                                     knotXAll,
+                                     knotYAll,
+                                     coefBAll,
+                                     coefCAll,
+                                     coefDAll,
+                                     splineOffsets,
+                                     splineNKnots,
+                                     splineGPParams,
+                                     splineCutoff,
+                                     splineRMin,
+                                     &v,
+                                     g,
+                                     nullptr);
+              value += v;
+              grad[0] += g[0];
+              grad[1] += g[1];
+              grad[2] += g[2];
+            }
+          valueOut[index]        = value;
+          gradOut[index * 3 + 0] = grad[0];
+          gradOut[index * 3 + 1] = grad[1];
+          gradOut[index * 3 + 2] = grad[2];
+        }
+    }
+
+    template <>
+    void
+    atomicRadialDensityPairDerivatives<dftfe::utils::MemorySpace::HOST>(
+      const dftfe::uInt  numPairs,
+      const dftfe::uInt  numQuadPoints,
+      const bool         floatingNuclearCharges,
+      const double      *quadCoords,
+      const double      *pairCenters,
+      const dftfe::uInt *pairCellSlot,
+      const dftfe::uInt *pairSplineId,
+      const double      *knotXAll,
+      const double      *knotYAll,
+      const double      *coefBAll,
+      const double      *coefCAll,
+      const double      *coefDAll,
+      const dftfe::uInt *splineOffsets,
+      const dftfe::uInt *splineNKnots,
+      const double      *splineGPParams,
+      const double      *splineCutoff,
+      const double      *splineRMin,
+      double            *gradOut,
+      double            *hessOut,
+      dftfe::uInt       *pairHasSupport)
+    {
+      const dftfe::uInt numberEntries = numPairs * numQuadPoints;
+#pragma omp parallel for num_threads(hostThreadCount())
+      for (dftfe::uInt index = 0; index < numberEntries; ++index)
+        {
+          const dftfe::uInt iPair    = index / numQuadPoints;
+          const dftfe::uInt iQuad    = index % numQuadPoints;
+          const dftfe::uInt cellSlot = pairCellSlot[iPair];
+          if (radialDensityQuadPoint(
+                quadCoords + (cellSlot * numQuadPoints + iQuad) * 3,
+                pairCenters + iPair * 3,
+                pairSplineId[iPair],
+                floatingNuclearCharges,
+                knotXAll,
+                knotYAll,
+                coefBAll,
+                coefCAll,
+                coefDAll,
+                splineOffsets,
+                splineNKnots,
+                splineGPParams,
+                splineCutoff,
+                splineRMin,
+                nullptr,
+                gradOut + index * 3,
+                hessOut == nullptr ? nullptr : hessOut + index * 9))
+            {
+              // quadrature points of one pair share this flag
+#pragma omp atomic write
+              pairHasSupport[iPair] = 1;
+            }
+        }
+    }
+
+    template <>
+    void
+    atomicDensityQuadSuperposition<dftfe::utils::MemorySpace::HOST>(
+      const dftfe::uInt  numPoints,
+      const dftfe::uInt  numCenters,
+      const dftfe::uInt  numMagComponents,
+      const bool         floatingNuclearCharges,
+      const bool         applyConstraintMag,
+      const double       totMagnetization,
+      const double      *pointCoords,
+      const double      *centerCoords,
+      const dftfe::uInt *centerSplineId,
+      const double      *centerRhoFactor,
+      const double      *centerMagZFactor,
+      const double      *centerMagYFactor,
+      const double      *centerMagXFactor,
+      const double      *knotXAll,
+      const double      *knotYAll,
+      const double      *coefBAll,
+      const double      *coefCAll,
+      const double      *coefDAll,
+      const dftfe::uInt *splineOffsets,
+      const dftfe::uInt *splineNKnots,
+      const double      *splineGPParams,
+      const double      *splineCutoff,
+      const double      *splineRMin,
+      double            *rhoOut,
+      double            *magZOut,
+      double            *magYOut,
+      double            *magXOut,
+      double            *gradRhoOut,
+      double            *gradMagZOut,
+      double            *gradMagYOut,
+      double            *gradMagXOut)
+    {
+#pragma omp        parallel for num_threads(hostThreadCount())
+      for (dftfe::uInt index = 0; index < numPoints; ++index)
+        densitySuperpositionQuadPoint(index,
+                                      pointCoords,
+                                      numCenters,
+                                      numMagComponents,
+                                      floatingNuclearCharges,
+                                      applyConstraintMag,
+                                      totMagnetization,
+                                      centerCoords,
+                                      centerSplineId,
+                                      centerRhoFactor,
+                                      centerMagZFactor,
+                                      centerMagYFactor,
+                                      centerMagXFactor,
+                                      knotXAll,
+                                      knotYAll,
+                                      coefBAll,
+                                      coefCAll,
+                                      coefDAll,
+                                      splineOffsets,
+                                      splineNKnots,
+                                      splineGPParams,
+                                      splineCutoff,
+                                      splineRMin,
+                                      rhoOut,
+                                      magZOut,
+                                      magYOut,
+                                      magXOut,
+                                      gradRhoOut,
+                                      gradMagZOut,
+                                      gradMagYOut,
+                                      gradMagXOut);
+    }
+
+    template <>
+    void
     localPseudoPotentialValues<dftfe::utils::MemorySpace::HOST>(
       const dftfe::uInt  numPairs,
       const dftfe::uInt  numQuadPoints,

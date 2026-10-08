@@ -28,6 +28,382 @@ namespace dftfe
   {
     DFTFE_CREATE_KERNEL(
       void,
+      atomicDensityQuadSuperpositionKernel,
+      {
+        for (dftfe::uInt index = globalThreadId; index < numPoints;
+             index += nThreadsPerBlock * nThreadBlock)
+          densitySuperpositionQuadPoint(index,
+                                        pointCoords,
+                                        numCenters,
+                                        numMagComponents,
+                                        floatingNuclearCharges,
+                                        applyConstraintMag,
+                                        totMagnetization,
+                                        centerCoords,
+                                        centerSplineId,
+                                        centerRhoFactor,
+                                        centerMagZFactor,
+                                        centerMagYFactor,
+                                        centerMagXFactor,
+                                        knotXAll,
+                                        knotYAll,
+                                        coefBAll,
+                                        coefCAll,
+                                        coefDAll,
+                                        splineOffsets,
+                                        splineNKnots,
+                                        splineGPParams,
+                                        splineCutoff,
+                                        splineRMin,
+                                        rhoOut,
+                                        magZOut,
+                                        magYOut,
+                                        magXOut,
+                                        gradRhoOut,
+                                        gradMagZOut,
+                                        gradMagYOut,
+                                        gradMagXOut);
+      },
+      const dftfe::uInt  numPoints,
+      const dftfe::uInt  numCenters,
+      const dftfe::uInt  numMagComponents,
+      const bool         floatingNuclearCharges,
+      const bool         applyConstraintMag,
+      const double       totMagnetization,
+      const double      *pointCoords,
+      const double      *centerCoords,
+      const dftfe::uInt *centerSplineId,
+      const double      *centerRhoFactor,
+      const double      *centerMagZFactor,
+      const double      *centerMagYFactor,
+      const double      *centerMagXFactor,
+      const double      *knotXAll,
+      const double      *knotYAll,
+      const double      *coefBAll,
+      const double      *coefCAll,
+      const double      *coefDAll,
+      const dftfe::uInt *splineOffsets,
+      const dftfe::uInt *splineNKnots,
+      const double      *splineGPParams,
+      const double      *splineCutoff,
+      const double      *splineRMin,
+      double            *rhoOut,
+      double            *magZOut,
+      double            *magYOut,
+      double            *magXOut,
+      double            *gradRhoOut,
+      double            *gradMagZOut,
+      double            *gradMagYOut,
+      double            *gradMagXOut);
+
+    template <>
+    void
+    atomicDensityQuadSuperposition<dftfe::utils::MemorySpace::DEVICE>(
+      const dftfe::uInt  numPoints,
+      const dftfe::uInt  numCenters,
+      const dftfe::uInt  numMagComponents,
+      const bool         floatingNuclearCharges,
+      const bool         applyConstraintMag,
+      const double       totMagnetization,
+      const double      *pointCoords,
+      const double      *centerCoords,
+      const dftfe::uInt *centerSplineId,
+      const double      *centerRhoFactor,
+      const double      *centerMagZFactor,
+      const double      *centerMagYFactor,
+      const double      *centerMagXFactor,
+      const double      *knotXAll,
+      const double      *knotYAll,
+      const double      *coefBAll,
+      const double      *coefCAll,
+      const double      *coefDAll,
+      const dftfe::uInt *splineOffsets,
+      const dftfe::uInt *splineNKnots,
+      const double      *splineGPParams,
+      const double      *splineCutoff,
+      const double      *splineRMin,
+      double            *rhoOut,
+      double            *magZOut,
+      double            *magYOut,
+      double            *magXOut,
+      double            *gradRhoOut,
+      double            *gradMagZOut,
+      double            *gradMagYOut,
+      double            *gradMagXOut)
+    {
+      if (numPoints == 0)
+        return;
+      DFTFE_LAUNCH_KERNEL(
+        atomicDensityQuadSuperpositionKernel,
+        (dftfe::utils::DEVICE_BLOCK_SIZE + numPoints) /
+          dftfe::utils::DEVICE_BLOCK_SIZE,
+        dftfe::utils::DEVICE_BLOCK_SIZE,
+        dftfe::linearAlgebra::BLASWrapper<
+          dftfe::utils::MemorySpace::DEVICE>::d_streamId,
+        numPoints,
+        numCenters,
+        numMagComponents,
+        floatingNuclearCharges,
+        applyConstraintMag,
+        totMagnetization,
+        dftfe::utils::makeDataTypeDeviceCompatible(pointCoords),
+        dftfe::utils::makeDataTypeDeviceCompatible(centerCoords),
+        dftfe::utils::makeDataTypeDeviceCompatible(centerSplineId),
+        dftfe::utils::makeDataTypeDeviceCompatible(centerRhoFactor),
+        dftfe::utils::makeDataTypeDeviceCompatible(centerMagZFactor),
+        dftfe::utils::makeDataTypeDeviceCompatible(centerMagYFactor),
+        dftfe::utils::makeDataTypeDeviceCompatible(centerMagXFactor),
+        dftfe::utils::makeDataTypeDeviceCompatible(knotXAll),
+        dftfe::utils::makeDataTypeDeviceCompatible(knotYAll),
+        dftfe::utils::makeDataTypeDeviceCompatible(coefBAll),
+        dftfe::utils::makeDataTypeDeviceCompatible(coefCAll),
+        dftfe::utils::makeDataTypeDeviceCompatible(coefDAll),
+        dftfe::utils::makeDataTypeDeviceCompatible(splineOffsets),
+        dftfe::utils::makeDataTypeDeviceCompatible(splineNKnots),
+        dftfe::utils::makeDataTypeDeviceCompatible(splineGPParams),
+        dftfe::utils::makeDataTypeDeviceCompatible(splineCutoff),
+        dftfe::utils::makeDataTypeDeviceCompatible(splineRMin),
+        dftfe::utils::makeDataTypeDeviceCompatible(rhoOut),
+        dftfe::utils::makeDataTypeDeviceCompatible(magZOut),
+        dftfe::utils::makeDataTypeDeviceCompatible(magYOut),
+        dftfe::utils::makeDataTypeDeviceCompatible(magXOut),
+        dftfe::utils::makeDataTypeDeviceCompatible(gradRhoOut),
+        dftfe::utils::makeDataTypeDeviceCompatible(gradMagZOut),
+        dftfe::utils::makeDataTypeDeviceCompatible(gradMagYOut),
+        dftfe::utils::makeDataTypeDeviceCompatible(gradMagXOut));
+    }
+
+    DFTFE_CREATE_KERNEL(
+      void,
+      atomicRadialDensityQuadTotalKernel,
+      {
+        const dftfe::uInt numberEntries = numCells * numQuadPoints;
+        for (dftfe::uInt index = globalThreadId; index < numberEntries;
+             index += nThreadsPerBlock * nThreadBlock)
+          {
+            const double *qp    = quadCoords + index * 3;
+            double        value = 0.0;
+            double        grad[3];
+            grad[0] = 0.0;
+            grad[1] = 0.0;
+            grad[2] = 0.0;
+            for (dftfe::uInt iCenter = 0; iCenter < numCenters; ++iCenter)
+              {
+                double v;
+                double g[3];
+                radialDensityQuadPoint(qp,
+                                       centerCoords + iCenter * 3,
+                                       centerSplineId[iCenter],
+                                       floatingNuclearCharges,
+                                       knotXAll,
+                                       knotYAll,
+                                       coefBAll,
+                                       coefCAll,
+                                       coefDAll,
+                                       splineOffsets,
+                                       splineNKnots,
+                                       splineGPParams,
+                                       splineCutoff,
+                                       splineRMin,
+                                       &v,
+                                       g,
+                                       nullptr);
+                value += v;
+                grad[0] += g[0];
+                grad[1] += g[1];
+                grad[2] += g[2];
+              }
+            valueOut[index]        = value;
+            gradOut[index * 3 + 0] = grad[0];
+            gradOut[index * 3 + 1] = grad[1];
+            gradOut[index * 3 + 2] = grad[2];
+          }
+      },
+      const dftfe::uInt  numCells,
+      const dftfe::uInt  numQuadPoints,
+      const dftfe::uInt  numCenters,
+      const bool         floatingNuclearCharges,
+      const double      *quadCoords,
+      const double      *centerCoords,
+      const dftfe::uInt *centerSplineId,
+      const double      *knotXAll,
+      const double      *knotYAll,
+      const double      *coefBAll,
+      const double      *coefCAll,
+      const double      *coefDAll,
+      const dftfe::uInt *splineOffsets,
+      const dftfe::uInt *splineNKnots,
+      const double      *splineGPParams,
+      const double      *splineCutoff,
+      const double      *splineRMin,
+      double            *valueOut,
+      double            *gradOut);
+
+    DFTFE_CREATE_KERNEL(
+      void,
+      atomicRadialDensityPairDerivativesKernel,
+      {
+        const dftfe::uInt numberEntries = numPairs * numQuadPoints;
+        for (dftfe::uInt index = globalThreadId; index < numberEntries;
+             index += nThreadsPerBlock * nThreadBlock)
+          {
+            const dftfe::uInt iPair    = index / numQuadPoints;
+            const dftfe::uInt iQuad    = index % numQuadPoints;
+            const dftfe::uInt cellSlot = pairCellSlot[iPair];
+            if (radialDensityQuadPoint(
+                  quadCoords + (cellSlot * numQuadPoints + iQuad) * 3,
+                  pairCenters + iPair * 3,
+                  pairSplineId[iPair],
+                  floatingNuclearCharges,
+                  knotXAll,
+                  knotYAll,
+                  coefBAll,
+                  coefCAll,
+                  coefDAll,
+                  splineOffsets,
+                  splineNKnots,
+                  splineGPParams,
+                  splineCutoff,
+                  splineRMin,
+                  nullptr,
+                  gradOut + index * 3,
+                  hessOut == nullptr ? nullptr : hessOut + index * 9))
+              pairHasSupport[iPair] = 1;
+          }
+      },
+      const dftfe::uInt  numPairs,
+      const dftfe::uInt  numQuadPoints,
+      const bool         floatingNuclearCharges,
+      const double      *quadCoords,
+      const double      *pairCenters,
+      const dftfe::uInt *pairCellSlot,
+      const dftfe::uInt *pairSplineId,
+      const double      *knotXAll,
+      const double      *knotYAll,
+      const double      *coefBAll,
+      const double      *coefCAll,
+      const double      *coefDAll,
+      const dftfe::uInt *splineOffsets,
+      const dftfe::uInt *splineNKnots,
+      const double      *splineGPParams,
+      const double      *splineCutoff,
+      const double      *splineRMin,
+      double            *gradOut,
+      double            *hessOut,
+      dftfe::uInt       *pairHasSupport);
+
+    template <>
+    void
+    atomicRadialDensityQuadTotal<dftfe::utils::MemorySpace::DEVICE>(
+      const dftfe::uInt  numCells,
+      const dftfe::uInt  numQuadPoints,
+      const dftfe::uInt  numCenters,
+      const bool         floatingNuclearCharges,
+      const double      *quadCoords,
+      const double      *centerCoords,
+      const dftfe::uInt *centerSplineId,
+      const double      *knotXAll,
+      const double      *knotYAll,
+      const double      *coefBAll,
+      const double      *coefCAll,
+      const double      *coefDAll,
+      const dftfe::uInt *splineOffsets,
+      const dftfe::uInt *splineNKnots,
+      const double      *splineGPParams,
+      const double      *splineCutoff,
+      const double      *splineRMin,
+      double            *valueOut,
+      double            *gradOut)
+    {
+      if (numCells == 0 || numQuadPoints == 0)
+        return;
+      const dftfe::uInt numberEntries = numCells * numQuadPoints;
+      DFTFE_LAUNCH_KERNEL(
+        atomicRadialDensityQuadTotalKernel,
+        (dftfe::utils::DEVICE_BLOCK_SIZE + numberEntries) /
+          dftfe::utils::DEVICE_BLOCK_SIZE,
+        dftfe::utils::DEVICE_BLOCK_SIZE,
+        dftfe::linearAlgebra::BLASWrapper<
+          dftfe::utils::MemorySpace::DEVICE>::d_streamId,
+        numCells,
+        numQuadPoints,
+        numCenters,
+        floatingNuclearCharges,
+        dftfe::utils::makeDataTypeDeviceCompatible(quadCoords),
+        dftfe::utils::makeDataTypeDeviceCompatible(centerCoords),
+        dftfe::utils::makeDataTypeDeviceCompatible(centerSplineId),
+        dftfe::utils::makeDataTypeDeviceCompatible(knotXAll),
+        dftfe::utils::makeDataTypeDeviceCompatible(knotYAll),
+        dftfe::utils::makeDataTypeDeviceCompatible(coefBAll),
+        dftfe::utils::makeDataTypeDeviceCompatible(coefCAll),
+        dftfe::utils::makeDataTypeDeviceCompatible(coefDAll),
+        dftfe::utils::makeDataTypeDeviceCompatible(splineOffsets),
+        dftfe::utils::makeDataTypeDeviceCompatible(splineNKnots),
+        dftfe::utils::makeDataTypeDeviceCompatible(splineGPParams),
+        dftfe::utils::makeDataTypeDeviceCompatible(splineCutoff),
+        dftfe::utils::makeDataTypeDeviceCompatible(splineRMin),
+        dftfe::utils::makeDataTypeDeviceCompatible(valueOut),
+        dftfe::utils::makeDataTypeDeviceCompatible(gradOut));
+    }
+
+    template <>
+    void
+    atomicRadialDensityPairDerivatives<dftfe::utils::MemorySpace::DEVICE>(
+      const dftfe::uInt  numPairs,
+      const dftfe::uInt  numQuadPoints,
+      const bool         floatingNuclearCharges,
+      const double      *quadCoords,
+      const double      *pairCenters,
+      const dftfe::uInt *pairCellSlot,
+      const dftfe::uInt *pairSplineId,
+      const double      *knotXAll,
+      const double      *knotYAll,
+      const double      *coefBAll,
+      const double      *coefCAll,
+      const double      *coefDAll,
+      const dftfe::uInt *splineOffsets,
+      const dftfe::uInt *splineNKnots,
+      const double      *splineGPParams,
+      const double      *splineCutoff,
+      const double      *splineRMin,
+      double            *gradOut,
+      double            *hessOut,
+      dftfe::uInt       *pairHasSupport)
+    {
+      if (numPairs == 0 || numQuadPoints == 0)
+        return;
+      const dftfe::uInt numberEntries = numPairs * numQuadPoints;
+      DFTFE_LAUNCH_KERNEL(
+        atomicRadialDensityPairDerivativesKernel,
+        (dftfe::utils::DEVICE_BLOCK_SIZE + numberEntries) /
+          dftfe::utils::DEVICE_BLOCK_SIZE,
+        dftfe::utils::DEVICE_BLOCK_SIZE,
+        dftfe::linearAlgebra::BLASWrapper<
+          dftfe::utils::MemorySpace::DEVICE>::d_streamId,
+        numPairs,
+        numQuadPoints,
+        floatingNuclearCharges,
+        dftfe::utils::makeDataTypeDeviceCompatible(quadCoords),
+        dftfe::utils::makeDataTypeDeviceCompatible(pairCenters),
+        dftfe::utils::makeDataTypeDeviceCompatible(pairCellSlot),
+        dftfe::utils::makeDataTypeDeviceCompatible(pairSplineId),
+        dftfe::utils::makeDataTypeDeviceCompatible(knotXAll),
+        dftfe::utils::makeDataTypeDeviceCompatible(knotYAll),
+        dftfe::utils::makeDataTypeDeviceCompatible(coefBAll),
+        dftfe::utils::makeDataTypeDeviceCompatible(coefCAll),
+        dftfe::utils::makeDataTypeDeviceCompatible(coefDAll),
+        dftfe::utils::makeDataTypeDeviceCompatible(splineOffsets),
+        dftfe::utils::makeDataTypeDeviceCompatible(splineNKnots),
+        dftfe::utils::makeDataTypeDeviceCompatible(splineGPParams),
+        dftfe::utils::makeDataTypeDeviceCompatible(splineCutoff),
+        dftfe::utils::makeDataTypeDeviceCompatible(splineRMin),
+        dftfe::utils::makeDataTypeDeviceCompatible(gradOut),
+        dftfe::utils::makeDataTypeDeviceCompatible(hessOut),
+        dftfe::utils::makeDataTypeDeviceCompatible(pairHasSupport));
+    }
+
+    DFTFE_CREATE_KERNEL(
+      void,
       localPseudoPotentialValuesKernel,
       {
         const dftfe::uInt numberEntries = numPairs * numQuadPoints;
