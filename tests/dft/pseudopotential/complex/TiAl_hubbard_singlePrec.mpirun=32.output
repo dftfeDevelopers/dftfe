@@ -35,11 +35,11 @@ Pseudopotential initalization....
 Reading data for core electron-density to be used in nonlinear core-correction.....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 55 iterations.
+SCF iterations converged to the specified tolerance after: 71 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -58.87535212
+             Total energy:         -58.87535195
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------

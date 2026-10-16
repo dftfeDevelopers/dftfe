@@ -1,9 +1,9 @@
 number of atoms: 2
 number of atoms types: 1
 Total number of k-points 216
-Found -714597200 GPUs
+Found 601682624 GPUs
 MPI rank 0 uses GPU #3
-Found 1168723280 GPUs
+Found -498715968 GPUs
 MPI rank 0 uses GPU #0
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
 v1 : 5.368001262539999985e+00 0.000000000000000000e+00 0.000000000000000000e+00

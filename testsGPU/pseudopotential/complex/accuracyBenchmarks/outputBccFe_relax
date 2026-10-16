@@ -1,9 +1,9 @@
 number of atoms: 2
 number of atoms types: 1
 Total number of k-points 8
-Found 280374416 GPUs
+Found -420474176 GPUs
 MPI rank 0 uses GPU #3
-Found 0 GPUs
+Found -577436992 GPUs
 MPI rank 0 uses GPU #0
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
 v1 : 5.368001262539999985e+00 0.000000000000000000e+00 0.000000000000000000e+00
@@ -39,7 +39,7 @@ Pseudopotential initalization....
 Reading data for core electron-density to be used in nonlinear core-correction.....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 31 iterations.
+SCF iterations converged to the specified tolerance after: 29 iterations.
 
 Energy computations (Hartree) 
 -------------------
@@ -82,7 +82,7 @@ SCF iterations converged to the specified tolerance after: 19 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:        -253.17176090
+             Total energy:        -253.17176091
 Absolute magnetization: 7.250
 Net magnetization     : 7.250
 
@@ -93,9 +93,9 @@ Absolute value of cell stress (Hartree/Bohr^3)
 0.000000  0.000000  0.000835
 ------------------------------------------------------------------------
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
-v1 : 5.516687 0.000000 0.000000
-v2 : 0.000000 5.516687 0.000000
-v3 : 0.000000 0.000000 5.516687
+v1 : 5.516685 0.000000 0.000000
+v2 : 0.000000 5.516685 0.000000
+v3 : 0.000000 0.000000 5.516685
 -----------------------------------------------------------------------------------------
 -----Fractional coordinates of atoms------ 
 AtomId 0:  0.000000 0.000000 0.000000
@@ -121,7 +121,7 @@ SCF iterations converged to the specified tolerance after: 28 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:        -253.18661237
+             Total energy:        -253.18661238
 Absolute magnetization: 7.250
 Net magnetization     : 7.250
 
@@ -160,7 +160,7 @@ SCF iterations converged to the specified tolerance after: 22 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:        -253.18615747
+             Total energy:        -253.18615748
 Absolute magnetization: 7.250
 Net magnetization     : 7.250
 

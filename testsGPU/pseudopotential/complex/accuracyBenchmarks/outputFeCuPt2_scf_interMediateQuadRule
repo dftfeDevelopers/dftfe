@@ -1,6 +1,10 @@
 number of atoms: 4
 number of atoms types: 3
 Total number of k-points 12
+Found -1202580800 GPUs
+MPI rank 0 uses GPU #3
+Found 0 GPUs
+MPI rank 0 uses GPU #0
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
 v1 : 7.488597237999999656e+00 0.000000000000000000e+00 0.000000000000000000e+00
 v2 : 0.000000000000000000e+00 7.488597237999999656e+00 0.000000000000000000e+00
@@ -37,7 +41,7 @@ Pseudopotential initalization....
 Reading data for core electron-density to be used in nonlinear core-correction.....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 21 iterations.
+SCF iterations converged to the specified tolerance after: 22 iterations.
 
 Energy computations (Hartree) 
 -------------------
