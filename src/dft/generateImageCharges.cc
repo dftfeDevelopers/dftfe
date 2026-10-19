@@ -65,44 +65,17 @@ namespace dftfe
     }
 
     //
-    // inverse of the row-major 3x3 lattice matrix, used to map a real space
-    // point to fractional coordinates
-    //
-    std::vector<double>
-    invert3x3(const std::vector<double> &m)
-    {
-      const double c00 = m[4] * m[8] - m[5] * m[7];
-      const double c01 = m[5] * m[6] - m[3] * m[8];
-      const double c02 = m[3] * m[7] - m[4] * m[6];
-      const double det = m[0] * c00 + m[1] * c01 + m[2] * c02;
-      AssertThrow(std::fabs(det) > 1.0e-14,
-                  dealii::ExcMessage(
-                    "DFT-FE Error: singular lattice vector matrix."));
-      const double        invDet = 1.0 / det;
-      std::vector<double> inv(9);
-      inv[0] = c00 * invDet;
-      inv[1] = (m[2] * m[7] - m[1] * m[8]) * invDet;
-      inv[2] = (m[1] * m[5] - m[2] * m[4]) * invDet;
-      inv[3] = c01 * invDet;
-      inv[4] = (m[0] * m[8] - m[2] * m[6]) * invDet;
-      inv[5] = (m[2] * m[3] - m[0] * m[5]) * invDet;
-      inv[6] = c02 * invDet;
-      inv[7] = (m[1] * m[6] - m[0] * m[7]) * invDet;
-      inv[8] = (m[0] * m[4] - m[1] * m[3]) * invDet;
-      return inv;
-    }
-
-    //
     // given surface defined by normal = surfaceNormal and a point = xred2
     // find the point on this surface closest to an arbitrary point = xred1
     // return fractional coordinates of nearest point
     //
     std::vector<double>
-    getNearestPointOnGivenSurface(const std::vector<double> &latticeVectors,
-                                  const std::vector<double> &latticeVectorsInv,
-                                  const std::vector<double> &xred1,
-                                  const std::vector<double> &xred2,
-                                  const std::vector<double> &surfaceNormal)
+    getNearestPointOnGivenSurface(
+      const std::vector<double>          &latticeVectors,
+      const dealii::Tensor<2, 3, double> &latticeVectorsInv,
+      const std::vector<double>          &xred1,
+      const std::vector<double>          &xred2,
+      const std::vector<double>          &surfaceNormal)
 
     {
       //
@@ -145,7 +118,7 @@ namespace dftfe
       std::vector<double> fracCoords(3, 0.0);
       for (dftfe::Int i = 0; i < 3; ++i)
         for (dftfe::Int j = 0; j < 3; ++j)
-          fracCoords[i] += latticeVectorsInv[3 * j + i] * nearestPtCoords[j];
+          fracCoords[i] += latticeVectorsInv[j][i] * nearestPtCoords[j];
 
       std::vector<double> returnValue(3);
 
@@ -160,9 +133,10 @@ namespace dftfe
     // output : min distance to any of the cel surfaces
     //
     double
-    getMinDistanceFromImageToCell(const std::vector<double> &latticeVectors,
-                                  const std::vector<double> &latticeVectorsInv,
-                                  const std::vector<double> &xreduced)
+    getMinDistanceFromImageToCell(
+      const std::vector<double>          &latticeVectors,
+      const dealii::Tensor<2, 3, double> &latticeVectorsInv,
+      const std::vector<double>          &xreduced)
     {
       const double xfrac = xreduced[0];
       const double yfrac = xreduced[1];
@@ -449,8 +423,15 @@ namespace dftfe
       }
 
     // maps candidate image positions to fractional coordinates
-    const std::vector<double> latticeVectorsInv =
-      internaldft::invert3x3(latticeVectors);
+    dealii::Tensor<2, 3, double> latticeVectorsTensor;
+    for (dftfe::uInt i = 0; i < 3; ++i)
+      for (dftfe::uInt j = 0; j < 3; ++j)
+        latticeVectorsTensor[i][j] = latticeVectors[3 * i + j];
+    AssertThrow(std::fabs(dealii::determinant(latticeVectorsTensor)) > 1.0e-14,
+                dealii::ExcMessage(
+                  "DFT-FE Error: singular lattice vector matrix."));
+    const dealii::Tensor<2, 3, double> latticeVectorsInv =
+      dealii::invert(latticeVectorsTensor);
 
     imageIds.clear();
     imagePositions.clear();

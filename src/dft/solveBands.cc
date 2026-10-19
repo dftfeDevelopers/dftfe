@@ -375,6 +375,8 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
     if (d_dftParamsPtr->useDevice && (d_dftParamsPtr->writeWfcSolutionFields))
       d_eigenVectorsFlattenedDevice.copyTo(d_eigenVectorsFlattenedHost);
+    if constexpr (dftfe::utils::MemorySpace::DEVICE == memorySpace)
+      d_subspaceIterationSolverDevice.releaseScratchMemory();
 #endif
   }
 #include "dft.inst.cc"

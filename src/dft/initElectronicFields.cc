@@ -104,30 +104,17 @@ namespace dftfe
     // initialize PSI and density
     //
 
-    if (d_dftParamsPtr->solverMode == "BANDS")
-      {
-        AssertThrow(
-          ((d_dftParamsPtr->noncolin || d_dftParamsPtr->hasSOC) ? 2 : 1) *
-              matrix_free_data.get_vector_partitioner()->locally_owned_size() <
-            std::numeric_limits<dftfe::Int>::max() / d_numEigenValues,
-          dealii::ExcMessage(
-            "DFT-FE error: size of local wavefunctions storage exceeds integer bounds. Please increase number of MPI tasks"));
-        d_eigenVectorsFlattenedHost.resize(
-          (d_numEigenValues *
-           matrix_free_data.get_vector_partitioner()->locally_owned_size()) *
-            ((d_dftParamsPtr->noncolin || d_dftParamsPtr->hasSOC) ? 2 : 1),
-          dataTypes::number(0.0));
-      }
-    else
-      {
-        AssertThrow(
-          ((d_dftParamsPtr->noncolin || d_dftParamsPtr->hasSOC) ? 2 : 1) *
-              (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size() *
-              matrix_free_data.get_vector_partitioner()->locally_owned_size() <
-            std::numeric_limits<dftfe::Int>::max() / d_numEigenValues,
-          dealii::ExcMessage(
-            "DFT-FE error: size of local wavefunctions storage exceeds integer bounds. Please increase number of MPI tasks"));
-      }
+    // readPSI sizes the wavefunction storage; BANDS holds a single spin and
+    // k-point block
+    AssertThrow(
+      ((d_dftParamsPtr->noncolin || d_dftParamsPtr->hasSOC) ? 2 : 1) *
+          (d_dftParamsPtr->solverMode == "BANDS" ?
+             1 :
+             (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size()) *
+          matrix_free_data.get_vector_partitioner()->locally_owned_size() <
+        std::numeric_limits<dftfe::Int>::max() / d_numEigenValues,
+      dealii::ExcMessage(
+        "DFT-FE error: size of local wavefunctions storage exceeds integer bounds. Please increase number of MPI tasks"));
 
 
     pcout << std::endl
@@ -159,7 +146,8 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
     if (d_dftParamsPtr->useDevice)
       {
-        // already sized and filled by readPSIRandomValuesDevice
+        // an empty host array means readPSIRadialValues generated the guess
+        // directly in the device array
         if (d_eigenVectorsFlattenedHost.size() > 0)
           {
             d_eigenVectorsFlattenedDevice.resize(

@@ -105,6 +105,38 @@ namespace dftfe
       dftfe::utils::MemoryStorage<double, memorySpace>
         &invJacderExcWithSigmaTimesMagZTimesGradRhoJxWHost);
 
+    // Defined in KohnShamDFTBaseOperator.cc and also called from
+    // energyCalculator.cc, so declared before any use.
+    template <>
+    void
+    computeInvJacderExcWithSigmaTimesGradRhoMagJxWEntries(
+      const std::pair<dftfe::uInt, dftfe::uInt> cellRange,
+      const dftfe::uInt                         numQuadsPerCell,
+      const dftfe::Int                          spinIndex,
+      const dftfe::Int                          cellsTypeFlag,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &pdecVector,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &pdexVector,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &magAxis,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &jxwVector,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &invJacobianEntries,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &gradientRhoSpinUp,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &gradientRhoSpinDown,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &invJacderExcWithSigmaTimesGradRhoJxW,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &invJacderExcWithSigmaTimesMagXTimesGradRhoJxWHost,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &invJacderExcWithSigmaTimesMagYTimesGradRhoJxWHost,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &invJacderExcWithSigmaTimesMagZTimesGradRhoJxWHost);
+
     template <dftfe::utils::MemorySpace memorySpace>
     void
     computeHalfInvJacinvJacderExcWithTauJxWEntries(

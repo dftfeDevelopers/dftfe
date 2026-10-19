@@ -503,53 +503,53 @@ namespace dftfe
           "NON LOCAL PSP QUADRATURE ORDER",
           "0",
           dealii::Patterns::Integer(0, 40),
-          "[Advanced] The quadrature rule used for the nonlocal potential projectors or orbital data. It is automatically set for default value of zero.");
+          "[Advanced] The quadrature rule used for the nonlocal potential projectors or orbital data. The default value of zero selects 14 if USE HIGH QUADRATURE RULE is true and 10 otherwise.");
 
         prm.declare_entry(
           "NON LOCAL PSP QUADRATURE COPY",
           "0",
           dealii::Patterns::Integer(0, 10),
-          "[Advanced] The number of copies of the quadrature rule used for the nonlocal potential projectors or orbital data. It is automatically set for default value of zero.");
+          "[Advanced] The number of copies of the quadrature rule used for the nonlocal potential projectors or orbital data. The default value of zero selects 1.");
 
         prm.declare_entry(
           "NUCLEAR CHARGE QUADRATURE ORDER",
           "0",
           dealii::Patterns::Integer(0, 40),
-          "[Advanced] The quadrature rule used for the smeared charge or compensation charge. It is automatically set for default value of zero.");
+          "[Advanced] The quadrature rule used for the smeared charge or compensation charge. The default value of zero selects 10.");
 
         prm.declare_entry(
           "NUCLEAR CHARGE QUADRATURE COPY",
           "0",
           dealii::Patterns::Integer(0, 10),
-          "[Advanced] The number of copies of the quadrature rule used for the smeared charge or compensation charge. It is automatically set for default value of zero.");
+          "[Advanced] The number of copies of the quadrature rule used for the smeared charge or compensation charge. The default value of zero selects 5 if CELL STRESS is true, 3 if MESH SIZE AROUND ATOM exceeds 2.2, and 2 otherwise.");
 
         prm.declare_entry(
           "LOCAL POTENTIAL QUADRATURE ORDER",
           "0",
           dealii::Patterns::Integer(0, 40),
-          "[Advanced] The quadrature rule used for the atom data local potentials. It is automatically set for default value of zero.");
+          "[Advanced] The quadrature rule used for the atom data local potentials. The default value of zero selects 14 if USE HIGH QUADRATURE RULE is true and 10 otherwise.");
 
         prm.declare_entry(
           "LOCAL POTENTIAL QUADRATURE COPY",
           "0",
           dealii::Patterns::Integer(0, 10),
-          "[Advanced] The number of copies of the quadrature rule used for the atom data local potentials. It is automatically set for default value of zero.");
+          "[Advanced] The number of copies of the quadrature rule used for the atom data local potentials. The default value of zero selects 1.");
 
         prm.declare_entry(
           "USE HIGH QUADRATURE RULE",
           "false",
           dealii::Patterns::Bool(),
-          "[Advanced] Used to select the default pseudopotential quadrature rules. If true: higher quadrature rules are used. Default: false.");
+          "[Advanced] Selects the quadrature rule that NON LOCAL PSP QUADRATURE ORDER and LOCAL POTENTIAL QUADRATURE ORDER take when left at zero: 14 if true, 10 if false. Recommended for MD simulations with hard pseudopotentials. Default: false.");
         prm.declare_entry(
           "POLYNOMIAL ORDER DENSITY NODAL",
           "0",
           dealii::Patterns::Integer(0, 24),
-          "[Standard] The degree of the finite-element interpolating polynomial for interpolating electron density. It is automatically set to max of POLYNOMIAL ORDER+2 and POLYNOMIAL ORDER ELECTROSTATICS  if POLYNOMIAL ORDER DENSITY NODAL set to default value of zero.");
+          "[Standard] The degree of the finite-element interpolating polynomial for interpolating electron density. It is automatically set to max of POLYNOMIAL ORDER+2 and POLYNOMIAL ORDER ELECTROSTATICS  if POLYNOMIAL ORDER DENSITY NODAL set to default value of zero. With NONCOLLINEAR SPIN, a GGA functional and a MIXING METHOD that mixes the nodal density (ANDERSON_WITH_KERKER, ANDERSON_WITH_RESTA, LOW_RANK_DIELECM_PRECOND or ANDERSON_WITH_LDOS) or USE GROUP SYMMETRY, the automatic value is raised to at least 2*POLYNOMIAL ORDER.");
         prm.declare_entry(
           "DENSITY QUADRATURE RULE",
           "0",
           dealii::Patterns::Integer(0, 24),
-          "[Standard] The quadrtaure rule used for computing the electron density. It is automatically set to 16 for MGGA exchange-correlation functional or max of POLYNOMIAL ORDER DENSITY NODAL +1 for other exchange-correlation functionals if DENSITY QUADTRATURE RULE set to default value of zero.");
+          "[Standard] The quadrtaure rule used for computing the electron density. It is automatically set to 16 for MGGA exchange-correlation functional or max of POLYNOMIAL ORDER DENSITY NODAL +1 for other exchange-correlation functionals if DENSITY QUADTRATURE RULE set to default value of zero. With NONCOLLINEAR SPIN and a GGA functional, a value below 2*POLYNOMIAL ORDER+1, automatic or given, is raised to 2*POLYNOMIAL ORDER+1.");
         prm.declare_entry(
           "INTERMEDIATE DENSITY QUADRATURE RULE",
           "0",
@@ -1586,6 +1586,14 @@ namespace dftfe
     confiningWParam      = 1.0;
     confiningCParam      = 1.0;
 
+    // 0 selects the automatic rule of setAutoParameters
+    QuadratureOrderNonLocalPSP    = 0;
+    QuadratureCopyNonLocalPSP     = 0;
+    QuadratureOrderNuclearCharge  = 0;
+    QuadratureCopyNuclearCharge   = 0;
+    QuadratureOrderLocalPotential = 0;
+    QuadratureCopyLocalPotential  = 0;
+    highQuadRule                  = false;
 
     writeStructreEnergyForcesFileForPostProcess = false;
   }
@@ -2265,6 +2273,16 @@ namespace dftfe
       }
   }
 
+  bool
+  dftParameters::usesNodalDensity() const
+  {
+    return mixingMethod == "ANDERSON_WITH_KERKER" ||
+           mixingMethod == "ANDERSON_WITH_RESTA" ||
+           mixingMethod == "LOW_RANK_DIELECM_PRECOND" ||
+           mixingMethod == "ANDERSON_WITH_LDOS" || useSymm;
+  }
+
+
   void
   dftParameters::setAutoParameters(const MPI_Comm &mpi_comm_parent)
   {
@@ -2490,9 +2508,8 @@ namespace dftfe
                                   finiteElementPolynomialOrderRhoNodal + 1;
       }
 
-    // Pseudopotential quadrature rules. These were compile-time constants
-    // selected by DFTFE_WITH_HIGHERQUAD_PSP; the values below reproduce that
-    // choice, with USE HIGH QUADRATURE RULE taking the role of the macro.
+    // Pseudopotential quadrature rules left at 0: order 14 with USE HIGH
+    // QUADRATURE RULE, 10 otherwise, and one copy.
     if (QuadratureOrderNonLocalPSP == 0)
       QuadratureOrderNonLocalPSP = highQuadRule ? 14 : 10;
 
@@ -2505,8 +2522,8 @@ namespace dftfe
     if (QuadratureCopyLocalPotential == 0)
       QuadratureCopyLocalPotential = 1;
 
-    // The smeared nuclear charge rule was selected by cell stress and mesh
-    // size at the point of use; that selection now resolves here.
+    // Smeared nuclear charge rule left at 0: order 10, with 5 copies for the
+    // cell stress, 3 for MESH SIZE AROUND ATOM > 2.2 and 2 otherwise.
     if (QuadratureOrderNuclearCharge == 0)
       QuadratureOrderNuclearCharge = 10;
 
@@ -2536,12 +2553,7 @@ namespace dftfe
         // order must also reach 2 * finiteElementPolynomialOrder to preserve
         // the content the quadrature rule above requires.  Raised only when
         // left at the default; a user-supplied order is honoured as given.
-        const bool usesNodalDensity =
-          mixingMethod == "ANDERSON_WITH_KERKER" ||
-          mixingMethod == "ANDERSON_WITH_RESTA" ||
-          mixingMethod == "LOW_RANK_DIELECM_PRECOND" ||
-          mixingMethod == "ANDERSON_WITH_LDOS" || useSymm;
-        if (usesNodalDensity && densityNodalOrderIsDefault &&
+        if (usesNodalDensity() && densityNodalOrderIsDefault &&
             finiteElementPolynomialOrderRhoNodal <
               2 * finiteElementPolynomialOrder)
           {

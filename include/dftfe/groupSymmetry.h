@@ -71,8 +71,12 @@ namespace dftfe
       distributedCPUVec<double>   &scalarField,
       const dealii::DoFHandler<3> &dofHandler);
 
+    /**
+     * @brief Symmetrizes an axial (pseudo)vector field, such as the
+     * magnetization, as m'(r) = det(R) R m(R^-1 r) averaged over the group.
+     */
     void
-    symmetrizeVectorFieldFromLocalValues(
+    symmetrizeAxialVectorFieldFromLocalValues(
       distributedCPUVec<double>   &vectorFieldComponentx,
       distributedCPUVec<double>   &vectorFieldComponenty,
       distributedCPUVec<double>   &vectorFieldComponentz,

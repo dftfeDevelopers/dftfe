@@ -222,13 +222,13 @@ namespace dftfe
     dftfe::Int  MDTrack;
 
     // Quadrature data as inputs from user
-    unsigned int QuadratureOrderNonLocalPSP;
-    unsigned int QuadratureCopyNonLocalPSP;
-    unsigned int QuadratureOrderNuclearCharge;
-    unsigned int QuadratureCopyNuclearCharge;
-    unsigned int QuadratureOrderLocalPotential;
-    unsigned int QuadratureCopyLocalPotential;
-    bool         highQuadRule;
+    dftfe::uInt QuadratureOrderNonLocalPSP;
+    dftfe::uInt QuadratureCopyNonLocalPSP;
+    dftfe::uInt QuadratureOrderNuclearCharge;
+    dftfe::uInt QuadratureCopyNuclearCharge;
+    dftfe::uInt QuadratureOrderLocalPotential;
+    dftfe::uInt QuadratureCopyLocalPotential;
+    bool        highQuadRule;
 
     bool writeStructreEnergyForcesFileForPostProcess;
 
@@ -264,6 +264,13 @@ namespace dftfe
      */
     void
     setAutoParameters(const MPI_Comm &mpi_comm_parent);
+
+    /**
+     * @brief Whether the mixing scheme, or the symmetrization, routes the
+     * density through its nodal field.
+     */
+    bool
+    usesNodalDensity() const;
 
   }; // class dftParameters
 

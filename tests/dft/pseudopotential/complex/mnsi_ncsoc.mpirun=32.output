@@ -23,7 +23,7 @@ Finite element mesh information
 FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 3
 FE interpolating polynomial order for electrostatics solve: 3
 FE interpolating polynomial order for nodal electron density computation: 5
-quadrature rule for electron density and kinetic energy density computation: 6
+quadrature rule for electron density and kinetic energy density computation: 7
 number of elements: 512
 number of degrees of freedom for the Kohn-Sham eigenvalue problem : 15625
 -------------------------------------------------
@@ -45,23 +45,23 @@ SCF iterations converged to the specified tolerance after: 28 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:        -449.04600236
+             Total energy:        -449.03325081
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.339859,0.339832,0.339763
-AtomId    1:  0.339839,0.339751,0.339863
-AtomId    2:  0.339759,0.339850,0.339845
-AtomId    3:  0.339626,0.339616,0.339628
-AtomId    4:  0.003440,0.003353,0.003436
-AtomId    5:  0.003354,0.003436,0.003437
-AtomId    6:  0.003437,0.003437,0.003353
-AtomId    7:  0.003369,0.003367,0.003367
+AtomId    0:  0.341488,0.341462,0.341395
+AtomId    1:  0.341470,0.341381,0.341493
+AtomId    2:  0.341392,0.341481,0.341473
+AtomId    3:  0.341257,0.341249,0.341263
+AtomId    4:  0.003443,0.003357,0.003440
+AtomId    5:  0.003359,0.003440,0.003442
+AtomId    6:  0.003442,0.003442,0.003357
+AtomId    7:  0.003373,0.003372,0.003372
 --------------------------------------------------------------------------------------------
 
 Absolute value of cell stress (Hartree/Bohr^3)
 ------------------------------------------------------------------------
-0.005317  0.000009  0.000008
-0.000008  0.005317  0.000009
-0.000009  0.000008  0.005317
+0.005331  0.000008  0.000008
+0.000008  0.005331  0.000008
+0.000008  0.000008  0.005332
 ------------------------------------------------------------------------

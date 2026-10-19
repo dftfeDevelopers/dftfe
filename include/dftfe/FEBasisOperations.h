@@ -98,14 +98,87 @@ namespace dftfe
         tempCellValuesBlockCoeff, tempCellGradientsBlockCoeff,
         tempCellGradientData;
       /// Quadrature the reference gradients in tempCellGradientsBlockCoeff
-      /// were reshaped for, and whether they are still valid.
+      /// were reshaped for.
       mutable dftfe::uInt d_cellGradientsBlockCoeffQuadratureID = 0;
-      mutable bool        d_cellGradientsBlockCoeffValid        = false;
+      /// Whether tempCellGradientsBlockCoeff holds the reshaped reference
+      /// gradients of d_cellGradientsBlockCoeffQuadratureID.
+      mutable bool d_cellGradientsBlockCoeffValid = false;
       /// Number of live ScratchScope objects; the last one out clears the
       /// scratch arrays above.
       mutable dftfe::uInt d_scratchScopeDepth = 0;
       std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
         d_BLASWrapperPtr;
+
+    private:
+      /**
+       * @name Scratch sizing helpers
+       *
+       * Each helper sizes one internal scratch array for the current vector
+       * block size, cell block size and quadrature index. The helpers are
+       * idempotent, resizing only when the required size has changed
+       * (ensureCellGradientData only grows its array), so calling one on
+       * every iteration of a cell-block loop is free after the first. Every
+       * operation that touches a scratch array calls the corresponding
+       * helper itself.
+       */
+      ///@{
+
+      /// nDofsPerCell^2 * cellsBlockSize; cell matrix accumulator.
+      void
+      ensureCellMatrixBlock() const;
+
+      /// nQuadsPerCell * nDofsPerCell * cellsBlockSize; weighted shape values.
+      void
+      ensureCellValuesBlock() const;
+
+      /// 3 * nQuadsPerCell * nDofsPerCell * cellsBlockSize; weighted shape
+      /// gradients.
+      void
+      ensureCellGradientsBlock() const;
+
+      /// Second buffer of the same shape as ensureCellGradientsBlock().
+      void
+      ensureCellGradientsBlock2() const;
+
+      /// cellsBlockSize zeros, used as a null strided-copy index map.
+      void
+      ensureZeroIndexVec() const;
+
+      /// nVectors * nDofsPerCell * cellsBlockSize; cell-local nodal values.
+      void
+      ensureCellNodalData() const;
+
+      /// nVectors * nQuadsPerCell * 3 * cellsBlockSize; real-space gradients.
+      void
+      ensureQuadratureGradientsData() const;
+
+      /// nVectors * nQuadsPerCell * 3 * cellsBlockSize; non-affine layout.
+      void
+      ensureQuadratureGradientsDataNonAffine() const;
+
+      /// nVectors * nQuadsPerCell * cellsBlockSize; JxW-scaled quadrature
+      /// values in multivector layout.
+      void
+      ensureCellValuesBlockCoeff() const;
+
+      /// 3 * nQuadsPerCell * nDofsPerCell; single-cell reference gradients,
+      /// reshaped to the non affine layout on first use per quadrature.
+      void
+      ensureCellGradientsBlockCoeff() const;
+
+      /// 3 * nQuadsPerCell * nDofsPerCell * numberOfElements; Jacobian scaled
+      /// real space gradients.
+      void
+      ensureCellGradientData(const dftfe::uInt numberOfElements) const;
+
+      ///@}
+
+      /**
+       * @brief Clears the internal temporary storage; ScratchScope calls it
+       * when the outermost scope closes.
+       */
+      void
+      clearTempStorage() const;
 
     public:
       /**
@@ -295,11 +368,13 @@ namespace dftfe
                                  const bool        basisType = false,
                                  const bool        ceoffType = true);
 
+      /**
+       * @brief Computes the cell-level mass matrix in ValueTypeBasisData,
+       * read through cellMassMatrixBasisData().
+       */
       void
       computeCellMassMatrix(const dftfe::uInt quadratureID,
-                            const dftfe::uInt cellsBlockSize,
-                            const bool        basisType = false,
-                            const bool        ceoffType = true);
+                            const dftfe::uInt cellsBlockSize);
 
       void
       computeWeightedCellMassMatrix(
@@ -383,75 +458,6 @@ namespace dftfe
       void
       computeStiffnessVector(const bool basisType = true,
                              const bool ceoffType = false);
-
-      /**
-       * @brief Sizes one internal scratch array for the current vector block size, cell block size and quadrature index.
-       *
-       * Each helper is idempotent, resizing only when the required size has
-       * changed, so calling it on every iteration of a cell-block loop is free
-       * after the first.  Every operation that touches a scratch array calls
-       * the corresponding helper itself.
-       *
-       * @{
-       */
-
-      /// nDofsPerCell^2 * cellsBlockSize; cell matrix accumulator.
-      void
-      ensureCellMatrixBlock() const;
-
-      /// nQuadsPerCell * nDofsPerCell * cellsBlockSize; weighted shape values.
-      void
-      ensureCellValuesBlock() const;
-
-      /// 3 * nQuadsPerCell * nDofsPerCell * cellsBlockSize; weighted shape
-      /// gradients.
-      void
-      ensureCellGradientsBlock() const;
-
-      /// Second buffer of the same shape as ensureCellGradientsBlock().
-      void
-      ensureCellGradientsBlock2() const;
-
-      /// cellsBlockSize zeros, used as a null strided-copy index map.
-      void
-      ensureZeroIndexVec() const;
-
-      /// nVectors * nDofsPerCell * cellsBlockSize; cell-local nodal values.
-      void
-      ensureCellNodalData() const;
-
-      /// nVectors * nQuadsPerCell * 3 * cellsBlockSize; real-space gradients.
-      void
-      ensureQuadratureGradientsData() const;
-
-      /// nVectors * nQuadsPerCell * 3 * cellsBlockSize; non-affine layout.
-      void
-      ensureQuadratureGradientsDataNonAffine() const;
-
-      /// nVectors * nQuadsPerCell * cellsBlockSize; JxW-scaled quadrature
-      /// values in multivector layout.
-      void
-      ensureCellValuesBlockCoeff() const;
-
-      /// 3 * nQuadsPerCell * nDofsPerCell; single-cell reference gradients,
-      /// reshaped to the non affine layout on first use per quadrature.
-      void
-      ensureCellGradientsBlockCoeff() const;
-
-      /// 3 * nQuadsPerCell * nDofsPerCell * numberOfElements; Jacobian scaled
-      /// real space gradients.
-      void
-      ensureCellGradientData(const dftfe::uInt numberOfElements) const;
-
-      /** @} */
-
-      /**
-       * @brief Clears the internal temporary storage.
-       *
-       * Prefer a ScratchScope over calling this directly.
-       */
-      void
-      clearTempStorage() const;
 
       /**
        * @brief Number of quadrature points per cell for the quadratureID set in reinit.
@@ -681,24 +687,6 @@ namespace dftfe
        */
       const dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace> &
       cellStiffnessMatrixBasisData() const;
-
-
-      /**
-       * @brief Cell level mass matrix in ValueTypeBasisCoeff
-       */
-      const auto &
-      cellMassMatrix() const
-      {
-        if constexpr (std::is_same<ValueTypeBasisCoeff,
-                                   ValueTypeBasisData>::value)
-          {
-            return d_cellMassMatrixBasisType;
-          }
-        else
-          {
-            return d_cellMassMatrixCoeffType;
-          }
-      }
 
 
       /**
@@ -1138,8 +1126,6 @@ namespace dftfe
         d_cellStiffnessMatrixCoeffType;
       dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>
         d_cellMassMatrixBasisType;
-      dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
-        d_cellMassMatrixCoeffType;
       dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>
         d_cellInverseMassVectorBasisType;
 

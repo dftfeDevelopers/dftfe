@@ -16,9 +16,8 @@
 //
 // Device kernels for batched evaluation of atom-centered radial projector
 // splines times real spherical harmonics at finite-element quadrature
-// points, their reduction over periodic images with k-point phases, and
-// the portable random initialization of wavefunctions. Used by the
-// nonlocal C-matrix construction and readPSI.
+// points and their reduction over periodic images with k-point phases.
+// Used by the nonlocal C-matrix construction.
 //
 #include <dftfe/AtomCenteredSphericalFunctionDeviceKernels.h>
 #include <dftfe/BLASWrapper.h>
@@ -29,74 +28,12 @@ namespace dftfe
 {
 
   // -------------------------------------------------------------------
-  // Portable random initial wavefunctions: fills a flattened block
-  // (iNode-major, wavefunction-minor) of real coefficients (a complex
-  // array is filled as interleaved re/im via numRealsPerCoeff = 2).
-  // Values are keyed on (seed, global dof id, wavefunction id, block key)
-  // so the guess is identical on NVIDIA/AMD/Intel devices and independent
-  // of the MPI/GPU decomposition.
-  // -------------------------------------------------------------------
-  DFTFE_CREATE_KERNEL(
-    void,
-    fillRandomWavefunctionsKernel,
-    {
-      const dftfe::uInt numberEntries =
-        numLocalDofs * numWaveFunctions * numRealsPerCoeff;
-      for (dftfe::uInt index = globalThreadId; index < numberEntries;
-           index += nThreadsPerBlock * nThreadBlock)
-        {
-          const dftfe::uInt coeffIndex = index / numRealsPerCoeff;
-          const dftfe::uInt comp       = index % numRealsPerCoeff;
-          const dftfe::uInt iNode      = coeffIndex / numWaveFunctions;
-          const dftfe::uInt iWave      = coeffIndex % numWaveFunctions;
-          // replicate the host initial-guess semantics: only the real part
-          // is randomized (imaginary components stay zero) and constrained
-          // dofs stay zero
-          double value = 0.0;
-          if (comp == 0 &&
-              (constrainedMaskOrNull == nullptr ||
-               constrainedMaskOrNull[iNode / numSpinorComponents] == 0))
-            {
-              const double u1 =
-                atomCenteredSphericalFunctionDeviceUtils::uniformRandomCentered(
-                  seed,
-                  static_cast<unsigned long long>(globalDofStartIndex + iNode),
-                  static_cast<unsigned long long>(iWave),
-                  2ULL * blockKey);
-              const double u2 =
-                atomCenteredSphericalFunctionDeviceUtils::uniformRandomCentered(
-                  seed,
-                  static_cast<unsigned long long>(globalDofStartIndex + iNode),
-                  static_cast<unsigned long long>(iWave),
-                  2ULL * blockKey + 1ULL);
-              // z uniform in [-1.5, 1.5); value = standard normal pdf(z)
-              // with a random sign, matching the host generator
-              const double z = 3.0 * u1;
-              value          = std::exp(-0.5 * z * z) * 0.3989422804014327 *
-                      (u2 < 0.0 ? -1.0 : 1.0);
-            }
-          wfcData[index] = value;
-        }
-    },
-    const dftfe::uInt        numLocalDofs,
-    const dftfe::uInt        numWaveFunctions,
-    const dftfe::uInt        numRealsPerCoeff,
-    const dftfe::uInt        numSpinorComponents,
-    const unsigned long long globalDofStartIndex,
-    const unsigned long long blockKey,
-    const unsigned long long seed,
-    const dftfe::uInt       *constrainedMaskOrNull,
-    double                  *wfcData);
-
-
-  // -------------------------------------------------------------------
-  // Projector (or any radial-spline x Y_lm family) values times jxw at the
-  // quadrature points of each (center, cell) pair, for the nonlocal
-  // C-matrix construction:
-  //   out[iPair][alpha_lm][q] = p_alpha(r) Y_lm(theta,phi) * (multJxW ?
-  //   jxw[q] : 1)
-  // The lm channels of one species are described by contiguous
-  // (splineId, l) entries; m runs over -l..l inside.
+  // Projector values times jxw at the quadrature points of each
+  // (center, cell) pair of one species, for the nonlocal C-matrix
+  // construction:
+  //   out[iPair][alpha_lm][q] = p_alpha(r) Y_lm(theta, phi) jxw[q]
+  // Radial function alpha has angular momentum radialFnLQuantum[alpha]
+  // and contributes its 2l+1 channels m = -l..l in order.
   // -------------------------------------------------------------------
   DFTFE_CREATE_KERNEL(
     void,
@@ -119,53 +56,14 @@ namespace dftfe
           double       phi;
           atomCenteredSphericalFunctionDeviceUtils::cartesianToSpherical(
             x0, x1, x2, r, theta, phi);
-          const dftfe::uInt spec         = pairSpecies[iPair];
-          const dftfe::uInt radFnStart   = speciesRadialFnStart[spec];
-          const dftfe::uInt numRadialFns = speciesNumRadialFns[spec];
-          const dftfe::uInt totalLM      = speciesTotalLM[spec];
-          const double      jxwVal =
-            multiplyJxW ? jxwCompact[cellSlot * numQuadPoints + iQuad] : 1.0;
-          double *out = valuesOut + iPair * maxTotalLM * numQuadPoints + iQuad;
+          const double jxwVal = jxwCompact[cellSlot * numQuadPoints + iQuad];
+          double     *out = valuesOut + iPair * totalLM * numQuadPoints + iQuad;
           dftfe::uInt lmIndex = 0;
-          for (dftfe::uInt alpha = 0; alpha < numRadialFns; alpha++)
+          for (dftfe::uInt alpha = 0; alpha < numRadialFunctions; alpha++)
             {
-              const dftfe::uInt fnId = radFnStart + alpha;
-              const int         l    = static_cast<int>(radialFnLQuantum[fnId]);
-              double            radialVal = 0.0;
-              if (r < splineCutoff[fnId])
-                {
-                  const splineEval::SplineTableView t =
-                    splineEval::splineView(knotXAll,
-                                           knotYAll,
-                                           coefBAll,
-                                           coefCAll,
-                                           coefDAll,
-                                           splineOffsets,
-                                           splineNKnots,
-                                           splineGPParams,
-                                           fnId);
-                  if (splineEvalParams[2 * fnId] > 0.5)
-                    {
-                      // AtomCenteredSphericalFunctionPAWProjectorSpline2
-                      // semantics: spline fit of r*f(r); y0 within 1e-8
-                      // of rMin; spline(r)/r otherwise (no rMin clamp,
-                      // segment-0 extrapolation below the first knot
-                      // matches alglib::spline1dcalc)
-                      double diff = r - splineRMin[fnId];
-                      if (diff < 0.0)
-                        diff = -diff;
-                      if (diff <= 1e-8)
-                        radialVal = splineEvalParams[2 * fnId + 1];
-                      else
-                        radialVal = splineEval::splineEvalValue(t, r) / r;
-                    }
-                  else
-                    {
-                      const double rEval =
-                        r <= splineRMin[fnId] ? splineRMin[fnId] : r;
-                      radialVal = splineEval::splineEvalValue(t, rEval);
-                    }
-                }
+              const int    l = static_cast<int>(radialFnLQuantum[alpha]);
+              const double radialVal =
+                splineEval::radialSplineValue(tables, alpha, r);
               for (int m = -l; m <= l; m++)
                 {
                   const double Y = atomCenteredSphericalFunctionDeviceUtils::
@@ -174,35 +72,19 @@ namespace dftfe
                   lmIndex++;
                 }
             }
-          for (; lmIndex < maxTotalLM; lmIndex++)
-            out[lmIndex * numQuadPoints] = 0.0;
         }
     },
-    const dftfe::uInt  numPairs,
-    const dftfe::uInt  numQuadPoints,
-    const dftfe::uInt  maxTotalLM,
-    const bool         multiplyJxW,
-    const double      *quadCoords,
-    const double      *jxwCompact,
-    const double      *pairCenters,
-    const dftfe::uInt *pairCellSlot,
-    const dftfe::uInt *pairSpecies,
-    const dftfe::uInt *speciesRadialFnStart,
-    const dftfe::uInt *speciesNumRadialFns,
-    const dftfe::uInt *speciesTotalLM,
-    const dftfe::uInt *radialFnLQuantum,
-    const double      *knotXAll,
-    const double      *knotYAll,
-    const double      *coefBAll,
-    const double      *coefCAll,
-    const double      *coefDAll,
-    const dftfe::uInt *splineOffsets,
-    const dftfe::uInt *splineNKnots,
-    const double      *splineGPParams,
-    const double      *splineCutoff,
-    const double      *splineRMin,
-    const double      *splineEvalParams, // [fn*2] {mode, y0}
-    double            *valuesOut);
+    const dftfe::uInt                      numPairs,
+    const dftfe::uInt                      numQuadPoints,
+    const dftfe::uInt                      numRadialFunctions,
+    const dftfe::uInt                      totalLM,
+    const double                          *quadCoords,
+    const double                          *jxwCompact,
+    const double                          *pairCenters,
+    const dftfe::uInt                     *pairCellSlot,
+    const dftfe::uInt                     *radialFnLQuantum,
+    const splineEval::SplineTableGroupView tables,
+    double                                *valuesOut);
 
 
   // -------------------------------------------------------------------
@@ -332,37 +214,6 @@ namespace dftfe
   namespace atomCenteredSphericalFunctionDeviceKernels
   {
     void
-    fillRandomWavefunctions(const dftfe::uInt        numLocalDofs,
-                            const dftfe::uInt        numWaveFunctions,
-                            const dftfe::uInt        numRealsPerCoeff,
-                            const dftfe::uInt        numSpinorComponents,
-                            const unsigned long long globalDofStartIndex,
-                            const unsigned long long blockKey,
-                            const unsigned long long seed,
-                            const dftfe::uInt       *constrainedMaskOrNull,
-                            double                  *wfcData)
-    {
-      const dftfe::uInt numberEntries =
-        numLocalDofs * numWaveFunctions * numRealsPerCoeff;
-      DFTFE_LAUNCH_KERNEL(fillRandomWavefunctionsKernel,
-                          (dftfe::utils::DEVICE_BLOCK_SIZE + numberEntries) /
-                            dftfe::utils::DEVICE_BLOCK_SIZE,
-                          dftfe::utils::DEVICE_BLOCK_SIZE,
-                          dftfe::linearAlgebra::BLASWrapper<
-                            dftfe::utils::MemorySpace::DEVICE>::d_streamId,
-                          numLocalDofs,
-                          numWaveFunctions,
-                          numRealsPerCoeff,
-                          numSpinorComponents,
-                          globalDofStartIndex,
-                          blockKey,
-                          seed,
-                          dftfe::utils::makeDataTypeDeviceCompatible(
-                            constrainedMaskOrNull),
-                          dftfe::utils::makeDataTypeDeviceCompatible(wfcData));
-    }
-
-    void
     reduceImageContributionsWithPhases(const dftfe::uInt  numPairs,
                                        const dftfe::uInt  numQuadPoints,
                                        const dftfe::uInt  totalLM,
@@ -407,65 +258,38 @@ namespace dftfe
     }
 
     void
-    projectorValues(const dftfe::uInt  numPairs,
-                    const dftfe::uInt  numQuadPoints,
-                    const dftfe::uInt  maxTotalLM,
-                    const bool         multiplyJxW,
-                    const double      *quadCoords,
-                    const double      *jxwCompact,
-                    const double      *pairCenters,
-                    const dftfe::uInt *pairCellSlot,
-                    const dftfe::uInt *pairSpecies,
-                    const dftfe::uInt *speciesRadialFnStart,
-                    const dftfe::uInt *speciesNumRadialFns,
-                    const dftfe::uInt *speciesTotalLM,
-                    const dftfe::uInt *radialFnLQuantum,
-                    const double      *knotXAll,
-                    const double      *knotYAll,
-                    const double      *coefBAll,
-                    const double      *coefCAll,
-                    const double      *coefDAll,
-                    const dftfe::uInt *splineOffsets,
-                    const dftfe::uInt *splineNKnots,
-                    const double      *splineGPParams,
-                    const double      *splineCutoff,
-                    const double      *splineRMin,
-                    const double      *splineEvalParams,
-                    double            *valuesOut)
+    projectorValues(const dftfe::uInt                       numPairs,
+                    const dftfe::uInt                       numQuadPoints,
+                    const dftfe::uInt                       numRadialFunctions,
+                    const dftfe::uInt                       totalLM,
+                    const double                           *quadCoords,
+                    const double                           *jxwCompact,
+                    const double                           *pairCenters,
+                    const dftfe::uInt                      *pairCellSlot,
+                    const dftfe::uInt                      *radialFnLQuantum,
+                    const splineEval::SplineTableGroupView &tables,
+                    double                                 *valuesOut)
     {
       const dftfe::uInt numberEntries = numPairs * numQuadPoints;
-      DFTFE_LAUNCH_KERNEL(
-        projectorValuesKernel,
-        (dftfe::utils::DEVICE_BLOCK_SIZE + numberEntries) /
-          dftfe::utils::DEVICE_BLOCK_SIZE,
-        dftfe::utils::DEVICE_BLOCK_SIZE,
-        dftfe::linearAlgebra::BLASWrapper<
-          dftfe::utils::MemorySpace::DEVICE>::d_streamId,
-        numPairs,
-        numQuadPoints,
-        maxTotalLM,
-        multiplyJxW,
-        dftfe::utils::makeDataTypeDeviceCompatible(quadCoords),
-        dftfe::utils::makeDataTypeDeviceCompatible(jxwCompact),
-        dftfe::utils::makeDataTypeDeviceCompatible(pairCenters),
-        dftfe::utils::makeDataTypeDeviceCompatible(pairCellSlot),
-        dftfe::utils::makeDataTypeDeviceCompatible(pairSpecies),
-        dftfe::utils::makeDataTypeDeviceCompatible(speciesRadialFnStart),
-        dftfe::utils::makeDataTypeDeviceCompatible(speciesNumRadialFns),
-        dftfe::utils::makeDataTypeDeviceCompatible(speciesTotalLM),
-        dftfe::utils::makeDataTypeDeviceCompatible(radialFnLQuantum),
-        dftfe::utils::makeDataTypeDeviceCompatible(knotXAll),
-        dftfe::utils::makeDataTypeDeviceCompatible(knotYAll),
-        dftfe::utils::makeDataTypeDeviceCompatible(coefBAll),
-        dftfe::utils::makeDataTypeDeviceCompatible(coefCAll),
-        dftfe::utils::makeDataTypeDeviceCompatible(coefDAll),
-        dftfe::utils::makeDataTypeDeviceCompatible(splineOffsets),
-        dftfe::utils::makeDataTypeDeviceCompatible(splineNKnots),
-        dftfe::utils::makeDataTypeDeviceCompatible(splineGPParams),
-        dftfe::utils::makeDataTypeDeviceCompatible(splineCutoff),
-        dftfe::utils::makeDataTypeDeviceCompatible(splineRMin),
-        dftfe::utils::makeDataTypeDeviceCompatible(splineEvalParams),
-        dftfe::utils::makeDataTypeDeviceCompatible(valuesOut));
+      if (numberEntries == 0)
+        return;
+      DFTFE_LAUNCH_KERNEL(projectorValuesKernel,
+                          (dftfe::utils::DEVICE_BLOCK_SIZE + numberEntries) /
+                            dftfe::utils::DEVICE_BLOCK_SIZE,
+                          dftfe::utils::DEVICE_BLOCK_SIZE,
+                          dftfe::linearAlgebra::BLASWrapper<
+                            dftfe::utils::MemorySpace::DEVICE>::d_streamId,
+                          numPairs,
+                          numQuadPoints,
+                          numRadialFunctions,
+                          totalLM,
+                          quadCoords,
+                          jxwCompact,
+                          pairCenters,
+                          pairCellSlot,
+                          radialFnLQuantum,
+                          tables,
+                          valuesOut);
     }
   } // namespace atomCenteredSphericalFunctionDeviceKernels
 } // namespace dftfe

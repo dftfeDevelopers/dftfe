@@ -41,6 +41,7 @@
 #include <dftfe/MPIWriteOnFile.h>
 #include <dftfe/functionalTest.h>
 #include <dftfe/computeAuxProjectedDensityMatrixFromPSI.h>
+#include <dftfe/noncollinearDensityUtils.h>
 
 #include <algorithm>
 #include <cmath>
@@ -418,21 +419,6 @@ namespace dftfe
             "match the NATOMS input. Please check your atomic coordinates file. Sometimes an extra"
             "blank row at the end can cause this issue too."));
         pcout << "number of atoms: " << atomLocations.size() << "\n";
-
-        // Non-collinear magnetism reads the initial moment from three
-        // further columns per atom record (magnitude, polar angle theta,
-        // azimuthal angle phi, the angles in degrees).  initRho fills
-        // magX/Y/Z only for records of length 8 or 9, and zero initial
-        // magnetization is a stationary point of the SCF.
-        if (d_dftParamsPtr->noncolin)
-          for (dftfe::uInt iAtom = 0; iAtom < atomLocations.size(); ++iAtom)
-            AssertThrow(
-              atomLocations[iAtom].size() == 8 ||
-                atomLocations[iAtom].size() == 9,
-              dealii::ExcMessage(
-                "DFT-FE Error: NONCOLLINEAR SPIN requires 8 columns per row in the atomic coordinates file (atomic number, valence charge, three coordinates, then the initial magnetization as magnitude, theta and phi in degrees), or 9 with a trailing valence-charge override. Atom " +
-                std::to_string(iAtom) + " has " +
-                std::to_string(atomLocations[iAtom].size()) + " columns."));
         atomLocationsFractional.resize(atomLocations.size());
         //
         // find unique atom types
@@ -479,21 +465,6 @@ namespace dftfe
             "blank row at the end can cause this issue too."));
         pcout << "number of atoms: " << atomLocations.size() << "\n";
 
-        // Non-collinear magnetism reads the initial moment from three
-        // further columns per atom record (magnitude, polar angle theta,
-        // azimuthal angle phi, the angles in degrees).  initRho fills
-        // magX/Y/Z only for records of length 8 or 9, and zero initial
-        // magnetization is a stationary point of the SCF.
-        if (d_dftParamsPtr->noncolin)
-          for (dftfe::uInt iAtom = 0; iAtom < atomLocations.size(); ++iAtom)
-            AssertThrow(
-              atomLocations[iAtom].size() == 8 ||
-                atomLocations[iAtom].size() == 9,
-              dealii::ExcMessage(
-                "DFT-FE Error: NONCOLLINEAR SPIN requires 8 columns per row in the atomic coordinates file (atomic number, valence charge, three coordinates, then the initial magnetization as magnitude, theta and phi in degrees), or 9 with a trailing valence-charge override. Atom " +
-                std::to_string(iAtom) + " has " +
-                std::to_string(atomLocations[iAtom].size()) + " columns."));
-
         //
         // find unique atom types
         //
@@ -518,6 +489,20 @@ namespace dftfe
                   "atomic numbers beyond 50."));
           }
       }
+
+    // Non-collinear magnetism reads the initial moment from three
+    // further columns per atom record (magnitude, polar angle theta,
+    // azimuthal angle phi, the angles in degrees).  initRho fills
+    // magX/Y/Z only for records of length 8 or 9, and zero initial
+    // magnetization is a stationary point of the SCF.
+    if (d_dftParamsPtr->noncolin)
+      for (dftfe::uInt iAtom = 0; iAtom < atomLocations.size(); ++iAtom)
+        AssertThrow(
+          atomLocations[iAtom].size() == 8 || atomLocations[iAtom].size() == 9,
+          dealii::ExcMessage(
+            "DFT-FE Error: NONCOLLINEAR SPIN requires 8 columns per row in the atomic coordinates file (atomic number, valence charge, three coordinates, then the initial magnetization as magnitude, theta and phi in degrees), or 9 with a trailing valence-charge override. Atom " +
+            std::to_string(iAtom) + " has " +
+            std::to_string(atomLocations[iAtom].size()) + " columns."));
 
     //
     // read Gaussian atomic displacements
@@ -4239,11 +4224,6 @@ namespace dftfe
                                        fermiEnergyUp,
                                        fermiEnergyDown,
                                        d_dftParamsPtr->spinPolarized == 1,
-                                       (d_dftParamsPtr->spinPolarized == 1 ||
-                                        d_dftParamsPtr->noncolin ||
-                                        d_dftParamsPtr->hasSOC) ?
-                                         1.0 :
-                                         2.0,
                                        d_dftParamsPtr->constraintMagnetization,
                                        d_dftParamsPtr->TVal);
 
@@ -5952,26 +5932,18 @@ namespace dftfe
                         cellMagAxisValues[3 * iQuad + 1] = 0.0;
                         cellMagAxisValues[3 * iQuad + 2] = 0.0;
                       }
-                    // |m| <= n holds for any physical spinor density
-                    // (Cauchy-Schwarz on the two-component wavefunction), but
-                    // the SCF mixes n and the components of m as independent
-                    // linear channels with signed coefficients, so a mixed
-                    // density can violate it and drive
-                    // rho^down = (n - |m|)/2 negative.  Clamping keeps the XC
-                    // input in the physical region; the bound is attained at
-                    // full polarization, which libxc handles.
                     if (cellMagNormValues[iQuad] > cellRhoValues[iQuad])
                       {
                         ++numMagnitudeClamped;
                         maxRhoAtClamp =
                           std::max(maxRhoAtClamp, cellRhoValues[iQuad]);
-                        maxAbsViolation          = std::max(maxAbsViolation,
+                        maxAbsViolation = std::max(maxAbsViolation,
                                                    cellMagNormValues[iQuad] -
                                                      cellRhoValues[iQuad]);
-                        cellMagNormValues[iQuad] = cellRhoValues[iQuad] > 0.0 ?
-                                                     cellRhoValues[iQuad] :
-                                                     0.0;
                       }
+                    cellMagNormValues[iQuad] =
+                      noncollinearDensityUtils::physicalMagnetizationNorm(
+                        cellMagNormValues[iQuad], cellRhoValues[iQuad]);
                     const double magByTwo = cellMagNormValues[iQuad] / 2.0;
                     densityValsForXC[iCell * nQuadsPerCell + iQuad] =
                       rhoByTwo + magByTwo;

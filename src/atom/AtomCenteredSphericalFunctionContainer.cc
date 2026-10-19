@@ -387,40 +387,13 @@ namespace dftfe
     // per-cell bounding spheres: a center farther from the centroid than
     // (cell radius + maximum interaction radius) has no quadrature point in
     // range, so the exact tests below can be skipped for that pair
-    std::vector<double> cellCentroid(3 * numberElements, 0.0);
-    std::vector<double> cellRadius(numberElements, 0.0);
-    for (dftfe::Int iCell = 0; iCell < numberElements; iCell++)
-      {
-        const double *qp =
-          quadraturePointsVector.data() +
-          static_cast<size_t>(iCell) * numberQuadraturePoints * 3;
-        double cx = 0.0;
-        double cy = 0.0;
-        double cz = 0.0;
-        for (dftfe::Int iQuad = 0; iQuad < numberQuadraturePoints; iQuad++)
-          {
-            cx += qp[3 * iQuad + 0];
-            cy += qp[3 * iQuad + 1];
-            cz += qp[3 * iQuad + 2];
-          }
-        cx /= numberQuadraturePoints;
-        cy /= numberQuadraturePoints;
-        cz /= numberQuadraturePoints;
-        double r2max = 0.0;
-        for (dftfe::Int iQuad = 0; iQuad < numberQuadraturePoints; iQuad++)
-          {
-            const double dx = qp[3 * iQuad + 0] - cx;
-            const double dy = qp[3 * iQuad + 1] - cy;
-            const double dz = qp[3 * iQuad + 2] - cz;
-            const double r2 = dx * dx + dy * dy + dz * dz;
-            if (r2 > r2max)
-              r2max = r2;
-          }
-        cellCentroid[3 * iCell + 0] = cx;
-        cellCentroid[3 * iCell + 1] = cy;
-        cellCentroid[3 * iCell + 2] = cz;
-        cellRadius[iCell]           = std::sqrt(r2max);
-      }
+    std::vector<dealii::Point<3>> cellCentroids;
+    std::vector<double>           cellRadii;
+    dftUtils::computeCellBoundingSpheres(quadraturePointsVector.data(),
+                                         numberElements,
+                                         numberQuadraturePoints,
+                                         cellCentroids,
+                                         cellRadii);
 
     for (dftfe::Int iAtom = 0; iAtom < numberAtomsOfInterest; ++iAtom)
       {
@@ -503,21 +476,12 @@ namespace dftfe
                       d_periodicImageCoord[iAtom][3 * iImageAtomCount + 2];
                   }
 
-                // bounding-sphere rejection (conservative margin against
-                // floating-point rounding of the triangle inequality)
-                {
-                  const double dxc =
-                    cellCentroid[3 * iCell + 0] - chargePoint[0];
-                  const double dyc =
-                    cellCentroid[3 * iCell + 1] - chargePoint[1];
-                  const double dzc =
-                    cellCentroid[3 * iCell + 2] - chargePoint[2];
-                  const double distCentroid =
-                    std::sqrt(dxc * dxc + dyc * dyc + dzc * dzc);
-                  if (distCentroid - cellRadius[iCell] >
-                      maxInteractionRadius + 1e-9)
-                    continue;
-                }
+                // bounding-sphere rejection
+                if (cellCentroids[iCell].distance(chargePoint) -
+                      cellRadii[iCell] >
+                    maxInteractionRadius +
+                      dftUtils::cellBoundingSphereTolerance)
+                  continue;
 
                 for (dftfe::uInt iPsp = 0; iPsp < numberSphericalFunctions;
                      ++iPsp)

@@ -725,48 +725,41 @@ namespace dftfe
             {
               l = '0';
             }
-          if (orbital_string_nl[1] == 'p')
+          else if (orbital_string_nl[1] == 'p')
             {
               l = '1';
             }
-          if (orbital_string_nl[1] == 'd')
+          else if (orbital_string_nl[1] == 'd')
             {
               l = '2';
             }
-          if (orbital_string_nl[1] == 'f')
+          else if (orbital_string_nl[1] == 'f')
             {
               l = '3';
             }
-          std::string orbital_string = "psi";
-          // A fully relativistic UPF carries two PP_CHI entries per (n, l),
-          // one per relativistic j.  Each channel is written under a name
-          // carrying the UPF wavefunction index, and psi<n><l>.inp aliases the
-          // first channel of each (n, l) - that is the name psiInitialGuess
-          // looks up, the atomic initial guess not being j resolved.
-          const std::string channelName = file_path_out + "/" + orbital_string +
-                                          n + l + "_" + std::to_string(i) +
-                                          ".inp";
-          std::vector<std::string> orbitalFileNames;
-          orbitalFileNames.push_back(channelName);
-          const std::string nlKey(1, n);
-          if (writtenOrbitalNL.insert(nlKey + l).second)
-            orbitalFileNames.push_back(file_path_out + "/" + orbital_string +
-                                       n + l + ".inp");
-          for (const auto &orbitalFileName : orbitalFileNames)
+          else
             {
-              std::fstream file;
-              file.open(orbitalFileName, std::ios::out);
-              file << std::setprecision(12);
-              if (file.is_open())
-                {
-                  for (dftfe::Int j = 0; j < chi_values.size(); j++)
-                    {
-                      file << radial_coord[j] << " " << chi_values[j]
-                           << std::endl;
-                    }
-                }
-              file.close();
+              throw std::invalid_argument("unsupported orbital label " +
+                                          attr_value[index]);
             }
+          // A fully relativistic UPF carries two PP_CHI entries per (n, l),
+          // one per relativistic j. The atomic initial guess is not j
+          // resolved and reads psi<n><l>.inp, written from the first.
+          if (!writtenOrbitalNL.insert(std::string{n, l}).second)
+            continue;
+          std::string  orbital_string = "psi";
+          std::fstream file;
+          file.open(file_path_out + "/" + orbital_string + n + l + ".inp",
+                    std::ios::out);
+          file << std::setprecision(12);
+          if (file.is_open())
+            {
+              for (dftfe::Int j = 0; j < chi_values.size(); j++)
+                {
+                  file << radial_coord[j] << " " << chi_values[j] << std::endl;
+                }
+            }
+          file.close();
         }
     }
 

@@ -51,19 +51,8 @@
 #ifndef DFTFE_SPLINEDEVICEEVAL_H
 #define DFTFE_SPLINEDEVICEEVAL_H
 
+#include <dftfe/TypeConfig.h>
 #include <cmath>
-#include <vector>
-
-// Keyed on the compiler-mode macros, which are defined only while the
-// device compiler is actually compiling this translation unit. The HIP
-// platform macros cannot be used here: config.h defines them for every
-// unit of a HIP build, including the host-only units that the plain C++
-// compiler builds, which would then see the device attributes.
-#if defined(__CUDACC__) || defined(__HIPCC__)
-#  define DFTFE_HOST_DEVICE_INLINE __host__ __device__ __forceinline__
-#else
-#  define DFTFE_HOST_DEVICE_INLINE inline
-#endif
 
 namespace dftfe
 {
@@ -72,60 +61,80 @@ namespace dftfe
     /**
      * @brief POD view of one radial spline's coefficient tables, passable
      * by value into kernels. The piecewise cubic on interval i is
-     * y(x) = knotY[i] + h*(coefB[i] + h*(coefC[i] + h*coefD[i])),
-     * h = x - knotX[i], matching alglib's spline1dunpack convention, so
-     * evaluation agrees with the host spline1dcalc to machine precision.
-     * Points outside [knotX[0], knotX[nKnots-1]] use the boundary interval
-     * polynomial (alglib extrapolation behavior); callers are expected to
-     * apply radial cutoffs before evaluation as the host code does.
+     * @code
+     *   y(x) = knotY[i] + h*(coefB[i] + h*(coefC[i] + h*coefD[i])),
+     *   h    = x - knotX[i]
+     * @endcode
+     * matching alglib's spline1dunpack convention, so evaluation agrees with
+     * the host spline1dcalc to rounding. Points outside
+     * [knotX[0], knotX[nKnots-1]] use the boundary interval polynomial
+     * (alglib extrapolation behavior); callers are expected to apply radial
+     * cutoffs before evaluation as the host code does.
      */
     struct SplineTableView
     {
-      const double *knotX; // nKnots entries
-      const double *knotY; // nKnots-1 entries (per interval)
-      const double *coefB; // nKnots-1
-      const double *coefC; // nKnots-1
-      const double *coefD; // nKnots-1
-      dftfe::uInt   nKnots;
-      // geometric-progression mesh parameters (isGPGrid):
-      // knotX[i] = gpA * (pow(gpQ, i) - 1) / (gpQ - 1), gpQ > 1
+      const double *knotX;  ///< nKnots entries
+      const double *knotY;  ///< nKnots-1 entries (per interval)
+      const double *coefB;  ///< nKnots-1 entries
+      const double *coefC;  ///< nKnots-1 entries
+      const double *coefD;  ///< nKnots-1 entries
+      dftfe::uInt   nKnots; ///< number of knots
+      /// knotX[i] = gpA * (pow(gpQ, i) - 1) / (gpQ - 1), gpQ > 1, when set
       bool   isGPGrid;
-      double gpA;
-      double gpQ;
-      double invLogGpQ; // 1/log(gpQ), precomputed
+      double gpA;       ///< first knot spacing of the geometric mesh
+      double gpQ;       ///< ratio of the geometric mesh
+      double invLogGpQ; ///< 1/log(gpQ)
     };
 
     /**
-     * @brief View onto one radial spline inside the packed tables.
-     *
-     * splineGPParams is 4-wide per function: {isGPGrid, a, q, 1/log(q)}.
+     * @brief POD view of a group of radial splines packed into contiguous
+     * arrays, passable by value into kernels. Function fnId occupies
+     * [offsets[fnId], offsets[fnId] + nKnots[fnId]) of the five coefficient
+     * arrays, the per-interval ones padded to nKnots entries.
+     */
+    struct SplineTableGroupView
+    {
+      const double      *knotX;
+      const double      *knotY;
+      const double      *coefB;
+      const double      *coefC;
+      const double      *coefD;
+      const dftfe::uInt *offsets;
+      const dftfe::uInt *nKnots;
+      /// 4 per function: isGPGrid, gpA, gpQ, 1/log(gpQ)
+      const double *gpParams;
+      /// radial cutoff per function
+      const double *cutoffs;
+      /// radius below which the function is evaluated at rMin
+      const double *rMins;
+    };
+
+    /**
+     * @brief View onto function fnId of a packed group.
      */
     DFTFE_HOST_DEVICE_INLINE SplineTableView
-    splineView(const double      *knotXAll,
-               const double      *knotYAll,
-               const double      *coefBAll,
-               const double      *coefCAll,
-               const double      *coefDAll,
-               const dftfe::uInt *splineOffsets,
-               const dftfe::uInt *splineNKnots,
-               const double      *splineGPParams,
-               const dftfe::uInt  fnId)
+    splineView(const SplineTableGroupView &tables, const dftfe::uInt fnId)
     {
       SplineTableView   t;
-      const dftfe::uInt off = splineOffsets[fnId];
-      t.knotX               = knotXAll + off;
-      t.knotY               = knotYAll + off;
-      t.coefB               = coefBAll + off;
-      t.coefC               = coefCAll + off;
-      t.coefD               = coefDAll + off;
-      t.nKnots              = splineNKnots[fnId];
-      t.isGPGrid            = splineGPParams[fnId * 4 + 0] > 0.5;
-      t.gpA                 = splineGPParams[fnId * 4 + 1];
-      t.gpQ                 = splineGPParams[fnId * 4 + 2];
-      t.invLogGpQ           = splineGPParams[fnId * 4 + 3];
+      const dftfe::uInt off = tables.offsets[fnId];
+      t.knotX               = tables.knotX + off;
+      t.knotY               = tables.knotY + off;
+      t.coefB               = tables.coefB + off;
+      t.coefC               = tables.coefC + off;
+      t.coefD               = tables.coefD + off;
+      t.nKnots              = tables.nKnots[fnId];
+      t.isGPGrid            = tables.gpParams[fnId * 4 + 0] > 0.5;
+      t.gpA                 = tables.gpParams[fnId * 4 + 1];
+      t.gpQ                 = tables.gpParams[fnId * 4 + 2];
+      t.invLogGpQ           = tables.gpParams[fnId * 4 + 3];
       return t;
     }
 
+    /**
+     * @brief Index of the knot interval containing x, clamped to the first
+     * and last interval. Closed form on a geometric-progression mesh, binary
+     * search otherwise.
+     */
     DFTFE_HOST_DEVICE_INLINE dftfe::uInt
     splineFindInterval(const SplineTableView &t, const double x)
     {
@@ -165,6 +174,10 @@ namespace dftfe
       return idx;
     }
 
+    /**
+     * @brief Spline value at x; agrees with alglib::spline1dcalc to
+     * rounding.
+     */
     DFTFE_HOST_DEVICE_INLINE double
     splineEvalValue(const SplineTableView &t, const double x)
     {
@@ -173,7 +186,10 @@ namespace dftfe
       return t.knotY[i] + h * (t.coefB[i] + h * (t.coefC[i] + h * t.coefD[i]));
     }
 
-    // order = 1 or 2
+    /**
+     * @brief First (order = 1) or second (order = 2) derivative of the
+     * spline at x.
+     */
     DFTFE_HOST_DEVICE_INLINE double
     splineEvalDerivative(const SplineTableView &t,
                          const double           x,
@@ -187,57 +203,19 @@ namespace dftfe
     }
 
     /**
-     * @brief Host-side flattened coefficient table of one alglib spline,
-     * ready for upload to a device MemoryStorage. Filled by
-     * splineHostTableUtils::unpackAlglibSpline() (host-only header
-     * splineHostTableUtils.h) or directly.
+     * @brief Value of function fnId at radius r with the semantics of
+     * AtomCenteredSphericalFunctionSpline::getRadialValue: zero at
+     * r >= cutoff, evaluated at rMin below rMin.
      */
-    struct HostSplineTable
+    DFTFE_HOST_DEVICE_INLINE double
+    radialSplineValue(const SplineTableGroupView &tables,
+                      const dftfe::uInt           fnId,
+                      const double                r)
     {
-      std::vector<double> knotX;
-      std::vector<double> knotY;
-      std::vector<double> coefB;
-      std::vector<double> coefC;
-      std::vector<double> coefD;
-      bool                isGPGrid  = false;
-      double              gpA       = 0.0;
-      double              gpQ       = 0.0;
-      double              invLogGpQ = 0.0;
-    };
-
-    /**
-     * @brief Detects whether the knots follow a geometric-progression mesh
-     * knotX[i] = a*(q^i - 1)/(q - 1) with q > 1 (JTH radial meshes) and
-     * fills the closed-form lookup parameters.
-     */
-    inline void
-    detectGeometricGrid(HostSplineTable &table)
-    {
-      table.isGPGrid      = false;
-      const size_t nKnots = table.knotX.size();
-      if (nKnots < 4)
-        return;
-      const double dx0 = table.knotX[1] - table.knotX[0];
-      if (dx0 <= 0.0)
-        return;
-      const double q = (table.knotX[2] - table.knotX[1]) / dx0;
-      if (q <= 1.0 + 1e-10)
-        return;
-      // verify the ratio holds across the mesh
-      for (size_t i = 1; i + 1 < nKnots; i++)
-        {
-          const double dxi  = table.knotX[i + 1] - table.knotX[i];
-          const double dxim = table.knotX[i] - table.knotX[i - 1];
-          if (std::abs(dxi / dxim - q) > 1e-6 * q)
-            return;
-        }
-      table.isGPGrid  = true;
-      table.gpQ       = q;
-      table.gpA       = dx0; // x_i = dx0*(q^i - 1)/(q - 1) since x_0 = 0
-      table.invLogGpQ = 1.0 / std::log(q);
-      // closed form assumes the mesh starts at zero; otherwise fall back
-      if (std::abs(table.knotX[0]) > 1e-14)
-        table.isGPGrid = false;
+      if (r >= tables.cutoffs[fnId])
+        return 0.0;
+      const double rMin = tables.rMins[fnId];
+      return splineEvalValue(splineView(tables, fnId), r <= rMin ? rMin : r);
     }
   } // namespace splineEval
 } // namespace dftfe

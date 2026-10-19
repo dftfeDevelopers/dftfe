@@ -38,6 +38,32 @@ namespace dftfe
     // Reading single atom rho initial guess
     pcout << std::endl
           << "Reading initial guess for electron-density....." << std::endl;
+
+    // A pseudopotential run evaluates the valence densities through
+    // atomicInitKernels; a device run dispatches to the device
+    // specialization and a CPU run to the host one.
+    if (d_dftParamsPtr->isPseudopotential)
+      {
+        splineHostTableUtils::SplineTableGroup tables;
+        std::map<dftfe::uInt, dftfe::uInt>     znumToSplineId;
+        buildAtomTypeSplineTables(
+          atomTypes,
+          [this](const dftfe::uInt Znum) {
+            return d_oncvClassPtr->getRadialValenceDensityFunction(Znum, 0);
+          },
+          tables,
+          znumToSplineId);
+        AtomTypeSplineTables<memorySpace> tablesMem;
+        tablesMem.stage(tables);
+        computeRadialDensityQuadTotals(tablesMem,
+                                       znumToSplineId,
+                                       d_rhoAtomsValues,
+                                       d_gradRhoAtomsValues);
+        normalizeAtomicRhoQuadValues();
+        return;
+      }
+
+    // all-electron run: single-atom densities from the data files
     std::map<dftfe::uInt, alglib::spline1dinterpolant> denSpline;
     std::map<dftfe::uInt, std::vector<std::vector<double>>>
                                   singleAtomElectronDensity;
@@ -51,54 +77,43 @@ namespace dftfe
          it++)
       {
         char densityFile[256];
+        sprintf(
+          densityFile,
+          "%s/data/electronicStructure/allElectron/z%u/singleAtomData/density.inp",
+          DFTFE_PATH,
+          *it);
 
-        if (!d_dftParamsPtr->isPseudopotential)
+        dftUtils::readFile(2, singleAtomElectronDensity[*it], densityFile);
+        dftfe::uInt         numRows = singleAtomElectronDensity[*it].size() - 1;
+        std::vector<double> xData(numRows), yData(numRows);
+
+        dftfe::uInt maxRowId = 0;
+        for (dftfe::uInt irow = 0; irow < numRows; ++irow)
           {
-            sprintf(
-              densityFile,
-              "%s/data/electronicStructure/allElectron/z%u/singleAtomData/density.inp",
-              DFTFE_PATH,
-              *it);
+            xData[irow] = singleAtomElectronDensity[*it][irow][0];
+            yData[irow] = singleAtomElectronDensity[*it][irow][1];
 
-
-            dftUtils::readFile(2, singleAtomElectronDensity[*it], densityFile);
-            dftfe::uInt numRows = singleAtomElectronDensity[*it].size() - 1;
-            std::vector<double> xData(numRows), yData(numRows);
-
-            dftfe::uInt maxRowId = 0;
-            for (dftfe::uInt irow = 0; irow < numRows; ++irow)
-              {
-                xData[irow] = singleAtomElectronDensity[*it][irow][0];
-                yData[irow] = singleAtomElectronDensity[*it][irow][1];
-
-                if (yData[irow] > truncationTol)
-                  maxRowId = irow;
-
-
-                yData[0] = yData[1];
-
-                // interpolate rho
-                alglib::real_1d_array x;
-                x.setcontent(numRows, &xData[0]);
-                alglib::real_1d_array y;
-                y.setcontent(numRows, &yData[0]);
-                alglib::ae_int_t natural_bound_type_L = 1;
-                alglib::ae_int_t natural_bound_type_R = 1;
-                spline1dbuildcubic(x,
-                                   y,
-                                   numRows,
-                                   natural_bound_type_L,
-                                   0.0,
-                                   natural_bound_type_R,
-                                   0.0,
-                                   denSpline[*it]);
-                outerMostPointDen[*it] = xData[maxRowId];
-              }
+            if (yData[irow] > truncationTol)
+              maxRowId = irow;
           }
-        else
-          {
-            outerMostPointDen[*it] = d_oncvClassPtr->getRmaxValenceDensity(*it);
-          }
+        yData[0] = yData[1];
+
+        // interpolate rho
+        alglib::real_1d_array x;
+        x.setcontent(numRows, &xData[0]);
+        alglib::real_1d_array y;
+        y.setcontent(numRows, &yData[0]);
+        alglib::ae_int_t natural_bound_type_L = 1;
+        alglib::ae_int_t natural_bound_type_R = 1;
+        spline1dbuildcubic(x,
+                           y,
+                           numRows,
+                           natural_bound_type_L,
+                           0.0,
+                           natural_bound_type_R,
+                           0.0,
+                           denSpline[*it]);
+        outerMostPointDen[*it] = xData[maxRowId];
         if (outerMostPointDen[*it] > maxRhoTail)
           maxRhoTail = outerMostPointDen[*it];
       }
@@ -129,23 +144,11 @@ namespace dftfe
     for (dftfe::uInt i = 0; i < 3; i++)
       zeroTensor1[i] = 0.0;
 
-    // A device run dispatches to the device specialization and a CPU run to
-    // the host one; the loop further down covers the all-electron case and
-    // any species that is not spline backed.
-    const bool rhoAtomsComputed =
-      d_dftParamsPtr->isPseudopotential &&
-      computeRadialDensityQuadTotals(
-        [this](const dftfe::uInt Znum) {
-          return d_oncvClassPtr->getRadialValenceDensityFunction(Znum, 0);
-        },
-        d_rhoAtomsValues,
-        d_gradRhoAtomsValues);
-
     // loop over elements
     typename dealii::DoFHandler<3>::active_cell_iterator
       cell = dofHandler.begin_active(),
       endc = dofHandler.end();
-    for (; cell != endc && !rhoAtomsComputed; ++cell)
+    for (; cell != endc; ++cell)
       {
         if (cell->is_locally_owned())
           {
@@ -198,24 +201,11 @@ namespace dftfe
                       radialDensitySecondDerivative;
                     if (distanceToAtom <=
                         outerMostPointDen[atomLocations[iAtom][0]])
-                      {
-                        if (!d_dftParamsPtr->isPseudopotential)
-                          alglib::spline1ddiff(
-                            denSpline[atomLocations[iAtom][0]],
-                            distanceToAtom,
-                            value,
-                            radialDensityFirstDerivative,
-                            radialDensitySecondDerivative);
-                        else
-                          {
-                            std::vector<double> Vec;
-                            d_oncvClassPtr->getRadialValenceDensity(
-                              atomLocations[iAtom][0], distanceToAtom, Vec);
-                            value                         = Vec[0];
-                            radialDensityFirstDerivative  = Vec[1];
-                            radialDensitySecondDerivative = Vec[2];
-                          }
-                      }
+                      alglib::spline1ddiff(denSpline[atomLocations[iAtom][0]],
+                                           distanceToAtom,
+                                           value,
+                                           radialDensityFirstDerivative,
+                                           radialDensitySecondDerivative);
                     else
                       {
                         value                         = 0.0;
@@ -268,26 +258,12 @@ namespace dftfe
                       radialDensitySecondDerivative;
                     if (distanceToAtom <=
                         outerMostPointDen[atomLocations[masterAtomId][0]])
-                      {
-                        if (!d_dftParamsPtr->isPseudopotential)
-                          alglib::spline1ddiff(
-                            denSpline[atomLocations[masterAtomId][0]],
-                            distanceToAtom,
-                            value,
-                            radialDensityFirstDerivative,
-                            radialDensitySecondDerivative);
-                        else
-                          {
-                            std::vector<double> Vec;
-                            d_oncvClassPtr->getRadialValenceDensity(
-                              atomLocations[masterAtomId][0],
-                              distanceToAtom,
-                              Vec);
-                            value                         = Vec[0];
-                            radialDensityFirstDerivative  = Vec[1];
-                            radialDensitySecondDerivative = Vec[2];
-                          }
-                      }
+                      alglib::spline1ddiff(
+                        denSpline[atomLocations[masterAtomId][0]],
+                        distanceToAtom,
+                        value,
+                        radialDensityFirstDerivative,
+                        radialDensitySecondDerivative);
                     else
                       {
                         value                         = 0.0;
@@ -314,56 +290,56 @@ namespace dftfe
 
 
   template <dftfe::utils::MemorySpace memorySpace>
-  bool
+  void
   dftClass<memorySpace>::computeRadialDensityQuadTotals(
-    const std::function<const AtomCenteredSphericalFunctionBase *(
-      const dftfe::uInt)>                         &getRadialFunction,
+    const AtomTypeSplineTables<memorySpace>       &tables,
+    const std::map<dftfe::uInt, dftfe::uInt>      &znumToSplineId,
     std::map<dealii::CellId, std::vector<double>> &valueMap,
     std::map<dealii::CellId, std::vector<double>> &gradMap)
   {
-    splineHostTableUtils::SplineTableGroup tables;
-    std::map<dftfe::uInt, dftfe::uInt>     znumToSplineId;
-    if (!buildAtomTypeSplineTables(
-          atomTypes, getRadialFunction, tables, znumToSplineId))
-      return false;
-
     d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId);
     const dftfe::uInt nCells        = d_basisOperationsPtrHost->nCells();
     const dftfe::uInt nQuadsPerCell = d_basisOperationsPtrHost->nQuadsPerCell();
 
-    // atoms first, then their periodic images: the order in which the host
-    // loops accumulate
-    const dftfe::uInt        nAtoms   = atomLocations.size();
-    const dftfe::uInt        nCenters = nAtoms + d_imageIdsTrunc.size();
-    std::vector<double>      centerCoordsHost(3 * nCenters);
-    std::vector<dftfe::uInt> centerSplineIdHost(nCenters);
-    for (dftfe::uInt iCenter = 0; iCenter < nCenters; ++iCenter)
+    // atoms first, then their periodic images; atoms of a type without an
+    // entry in znumToSplineId contribute nothing
+    const dftfe::uInt        nAtoms = atomLocations.size();
+    std::vector<double>      centerCoordsHost;
+    std::vector<dftfe::uInt> centerSplineIdHost;
+    for (dftfe::uInt iCenter = 0; iCenter < nAtoms + d_imageIdsTrunc.size();
+         ++iCenter)
       {
         const bool        isImage = iCenter >= nAtoms;
         const dftfe::uInt iAtom =
           isImage ? d_imageIdsTrunc[iCenter - nAtoms] : iCenter;
+        const auto splineIt =
+          znumToSplineId.find(std::round(atomLocations[iAtom][0]));
+        if (splineIt == znumToSplineId.end())
+          continue;
         for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
-          centerCoordsHost[3 * iCenter + iDim] =
+          centerCoordsHost.push_back(
             isImage ? d_imagePositionsTrunc[iCenter - nAtoms][iDim] :
-                      atomLocations[iAtom][2 + iDim];
-        centerSplineIdHost[iCenter] =
-          znumToSplineId[std::round(atomLocations[iAtom][0])];
+                      atomLocations[iAtom][2 + iDim]);
+        centerSplineIdHost.push_back(splineIt->second);
       }
+    const dftfe::uInt nCenters = centerSplineIdHost.size();
 
-    AtomTypeSplineTables<memorySpace> tablesMem;
-    tablesMem.stage(tables);
-    dftfe::utils::MemoryStorage<double, memorySpace> dCenterCoords, dQuad,
-      dValue, dGrad;
-    dftfe::utils::MemoryStorage<dftfe::uInt, memorySpace> dCenterSplineId;
-    stageHostVector(centerCoordsHost, dCenterCoords);
-    stageHostVector(centerSplineIdHost, dCenterSplineId);
+    const dftfe::utils::MemoryStorage<double, memorySpace> dCenterCoords =
+      dftfe::utils::memoryStorageFromSTL<double, memorySpace>(centerCoordsHost);
+    const dftfe::utils::MemoryStorage<dftfe::uInt, memorySpace>
+      dCenterSplineId =
+        dftfe::utils::memoryStorageFromSTL<dftfe::uInt, memorySpace>(
+          centerSplineIdHost);
+    dftfe::utils::MemoryStorage<double, memorySpace> dQuad, dValue, dGrad;
 
     // block over cells so the device transient stays bounded. Each cell
     // stages three coordinates per quadrature point and returns the density
     // and its gradient, so seven doubles per point.
-    constexpr std::size_t maxBlockBytes  = 256000000;
-    const dftfe::uInt     cellsBlockSize = std::max<dftfe::uInt>(
-      1, maxBlockBytes / (std::size_t)(7 * nQuadsPerCell * sizeof(double)));
+    const dftfe::uInt cellsBlockSize =
+      std::max<dftfe::uInt>(1,
+                            atomicInitKernels::maxBlockBytes /
+                              (std::size_t)(7 * nQuadsPerCell *
+                                            sizeof(double)));
     std::vector<double> hValue, hGrad;
     for (dftfe::uInt cellBlockStart = 0; cellBlockStart < nCells;
          cellBlockStart += cellsBlockSize)
@@ -387,18 +363,10 @@ namespace dftfe
           dQuad.data(),
           dCenterCoords.data(),
           dCenterSplineId.data(),
-          tablesMem.knotX.data(),
-          tablesMem.knotY.data(),
-          tablesMem.coefB.data(),
-          tablesMem.coefC.data(),
-          tablesMem.coefD.data(),
-          tablesMem.offsets.data(),
-          tablesMem.nKnots.data(),
-          tablesMem.gpParams.data(),
-          tablesMem.cutoffs.data(),
-          tablesMem.rMins.data(),
+          tables.view(),
           dValue.data(),
-          dGrad.data());
+          dGrad.data(),
+          d_nOMPThreads);
 
         hValue.resize(nPointsInBlock);
         dValue.copyTo(hValue);
@@ -418,7 +386,6 @@ namespace dftfe
                                   (std::size_t)(iCell + 1) * nQuadsPerCell * 3);
           }
       }
-    return true;
   }
 
 

@@ -77,7 +77,7 @@
 #include <dftfe/kerkerSolverProblemWrapper.h>
 #include <dftfe/ldosSolverProblemWrapper.h>
 #include <dftfe/groupSymmetry.h>
-#include <functional>
+#include <dftfe/atomTypeSplineTables.h>
 
 namespace dftfe
 {
@@ -286,12 +286,6 @@ namespace dftfe
      * @brief Number of Kohn-Sham eigen values to be computed
      */
     dftfe::uInt d_numEigenValues;
-
-
-    /**
-     * @brief Number of random wavefunctions
-     */
-    dftfe::uInt d_nonAtomicWaveFunctions;
 
     void
     readkPointData();
@@ -997,14 +991,17 @@ namespace dftfe
      * @brief Radial density and its gradient summed over every atom and
      * periodic image, at every density quadrature point of every locally
      * owned cell, through atomicInitKernels::atomicRadialDensityQuadTotal.
-     * getRadialFunction maps an atomic number to its radial function. Fills
-     * valueMap and gradMap and returns true, or returns false with nothing
-     * written when a species is not spline backed.
+     *
+     * @param[in] tables radial functions staged by AtomTypeSplineTables::stage
+     * @param[in] znumToSplineId function id of each atomic number in tables;
+     * atoms whose atomic number has no entry contribute nothing
+     * @param[out] valueMap density of each cell
+     * @param[out] gradMap density gradient of each cell
      */
-    bool
+    void
     computeRadialDensityQuadTotals(
-      const std::function<const AtomCenteredSphericalFunctionBase *(
-        const dftfe::uInt)>                         &getRadialFunction,
+      const AtomTypeSplineTables<memorySpace>       &tables,
+      const std::map<dftfe::uInt, dftfe::uInt>      &znumToSplineId,
       std::map<dealii::CellId, std::vector<double>> &valueMap,
       std::map<dealii::CellId, std::vector<double>> &gradMap);
 
@@ -1043,16 +1040,6 @@ namespace dftfe
     readPSI();
     void
     readPSIRadialValues();
-
-#ifdef DFTFE_WITH_DEVICE
-    /**
-     * @brief Fills the random initial-guess wavefunctions directly in
-     * d_eigenVectorsFlattenedDevice, leaving the host array unallocated.
-     */
-    void
-    readPSIRandomValuesDevice();
-#endif
-
     void
     loadPSIFiles(dftfe::uInt  Z,
                  dftfe::uInt  n,
@@ -1072,6 +1059,83 @@ namespace dftfe
       std::map<dealii::CellId, std::vector<double>> &_pseudoValues,
       std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
         &_pseudoValuesAtoms);
+
+    /**
+     * @brief Step 2 of initLocalPseudoPotential for a pseudopotential run:
+     * the local pseudopotential summed over every center, at every
+     * quadrature point of the cells of this k-point group, through
+     * atomicInitKernels::localPseudoPotentialTotal.
+     *
+     * d_basisOperationsPtrElectroHost must be reinitialized to the local
+     * pseudopotential quadrature.
+     *
+     * @param[in] lpspTables local pseudopotentials staged by
+     * AtomTypeSplineTables::stage
+     * @param[in] znumToSplineId function id of each atomic number in
+     * lpspTables
+     * @param[in] centerCoords x, y, z of each atom and periodic image
+     * @param[in] centerCharges valence charge of each center
+     * @param[in] centerAtomicNumbers atomic number of each center
+     * @param[in] centerTailCutoffs radius beyond which each center
+     * contributes -charge/r
+     * @param[in] centerSmearedWidths smeared charge width of each center,
+     * read only on the analytic smeared charge route
+     * @param[in] analyticSmearedChargeRoute subtract the potential of the
+     * smeared nuclear charges
+     * @param[in] maxTail largest radius at which a spline is evaluated
+     * @param[in,out] pseudoValues values of each cell, sized to the number
+     * of quadrature points; cells of other k-point groups are left as they
+     * are
+     */
+    void
+    computeLocalPseudoPotentialTotal(
+      const AtomTypeSplineTables<memorySpace>       &lpspTables,
+      const std::map<dftfe::uInt, dftfe::uInt>      &znumToSplineId,
+      const std::vector<double>                     &centerCoords,
+      const std::vector<double>                     &centerCharges,
+      const std::vector<dftfe::Int>                 &centerAtomicNumbers,
+      const std::vector<double>                     &centerTailCutoffs,
+      const std::vector<double>                     &centerSmearedWidths,
+      const bool                                     analyticSmearedChargeRoute,
+      const double                                   maxTail,
+      std::map<dealii::CellId, std::vector<double>> &pseudoValues);
+
+    /**
+     * @brief Step 3 of initLocalPseudoPotential for a pseudopotential run:
+     * the local pseudopotential of each atom and truncated periodic image
+     * on every cell of this k-point group where it has a quadrature point
+     * within cutOffForPsp, through
+     * atomicInitKernels::localPseudoPotentialValues.
+     *
+     * d_basisOperationsPtrElectroHost must be reinitialized to the local
+     * pseudopotential quadrature.
+     *
+     * @param[in] lpspTables local pseudopotentials staged by
+     * AtomTypeSplineTables::stage
+     * @param[in] znumToSplineId function id of each atomic number in
+     * lpspTables
+     * @param[in] cutOffForPsp radius within which the values are stored
+     * @param[in] boundingBoxTria bounding box of the locally owned cells
+     * @param[in] cellCentroids centroid of the quadrature points of each
+     * cell
+     * @param[in] cellRadii radius about cellCentroids enclosing the
+     * quadrature points of each cell
+     * @param[in] kptGroupCellIndices cell range of each k-point group, from
+     * dftUtils::createKpointParallelizationIndices
+     * @param[out] pseudoValuesAtoms values keyed by center (atoms first,
+     * then truncated images) and cell
+     */
+    void
+    computeLocalPseudoPotentialPerAtom(
+      const AtomTypeSplineTables<memorySpace>  &lpspTables,
+      const std::map<dftfe::uInt, dftfe::uInt> &znumToSplineId,
+      const double                              cutOffForPsp,
+      const dealii::BoundingBox<3>             &boundingBoxTria,
+      const std::vector<dealii::Point<3>>      &cellCentroids,
+      const std::vector<double>                &cellRadii,
+      const std::vector<dftfe::Int>            &kptGroupCellIndices,
+      std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
+        &pseudoValuesAtoms);
 
     void
     initAnalyticSmearedChargeData();

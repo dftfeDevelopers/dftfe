@@ -16,32 +16,25 @@
 //
 // Host+device utility functions for the GPU-accelerated PAW/pseudopotential
 // initialization paths: real spherical harmonics (matching the boost-based
-// host conventions of sphericalHarmonicUtils), cartesian-to-spherical
-// conversion (replicating the host tolerance branches),
-// and a stateless counter-based random number generator (splitmix64) that
-// produces identical streams on NVIDIA, AMD and Intel devices and is
-// independent of the MPI/GPU decomposition.
+// host conventions of sphericalHarmonicUtils) and cartesian-to-spherical
+// conversion (replicating the host tolerance branches).
 //
 
 #ifndef DFTFE_ATOMCENTEREDSPHERICALFUNCTIONDEVICEUTILS_H
 #define DFTFE_ATOMCENTEREDSPHERICALFUNCTIONDEVICEUTILS_H
 
-#include <dftfe/splineDeviceEval.h> // for DFTFE_HOST_DEVICE_INLINE
+#include <dftfe/splineDeviceEval.h>
+#include <dftfe/TypeConfig.h>
 #include <cmath>
 
 namespace dftfe
 {
   namespace atomCenteredSphericalFunctionDeviceUtils
   {
-    // ---------------- real spherical harmonics ----------------
-    // Host convention (sphericalHarmonicUtils::getSphericalHarmonicVal):
-    //   m == 0 : Y = N(l,0) P_l^0(cos t)
-    //   m  > 0 : Y = sqrt(2) N(l,m)  P_l^m(cos t)  cos(m p)
-    //   m  < 0 : Y = sqrt(2) N(l,|m|) P_l^|m|(cos t) sin(|m| p)
-    // with P_l^m the associated Legendre polynomial INCLUDING the
-    // Condon-Shortley phase (boost convention) and
-    // N(l,m) = sqrt((2l+1)/(4 pi) (l-m)!/(l+m)!).
-
+    /**
+     * @brief Associated Legendre polynomial P_l^m(x), m >= 0, including the
+     * Condon-Shortley phase (boost convention).
+     */
     DFTFE_HOST_DEVICE_INLINE double
     associatedLegendreCS(const dftfe::Int l, const dftfe::Int m, const double x)
     {
@@ -74,6 +67,17 @@ namespace dftfe
       return pll;
     }
 
+    /**
+     * @brief Real spherical harmonic in the convention of
+     * sphericalHarmonicUtils::getSphericalHarmonicVal:
+     * @code
+     *   m == 0 : Y = N(l,0) P_l^0(cos t)
+     *   m  > 0 : Y = sqrt(2) N(l,m)  P_l^m(cos t)  cos(m p)
+     *   m  < 0 : Y = sqrt(2) N(l,|m|) P_l^|m|(cos t) sin(|m| p)
+     * @endcode
+     * with P_l^m from associatedLegendreCS and
+     * N(l,m) = sqrt((2l+1)/(4 pi) (l-m)!/(l+m)!).
+     */
     DFTFE_HOST_DEVICE_INLINE double
     realSphericalHarmonic(const dftfe::Int l,
                           const dftfe::Int m,
@@ -97,8 +101,12 @@ namespace dftfe
       return sqrt2 * norm * plm * std::sin(absm * phi);
     }
 
-    // Replicates sphericalHarmonicUtils::convertCartesianToSpherical
-    // including its 1e-12 tolerance branches.
+    /**
+     * @brief Spherical coordinates (r, theta, phi) of the point
+     * (x0, x1, x2). An undetermined angle is set to zero: theta and phi
+     * when r is within 1e-12 of zero, and phi when theta is within 1e-12 of
+     * 0 or pi, where its value does not affect a spherical harmonic.
+     */
     DFTFE_HOST_DEVICE_INLINE void
     cartesianToSpherical(const double x0,
                          const double x1,
@@ -108,6 +116,7 @@ namespace dftfe
                          double      &phi)
     {
       const double tolerance = 1e-12;
+      const double pi        = 3.14159265358979323846;
       r                      = std::sqrt(x0 * x0 + x1 * x1 + x2 * x2);
       if (std::fabs(r - 0.0) <= tolerance)
         {
@@ -118,47 +127,11 @@ namespace dftfe
         {
           theta = std::acos(x2 / r);
           if (std::fabs(theta - 0.0) >= tolerance &&
-              std::fabs(theta - M_PI) >= tolerance)
+              std::fabs(theta - pi) >= tolerance)
             phi = std::atan2(x1, x0);
           else
             phi = 0.0;
         }
-    }
-
-    // ---------------- portable counter-based RNG ----------------
-    // Seed of the wavefunction initial guess. The host and device paths must
-    // share it or the two would produce different guesses.
-    constexpr unsigned long long randomWavefunctionSeed = 137137ULL;
-
-    // The generator below deliberately uses unsigned long long rather than
-    // dftfe::uInt: dftfe::uInt is 32 bit unless USE_64BIT_INT is set, and a
-    // narrower mixer would change the random stream between builds.
-    //
-    // splitmix64: high-quality 64-bit mixer; identical results on all
-    // device vendors (pure integer arithmetic) and independent of the
-    // parallel decomposition when keyed on global indices.
-    DFTFE_HOST_DEVICE_INLINE unsigned long long
-    splitmix64(unsigned long long z)
-    {
-      z += 0x9E3779B97F4A7C15ULL;
-      z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9ULL;
-      z = (z ^ (z >> 27)) * 0x94D049BB133111EBULL;
-      return z ^ (z >> 31);
-    }
-
-    // uniform double in [-0.5, 0.5) from a set of integer keys
-    DFTFE_HOST_DEVICE_INLINE double
-    uniformRandomCentered(const unsigned long long seed,
-                          const unsigned long long key0,
-                          const unsigned long long key1,
-                          const unsigned long long key2)
-    {
-      unsigned long long h = splitmix64(seed ^ splitmix64(key0));
-      h                    = splitmix64(h ^ splitmix64(key1));
-      h                    = splitmix64(h ^ splitmix64(key2));
-      // top 53 bits -> double in [0,1)
-      const double u = static_cast<double>(h >> 11) * 1.1102230246251565e-16;
-      return u - 0.5;
     }
   } // namespace atomCenteredSphericalFunctionDeviceUtils
 } // namespace dftfe

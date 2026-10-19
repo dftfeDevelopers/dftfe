@@ -456,237 +456,116 @@ namespace dftfe
         if (analyticSmearedChargeRoute)
           atomsImagesSmearedWidths[iAtom] = smearedChargeWidths[chargeId];
       }
+    // A pseudopotential run evaluates steps 2 and 3 through
+    // atomicInitKernels from these spline tables; an all-electron run
+    // evaluates the bare Coulomb potential on the host.
     const bool isPseudopotentialRun = d_dftParamsPtr->isPseudopotential;
-    // cap on the transient output buffer of one device block, in bytes
-    constexpr std::size_t maxBlockBytes = 256000000;
-
-    // One thread or iteration per (cell, quadrature point) of this k-point
-    // group, centers looped inside the kernel; a device run dispatches to
-    // the device specialization and a CPU run to the host one. The loop
-    // further down covers the cases this cannot handle.
-    bool init2Computed = false;
-    if (isPseudopotentialRun && d_basisOperationsPtrElectroHost->nCells() > 0)
+    std::map<dftfe::uInt, dftfe::uInt> lpspZnumToSplineId;
+    AtomTypeSplineTables<memorySpace>  lpspTablesMem;
+    if (isPseudopotentialRun)
       {
         splineHostTableUtils::SplineTableGroup lpspTables;
-        std::map<dftfe::uInt, dftfe::uInt>     znumToSplineId;
-        const bool deviceCompatible = buildAtomTypeSplineTables(
+        buildAtomTypeSplineTables(
           atomTypes,
           [this](const dftfe::uInt Znum) {
             return d_oncvClassPtr->getRadialLocalPseudoFunction(Znum, 0);
           },
           lpspTables,
-          znumToSplineId);
-
-        if (deviceCompatible)
-          {
-            AtomTypeSplineTables<memorySpace> lpspTablesMem;
-            lpspTablesMem.stage(lpspTables);
-
-            const dftfe::uInt nCenters =
-              numberGlobalCharges + numberImageCharges;
-            std::vector<dftfe::uInt> centerSplineIdHost(nCenters);
-            for (dftfe::uInt iAtom = 0; iAtom < nCenters; ++iAtom)
-              centerSplineIdHost[iAtom] =
-                znumToSplineId[atomsImagesAtomicNumbers[iAtom]];
-
-            dftfe::utils::MemoryStorage<double, memorySpace> dCenterCoords,
-              dCenterCharges, dCenterCutoff, dCenterWidth, dQuad, dOut;
-            dftfe::utils::MemoryStorage<dftfe::uInt, memorySpace>
-              dCenterSplineId;
-            dCenterCoords.resize(atomsImagesPositions.size());
-            dCenterCoords.copyFrom(atomsImagesPositions);
-            dCenterCharges.resize(atomsImagesCharges.size());
-            dCenterCharges.copyFrom(atomsImagesCharges);
-            dCenterCutoff.resize(atomsImagesTailCutoffs.size());
-            dCenterCutoff.copyFrom(atomsImagesTailCutoffs);
-            dCenterWidth.resize(atomsImagesSmearedWidths.size());
-            dCenterWidth.copyFrom(atomsImagesSmearedWidths);
-            dCenterSplineId.resize(centerSplineIdHost.size());
-            dCenterSplineId.copyFrom(centerSplineIdHost);
-
-            // block over cells so the device transient stays bounded. Each
-            // cell stages three coordinates per quadrature point and returns
-            // one value, so four doubles per point.
-            const dftfe::uInt nCellsLocal =
-              d_basisOperationsPtrElectroHost->nCells();
-            const dftfe::uInt cellsBlockSize = std::max<dftfe::uInt>(
-              1,
-              maxBlockBytes / (std::size_t)(4 * n_q_points * sizeof(double)));
-            std::vector<double> hOut;
-
-            // The host loop splits macrocells across k-point groups; the sum
-            // over interpoolcomm below only needs the slices to be disjoint
-            // and to cover every cell, so this path splits cells directly.
-            std::vector<dftfe::Int> kptGroupCellIndices;
-            dftUtils::createKpointParallelizationIndices(interpoolcomm,
-                                                         nCellsLocal,
-                                                         kptGroupCellIndices);
-            const dftfe::Int cellLow = kptGroupCellIndices[2 * kptGroupTaskId];
-            const dftfe::Int cellHighPlusOne =
-              kptGroupCellIndices[2 * kptGroupTaskId + 1];
-            const dftfe::uInt cellBegin =
-              cellLow < 0 ? nCellsLocal : (dftfe::uInt)cellLow;
-            const dftfe::uInt cellEnd =
-              cellHighPlusOne < 0 ?
-                nCellsLocal :
-                std::min(nCellsLocal, (dftfe::uInt)cellHighPlusOne);
-
-            for (dftfe::uInt cellBlockStart = cellBegin;
-                 cellBlockStart < cellEnd;
-                 cellBlockStart += cellsBlockSize)
-              {
-                const dftfe::uInt nCellsInBlock =
-                  std::min(cellsBlockSize, cellEnd - cellBlockStart);
-                const double *quadPointsBlock =
-                  d_basisOperationsPtrElectroHost->quadPoints().data() +
-                  (std::size_t)cellBlockStart * n_q_points * 3;
-                const std::size_t nQuadInBlock =
-                  (std::size_t)nCellsInBlock * n_q_points * 3;
-                dQuad.resize(nQuadInBlock);
-                dQuad.template copyFrom<dftfe::utils::MemorySpace::HOST>(
-                  quadPointsBlock);
-                dOut.resize((std::size_t)nCellsInBlock * n_q_points);
-
-                atomicInitKernels::localPseudoPotentialTotal<memorySpace>(
-                  nCellsInBlock,
-                  n_q_points,
-                  nCenters,
-                  analyticSmearedChargeRoute,
-                  maxTail,
-                  dQuad.data(),
-                  dCenterCoords.data(),
-                  dCenterCharges.data(),
-                  dCenterCutoff.data(),
-                  dCenterWidth.data(),
-                  dCenterSplineId.data(),
-                  lpspTablesMem.knotX.data(),
-                  lpspTablesMem.knotY.data(),
-                  lpspTablesMem.coefB.data(),
-                  lpspTablesMem.coefC.data(),
-                  lpspTablesMem.coefD.data(),
-                  lpspTablesMem.offsets.data(),
-                  lpspTablesMem.nKnots.data(),
-                  lpspTablesMem.gpParams.data(),
-                  lpspTablesMem.cutoffs.data(),
-                  lpspTablesMem.rMins.data(),
-                  dOut.data());
-
-                hOut.resize((std::size_t)nCellsInBlock * n_q_points);
-                dOut.copyTo(hOut);
-                for (dftfe::uInt iCell = 0; iCell < nCellsInBlock; ++iCell)
-                  {
-                    std::vector<double> &pv =
-                      _pseudoValues[d_basisOperationsPtrElectroHost->cellID(
-                        cellBlockStart + iCell)];
-                    std::copy(hOut.begin() + (std::size_t)iCell * n_q_points,
-                              hOut.begin() +
-                                (std::size_t)(iCell + 1) * n_q_points,
-                              pv.begin());
-                  }
-              }
-            init2Computed = true;
-          }
+          lpspZnumToSplineId);
+        lpspTablesMem.stage(lpspTables);
+        computeLocalPseudoPotentialTotal(lpspTablesMem,
+                                         lpspZnumToSplineId,
+                                         atomsImagesPositions,
+                                         atomsImagesCharges,
+                                         atomsImagesAtomicNumbers,
+                                         atomsImagesTailCutoffs,
+                                         atomsImagesSmearedWidths,
+                                         analyticSmearedChargeRoute,
+                                         maxTail,
+                                         _pseudoValues);
       }
-
-    const dftfe::uInt nMacroCellsHostPath =
-      init2Computed ? 0 : _matrix_free_data.n_cell_batches();
-#pragma omp parallel for num_threads(d_nOMPThreads)
-    for (dftfe::uInt macrocell = 0; macrocell < nMacroCellsHostPath;
-         ++macrocell)
+    else
       {
-        if (macrocell <
-              kptGroupLowHighPlusOneIndicesStep2[2 * kptGroupTaskId + 1] &&
-            macrocell >= kptGroupLowHighPlusOneIndicesStep2[2 * kptGroupTaskId])
+#pragma omp parallel for num_threads(d_nOMPThreads)
+        for (dftfe::uInt macrocell = 0;
+             macrocell < _matrix_free_data.n_cell_batches();
+             ++macrocell)
           {
-            double atomCharge;
-
-            // radial functions resolved per atom, outside the quadrature loop
-            const dftfe::uInt ompThreadId = omp_get_thread_num();
-            std::vector<const AtomCenteredSphericalFunctionBase *>
-              atomLocalPotFn(numberGlobalCharges + numberImageCharges, nullptr);
-            if (isPseudopotentialRun)
-              for (dftfe::uInt iAtom = 0;
-                   iAtom < numberGlobalCharges + numberImageCharges;
-                   ++iAtom)
-                atomLocalPotFn[iAtom] =
-                  d_oncvClassPtr->getRadialLocalPseudoFunction(
-                    atomsImagesAtomicNumbers[iAtom], ompThreadId);
-
-            for (dftfe::uInt iSubCell = 0;
-                 iSubCell <
-                 _matrix_free_data.n_active_entries_per_cell_batch(macrocell);
-                 ++iSubCell)
+            if (macrocell <
+                  kptGroupLowHighPlusOneIndicesStep2[2 * kptGroupTaskId + 1] &&
+                macrocell >=
+                  kptGroupLowHighPlusOneIndicesStep2[2 * kptGroupTaskId])
               {
-                dealii::DoFHandler<3>::active_cell_iterator subCellPtr =
-                  _matrix_free_data.get_cell_iterator(macrocell,
-                                                      iSubCell,
-                                                      _phiExtDofHandlerIndex);
-                dealii::CellId subCellId = subCellPtr->id();
+                double atomCharge;
 
-                std::vector<double> &pseudoVLoc = _pseudoValues[subCellId];
-                dftfe::uInt          cellIndex =
-                  d_basisOperationsPtrElectroHost->cellIndex(subCellId);
-                double        value, distanceToAtom, distanceToAtomInv;
-                const double *quadPointPtr =
-                  d_basisOperationsPtrElectroHost->quadPoints().data() +
-                  cellIndex * n_q_points * 3;
-
-                // loop over quad points
-                for (dftfe::uInt q = 0; q < n_q_points; ++q)
+                for (dftfe::uInt iSubCell = 0;
+                     iSubCell <
+                     _matrix_free_data.n_active_entries_per_cell_batch(
+                       macrocell);
+                     ++iSubCell)
                   {
-                    const dealii::Point<3> quadPoint(quadPointPtr[q * 3],
-                                                     quadPointPtr[q * 3 + 1],
-                                                     quadPointPtr[q * 3 + 2]);
+                    dealii::DoFHandler<3>::active_cell_iterator subCellPtr =
+                      _matrix_free_data.get_cell_iterator(
+                        macrocell, iSubCell, _phiExtDofHandlerIndex);
+                    dealii::CellId subCellId = subCellPtr->id();
 
-                    double tempVal = 0.0;
-                    double diffx;
-                    double diffy;
-                    double diffz;
-                    // loop over atoms
-                    for (dftfe::uInt iAtom = 0;
-                         iAtom < numberGlobalCharges + numberImageCharges;
-                         iAtom++)
+                    std::vector<double> &pseudoVLoc = _pseudoValues[subCellId];
+                    dftfe::uInt          cellIndex =
+                      d_basisOperationsPtrElectroHost->cellIndex(subCellId);
+                    double        value, distanceToAtom, distanceToAtomInv;
+                    const double *quadPointPtr =
+                      d_basisOperationsPtrElectroHost->quadPoints().data() +
+                      cellIndex * n_q_points * 3;
+
+                    // loop over quad points
+                    for (dftfe::uInt q = 0; q < n_q_points; ++q)
                       {
-                        diffx =
-                          quadPoint[0] - atomsImagesPositions[iAtom * 3 + 0];
-                        diffy =
-                          quadPoint[1] - atomsImagesPositions[iAtom * 3 + 1];
-                        diffz =
-                          quadPoint[2] - atomsImagesPositions[iAtom * 3 + 2];
+                        const dealii::Point<3> quadPoint(
+                          quadPointPtr[q * 3],
+                          quadPointPtr[q * 3 + 1],
+                          quadPointPtr[q * 3 + 2]);
 
-                        atomCharge = atomsImagesCharges[iAtom];
-
-                        distanceToAtom = std::sqrt(
-                          diffx * diffx + diffy * diffy + diffz * diffz);
-                        distanceToAtomInv = 1.0 / distanceToAtom;
-
-                        if (distanceToAtom <= maxTail &&
-                            distanceToAtom <= atomsImagesTailCutoffs[iAtom] &&
-                            isPseudopotentialRun)
+                        double tempVal = 0.0;
+                        double diffx;
+                        double diffy;
+                        double diffz;
+                        // loop over atoms
+                        for (dftfe::uInt iAtom = 0;
+                             iAtom < numberGlobalCharges + numberImageCharges;
+                             iAtom++)
                           {
-                            value = atomLocalPotFn[iAtom]->getRadialValue(
-                              distanceToAtom);
-                          }
-                        else
-                          {
+                            diffx = quadPoint[0] -
+                                    atomsImagesPositions[iAtom * 3 + 0];
+                            diffy = quadPoint[1] -
+                                    atomsImagesPositions[iAtom * 3 + 1];
+                            diffz = quadPoint[2] -
+                                    atomsImagesPositions[iAtom * 3 + 2];
+
+                            atomCharge = atomsImagesCharges[iAtom];
+
+                            distanceToAtom = std::sqrt(
+                              diffx * diffx + diffy * diffy + diffz * diffz);
+                            distanceToAtomInv = 1.0 / distanceToAtom;
+
                             value = -atomCharge * distanceToAtomInv;
-                          }
 
-                        if (analyticSmearedChargeRoute)
-                          value -=
-                            distanceToAtom > atomsImagesSmearedWidths[iAtom] ?
-                              -atomCharge / distanceToAtom :
-                              -atomCharge * dftUtils::smearedPot(
-                                              distanceToAtom,
-                                              atomsImagesSmearedWidths[iAtom]);
+                            if (analyticSmearedChargeRoute)
+                              value -= distanceToAtom >
+                                           atomsImagesSmearedWidths[iAtom] ?
+                                         -atomCharge / distanceToAtom :
+                                         -atomCharge *
+                                           atomicInitKernels::smearedPot(
+                                             distanceToAtom,
+                                             atomsImagesSmearedWidths[iAtom]);
 
-                        tempVal += value;
-                      } // atom loop
-                    pseudoVLoc[q] = tempVal;
-                  } // quad loop
-              }     // subcell loop
-          }         // intercomm paral
-      }             // cell loop
+                            tempVal += value;
+                          } // atom loop
+                        pseudoVLoc[q] = tempVal;
+                      } // quad loop
+                  }     // subcell loop
+              }         // intercomm paral
+          }             // cell loop
+      }
 
     if (!analyticSmearedChargeRoute)
       {
@@ -785,179 +664,64 @@ namespace dftfe
         d_basisOperationsPtrElectroHost->nCells(),
         kptGroupLowHighPlusOneIndicesStep3);
 
-    // Tolerance on the bounding-sphere rejections below, matching
-    // AtomCenteredSphericalFunctionContainer::computeSparseStructure. The
-    // exact storage criterion is inclusive, so the prefilter must not reject
-    // a cell whose computed lower bound merely rounds above the cutoff.
-    constexpr double boundingSphereTol = 1e-9;
-
     // Per-cell bounding spheres over the quadrature points, computed once and
-    // reused for every atom, for the prefilter in the loop below.
-    const dftfe::uInt nCellsElectro = d_basisOperationsPtrElectroHost->nCells();
-    std::vector<dealii::Point<3>> cellCentroids(nCellsElectro);
-    std::vector<double>           cellRadii(nCellsElectro, 0.0);
-#pragma omp parallel for num_threads(d_nOMPThreads)
-    for (dftfe::uInt iCell = 0; iCell < nCellsElectro; ++iCell)
-      {
-        const double *qp =
-          d_basisOperationsPtrElectroHost->quadPoints().data() +
-          iCell * n_q_points * 3;
-        double cx = 0.0, cy = 0.0, cz = 0.0;
-        for (dftfe::uInt q = 0; q < n_q_points; ++q)
-          {
-            cx += qp[q * 3 + 0];
-            cy += qp[q * 3 + 1];
-            cz += qp[q * 3 + 2];
-          }
-        const double     invN = 1.0 / static_cast<double>(n_q_points);
-        dealii::Point<3> centroid(cx * invN, cy * invN, cz * invN);
-        double           r2max = 0.0;
-        for (dftfe::uInt q = 0; q < n_q_points; ++q)
-          {
-            const double dx = qp[q * 3 + 0] - centroid[0];
-            const double dy = qp[q * 3 + 1] - centroid[1];
-            const double dz = qp[q * 3 + 2] - centroid[2];
-            const double r2 = dx * dx + dy * dy + dz * dz;
-            if (r2 > r2max)
-              r2max = r2;
-          }
-        cellCentroids[iCell] = centroid;
-        cellRadii[iCell]     = std::sqrt(r2max);
-      }
+    // reused for every atom, for the prefilter of step 3. The exact
+    // storage criterion is inclusive, so the prefilter keeps the
+    // cellBoundingSphereTolerance margin.
+    std::vector<dealii::Point<3>> cellCentroids;
+    std::vector<double>           cellRadii;
+    dftUtils::computeCellBoundingSpheres(
+      d_basisOperationsPtrElectroHost->quadPoints().data(),
+      d_basisOperationsPtrElectroHost->nCells(),
+      n_q_points,
+      cellCentroids,
+      cellRadii);
 
     // _pseudoValuesAtoms is only read by the force and stress computation
     const bool storePerAtomPseudoData =
       d_dftParamsPtr->isIonForce || d_dftParamsPtr->isCellStress;
 
-    // One thread or iteration per (atom-cell pair, quadrature point); a
-    // device run dispatches to the device specialization and a CPU run to
-    // the host one. The loop further down covers the cases this cannot
-    // handle.
-    bool init3Computed = false;
-    if (isPseudopotentialRun && storePerAtomPseudoData &&
-        d_basisOperationsPtrElectroHost->nCells() > 0)
+    std::vector<double> pseudoVLocAtom(n_q_points);
+    if (storePerAtomPseudoData && isPseudopotentialRun)
+      computeLocalPseudoPotentialPerAtom(lpspTablesMem,
+                                         lpspZnumToSplineId,
+                                         cutOffForPsp,
+                                         boundingBoxTria,
+                                         cellCentroids,
+                                         cellRadii,
+                                         kptGroupLowHighPlusOneIndicesStep3,
+                                         _pseudoValuesAtoms);
+    else if (storePerAtomPseudoData)
       {
-        splineHostTableUtils::SplineTableGroup lpspTables;
-        std::map<dftfe::uInt, dftfe::uInt>     znumToSplineId;
-        const bool deviceCompatible = buildAtomTypeSplineTables(
-          atomTypes,
-          [this](const dftfe::uInt Znum) {
-            return d_oncvClassPtr->getRadialLocalPseudoFunction(Znum, 0);
-          },
-          lpspTables,
-          znumToSplineId);
-
-        if (deviceCompatible)
+#pragma omp parallel for num_threads(d_nOMPThreads) firstprivate(pseudoVLocAtom)
+        for (dftfe::uInt iCell = 0;
+             iCell < d_basisOperationsPtrElectroHost->nCells();
+             ++iCell)
           {
-            AtomTypeSplineTables<memorySpace> lpspTablesMem;
-            lpspTablesMem.stage(lpspTables);
-
-            // blocked over pairs: each pair outputs n_q_points doubles
-            const dftfe::uInt pairsBlockSize = std::max<dftfe::uInt>(
-              1, maxBlockBytes / (std::size_t)(n_q_points * sizeof(double)));
-
-            std::vector<double>      blockCoords, blockCenters, blockCharges;
-            std::vector<dftfe::uInt> blockCellSlot, blockSplineId, blockAtomId,
-              blockCellId;
-            std::map<dftfe::uInt, dftfe::uInt> cellToSlot;
-
-            dftfe::utils::MemoryStorage<double, memorySpace> dCoords, dCenters,
-              dCharges, dValues;
-            dftfe::utils::MemoryStorage<dftfe::uInt, memorySpace> dCellSlot,
-              dSplineId, dHasSupport;
-            std::vector<double>      hValues;
-            std::vector<dftfe::uInt> hHasSupport;
-
-            auto flushBlock = [&]() {
-              const dftfe::uInt nPairs = blockAtomId.size();
-              if (nPairs == 0)
-                return;
-              dCoords.resize(blockCoords.size());
-              dCoords.copyFrom(blockCoords);
-              dCenters.resize(blockCenters.size());
-              dCenters.copyFrom(blockCenters);
-              dCharges.resize(blockCharges.size());
-              dCharges.copyFrom(blockCharges);
-              dCellSlot.resize(blockCellSlot.size());
-              dCellSlot.copyFrom(blockCellSlot);
-              dSplineId.resize(blockSplineId.size());
-              dSplineId.copyFrom(blockSplineId);
-              dValues.resize((std::size_t)nPairs * n_q_points);
-              dHasSupport.resize(nPairs);
-              dHasSupport.setValue(0);
-
-              atomicInitKernels::localPseudoPotentialValues<memorySpace>(
-                nPairs,
-                n_q_points,
-                cutOffForPsp,
-                dCoords.data(),
-                dCenters.data(),
-                dCharges.data(),
-                dCellSlot.data(),
-                dSplineId.data(),
-                lpspTablesMem.knotX.data(),
-                lpspTablesMem.knotY.data(),
-                lpspTablesMem.coefB.data(),
-                lpspTablesMem.coefC.data(),
-                lpspTablesMem.coefD.data(),
-                lpspTablesMem.offsets.data(),
-                lpspTablesMem.nKnots.data(),
-                lpspTablesMem.gpParams.data(),
-                lpspTablesMem.cutoffs.data(),
-                lpspTablesMem.rMins.data(),
-                dValues.data(),
-                dHasSupport.data());
-
-              hValues.resize((std::size_t)nPairs * n_q_points);
-              dValues.copyTo(hValues);
-              hHasSupport.resize(nPairs);
-              dHasSupport.copyTo(hHasSupport);
-
-              for (dftfe::uInt iPair = 0; iPair < nPairs; ++iPair)
-                if (hHasSupport[iPair] == 1)
-                  _pseudoValuesAtoms[blockAtomId[iPair]]
-                                    [d_basisOperationsPtrElectroHost->cellID(
-                                       blockCellId[iPair])]
-                                      .assign(hValues.begin() +
-                                                (std::size_t)iPair * n_q_points,
-                                              hValues.begin() +
-                                                (std::size_t)(iPair + 1) *
-                                                  n_q_points);
-
-              blockCoords.clear();
-              blockCenters.clear();
-              blockCharges.clear();
-              blockCellSlot.clear();
-              blockSplineId.clear();
-              blockAtomId.clear();
-              blockCellId.clear();
-              cellToSlot.clear();
-            };
-
-            for (dftfe::uInt iCell = 0;
-                 iCell < d_basisOperationsPtrElectroHost->nCells();
-                 ++iCell)
+            if ((iCell <
+                   kptGroupLowHighPlusOneIndicesStep3[2 * kptGroupTaskId + 1] &&
+                 iCell >=
+                   kptGroupLowHighPlusOneIndicesStep3[2 * kptGroupTaskId]))
               {
-                if (!(iCell <
-                        kptGroupLowHighPlusOneIndicesStep3[2 * kptGroupTaskId +
-                                                           1] &&
-                      iCell >=
-                        kptGroupLowHighPlusOneIndicesStep3[2 * kptGroupTaskId]))
-                  continue;
+                // compute values for the current elements
+
+                dealii::Point<3> atom;
+                double           atomCharge;
+                const double    *quadPointPtr =
+                  d_basisOperationsPtrElectroHost->quadPoints().data() +
+                  iCell * n_q_points * 3;
+
+                // loop over atoms
                 for (dftfe::uInt iAtom = 0;
                      iAtom < numberGlobalCharges + d_imagePositionsTrunc.size();
-                     ++iAtom)
+                     iAtom++)
                   {
-                    dealii::Point<3> atom;
-                    dftfe::Int       atomicNumberLocal;
-                    double           atomChargeLocal;
                     if (iAtom < numberGlobalCharges)
                       {
-                        atom[0]           = atomLocations[iAtom][2];
-                        atom[1]           = atomLocations[iAtom][3];
-                        atom[2]           = atomLocations[iAtom][4];
-                        atomChargeLocal   = atomLocations[iAtom][1];
-                        atomicNumberLocal = std::round(atomLocations[iAtom][0]);
+                        atom[0]    = atomLocations[iAtom][2];
+                        atom[1]    = atomLocations[iAtom][3];
+                        atom[2]    = atomLocations[iAtom][4];
+                        atomCharge = atomLocations[iAtom][0];
                       }
                     else
                       {
@@ -966,172 +730,55 @@ namespace dftfe
                         atom[0] = d_imagePositionsTrunc[iImageCharge][0];
                         atom[1] = d_imagePositionsTrunc[iImageCharge][1];
                         atom[2] = d_imagePositionsTrunc[iImageCharge][2];
-                        atomChargeLocal =
-                          atomLocations[d_imageIdsTrunc[iImageCharge]][1];
-                        atomicNumberLocal = std::round(
-                          atomLocations[d_imageIdsTrunc[iImageCharge]][0]);
+                        atomCharge =
+                          atomLocations[d_imageIdsTrunc[iImageCharge]][0];
                       }
 
-                    // same rejections as the host loop below
                     std::pair<dealii::Point<3, double>,
                               dealii::Point<3, double>>
                       boundaryPoints(atom - tempDisp, atom + tempDisp);
+
+                    dealii::BoundingBox<3> boundingBoxAroundAtom(
+                      boundaryPoints);
+
                     if (boundingBoxTria.get_neighbor_type(
-                          dealii::BoundingBox<3>(boundaryPoints)) ==
+                          boundingBoxAroundAtom) ==
                         dealii::NeighborType::not_neighbors)
                       continue;
+
+                    // nothing is stored unless a quadrature point of this cell
+                    // lies within cutOffForPsp of the atom
                     if (cellCentroids[iCell].distance(atom) - cellRadii[iCell] >
-                        cutOffForPsp + boundingSphereTol)
+                        cutOffForPsp + dftUtils::cellBoundingSphereTolerance)
                       continue;
 
-                    if (blockAtomId.size() >= pairsBlockSize)
-                      flushBlock();
-
-                    auto slotIt = cellToSlot.find(iCell);
-                    if (slotIt == cellToSlot.end())
+                    bool   isPseudoDataInCell = false;
+                    double distanceToAtom;
+                    // loop over quad points
+                    for (dftfe::uInt q = 0; q < n_q_points; ++q)
                       {
-                        const dftfe::uInt slot = cellToSlot.size();
-                        cellToSlot[iCell]      = slot;
-                        const double *qp =
-                          d_basisOperationsPtrElectroHost->quadPoints().data() +
-                          (std::size_t)iCell * n_q_points * 3;
-                        blockCoords.insert(blockCoords.end(),
-                                           qp,
-                                           qp + n_q_points * 3);
-                        slotIt = cellToSlot.find(iCell);
-                      }
+                        const dealii::Point<3> quadPoint(
+                          quadPointPtr[q * 3],
+                          quadPointPtr[q * 3 + 1],
+                          quadPointPtr[q * 3 + 2]);
+                        distanceToAtom = quadPoint.distance(atom);
 
-                    blockCenters.push_back(atom[0]);
-                    blockCenters.push_back(atom[1]);
-                    blockCenters.push_back(atom[2]);
-                    blockCharges.push_back(atomChargeLocal);
-                    blockCellSlot.push_back(slotIt->second);
-                    blockSplineId.push_back(znumToSplineId[atomicNumberLocal]);
-                    blockAtomId.push_back(iAtom);
-                    blockCellId.push_back(iCell);
-                  }
-              }
-            flushBlock();
-            init3Computed = true;
-          }
-      }
+                        if (distanceToAtom <= cutOffForPsp)
+                          isPseudoDataInCell = true;
 
-    std::vector<double> pseudoVLocAtom(n_q_points);
-    const dftfe::uInt   nCellsHostPath =
-      (init3Computed || !storePerAtomPseudoData) ?
-          0 :
-          d_basisOperationsPtrElectroHost->nCells();
-#pragma omp parallel for num_threads(d_nOMPThreads) firstprivate(pseudoVLocAtom)
-    for (dftfe::uInt iCell = 0; iCell < nCellsHostPath; ++iCell)
-      {
-        if ((iCell <
-               kptGroupLowHighPlusOneIndicesStep3[2 * kptGroupTaskId + 1] &&
-             iCell >= kptGroupLowHighPlusOneIndicesStep3[2 * kptGroupTaskId]))
-          {
-            // compute values for the current elements
-
-            dealii::Point<3> atom;
-            dftfe::Int       atomicNumber;
-            double           atomCharge;
-            const double    *quadPointPtr =
-              d_basisOperationsPtrElectroHost->quadPoints().data() +
-              iCell * n_q_points * 3;
-
-            // loop over atoms
-            for (dftfe::uInt iAtom = 0;
-                 iAtom < numberGlobalCharges + d_imagePositionsTrunc.size();
-                 iAtom++)
-              {
-                if (iAtom < numberGlobalCharges)
-                  {
-                    atom[0] = atomLocations[iAtom][2];
-                    atom[1] = atomLocations[iAtom][3];
-                    atom[2] = atomLocations[iAtom][4];
-                    if (d_dftParamsPtr->isPseudopotential)
-                      atomCharge = atomLocations[iAtom][1];
-                    else
-                      atomCharge = atomLocations[iAtom][0];
-                    atomicNumber = std::round(atomLocations[iAtom][0]);
-                  }
-                else
-                  {
-                    const dftfe::uInt iImageCharge =
-                      iAtom - numberGlobalCharges;
-                    atom[0] = d_imagePositionsTrunc[iImageCharge][0];
-                    atom[1] = d_imagePositionsTrunc[iImageCharge][1];
-                    atom[2] = d_imagePositionsTrunc[iImageCharge][2];
-                    if (d_dftParamsPtr->isPseudopotential)
-                      atomCharge =
-                        atomLocations[d_imageIdsTrunc[iImageCharge]][1];
-                    else
-                      atomCharge =
-                        atomLocations[d_imageIdsTrunc[iImageCharge]][0];
-                    atomicNumber = std::round(
-                      atomLocations[d_imageIdsTrunc[iImageCharge]][0]);
-                  }
-
-                std::pair<dealii::Point<3, double>, dealii::Point<3, double>>
-                  boundaryPoints(atom - tempDisp, atom + tempDisp);
-
-                dealii::BoundingBox<3> boundingBoxAroundAtom(boundaryPoints);
-
-                if (boundingBoxTria.get_neighbor_type(boundingBoxAroundAtom) ==
-                    dealii::NeighborType::not_neighbors)
-                  continue;
-
-                // nothing is stored unless a quadrature point of this cell
-                // lies within cutOffForPsp of the atom
-                if (cellCentroids[iCell].distance(atom) - cellRadii[iCell] >
-                    cutOffForPsp + boundingSphereTol)
-                  continue;
-
-                bool         isPseudoDataInCell = false;
-                double       value, distanceToAtom;
-                const double cutoff = outerMostDataPoint[atomicNumber];
-                // radial function resolved per (cell, atom)
-                const AtomCenteredSphericalFunctionBase *localPotFn =
-                  d_dftParamsPtr->isPseudopotential ?
-                    d_oncvClassPtr->getRadialLocalPseudoFunction(
-                      atomicNumber, omp_get_thread_num()) :
-                    nullptr;
-                // loop over quad points
-                for (dftfe::uInt q = 0; q < n_q_points; ++q)
-                  {
-                    const dealii::Point<3> quadPoint(quadPointPtr[q * 3],
-                                                     quadPointPtr[q * 3 + 1],
-                                                     quadPointPtr[q * 3 + 2]);
-                    distanceToAtom = quadPoint.distance(atom);
-                    if (distanceToAtom <= cutoff)
+                        pseudoVLocAtom[q] = -atomCharge / distanceToAtom;
+                      } // loop over quad points
+                    if (isPseudoDataInCell)
                       {
-                        if (d_dftParamsPtr->isPseudopotential)
-                          {
-                            value = localPotFn->getRadialValue(distanceToAtom);
-                          }
-                        else
-                          {
-                            value = -atomCharge / distanceToAtom;
-                          }
-                      }
-                    else
-                      {
-                        value = -atomCharge / distanceToAtom;
-                      }
-
-                    if (distanceToAtom <= cutOffForPsp)
-                      isPseudoDataInCell = true;
-
-                    pseudoVLocAtom[q] = value;
-                  } // loop over quad points
-                if (isPseudoDataInCell)
-                  {
 #pragma omp critical(pseudovalsatoms)
-                    _pseudoValuesAtoms[iAtom][d_basisOperationsPtrElectroHost
-                                                ->cellID(iCell)] =
-                      pseudoVLocAtom;
-                  }
-              } // loop over atoms
-          }     // kpt paral loop
-      }         // cell loop
+                        _pseudoValuesAtoms[iAtom]
+                                          [d_basisOperationsPtrElectroHost
+                                             ->cellID(iCell)] = pseudoVLocAtom;
+                      }
+                  } // loop over atoms
+              }     // kpt paral loop
+          }         // cell loop
+      }
 
     if (d_basisOperationsPtrElectroHost->nCells() > 0 && numberKptGroups > 1 &&
         storePerAtomPseudoData)
@@ -1252,6 +899,291 @@ namespace dftfe
     init_3 = MPI_Wtime() - init_3;
     if (d_dftParamsPtr->verbosity >= 4)
       pcout << "initLocalPSP: Time taken for init3: " << init_3 << std::endl;
+  }
+
+
+  template <dftfe::utils::MemorySpace memorySpace>
+  void
+  dftClass<memorySpace>::computeLocalPseudoPotentialTotal(
+    const AtomTypeSplineTables<memorySpace>       &lpspTables,
+    const std::map<dftfe::uInt, dftfe::uInt>      &znumToSplineId,
+    const std::vector<double>                     &centerCoords,
+    const std::vector<double>                     &centerCharges,
+    const std::vector<dftfe::Int>                 &centerAtomicNumbers,
+    const std::vector<double>                     &centerTailCutoffs,
+    const std::vector<double>                     &centerSmearedWidths,
+    const bool                                     analyticSmearedChargeRoute,
+    const double                                   maxTail,
+    std::map<dealii::CellId, std::vector<double>> &pseudoValues)
+  {
+    // One thread or iteration per (cell, quadrature point) of this k-point
+    // group, centers looped inside the kernel; a device run dispatches to
+    // the device specialization and a CPU run to the host one.
+    const dftfe::uInt n_q_points =
+      d_basisOperationsPtrElectroHost->nQuadsPerCell();
+    const dftfe::uInt kptGroupTaskId =
+      dealii::Utilities::MPI::this_mpi_process(interpoolcomm);
+    const dftfe::uInt        nCenters = centerCharges.size();
+    std::vector<dftfe::uInt> centerSplineIdHost(nCenters);
+    for (dftfe::uInt iAtom = 0; iAtom < nCenters; ++iAtom)
+      centerSplineIdHost[iAtom] = znumToSplineId.at(centerAtomicNumbers[iAtom]);
+
+    const dftfe::utils::MemoryStorage<double, memorySpace>
+      dCenterCoords =
+        dftfe::utils::memoryStorageFromSTL<double, memorySpace>(centerCoords),
+      dCenterCharges =
+        dftfe::utils::memoryStorageFromSTL<double, memorySpace>(centerCharges),
+      dCenterCutoff = dftfe::utils::memoryStorageFromSTL<double, memorySpace>(
+        centerTailCutoffs),
+      dCenterWidth = dftfe::utils::memoryStorageFromSTL<double, memorySpace>(
+        centerSmearedWidths);
+    const dftfe::utils::MemoryStorage<dftfe::uInt, memorySpace>
+      dCenterSplineId =
+        dftfe::utils::memoryStorageFromSTL<dftfe::uInt, memorySpace>(
+          centerSplineIdHost);
+    dftfe::utils::MemoryStorage<double, memorySpace> dQuad, dOut;
+
+    // block over cells so the device transient stays bounded. Each
+    // cell stages three coordinates per quadrature point and returns
+    // one value, so four doubles per point.
+    const dftfe::uInt nCellsLocal = d_basisOperationsPtrElectroHost->nCells();
+    const dftfe::uInt cellsBlockSize =
+      std::max<dftfe::uInt>(1,
+                            atomicInitKernels::maxBlockBytes /
+                              (std::size_t)(4 * n_q_points * sizeof(double)));
+    std::vector<double> hOut;
+
+    // The caller sums over interpoolcomm, which only needs the k-point
+    // group slices to be disjoint and to cover every cell, so the cells
+    // are split directly rather than by macrocell.
+    std::vector<dftfe::Int> kptGroupCellIndices;
+    dftUtils::createKpointParallelizationIndices(interpoolcomm,
+                                                 nCellsLocal,
+                                                 kptGroupCellIndices);
+    const dftfe::Int cellLow = kptGroupCellIndices[2 * kptGroupTaskId];
+    const dftfe::Int cellHighPlusOne =
+      kptGroupCellIndices[2 * kptGroupTaskId + 1];
+    const dftfe::uInt cellBegin =
+      cellLow < 0 ? nCellsLocal : (dftfe::uInt)cellLow;
+    const dftfe::uInt cellEnd =
+      cellHighPlusOne < 0 ? nCellsLocal :
+                            std::min(nCellsLocal, (dftfe::uInt)cellHighPlusOne);
+
+    for (dftfe::uInt cellBlockStart = cellBegin; cellBlockStart < cellEnd;
+         cellBlockStart += cellsBlockSize)
+      {
+        const dftfe::uInt nCellsInBlock =
+          std::min(cellsBlockSize, cellEnd - cellBlockStart);
+        const double *quadPointsBlock =
+          d_basisOperationsPtrElectroHost->quadPoints().data() +
+          (std::size_t)cellBlockStart * n_q_points * 3;
+        const std::size_t nQuadInBlock =
+          (std::size_t)nCellsInBlock * n_q_points * 3;
+        dQuad.resize(nQuadInBlock);
+        dQuad.template copyFrom<dftfe::utils::MemorySpace::HOST>(
+          quadPointsBlock);
+        dOut.resize((std::size_t)nCellsInBlock * n_q_points);
+
+        atomicInitKernels::localPseudoPotentialTotal<memorySpace>(
+          nCellsInBlock,
+          n_q_points,
+          nCenters,
+          analyticSmearedChargeRoute,
+          maxTail,
+          dQuad.data(),
+          dCenterCoords.data(),
+          dCenterCharges.data(),
+          dCenterCutoff.data(),
+          dCenterWidth.data(),
+          dCenterSplineId.data(),
+          lpspTables.view(),
+          dOut.data(),
+          d_nOMPThreads);
+
+        hOut.resize((std::size_t)nCellsInBlock * n_q_points);
+        dOut.copyTo(hOut);
+        for (dftfe::uInt iCell = 0; iCell < nCellsInBlock; ++iCell)
+          {
+            std::vector<double> &pv =
+              pseudoValues[d_basisOperationsPtrElectroHost->cellID(
+                cellBlockStart + iCell)];
+            std::copy(hOut.begin() + (std::size_t)iCell * n_q_points,
+                      hOut.begin() + (std::size_t)(iCell + 1) * n_q_points,
+                      pv.begin());
+          }
+      }
+  }
+
+
+  template <dftfe::utils::MemorySpace memorySpace>
+  void
+  dftClass<memorySpace>::computeLocalPseudoPotentialPerAtom(
+    const AtomTypeSplineTables<memorySpace>  &lpspTables,
+    const std::map<dftfe::uInt, dftfe::uInt> &znumToSplineId,
+    const double                              cutOffForPsp,
+    const dealii::BoundingBox<3>             &boundingBoxTria,
+    const std::vector<dealii::Point<3>>      &cellCentroids,
+    const std::vector<double>                &cellRadii,
+    const std::vector<dftfe::Int>            &kptGroupCellIndices,
+    std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
+      &pseudoValuesAtoms)
+  {
+    // One thread or iteration per (atom-cell pair, quadrature point); a
+    // device run dispatches to the device specialization and a CPU run to
+    // the host one.
+    const dftfe::uInt n_q_points =
+      d_basisOperationsPtrElectroHost->nQuadsPerCell();
+    const dftfe::uInt kptGroupTaskId =
+      dealii::Utilities::MPI::this_mpi_process(interpoolcomm);
+    const dftfe::uInt            numberGlobalCharges = atomLocations.size();
+    dealii::Tensor<1, 3, double> tempDisp;
+    tempDisp[0] = cutOffForPsp;
+    tempDisp[1] = cutOffForPsp;
+    tempDisp[2] = cutOffForPsp;
+
+    // blocked over pairs: each pair outputs n_q_points doubles
+    const dftfe::uInt pairsBlockSize =
+      std::max<dftfe::uInt>(1,
+                            atomicInitKernels::maxBlockBytes /
+                              (std::size_t)(n_q_points * sizeof(double)));
+
+    std::vector<double>      blockCoords, blockCenters, blockCharges;
+    std::vector<dftfe::uInt> blockCellSlot, blockSplineId, blockAtomId,
+      blockCellId;
+    std::map<dftfe::uInt, dftfe::uInt> cellToSlot;
+
+    dftfe::utils::MemoryStorage<double, memorySpace> dCoords, dCenters,
+      dCharges, dValues;
+    dftfe::utils::MemoryStorage<dftfe::uInt, memorySpace> dCellSlot, dSplineId,
+      dHasSupport;
+    std::vector<double>      hValues;
+    std::vector<dftfe::uInt> hHasSupport;
+
+    auto flushBlock = [&]() {
+      const dftfe::uInt nPairs = blockAtomId.size();
+      if (nPairs == 0)
+        return;
+      dCoords =
+        dftfe::utils::memoryStorageFromSTL<double, memorySpace>(blockCoords);
+      dCenters =
+        dftfe::utils::memoryStorageFromSTL<double, memorySpace>(blockCenters);
+      dCharges =
+        dftfe::utils::memoryStorageFromSTL<double, memorySpace>(blockCharges);
+      dCellSlot = dftfe::utils::memoryStorageFromSTL<dftfe::uInt, memorySpace>(
+        blockCellSlot);
+      dSplineId = dftfe::utils::memoryStorageFromSTL<dftfe::uInt, memorySpace>(
+        blockSplineId);
+      dValues.resize((std::size_t)nPairs * n_q_points);
+      dHasSupport.resize(nPairs);
+      dHasSupport.setValue(0);
+
+      atomicInitKernels::localPseudoPotentialValues<memorySpace>(
+        nPairs,
+        n_q_points,
+        cutOffForPsp,
+        dCoords.data(),
+        dCenters.data(),
+        dCharges.data(),
+        dCellSlot.data(),
+        dSplineId.data(),
+        lpspTables.view(),
+        dValues.data(),
+        dHasSupport.data(),
+        d_nOMPThreads);
+
+      hValues.resize((std::size_t)nPairs * n_q_points);
+      dValues.copyTo(hValues);
+      hHasSupport.resize(nPairs);
+      dHasSupport.copyTo(hHasSupport);
+
+      for (dftfe::uInt iPair = 0; iPair < nPairs; ++iPair)
+        if (hHasSupport[iPair] == 1)
+          pseudoValuesAtoms[blockAtomId[iPair]][d_basisOperationsPtrElectroHost
+                                                  ->cellID(blockCellId[iPair])]
+            .assign(hValues.begin() + (std::size_t)iPair * n_q_points,
+                    hValues.begin() + (std::size_t)(iPair + 1) * n_q_points);
+
+      blockCoords.clear();
+      blockCenters.clear();
+      blockCharges.clear();
+      blockCellSlot.clear();
+      blockSplineId.clear();
+      blockAtomId.clear();
+      blockCellId.clear();
+      cellToSlot.clear();
+    };
+
+    for (dftfe::uInt iCell = 0;
+         iCell < d_basisOperationsPtrElectroHost->nCells();
+         ++iCell)
+      {
+        if (!(iCell < kptGroupCellIndices[2 * kptGroupTaskId + 1] &&
+              iCell >= kptGroupCellIndices[2 * kptGroupTaskId]))
+          continue;
+        for (dftfe::uInt iAtom = 0;
+             iAtom < numberGlobalCharges + d_imagePositionsTrunc.size();
+             ++iAtom)
+          {
+            dealii::Point<3> atom;
+            dftfe::Int       atomicNumberLocal;
+            double           atomChargeLocal;
+            if (iAtom < numberGlobalCharges)
+              {
+                atom[0]           = atomLocations[iAtom][2];
+                atom[1]           = atomLocations[iAtom][3];
+                atom[2]           = atomLocations[iAtom][4];
+                atomChargeLocal   = atomLocations[iAtom][1];
+                atomicNumberLocal = std::round(atomLocations[iAtom][0]);
+              }
+            else
+              {
+                const dftfe::uInt iImageCharge = iAtom - numberGlobalCharges;
+                atom[0] = d_imagePositionsTrunc[iImageCharge][0];
+                atom[1] = d_imagePositionsTrunc[iImageCharge][1];
+                atom[2] = d_imagePositionsTrunc[iImageCharge][2];
+                atomChargeLocal =
+                  atomLocations[d_imageIdsTrunc[iImageCharge]][1];
+                atomicNumberLocal =
+                  std::round(atomLocations[d_imageIdsTrunc[iImageCharge]][0]);
+              }
+
+            // nothing is stored unless the cutOffForPsp sphere of the
+            // atom reaches the locally owned domain and this cell
+            std::pair<dealii::Point<3, double>, dealii::Point<3, double>>
+              boundaryPoints(atom - tempDisp, atom + tempDisp);
+            if (boundingBoxTria.get_neighbor_type(dealii::BoundingBox<3>(
+                  boundaryPoints)) == dealii::NeighborType::not_neighbors)
+              continue;
+            if (cellCentroids[iCell].distance(atom) - cellRadii[iCell] >
+                cutOffForPsp + dftUtils::cellBoundingSphereTolerance)
+              continue;
+
+            if (blockAtomId.size() >= pairsBlockSize)
+              flushBlock();
+
+            auto slotIt = cellToSlot.find(iCell);
+            if (slotIt == cellToSlot.end())
+              {
+                const dftfe::uInt slot = cellToSlot.size();
+                cellToSlot[iCell]      = slot;
+                const double *qp =
+                  d_basisOperationsPtrElectroHost->quadPoints().data() +
+                  (std::size_t)iCell * n_q_points * 3;
+                blockCoords.insert(blockCoords.end(), qp, qp + n_q_points * 3);
+                slotIt = cellToSlot.find(iCell);
+              }
+
+            blockCenters.push_back(atom[0]);
+            blockCenters.push_back(atom[1]);
+            blockCenters.push_back(atom[2]);
+            blockCharges.push_back(atomChargeLocal);
+            blockCellSlot.push_back(slotIt->second);
+            blockSplineId.push_back(znumToSplineId.at(atomicNumberLocal));
+            blockAtomId.push_back(iAtom);
+            blockCellId.push_back(iCell);
+          }
+      }
+    flushBlock();
   }
 #include "dft.inst.cc"
 } // namespace dftfe

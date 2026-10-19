@@ -186,14 +186,9 @@ main(int argc, char *argv[])
       std::cout << "with OpenMP support, ";
 #  endif
 #  ifdef DFTFE_WITH_64BIT_INT
-      std::cout << "with 64 bit integers, ";
+      std::cout << "with 64 bit integers" << std::endl;
 #  else
-      std::cout << "with 32 bit integers, ";
-#  endif
-#  ifdef DFTFE_WITH_HIGHERQUAD_PSP
-      std::cout << "and with HIGHERQUAD_PSP" << std::endl;
-#  else
-      std::cout << "and without HIGHERQUAD_PSP" << std::endl;
+      std::cout << "with 32 bit integers" << std::endl;
 #  endif
       std::cout
         << "=========================================================================================================="

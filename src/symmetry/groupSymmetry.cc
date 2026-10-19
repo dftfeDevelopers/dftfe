@@ -20,6 +20,7 @@
 #include <dftfe/groupSymmetry.h>
 #include <dftfe/linearAlgebraOperations.h>
 #include <spglib.h>
+#include <vector>
 
 namespace dftfe
 {
@@ -100,8 +101,10 @@ namespace dftfe
         int              rotation[max_size][3][3];
         double           translation[max_size][3];
         double           lattice[3][3];
-        double           position[d_numAtoms][3];
-        int              types[d_numAtoms];
+        // spglib reads the positions as double[][3], the layout of three
+        // contiguous doubles per atom
+        std::vector<double> positionFlattened(3 * d_numAtoms);
+        std::vector<int>    types(d_numAtoms);
         for (dftfe::uInt iVec = 0; iVec < 3; ++iVec)
           for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
             lattice[jDim][iVec] = d_domainBoundingVectors[3 * iVec + jDim];
@@ -109,44 +112,48 @@ namespace dftfe
           {
             types[iAtom] = atomLocationsFractional[iAtom][0];
             for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
-              position[iAtom][jDim] = d_atomicCoordsFrac[iAtom * 3 + jDim];
+              positionFlattened[iAtom * 3 + jDim] =
+                d_atomicCoordsFrac[iAtom * 3 + jDim];
           }
+        const double(*position)[3] =
+          reinterpret_cast<const double(*)[3]>(positionFlattened.data());
         if (!isCollinearSpin && !isNonCollinearSpin)
           d_numSymm = spg_get_symmetry(rotation,
                                        translation,
                                        max_size,
                                        lattice,
                                        position,
-                                       types,
+                                       types.data(),
                                        d_numAtoms,
                                        1e-8);
         else if (isCollinearSpin)
           {
-            int    equivalent_atoms[d_numAtoms];
-            double spins[d_numAtoms];
+            std::vector<int>    equivalent_atoms(d_numAtoms);
+            std::vector<double> spins(d_numAtoms);
             for (dftfe::uInt iAtom = 0; iAtom < d_numAtoms; ++iAtom)
               spins[iAtom] = atomLocationsFractional[iAtom].size() >= 6 ?
                                atomLocationsFractional[iAtom][5] :
                                0.0;
-            d_numSymm = spg_get_symmetry_with_collinear_spin(rotation,
-                                                             translation,
-                                                             equivalent_atoms,
-                                                             max_size,
-                                                             lattice,
-                                                             position,
-                                                             types,
-                                                             spins,
-                                                             d_numAtoms,
-                                                             1e-8);
+            d_numSymm =
+              spg_get_symmetry_with_collinear_spin(rotation,
+                                                   translation,
+                                                   equivalent_atoms.data(),
+                                                   max_size,
+                                                   lattice,
+                                                   position,
+                                                   types.data(),
+                                                   spins.data(),
+                                                   d_numAtoms,
+                                                   1e-8);
           }
         else if (isNonCollinearSpin)
           {
             // spglib writes one spin_flips entry per symmetry operation (not
             // per atom), so it must be sized like rotation/translation.
-            int    equivalent_atoms[d_numAtoms];
-            int    spin_flips[max_size];
-            double primitive_lattice[3][3];
-            double tensors[d_numAtoms * 3];
+            std::vector<int>    equivalent_atoms(d_numAtoms);
+            int                 spin_flips[max_size];
+            double              primitive_lattice[3][3];
+            std::vector<double> tensors(d_numAtoms * 3);
             for (dftfe::uInt iAtom = 0; iAtom < d_numAtoms; ++iAtom)
               {
                 if (atomLocationsFractional[iAtom].size() >= 8)
@@ -175,21 +182,22 @@ namespace dftfe
                     tensors[3 * iAtom + 2] = 0.0;
                   }
               }
-            d_numSymm = spg_get_symmetry_with_site_tensors(rotation,
-                                                           translation,
-                                                           equivalent_atoms,
-                                                           primitive_lattice,
-                                                           spin_flips,
-                                                           max_size,
-                                                           lattice,
-                                                           position,
-                                                           types,
-                                                           tensors,
-                                                           1,
-                                                           d_numAtoms,
-                                                           0,
-                                                           1,
-                                                           1e-8);
+            d_numSymm =
+              spg_get_symmetry_with_site_tensors(rotation,
+                                                 translation,
+                                                 equivalent_atoms.data(),
+                                                 primitive_lattice,
+                                                 spin_flips,
+                                                 max_size,
+                                                 lattice,
+                                                 position,
+                                                 types.data(),
+                                                 tensors.data(),
+                                                 1,
+                                                 d_numAtoms,
+                                                 0,
+                                                 1,
+                                                 1e-8);
           }
         d_symmMat.reserve(d_numSymm);
         d_symmMatInverse.reserve(d_numSymm);
@@ -580,7 +588,7 @@ namespace dftfe
   }
 
   void
-  groupSymmetryClass::symmetrizeVectorFieldFromLocalValues(
+  groupSymmetryClass::symmetrizeAxialVectorFieldFromLocalValues(
     distributedCPUVec<double>   &vectorFieldComponentx,
     distributedCPUVec<double>   &vectorFieldComponenty,
     distributedCPUVec<double>   &vectorFieldComponentz,
@@ -622,29 +630,29 @@ namespace dftfe
           {
             vectorFieldComponentx.local_element(iDoF) +=
               detSymmMat *
-              (d_symmMatCart[iSymm][0 * 3 + 0] *
+              (symmMat[0 * 3 + 0] *
                  pointValuesx[localDoFIndexToPointIndexMap[iSymm][iDoF]] +
-               d_symmMatCart[iSymm][1 * 3 + 0] *
+               symmMat[1 * 3 + 0] *
                  pointValuesy[localDoFIndexToPointIndexMap[iSymm][iDoF]] +
-               d_symmMatCart[iSymm][2 * 3 + 0] *
+               symmMat[2 * 3 + 0] *
                  pointValuesz[localDoFIndexToPointIndexMap[iSymm][iDoF]]) /
               d_numSymm;
             vectorFieldComponenty.local_element(iDoF) +=
               detSymmMat *
-              (d_symmMatCart[iSymm][0 * 3 + 1] *
+              (symmMat[0 * 3 + 1] *
                  pointValuesx[localDoFIndexToPointIndexMap[iSymm][iDoF]] +
-               d_symmMatCart[iSymm][1 * 3 + 1] *
+               symmMat[1 * 3 + 1] *
                  pointValuesy[localDoFIndexToPointIndexMap[iSymm][iDoF]] +
-               d_symmMatCart[iSymm][2 * 3 + 1] *
+               symmMat[2 * 3 + 1] *
                  pointValuesz[localDoFIndexToPointIndexMap[iSymm][iDoF]]) /
               d_numSymm;
             vectorFieldComponentz.local_element(iDoF) +=
               detSymmMat *
-              (d_symmMatCart[iSymm][0 * 3 + 2] *
+              (symmMat[0 * 3 + 2] *
                  pointValuesx[localDoFIndexToPointIndexMap[iSymm][iDoF]] +
-               d_symmMatCart[iSymm][1 * 3 + 2] *
+               symmMat[1 * 3 + 2] *
                  pointValuesy[localDoFIndexToPointIndexMap[iSymm][iDoF]] +
-               d_symmMatCart[iSymm][2 * 3 + 2] *
+               symmMat[2 * 3 + 2] *
                  pointValuesz[localDoFIndexToPointIndexMap[iSymm][iDoF]]) /
               d_numSymm;
           }

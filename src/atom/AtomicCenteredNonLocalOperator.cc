@@ -21,9 +21,9 @@
 #include <dftfe/AtomicCenteredNonLocalOperator.h>
 #if defined(DFTFE_WITH_DEVICE)
 #  include <dftfe/AtomCenteredSphericalFunctionDeviceKernels.h>
-#  include <dftfe/splineHostTableUtils.h>
 #  include <dftfe/atomTypeSplineTables.h>
 #  include <cstring>
+#  include <optional>
 #  include <type_traits>
 #  include <dftfe/AtomicCenteredNonLocalOperatorKernelsDevice.h>
 #  include <dftfe/DeviceTypeConfig.h>
@@ -33,6 +33,294 @@
 #endif
 namespace dftfe
 {
+#if defined(DFTFE_WITH_DEVICE)
+  namespace
+  {
+    /**
+     * @brief Spherical-function basis of one atom times JxW and, for the cell
+     * stress, also times the displacement from each periodic image, evaluated
+     * on the device for one block of at most 50 support cells at a time. The
+     * C-matrix construction slices it per (k-point, support cell).
+     */
+    class DeviceAtomBasis
+    {
+    public:
+      /**
+       * @brief Whether every radial function of species Znum is a spline, as
+       * the device evaluation requires.
+       */
+      static bool
+      hasSplineRadialFunctions(
+        const std::map<std::pair<dftfe::uInt, dftfe::uInt>,
+                       std::shared_ptr<AtomCenteredSphericalFunctionBase>>
+                         &sphericalFunction,
+        const dftfe::uInt Znum,
+        const dftfe::uInt numRadialFunctions)
+      {
+        for (dftfe::uInt alpha = 0; alpha < numRadialFunctions; ++alpha)
+          if (dynamic_cast<const AtomCenteredSphericalFunctionSpline *>(
+                sphericalFunction.find(std::make_pair(Znum, alpha))
+                  ->second.get()) == nullptr)
+            return false;
+        return true;
+      }
+
+      DeviceAtomBasis(
+        const std::map<std::pair<dftfe::uInt, dftfe::uInt>,
+                       std::shared_ptr<AtomCenteredSphericalFunctionBase>>
+                                       &sphericalFunction,
+        const dftfe::uInt               Znum,
+        const dftfe::uInt               numRadialFunctions,
+        const dftfe::uInt               numTotalFunctions,
+        const std::vector<dftfe::uInt> &elementIndexesInAtomCompactSupport,
+        const dftfe::uInt               numberQuadraturePoints,
+        const dftfe::utils::MemoryStorage<double,
+                                          dftfe::utils::MemorySpace::HOST>
+          &quadraturePointsVector,
+        const dftfe::utils::MemoryStorage<dataTypes::number,
+                                          dftfe::utils::MemorySpace::HOST>
+                                  &JxwVector,
+        const dealii::Point<3>    &nuclearCoordinates,
+        const std::vector<double> &imageCoordinates,
+        const std::vector<double> &kPointCoordinates,
+        const dftfe::uInt          maxkPoints,
+        const bool                 computeCellStress)
+        : d_numRadialFunctions(numRadialFunctions)
+        , d_numTotalFunctions(numTotalFunctions)
+        , d_numberQuadraturePoints(numberQuadraturePoints)
+        , d_numSupportCells(elementIndexesInAtomCompactSupport.size())
+        , d_numImages(imageCoordinates.size() / 3)
+        , d_effectiveKPoints(
+            std::is_same<dataTypes::number, std::complex<double>>::value ?
+              maxkPoints :
+              1)
+        , d_computeCellStress(computeCellStress)
+        , d_cellRange(0, 0)
+      {
+        // radial spline tables of this species
+        splineHostTableUtils::SplineTableGroup projTables;
+        std::vector<dftfe::uInt> radialFnLHost(numRadialFunctions, 0);
+        for (dftfe::uInt alpha = 0; alpha < numRadialFunctions; ++alpha)
+          {
+            std::shared_ptr<AtomCenteredSphericalFunctionBase> sphFnAlpha =
+              sphericalFunction.find(std::make_pair(Znum, alpha))->second;
+            // spline backed, as hasSplineRadialFunctions established
+            const AtomCenteredSphericalFunctionSpline *projFn =
+              static_cast<const AtomCenteredSphericalFunctionSpline *>(
+                sphFnAlpha.get());
+            radialFnLHost[alpha] = sphFnAlpha->getQuantumNumberl();
+            projTables.addSpline(projFn->getRadialSplineObject(),
+                                 projFn->getRadialCutOff(),
+                                 projFn->getrMinVal());
+          }
+        d_tables.stage(projTables);
+
+        // compact quadrature coordinates and real jxw of the support cells
+        std::vector<double> coordsHost(static_cast<size_t>(d_numSupportCells) *
+                                         numberQuadraturePoints * 3,
+                                       0.0);
+        std::vector<double> jxwHost(static_cast<size_t>(d_numSupportCells) *
+                                      numberQuadraturePoints,
+                                    0.0);
+        for (dftfe::uInt iSup = 0; iSup < d_numSupportCells; iSup++)
+          {
+            const dftfe::uInt elementIndex =
+              elementIndexesInAtomCompactSupport[iSup];
+            std::memcpy(&coordsHost[static_cast<size_t>(iSup) *
+                                    numberQuadraturePoints * 3],
+                        quadraturePointsVector.data() +
+                          elementIndex * numberQuadraturePoints * 3,
+                        numberQuadraturePoints * 3 * sizeof(double));
+            for (dftfe::uInt q = 0; q < numberQuadraturePoints; q++)
+              jxwHost[static_cast<size_t>(iSup) * numberQuadraturePoints + q] =
+                std::real(JxwVector[elementIndex * numberQuadraturePoints + q]);
+          }
+        // (image, support-cell) pairs, support-cell major
+        const dftfe::uInt        numPairs = d_numImages * d_numSupportCells;
+        std::vector<double>      pairCentersHost(numPairs * 3);
+        std::vector<dftfe::uInt> pairCellSlotHost(numPairs);
+        {
+          dftfe::uInt p = 0;
+          for (dftfe::uInt iSup = 0; iSup < d_numSupportCells; iSup++)
+            for (dftfe::uInt iImage = 0; iImage < d_numImages; iImage++, p++)
+              {
+                for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
+                  pairCentersHost[3 * p + iDim] =
+                    iImage == 0 ? nuclearCoordinates[iDim] :
+                                  imageCoordinates[3 * iImage + iDim];
+                pairCellSlotHost[p] = iSup;
+              }
+        }
+        d_coords =
+          dftfe::utils::memoryStorageFromSTL<double,
+                                             dftfe::utils::MemorySpace::DEVICE>(
+            coordsHost);
+        d_jxw =
+          dftfe::utils::memoryStorageFromSTL<double,
+                                             dftfe::utils::MemorySpace::DEVICE>(
+            jxwHost);
+        d_centers =
+          dftfe::utils::memoryStorageFromSTL<double,
+                                             dftfe::utils::MemorySpace::DEVICE>(
+            pairCentersHost);
+        d_atomCoords =
+          dftfe::utils::memoryStorageFromSTL<double,
+                                             dftfe::utils::MemorySpace::DEVICE>(
+            std::vector<double>({nuclearCoordinates[0],
+                                 nuclearCoordinates[1],
+                                 nuclearCoordinates[2]}));
+        d_kPointCoords =
+          dftfe::utils::memoryStorageFromSTL<double,
+                                             dftfe::utils::MemorySpace::DEVICE>(
+            kPointCoordinates);
+        d_cellSlot =
+          dftfe::utils::memoryStorageFromSTL<dftfe::uInt,
+                                             dftfe::utils::MemorySpace::DEVICE>(
+            pairCellSlotHost);
+        d_radialFnL =
+          dftfe::utils::memoryStorageFromSTL<dftfe::uInt,
+                                             dftfe::utils::MemorySpace::DEVICE>(
+            radialFnLHost);
+
+        // support cells per basis block, as elsewhere in DFT-FE
+        d_cellsBlockSize =
+          std::min(d_numSupportCells, static_cast<dftfe::uInt>(50));
+        // sized once for a whole block and zeroed per block, since resize
+        // deallocates and reallocates
+        d_basis.resize(static_cast<size_t>(maxkPoints) * d_cellsBlockSize *
+                         numTotalFunctions * numberQuadraturePoints,
+                       dataTypes::number(0.0));
+        if (computeCellStress)
+          d_basisWithDistance.resize(static_cast<size_t>(maxkPoints) *
+                                       d_cellsBlockSize * numTotalFunctions *
+                                       numberQuadraturePoints * 3,
+                                     dataTypes::number(0.0));
+        // cap on the transient projector value buffer, in bytes
+        constexpr std::size_t maxPairsBlockBytes = 512ULL * 1024 * 1024;
+        d_pairsBlockSize =
+          std::max(static_cast<dftfe::uInt>(1),
+                   static_cast<dftfe::uInt>(
+                     maxPairsBlockBytes /
+                     (static_cast<std::size_t>(numTotalFunctions) *
+                      numberQuadraturePoints * sizeof(double))));
+        d_values.resize(static_cast<size_t>(
+                          std::min(d_pairsBlockSize, numPairs)) *
+                          numTotalFunctions * numberQuadraturePoints,
+                        0.0);
+      }
+
+      /**
+       * @brief Builds the block of support cells that starts at support
+       * cell iSupportCell, unless the current block already holds it.
+       * Support cells are visited in increasing order.
+       */
+      void
+      buildBlockContaining(const dftfe::uInt iSupportCell)
+      {
+        if (iSupportCell < d_cellRange.second)
+          return;
+        d_cellRange = std::make_pair(iSupportCell,
+                                     std::min(d_numSupportCells,
+                                              iSupportCell + d_cellsBlockSize));
+        d_basis.setValue(dataTypes::number(0.0));
+        if (d_computeCellStress)
+          d_basisWithDistance.setValue(dataTypes::number(0.0));
+        // pairs are support-cell major, so the pairs of the block are one
+        // contiguous range
+        const std::pair<dftfe::uInt, dftfe::uInt> pairRange(
+          d_cellRange.first * d_numImages, d_cellRange.second * d_numImages);
+        for (dftfe::uInt startP = pairRange.first; startP < pairRange.second;
+             startP += d_pairsBlockSize)
+          {
+            const dftfe::uInt nPairsInBlock =
+              std::min(d_pairsBlockSize, pairRange.second - startP);
+            atomCenteredSphericalFunctionDeviceKernels::projectorValues(
+              nPairsInBlock,
+              d_numberQuadraturePoints,
+              d_numRadialFunctions,
+              d_numTotalFunctions,
+              d_coords.data(),
+              d_jxw.data(),
+              d_centers.data() + 3 * startP,
+              d_cellSlot.data() + startP,
+              d_radialFnL.data(),
+              d_tables.view(),
+              d_values.data());
+            atomCenteredSphericalFunctionDeviceKernels::
+              reduceImageContributionsWithPhases(
+                nPairsInBlock,
+                d_numberQuadraturePoints,
+                d_numTotalFunctions,
+                d_cellRange.second - d_cellRange.first,
+                d_cellRange.first,
+                d_effectiveKPoints,
+                std::is_same<dataTypes::number, std::complex<double>>::value,
+                d_coords.data(),
+                d_centers.data() + 3 * startP,
+                d_cellSlot.data() + startP,
+                d_atomCoords.data(),
+                d_kPointCoords.data(),
+                d_values.data(),
+                reinterpret_cast<double *>(d_basis.data()),
+                d_computeCellStress ?
+                  reinterpret_cast<double *>(d_basisWithDistance.data()) :
+                  nullptr);
+          }
+      }
+
+      /**
+       * @brief Offset in basis() of the slice of k-point iKpt and support
+       * cell iSupportCell, which must lie in the current block; the slice
+       * in basisWithDistance() starts at three times this offset.
+       */
+      std::size_t
+      sliceOffset(const dftfe::uInt iKpt, const dftfe::uInt iSupportCell) const
+      {
+        return (static_cast<std::size_t>(iKpt) *
+                  (d_cellRange.second - d_cellRange.first) +
+                (iSupportCell - d_cellRange.first)) *
+               d_numTotalFunctions * d_numberQuadraturePoints;
+      }
+
+      const dftfe::utils::MemoryStorage<dataTypes::number,
+                                        dftfe::utils::MemorySpace::DEVICE> &
+      basis() const
+      {
+        return d_basis;
+      }
+
+      const dftfe::utils::MemoryStorage<dataTypes::number,
+                                        dftfe::utils::MemorySpace::DEVICE> &
+      basisWithDistance() const
+      {
+        return d_basisWithDistance;
+      }
+
+    private:
+      const dftfe::uInt d_numRadialFunctions;
+      const dftfe::uInt d_numTotalFunctions;
+      const dftfe::uInt d_numberQuadraturePoints;
+      const dftfe::uInt d_numSupportCells;
+      const dftfe::uInt d_numImages;
+      const dftfe::uInt d_effectiveKPoints;
+      const bool        d_computeCellStress;
+      dftfe::uInt       d_cellsBlockSize;
+      dftfe::uInt       d_pairsBlockSize;
+      /// support cells [first, second) the basis buffers currently hold
+      std::pair<dftfe::uInt, dftfe::uInt>                     d_cellRange;
+      AtomTypeSplineTables<dftfe::utils::MemorySpace::DEVICE> d_tables;
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+        d_coords, d_jxw, d_centers, d_atomCoords, d_kPointCoords, d_values;
+      dftfe::utils::MemoryStorage<dftfe::uInt,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        d_cellSlot, d_radialFnL;
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        d_basis, d_basisWithDistance;
+    };
+  } // namespace
+#endif
+
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   AtomicCenteredNonLocalOperator<ValueType, memorySpace>::
     AtomicCenteredNonLocalOperator(
@@ -436,29 +724,34 @@ namespace dftfe
                   numberElementsInAtomCompactSupport);
               }
           }
-        dftfe::uInt kptBatch = 1;
-        // the device path builds the whole basis of this atom into one
-        // buffer and slices it per (k-point, cell), so it needs single-cell
-        // batches; the host fallback keeps its batching of 4
-        bool cMatrixDeviceEligible = false;
+        const dftfe::uInt kptBatch = 1;
 #if defined(DFTFE_WITH_DEVICE)
+        // the device basis is sliced per (k-point, support cell), so it
+        // takes single-cell batches; the host path batches 4 cells
+        std::optional<DeviceAtomBasis> deviceBasis;
         if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
           if (d_floatingNuclearCharges &&
-              numberElementsInAtomCompactSupport > 0)
-            {
-              cMatrixDeviceEligible = true;
-              for (dftfe::uInt alpha = 0; alpha < NumRadialSphericalFunctions;
-                   ++alpha)
-                if (dynamic_cast<const AtomCenteredSphericalFunctionSpline *>(
-                      sphericalFunction.find(std::make_pair(Znum, alpha))
-                        ->second.get()) == nullptr)
-                  {
-                    cMatrixDeviceEligible = false;
-                    break;
-                  }
-            }
+              numberElementsInAtomCompactSupport > 0 &&
+              DeviceAtomBasis::hasSplineRadialFunctions(
+                sphericalFunction, Znum, NumRadialSphericalFunctions))
+            deviceBasis.emplace(sphericalFunction,
+                                Znum,
+                                NumRadialSphericalFunctions,
+                                NumTotalSphericalFunctions,
+                                elementIndexesInAtomCompactSupport,
+                                numberQuadraturePoints,
+                                quadraturePointsVector,
+                                JxwVector,
+                                nuclearCoordinates,
+                                imageCoordinates,
+                                d_kPointCoordinates,
+                                maxkPoints,
+                                d_computeCellStress);
+        const bool cMatrixBasisBuiltOnDevice = deviceBasis.has_value();
+#else
+        const bool cMatrixBasisBuiltOnDevice = false;
 #endif
-        const dftfe::uInt nCellsPerBatch = cMatrixDeviceEligible ? 1 : 4;
+        const dftfe::uInt nCellsPerBatch = cMatrixBasisBuiltOnDevice ? 1 : 4;
         dftfe::utils::MemoryStorage<dataTypes::number,
                                     dftfe::utils::MemorySpace::HOST>
           sphericalFunctionBasisTimesJxWHost(nCellsPerBatch *
@@ -519,173 +812,11 @@ namespace dftfe
               NumTotalSphericalFunctions,
             0.0);
 #else
-        auto &sphericalFunctionBasisTimesJxW =
+        auto      &sphericalFunctionBasisTimesJxW =
           sphericalFunctionBasisTimesJxWHost;
         auto &sphericalFunctionBasisWithDistanceTimesJxW =
           sphericalFunctionBasisWithDistanceTimesJxWHost;
         // These aliases retain the all-k-point size of the host buffers.
-#endif
-        bool cMatrixBasisBuiltOnDevice = false;
-#if defined(DFTFE_WITH_DEVICE)
-        dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
-          sphericalFunctionBasisTimesJxWFullDevice,
-          sphericalFunctionBasisWithDistanceTimesJxWFullDevice;
-        // State of the blocked basis build, alive across cell blocks. The
-        // basis buffers above hold one block of support cells rather than
-        // the whole support, so the transient stays bounded.
-        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
-          coordsDevice, jxwDevice, centersDevice, atomCoordsDevice,
-          kPointCoordsDevice, valuesDevice;
-        dftfe::utils::MemoryStorage<dftfe::uInt,
-                                    dftfe::utils::MemorySpace::DEVICE>
-          cellSlotDevice, speciesDevice, radialFnLDevice, speciesStartDevice,
-          speciesNumFnsDevice, speciesTotalLMDevice;
-        AtomTypeSplineTables<memorySpace> projTablesMem;
-        dftfe::uInt cellsBlockSize = 0, pairsBlockSize = 0,
-                    effectiveKPoints = 1;
-        // block of support cells the basis buffers currently hold
-        std::pair<dftfe::uInt, dftfe::uInt> cellRange(0, 0);
-        const bool                          isComplexBuild =
-          std::is_same<dataTypes::number, std::complex<double>>::value;
-        if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
-          {
-            // the per-(kpt, cell) slice copy below assumes the single-cell
-            // batching that eligibility already selected
-            if (cMatrixDeviceEligible)
-              {
-                // radial projector spline tables of this species;
-                // eligibility above already established that every radial
-                // function is a spline
-                splineHostTableUtils::SplineTableGroup projTables;
-                std::vector<dftfe::uInt>               radialFnLHost(
-                  NumRadialSphericalFunctions, 0);
-                for (dftfe::uInt alpha = 0; alpha < NumRadialSphericalFunctions;
-                     ++alpha)
-                  {
-                    std::shared_ptr<AtomCenteredSphericalFunctionBase>
-                      sphFnAlpha =
-                        sphericalFunction.find(std::make_pair(Znum, alpha))
-                          ->second;
-                    const AtomCenteredSphericalFunctionSpline *projFn =
-                      dynamic_cast<const AtomCenteredSphericalFunctionSpline *>(
-                        sphFnAlpha.get());
-                    AssertThrow(
-                      projFn != nullptr,
-                      dealii::ExcMessage(
-                        "DFT-FE Error: non-spline radial projector reached the device C-matrix path."));
-                    radialFnLHost[alpha] = sphFnAlpha->getQuantumNumberl();
-                    projTables.addSpline(projFn->getRadialSplineObject(),
-                                         projFn->getRadialCutOff(),
-                                         projFn->getrMinVal(),
-                                         1.0);
-                  }
-                projTablesMem.stage(projTables);
-                const dftfe::uInt nSupport = numberElementsInAtomCompactSupport;
-                const dftfe::uInt numPairs = imageIdsSize * nSupport;
-                // compact quadrature coordinates and real jxw of the
-                // support cells
-                std::vector<double> coordsHost(static_cast<size_t>(nSupport) *
-                                                 numberQuadraturePoints * 3,
-                                               0.0);
-                std::vector<double> jxwHost(static_cast<size_t>(nSupport) *
-                                              numberQuadraturePoints,
-                                            0.0);
-                for (dftfe::uInt iSup = 0; iSup < nSupport; iSup++)
-                  {
-                    const dftfe::uInt elementIndex =
-                      elementIndexesInAtomCompactSupport[iSup];
-                    std::memcpy(&coordsHost[static_cast<size_t>(iSup) *
-                                            numberQuadraturePoints * 3],
-                                quadraturePointsVector.data() +
-                                  elementIndex * numberQuadraturePoints * 3,
-                                numberQuadraturePoints * 3 * sizeof(double));
-                    for (dftfe::uInt q = 0; q < numberQuadraturePoints; q++)
-                      jxwHost[static_cast<size_t>(iSup) *
-                                numberQuadraturePoints +
-                              q] =
-                        std::real(
-                          JxwVector[elementIndex * numberQuadraturePoints + q]);
-                  }
-                // (image, support-cell) pairs
-                std::vector<double>      pairCentersHost(numPairs * 3);
-                std::vector<dftfe::uInt> pairCellSlotHost(numPairs),
-                  pairSpeciesHost(numPairs, 0);
-                {
-                  dftfe::uInt p = 0;
-                  for (dftfe::uInt iSup = 0; iSup < nSupport; iSup++)
-                    for (dftfe::uInt iImageAtomCount = 0;
-                         iImageAtomCount < imageIdsSize;
-                         iImageAtomCount++, p++)
-                      {
-                        if (iImageAtomCount == 0)
-                          {
-                            pairCentersHost[3 * p + 0] = nuclearCoordinates[0];
-                            pairCentersHost[3 * p + 1] = nuclearCoordinates[1];
-                            pairCentersHost[3 * p + 2] = nuclearCoordinates[2];
-                          }
-                        else
-                          {
-                            pairCentersHost[3 * p + 0] =
-                              imageCoordinates[3 * iImageAtomCount + 0];
-                            pairCentersHost[3 * p + 1] =
-                              imageCoordinates[3 * iImageAtomCount + 1];
-                            pairCentersHost[3 * p + 2] =
-                              imageCoordinates[3 * iImageAtomCount + 2];
-                          }
-                        pairCellSlotHost[p] = iSup;
-                      }
-                }
-                stageHostVector(coordsHost, coordsDevice);
-                stageHostVector(jxwHost, jxwDevice);
-                stageHostVector(pairCentersHost, centersDevice);
-                stageHostVector(pairCellSlotHost, cellSlotDevice);
-                stageHostVector(pairSpeciesHost, speciesDevice);
-                stageHostVector(radialFnLHost, radialFnLDevice);
-                stageHostVector(std::vector<dftfe::uInt>{0u},
-                                speciesStartDevice);
-                stageHostVector(
-                  std::vector<dftfe::uInt>{NumRadialSphericalFunctions},
-                  speciesNumFnsDevice);
-                stageHostVector(
-                  std::vector<dftfe::uInt>{NumTotalSphericalFunctions},
-                  speciesTotalLMDevice);
-                std::vector<double> atomCoordsHost({nuclearCoordinates[0],
-                                                    nuclearCoordinates[1],
-                                                    nuclearCoordinates[2]});
-                stageHostVector(atomCoordsHost, atomCoordsDevice);
-                stageHostVector(d_kPointCoordinates, kPointCoordsDevice);
-                effectiveKPoints = isComplexBuild ? maxkPoints : 1;
-                // support cells per basis block, as elsewhere in DFT-FE; the
-                // buffers below hold one block rather than the whole support
-                cellsBlockSize =
-                  std::min(nSupport, static_cast<dftfe::uInt>(50));
-                // sized once for a whole block and zeroed per block below,
-                // since resize deallocates and reallocates
-                sphericalFunctionBasisTimesJxWFullDevice.resize(
-                  static_cast<size_t>(maxkPoints) * cellsBlockSize *
-                    NumTotalSphericalFunctions * numberQuadraturePoints,
-                  dataTypes::number(0.0));
-                if (d_computeCellStress)
-                  sphericalFunctionBasisWithDistanceTimesJxWFullDevice.resize(
-                    static_cast<size_t>(maxkPoints) * cellsBlockSize *
-                      NumTotalSphericalFunctions * numberQuadraturePoints * 3,
-                    dataTypes::number(0.0));
-                // cap on the transient projector value buffer, in bytes
-                constexpr std::size_t maxPairsBlockBytes = 512ULL * 1024 * 1024;
-                pairsBlockSize                           = std::max(
-                  static_cast<dftfe::uInt>(1),
-                  static_cast<dftfe::uInt>(
-                    maxPairsBlockBytes /
-                    (static_cast<std::size_t>(NumTotalSphericalFunctions) *
-                     numberQuadraturePoints * sizeof(double))));
-                valuesDevice.resize(
-                  static_cast<size_t>(std::min(pairsBlockSize, numPairs)) *
-                    NumTotalSphericalFunctions * numberQuadraturePoints,
-                  0.0);
-                cellRange                 = std::make_pair(0, 0);
-                cMatrixBasisBuiltOnDevice = true;
-              }
-          }
 #endif
 
         for (dftfe::Int iElemComp = 0;
@@ -693,83 +824,8 @@ namespace dftfe
              iElemComp += nCellsPerBatch)
           {
 #if defined(DFTFE_WITH_DEVICE)
-            // Build the basis for the block of support cells this element
-            // starts. Pairs are ordered support-cell major, so the pairs of
-            // cells [cellRange.first, cellRange.second) are one contiguous
-            // range.
-            if (cMatrixBasisBuiltOnDevice &&
-                static_cast<dftfe::uInt>(iElemComp) >= cellRange.second)
-              {
-                cellRange =
-                  std::make_pair(static_cast<dftfe::uInt>(iElemComp),
-                                 std::min(static_cast<dftfe::uInt>(
-                                            numberElementsInAtomCompactSupport),
-                                          static_cast<dftfe::uInt>(iElemComp) +
-                                            cellsBlockSize));
-                sphericalFunctionBasisTimesJxWFullDevice.setValue(
-                  dataTypes::number(0.0));
-                if (d_computeCellStress)
-                  sphericalFunctionBasisWithDistanceTimesJxWFullDevice.setValue(
-                    dataTypes::number(0.0));
-                const std::pair<dftfe::uInt, dftfe::uInt> pairRange(
-                  cellRange.first * imageIdsSize,
-                  cellRange.second * imageIdsSize);
-                for (dftfe::uInt startP = pairRange.first;
-                     startP < pairRange.second;
-                     startP += pairsBlockSize)
-                  {
-                    const dftfe::uInt nPairsInBlock =
-                      std::min(pairsBlockSize, pairRange.second - startP);
-                    atomCenteredSphericalFunctionDeviceKernels::projectorValues(
-                      nPairsInBlock,
-                      numberQuadraturePoints,
-                      NumTotalSphericalFunctions,
-                      true,
-                      coordsDevice.data(),
-                      jxwDevice.data(),
-                      centersDevice.data() + 3 * startP,
-                      cellSlotDevice.data() + startP,
-                      speciesDevice.data() + startP,
-                      speciesStartDevice.data(),
-                      speciesNumFnsDevice.data(),
-                      speciesTotalLMDevice.data(),
-                      radialFnLDevice.data(),
-                      projTablesMem.knotX.data(),
-                      projTablesMem.knotY.data(),
-                      projTablesMem.coefB.data(),
-                      projTablesMem.coefC.data(),
-                      projTablesMem.coefD.data(),
-                      projTablesMem.offsets.data(),
-                      projTablesMem.nKnots.data(),
-                      projTablesMem.gpParams.data(),
-                      projTablesMem.cutoffs.data(),
-                      projTablesMem.rMins.data(),
-                      projTablesMem.evalParams.data(),
-                      valuesDevice.data());
-                    atomCenteredSphericalFunctionDeviceKernels::
-                      reduceImageContributionsWithPhases(
-                        nPairsInBlock,
-                        numberQuadraturePoints,
-                        NumTotalSphericalFunctions,
-                        (cellRange.second - cellRange.first),
-                        cellRange.first,
-                        effectiveKPoints,
-                        isComplexBuild,
-                        coordsDevice.data(),
-                        centersDevice.data() + 3 * startP,
-                        cellSlotDevice.data() + startP,
-                        atomCoordsDevice.data(),
-                        kPointCoordsDevice.data(),
-                        valuesDevice.data(),
-                        reinterpret_cast<double *>(
-                          sphericalFunctionBasisTimesJxWFullDevice.data()),
-                        d_computeCellStress ?
-                          reinterpret_cast<double *>(
-                            sphericalFunctionBasisWithDistanceTimesJxWFullDevice
-                              .data()) :
-                          nullptr);
-                  }
-              }
+            if (deviceBasis)
+              deviceBasis->buildBlockContaining(iElemComp);
 #endif
             std::vector<dftfe::uInt> cellIndexes;
             cellIndexes.clear();
@@ -1060,16 +1116,12 @@ namespace dftfe
                                             NumTotalSphericalFunctions *
                                             numberQuadraturePoints;
 #if defined(DFTFE_WITH_DEVICE)
-                    if (cMatrixBasisBuiltOnDevice)
+                    if (deviceBasis)
                       sphericalFunctionBasisTimesJxW.copyFrom(
-                        sphericalFunctionBasisTimesJxWFullDevice,
+                        deviceBasis->basis(),
                         cellBatchSize * numberQuadraturePoints * kptBatch *
                           NumTotalSphericalFunctions,
-                        (static_cast<size_t>(iKpt) *
-                           (cellRange.second - cellRange.first) +
-                         (static_cast<dftfe::uInt>(iElemComp) -
-                          cellRange.first)) *
-                          NumTotalSphericalFunctions * numberQuadraturePoints,
+                        deviceBasis->sliceOffset(iKpt, iElemComp),
                         0);
                     else
 #endif
@@ -1082,18 +1134,12 @@ namespace dftfe
                     if (d_computeCellStress)
                       {
 #if defined(DFTFE_WITH_DEVICE)
-                        if (cMatrixBasisBuiltOnDevice)
+                        if (deviceBasis)
                           sphericalFunctionBasisWithDistanceTimesJxW.copyFrom(
-                            sphericalFunctionBasisWithDistanceTimesJxWFullDevice,
+                            deviceBasis->basisWithDistance(),
                             cellBatchSize * numberQuadraturePoints * kptBatch *
                               NumTotalSphericalFunctions * 3,
-                            3 *
-                              (static_cast<size_t>(iKpt) *
-                                 (cellRange.second - cellRange.first) +
-                               (static_cast<dftfe::uInt>(iElemComp) -
-                                cellRange.first)) *
-                              NumTotalSphericalFunctions *
-                              numberQuadraturePoints,
+                            3 * deviceBasis->sliceOffset(iKpt, iElemComp),
                             0);
                         else
 #endif

@@ -1858,8 +1858,8 @@ namespace dftfe
     d_basisOperationsPtr->reinit(0,
                                  d_cellsBlockSizeHamiltonianConstruction,
                                  d_lpspQuadratureID);
-    // Single-shot use of the LPSP quadrature, whose point count is the cube
-    // of the PSP quadrature order; the scope releases the scratch here.
+    // Single-shot use of the LPSP quadrature, with (order x copies)^3 points
+    // per cell; the scope releases the scratch here.
     auto scratch = d_basisOperationsPtr->scopedScratch();
 
     const dftfe::uInt nCells       = d_basisOperationsPtr->nCells();

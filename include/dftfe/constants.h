@@ -43,50 +43,5 @@ namespace dftfe
     return FEOrder + 1;
   }
 
-  /// 1d quad rule smeared nuclear charge
-  constexpr dftfe::uInt
-  C_num1DQuadSmearedCharge()
-  {
-    return 10;
-  }
-
-  /// number of copies 1d quad rule smeared nuclear charge
-  constexpr dftfe::uInt
-  C_numCopies1DQuadSmearedCharge()
-  {
-    return 2; // can be changed from 2 to 3
-  }
-
-  /// 1d quad rule smeared nuclear charge
-  /// if a very coarse FE mesh is used (e.g. softer pseudopotentials)
-  constexpr dftfe::uInt
-  C_num1DQuadSmearedChargeHigh()
-  {
-    return 10;
-  }
-
-  /// number of copies 1d quad rule smeared nuclear charge
-  /// if a very coarse FE mesh is used (e.g. softer pseudpotentials)
-  constexpr dftfe::uInt
-  C_numCopies1DQuadSmearedChargeHigh()
-  {
-    return 3;
-  }
-
-  /// 1d quad rule smeared nuclear charge if cell stress calculation is on
-  constexpr dftfe::uInt
-  C_num1DQuadSmearedChargeStress()
-  {
-    return 10;
-  }
-
-  /// number of copies 1d quad rule smeared nuclear charge if cell stress
-  /// calculation is on
-  constexpr dftfe::uInt
-  C_numCopies1DQuadSmearedChargeStress()
-  {
-    return 5; //
-  }
-
 } // namespace dftfe
 #endif

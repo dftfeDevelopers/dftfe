@@ -292,12 +292,6 @@ namespace dftfe
       if (quadratureValues != NULL)
         {
           ensureCellValuesBlockCoeff();
-          auto shapePtr = d_shapeFunctionData.find(d_quadratureID)->second;
-
-
-          auto jxwHost = d_JxWData.find(d_quadratureID)->second;
-
-
           d_BLASWrapperPtr->stridedBlockScaleCopy(
             d_nVectors,
             d_nQuadsPerCell[d_quadratureIndex] *

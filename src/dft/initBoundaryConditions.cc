@@ -312,7 +312,7 @@ namespace dftfe
                 (std::is_same<dataTypes::number, std::complex<double>>::value ||
                  !d_dftParamsPtr->approxOverlapMatrix))
               d_basisOperationsPtrHost->computeCellMassMatrix(
-                d_feOrderPlusOneQuadratureId, 1, true, false);
+                d_feOrderPlusOneQuadratureId, 1);
             d_basisOperationsPtrHost->computeInverseSqrtMassVector(true, false);
             if (d_dftParamsPtr->useIntermediateDensityQuadrature)
               {
@@ -401,7 +401,7 @@ namespace dftfe
             if (std::is_same<dataTypes::number, std::complex<double>>::value ||
                 !d_dftParamsPtr->approxOverlapMatrix)
               d_basisOperationsPtrDevice->computeCellMassMatrix(
-                d_feOrderPlusOneQuadratureId, 50, true, false);
+                d_feOrderPlusOneQuadratureId, 50);
             d_basisOperationsPtrDevice->computeInverseSqrtMassVector(true,
                                                                      false);
           }

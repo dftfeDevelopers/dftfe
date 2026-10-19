@@ -344,6 +344,37 @@ namespace dftfe
         }
     }
 
+    void
+    computeCellBoundingSpheres(const double     *quadPoints,
+                               const dftfe::uInt nCells,
+                               const dftfe::uInt nQuadPointsPerCell,
+                               std::vector<dealii::Point<3>> &centroids,
+                               std::vector<double>           &radii)
+    {
+      centroids.assign(nCells, dealii::Point<3>());
+      radii.assign(nCells, 0.0);
+      for (dftfe::uInt iCell = 0; iCell < nCells; ++iCell)
+        {
+          const double *qp =
+            quadPoints + (std::size_t)iCell * nQuadPointsPerCell * 3;
+          dealii::Point<3> centroid;
+          for (dftfe::uInt q = 0; q < nQuadPointsPerCell; ++q)
+            for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
+              centroid[iDim] += qp[q * 3 + iDim];
+          centroid /= static_cast<double>(nQuadPointsPerCell);
+          double r2max = 0.0;
+          for (dftfe::uInt q = 0; q < nQuadPointsPerCell; ++q)
+            {
+              const dealii::Point<3> p(qp[q * 3 + 0],
+                                       qp[q * 3 + 1],
+                                       qp[q * 3 + 2]);
+              r2max = std::max(r2max, p.distance_square(centroid));
+            }
+          centroids[iCell] = centroid;
+          radii[iCell]     = std::sqrt(r2max);
+        }
+    }
+
     MPI_Comm &
     Pool::get_interpool_comm()
     {

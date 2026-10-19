@@ -147,17 +147,19 @@ namespace dftfe
     getRmaxValenceDensity(dftfe::uInt Znum);
 
     /**
-     * @brief The atomic valence-density radial function for an atomic number,
-     * for callers that resolve it once outside a loop.
+     * @brief The atomic valence-density radial function of an atomic number, for callers
+     * that resolve it once outside a loop.
+     *
+     * @param[in] Znum atomic number
+     * @param[in] threadId OpenMP thread whose copy is returned; a thread id
+     * beyond the stored copies selects that of thread 0
+     * @return the function, or nullptr when Znum is not an atom type
      */
     const AtomCenteredSphericalFunctionBase *
     getRadialValenceDensityFunction(dftfe::uInt Znum,
                                     dftfe::uInt threadId) const
     {
-      const auto &mapForThread = d_atomicValenceDensityVector
-        [threadId < d_atomicValenceDensityVector.size() ? threadId : 0];
-      const auto it = mapForThread.find(Znum);
-      return it == mapForThread.end() ? nullptr : it->second.get();
+      return findRadialFunction(d_atomicValenceDensityVector, Znum, threadId);
     }
 
     void
@@ -172,36 +174,36 @@ namespace dftfe
     getRmaxCoreDensity(dftfe::uInt Znum);
 
     /**
-     * @brief The atomic core-density radial function for an atomic number,
-     * for callers that resolve it once outside a loop.
+     * @brief The atomic core-density radial function of an atomic number, for callers
+     * that resolve it once outside a loop.
+     *
+     * @param[in] Znum atomic number
+     * @param[in] threadId OpenMP thread whose copy is returned; a thread id
+     * beyond the stored copies selects that of thread 0
+     * @return the function, or nullptr when Znum is not an atom type
      */
     const AtomCenteredSphericalFunctionBase *
     getRadialCoreDensityFunction(dftfe::uInt Znum, dftfe::uInt threadId) const
     {
-      const auto &mapForThread =
-        d_atomicCoreDensityVector[threadId < d_atomicCoreDensityVector.size() ?
-                                    threadId :
-                                    0];
-      const auto it = mapForThread.find(Znum);
-      return it == mapForThread.end() ? nullptr : it->second.get();
+      return findRadialFunction(d_atomicCoreDensityVector, Znum, threadId);
     }
 
     double
     getRadialLocalPseudo(dftfe::uInt Znum, double rad);
 
     /**
-     * @brief The local-pseudopotential radial function for an atomic number,
-     * for callers that resolve it once outside a loop.
+     * @brief The local-pseudopotential radial function of an atomic number, for callers
+     * that resolve it once outside a loop.
+     *
+     * @param[in] Znum atomic number
+     * @param[in] threadId OpenMP thread whose copy is returned; a thread id
+     * beyond the stored copies selects that of thread 0
+     * @return the function, or nullptr when Znum is not an atom type
      */
     const AtomCenteredSphericalFunctionBase *
     getRadialLocalPseudoFunction(dftfe::uInt Znum, dftfe::uInt threadId) const
     {
-      const auto &mapForThread =
-        d_atomicLocalPotVector[threadId < d_atomicLocalPotVector.size() ?
-                                 threadId :
-                                 0];
-      const auto it = mapForThread.find(Znum);
-      return it == mapForThread.end() ? nullptr : it->second.get();
+      return findRadialFunction(d_atomicLocalPotVector, Znum, threadId);
     }
 
     double
@@ -253,6 +255,25 @@ namespace dftfe
 
 
   private:
+    /**
+     * @brief The function of Znum in the per-thread copies perThreadFunctions,
+     * as returned by the getRadial*Function accessors.
+     */
+    static const AtomCenteredSphericalFunctionBase *
+    findRadialFunction(
+      const std::vector<
+        std::map<dftfe::uInt,
+                 std::shared_ptr<AtomCenteredSphericalFunctionBase>>>
+                       &perThreadFunctions,
+      const dftfe::uInt Znum,
+      const dftfe::uInt threadId)
+    {
+      const auto &mapForThread =
+        perThreadFunctions[threadId < perThreadFunctions.size() ? threadId : 0];
+      const auto it = mapForThread.find(Znum);
+      return it == mapForThread.end() ? nullptr : it->second.get();
+    }
+
     /**
      * @brief Converts the periodic image data structure to relevant form for the container class
      * @param[in] atomLocations atomic Coordinates

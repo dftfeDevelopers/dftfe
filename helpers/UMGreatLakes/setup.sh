@@ -42,9 +42,6 @@ cxx_compiler=mpicxx
 cxx_flagsRelease="-O2 -fPIC -fopenmp"
 cuda_flags="" #only applicable for withGPU=ON
 
-#ON is recommended for MD simulations with hard pseudopotentials
-withHigherQuadPSP=OFF
-
 #Optmization flag: Release for optimized mode and Debug for debug mode compilation
 build_type=Release
 
@@ -71,7 +68,6 @@ function cmake_real() {
 	-DWITH_NCCL=$withNCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$NCCL_PATH"\
 	-DWITH_COMPLEX=OFF -DWITH_GPU=$withGPU -DCMAKE_CUDA_FLAGS="$cuda_flags"\
 	-DWITH_TESTING=$testing  \
-  -DHIGHERQUAD_PSP=$withHigherQuadPSP\
 	  $1
 }
 
@@ -86,7 +82,6 @@ function cmake_cplx() {
 	-DCMAKE_PREFIX_PATH="$ELPA_PATH" \
 	-DWITH_COMPLEX=ON \
 	-DWITH_TESTING=$testing  \
-  -DHIGHERQUAD_PSP=$withHigherQuadPSP\
 	  $1
 }
 

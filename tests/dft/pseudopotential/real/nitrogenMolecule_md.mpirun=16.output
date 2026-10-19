@@ -48,8 +48,8 @@ Energy computations (Hartree)
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.291136,0.000000,0.000000
-AtomId    1:  0.291136,0.000000,0.000000
+AtomId    0:  0.291139,0.000000,0.000000
+AtomId    1:  0.291139,0.000000,0.000000
 --------------------------------------------------------------------------------------------
 ---------------MD STEP 0 ------------------ 
  Temperature from velocities: 300.00
@@ -79,7 +79,7 @@ SCF iterations converged to the specified tolerance after: 9 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.78681666
+             Total energy:         -19.78681667
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
@@ -113,7 +113,7 @@ SCF iterations converged to the specified tolerance after: 9 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.78924861
+             Total energy:         -19.78924863
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
@@ -121,6 +121,6 @@ AtomId    0:  0.290793,0.001039,0.001019
 AtomId    1:  0.290793,0.001039,0.001019
 --------------------------------------------------------------------------------------------
 ---------------MD STEP 2 ------------------ 
- Temperature from velocities: 729.05
+ Temperature from velocities: 729.06
  Total Energy in Ha at timeIndex -19.78579
 ---MD run completed successfully---

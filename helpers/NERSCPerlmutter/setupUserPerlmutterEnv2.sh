@@ -84,7 +84,6 @@ device_architectures="80" # set DCMAKE_CXX_CUDA/HIP_ARCHITECTURES
 #Option to compile with default or higher order quadrature for storing pseudopotential data
 #ON is recommended for MD simulations with hard pseudopotentials.
 #Must be OFF to match the checked-in ctest reference outputs.
-withHigherQuadPSP=OFF
 
 # build type: "Release" or "Debug"
 build_type=Release
@@ -119,7 +118,7 @@ function cmake_real() {
     -DWITH_COMPLEX=OFF -DWITH_GPU=$withGPU -DGPU_LANG=$gpuLang -DGPU_VENDOR=$gpuVendor -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_CUDA_FLAGS="$device_flags" -DCMAKE_CUDA_ARCHITECTURES="$device_architectures"\
     -DCMAKE_SHARED_LINKER_FLAGS="-L$MPICH_DIR/lib -lmpich"\
     -DWITH_TESTING=$testing -DNUMDIFF_EXECUTABLE=$numdiffExecutable \
-    -DHIGHERQUAD_PSP=$withHigherQuadPSP -DUSE_64BIT_INT=$useInt64 $1
+    -DUSE_64BIT_INT=$useInt64 $1
   else
     cmake -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_COMPILER=$cxx_compiler\
     -DCMAKE_CXX_FLAGS="$cxx_flags"\
@@ -132,7 +131,7 @@ function cmake_real() {
     -DWITH_DCCL=OFF -DCMAKE_PREFIX_PATH="$ELPA_PATH"\
     -DWITH_COMPLEX=OFF -DWITH_GPU=OFF \
     -DWITH_TESTING=$testing -DNUMDIFF_EXECUTABLE=$numdiffExecutable \
-    -DHIGHERQUAD_PSP=$withHigherQuadPSP -DUSE_64BIT_INT=$useInt64 $1
+    -DUSE_64BIT_INT=$useInt64 $1
   fi
   cd ..
 }
@@ -152,7 +151,7 @@ function cmake_cplx() {
     -DWITH_COMPLEX=ON -DWITH_GPU=$withGPU -DGPU_LANG=$gpuLang -DGPU_VENDOR=$gpuVendor -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_CUDA_FLAGS="$device_flags" -DCMAKE_CUDA_ARCHITECTURES="$device_architectures"\
     -DCMAKE_SHARED_LINKER_FLAGS="-L$MPICH_DIR/lib -lmpich"\
     -DWITH_TESTING=$testing -DNUMDIFF_EXECUTABLE=$numdiffExecutable \
-    -DHIGHERQUAD_PSP=$withHigherQuadPSP -DUSE_64BIT_INT=$useInt64 $1
+    -DUSE_64BIT_INT=$useInt64 $1
   else
     cmake -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_COMPILER=$cxx_compiler\
     -DCMAKE_CXX_FLAGS="$cxx_flags"\
@@ -165,7 +164,7 @@ function cmake_cplx() {
     -DWITH_DCCL=OFF -DCMAKE_PREFIX_PATH="$ELPA_PATH"\
     -DWITH_COMPLEX=ON -DWITH_GPU=OFF \
     -DWITH_TESTING=$testing -DNUMDIFF_EXECUTABLE=$numdiffExecutable \
-    -DHIGHERQUAD_PSP=$withHigherQuadPSP -DUSE_64BIT_INT=$useInt64 $1
+    -DUSE_64BIT_INT=$useInt64 $1
   fi
   cd ..
 }

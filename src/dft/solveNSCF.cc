@@ -611,11 +611,6 @@ namespace dftfe
                                        fermiEnergyUp,
                                        fermiEnergyDown,
                                        d_dftParamsPtr->spinPolarized == 1,
-                                       (d_dftParamsPtr->spinPolarized == 1 ||
-                                        d_dftParamsPtr->noncolin ||
-                                        d_dftParamsPtr->hasSOC) ?
-                                         1.0 :
-                                         2.0,
                                        d_dftParamsPtr->constraintMagnetization,
                                        d_dftParamsPtr->TVal);
 
@@ -639,6 +634,8 @@ namespace dftfe
         (d_dftParamsPtr->writeWfcSolutionFields ||
          d_dftParamsPtr->writeLdosFile || d_dftParamsPtr->writePdosFile))
       d_eigenVectorsFlattenedDevice.copyTo(d_eigenVectorsFlattenedHost);
+    if constexpr (dftfe::utils::MemorySpace::DEVICE == memorySpace)
+      d_subspaceIterationSolverDevice.releaseScratchMemory();
 #endif
 
     // #ifdef USE_COMPLEX
