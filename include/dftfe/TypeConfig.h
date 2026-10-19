@@ -18,8 +18,13 @@ namespace dftfe
 // is actually compiling the translation unit. The HIP platform macros cannot
 // be used here: config.h defines them for every unit of a HIP build,
 // including the host-only units that the plain C++ compiler builds, which
-// would then see the device attributes.
-#if defined(__CUDACC__) || defined(__HIPCC__)
+// would then see the device attributes. nvcc predefines __host__,
+// __device__ and __forceinline__; HIP defines them in hip_runtime.h, included
+// here so that a unit may include this header before any HIP header.
+#if defined(__CUDACC__)
+#  define DFTFE_HOST_DEVICE_INLINE __host__ __device__ __forceinline__
+#elif defined(__HIPCC__)
+#  include <hip/hip_runtime.h>
 #  define DFTFE_HOST_DEVICE_INLINE __host__ __device__ __forceinline__
 #else
 #  define DFTFE_HOST_DEVICE_INLINE inline
