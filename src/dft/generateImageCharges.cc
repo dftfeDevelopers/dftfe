@@ -70,10 +70,12 @@ namespace dftfe
     // return fractional coordinates of nearest point
     //
     std::vector<double>
-    getNearestPointOnGivenSurface(std::vector<double>        latticeVectors,
-                                  const std::vector<double> &xred1,
-                                  const std::vector<double> &xred2,
-                                  const std::vector<double> &surfaceNormal)
+    getNearestPointOnGivenSurface(
+      const std::vector<double>          &latticeVectors,
+      const dealii::Tensor<2, 3, double> &latticeVectorsInv,
+      const std::vector<double>          &xred1,
+      const std::vector<double>          &xred2,
+      const std::vector<double>          &surfaceNormal)
 
     {
       //
@@ -109,40 +111,19 @@ namespace dftfe
         nearestPtCoords[i] = P[i] + t * surfaceNormal[i];
 
       //
-      // get fractional coordinates for the nearest point : solve a system
-      // of equations
-      int N    = 3;
-      int NRHS = 1;
-      int LDA  = 3;
-      int IPIV[3];
-      int info;
-
-
-      dgesv_(&N,
-             &NRHS,
-             &latticeVectors[0],
-             &LDA,
-             &IPIV[0],
-             &nearestPtCoords[0],
-             &LDA,
-             &info);
-
-
-      if (info != 0)
-        {
-          std::cout << "LU solve in conversion of frac to real coords failed."
-                    << std::endl;
-          exit(-1);
-        }
-
+      // fractional coordinates of the nearest point. The forward map above is
+      // real = transpose(L) * frac with row j of latticeVectors holding
+      // domain vector j, so the inverse map transposes latticeVectorsInv.
       //
-      // nearestPtCoords is overwritten with the solution = frac coords
-      //
+      std::vector<double> fracCoords(3, 0.0);
+      for (dftfe::Int i = 0; i < 3; ++i)
+        for (dftfe::Int j = 0; j < 3; ++j)
+          fracCoords[i] += latticeVectorsInv[j][i] * nearestPtCoords[j];
 
       std::vector<double> returnValue(3);
 
       for (dftfe::Int i = 0; i < 3; ++i)
-        returnValue[i] = roundToCell(nearestPtCoords[i]);
+        returnValue[i] = roundToCell(fracCoords[i]);
 
       return returnValue;
     }
@@ -152,8 +133,10 @@ namespace dftfe
     // output : min distance to any of the cel surfaces
     //
     double
-    getMinDistanceFromImageToCell(const std::vector<double> &latticeVectors,
-                                  const std::vector<double> &xreduced)
+    getMinDistanceFromImageToCell(
+      const std::vector<double>          &latticeVectors,
+      const dealii::Tensor<2, 3, double> &latticeVectorsInv,
+      const std::vector<double>          &xreduced)
     {
       const double xfrac = xreduced[0];
       const double yfrac = xreduced[1];
@@ -192,8 +175,12 @@ namespace dftfe
           surfacePoint[1] = yfrac;
           surfacePoint[2] = zfrac;
 
-          std::vector<double> fracPtA = getNearestPointOnGivenSurface(
-            latticeVectors, xreduced, surfacePoint, surface1Normal);
+          std::vector<double> fracPtA =
+            getNearestPointOnGivenSurface(latticeVectors,
+                                          latticeVectorsInv,
+                                          xreduced,
+                                          surfacePoint,
+                                          surface1Normal);
           //
           // compute distance between fracPtA (closest point on surface A) and
           // xreduced
@@ -216,8 +203,12 @@ namespace dftfe
           surfacePoint[1] = 0;
           surfacePoint[2] = zfrac;
 
-          std::vector<double> fracPtB = getNearestPointOnGivenSurface(
-            latticeVectors, xreduced, surfacePoint, surface2Normal);
+          std::vector<double> fracPtB =
+            getNearestPointOnGivenSurface(latticeVectors,
+                                          latticeVectorsInv,
+                                          xreduced,
+                                          surfacePoint,
+                                          surface2Normal);
 
           for (dftfe::Int i = 0; i < 3; ++i)
             {
@@ -240,8 +231,12 @@ namespace dftfe
           surfacePoint[1] = yfrac;
           surfacePoint[2] = 0;
 
-          std::vector<double> fracPtC = getNearestPointOnGivenSurface(
-            latticeVectors, xreduced, surfacePoint, surface3Normal);
+          std::vector<double> fracPtC =
+            getNearestPointOnGivenSurface(latticeVectors,
+                                          latticeVectorsInv,
+                                          xreduced,
+                                          surfacePoint,
+                                          surface3Normal);
 
           for (dftfe::Int i = 0; i < 3; ++i)
             {
@@ -264,8 +259,12 @@ namespace dftfe
           surfacePoint[1] = yfrac;
           surfacePoint[2] = zfrac;
 
-          std::vector<double> fracPtD = getNearestPointOnGivenSurface(
-            latticeVectors, xreduced, surfacePoint, surface1Normal);
+          std::vector<double> fracPtD =
+            getNearestPointOnGivenSurface(latticeVectors,
+                                          latticeVectorsInv,
+                                          xreduced,
+                                          surfacePoint,
+                                          surface1Normal);
 
           for (dftfe::Int i = 0; i < 3; ++i)
             {
@@ -288,8 +287,12 @@ namespace dftfe
           surfacePoint[1] = 1;
           surfacePoint[2] = zfrac;
 
-          std::vector<double> fracPtE = getNearestPointOnGivenSurface(
-            latticeVectors, xreduced, surfacePoint, surface2Normal);
+          std::vector<double> fracPtE =
+            getNearestPointOnGivenSurface(latticeVectors,
+                                          latticeVectorsInv,
+                                          xreduced,
+                                          surfacePoint,
+                                          surface2Normal);
 
           for (dftfe::Int i = 0; i < 3; ++i)
             {
@@ -313,8 +316,12 @@ namespace dftfe
           surfacePoint[1] = yfrac;
           surfacePoint[2] = 1;
 
-          std::vector<double> fracPtF = getNearestPointOnGivenSurface(
-            latticeVectors, xreduced, surfacePoint, surface3Normal);
+          std::vector<double> fracPtF =
+            getNearestPointOnGivenSurface(latticeVectors,
+                                          latticeVectorsInv,
+                                          xreduced,
+                                          surfacePoint,
+                                          surface3Normal);
 
           for (dftfe::Int i = 0; i < 3; ++i)
             {
@@ -415,6 +422,17 @@ namespace dftfe
           }
       }
 
+    // maps candidate image positions to fractional coordinates
+    dealii::Tensor<2, 3, double> latticeVectorsTensor;
+    for (dftfe::uInt i = 0; i < 3; ++i)
+      for (dftfe::uInt j = 0; j < 3; ++j)
+        latticeVectorsTensor[i][j] = latticeVectors[3 * i + j];
+    AssertThrow(std::fabs(dealii::determinant(latticeVectorsTensor)) > 1.0e-14,
+                dealii::ExcMessage(
+                  "DFT-FE Error: singular lattice vector matrix."));
+    const dealii::Tensor<2, 3, double> latticeVectorsInv =
+      dealii::invert(latticeVectorsTensor);
+
     imageIds.clear();
     imagePositions.clear();
     imageCharges.clear();
@@ -491,7 +509,7 @@ namespace dftfe
                               {
                                 const double distanceFromCell =
                                   internaldft::getMinDistanceFromImageToCell(
-                                    latticeVectors, newFrac);
+                                    latticeVectors, latticeVectorsInv, newFrac);
 
                                 if (distanceFromCell < pspCutOff)
                                   withinCutoff = true;

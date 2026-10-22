@@ -134,6 +134,7 @@ SET(TARGET_SRC
   ./src/dft/energyCalculator.cc
   ./src/dft/energyDensity.cc
   ./src/dft/densityCalculator.cc
+  ./src/dft/atomicInitKernels.cc
   ./src/dft/computeAuxProjectedDensityMatrixFromPSI.cc
   ./src/dft/densityFirstOrderResponseCalculator.cc
   ./src/dft/applyMultipoleDirichletBC.cc
@@ -285,6 +286,8 @@ SET(DEVICE_SRC
   ./src/matrixFree/MatrixFreeDevice.cc
   ./utils/FEBasisOperationsKernelsInternalDevice.cc
   ./src/atom/AtomicCenteredNonLocalOperatorKernelsDevice.cc
+  ./src/atom/AtomCenteredSphericalFunctionDeviceKernels.cc
+  ./src/dft/atomicInitDeviceKernels.cc
   ./src/force/configurationalForceKernels.cc
   ./src/dftOperator/KohnShamHamiltonianOperatorDeviceKernels.cc
   ./src/excManager/excManagerDeviceKernels.cc
@@ -308,6 +311,8 @@ SET(DEVICE_SRC
   ./src/matrixFree/MatrixFreeDevice.cc
   ./utils/FEBasisOperationsKernelsInternalDevice.cc
   ./src/atom/AtomicCenteredNonLocalOperatorKernelsDevice.cc
+  ./src/atom/AtomCenteredSphericalFunctionDeviceKernels.cc
+  ./src/dft/atomicInitDeviceKernels.cc
   ./src/dftOperator/KohnShamHamiltonianOperatorDeviceKernels.cc
   ./src/excManager/excManagerDeviceKernels.cc
   ./src/excManager/exchangeCorrelationFunctionalEvaluatorDevice.cc
@@ -331,6 +336,8 @@ SET(DEVICE_SRC
   ./src/matrixFree/MatrixFreeDevice.cc
   ./utils/FEBasisOperationsKernelsInternalDevice.cc
   ./src/atom/AtomicCenteredNonLocalOperatorKernelsDevice.cc
+  ./src/atom/AtomCenteredSphericalFunctionDeviceKernels.cc
+  ./src/dft/atomicInitDeviceKernels.cc
   ./src/dftOperator/KohnShamHamiltonianOperatorDeviceKernels.cc
   ./src/excManager/excManagerDeviceKernels.cc
   ./src/excManager/exchangeCorrelationFunctionalEvaluatorDevice.cc
@@ -393,10 +400,6 @@ IF (WITH_COMPLEX)
 ELSE()
   set(USE_REAL 1)
   MESSAGE(STATUS "DFT-FE: real arithmetic")
-ENDIF()
-
-IF (HIGHERQUAD_PSP)
-  set(DFTFE_WITH_HIGHERQUAD_PSP 1)
 ENDIF()
 
 IF (USE_64BIT_INT)
@@ -694,6 +697,13 @@ IF (WITH_GPU AND "${GPU_LANG}" STREQUAL "hip")
  ENDIF()
 ENDIF()
 
+# ── DCCL for P2P Communication (optional, ON by default) ──────────────────────
+OPTION(WITH_DCCL_P2P "Use DCCL for P2P Communication" ON)
+IF (WITH_DCCL_P2P AND (DFTFE_WITH_CUDA_NCCL OR DFTFE_WITH_HIP_RCCL))
+  set(DFTFE_WITH_DCCL_P2P 1)
+  MESSAGE(STATUS "DFT-FE: DCCL enabled for P2P")
+ENDIF()
+
 # ── Executable links against the library ─────────────────────────────────────
 TARGET_LINK_LIBRARIES(${TARGET} PUBLIC ${TARGETLIB})
 
@@ -737,6 +747,7 @@ IF (WITH_TESTING)
   ENABLE_TESTING()
   INCLUDE(CTest)
   SET (TEST_TIME_LIMIT 5000)
+  INCLUDE(${CMAKE_SOURCE_DIR}/cmake/dftfeTests.cmake)
   IF (WITH_COMPLEX)
      ADD_SUBDIRECTORY(tests/dft/pseudopotential/complex)
      ADD_SUBDIRECTORY(tests/dft/allElectron/complex)

@@ -28,6 +28,7 @@
 #include <iomanip>
 #include <stdexcept>
 #include <cmath>
+#include <set>
 
 
 namespace dftfe
@@ -335,6 +336,7 @@ namespace dftfe
           // Orbitals
           std::vector<std::string> pswfc_tag;
           pswfc_tag.push_back("PP_PSWFC");
+          std::set<std::string> listedOrbitalFiles;
           for (dftfe::Int i = 1;
                i <= xmlNodeChildCount(pswfc_tag, file_path_in);
                i++)
@@ -374,7 +376,10 @@ namespace dftfe
                   else if (w == 'f')
                     w = '3';
                 }
-              file << "psi" + orbital_string + ".inp" << std::endl;
+              // Emit each orbital file name once; a fully relativistic UPF
+              // has two PP_CHI entries per (n, l).
+              if (listedOrbitalFiles.insert(orbital_string).second)
+                file << "psi" + orbital_string + ".inp" << std::endl;
             }
         }
       file.close();
@@ -683,6 +688,7 @@ namespace dftfe
       radial_coord = XmlTagReaderMain(radial_tag, file_path_in);
       std::vector<std::string> pswfc_tag;
       pswfc_tag.push_back("PP_PSWFC");
+      std::set<std::string> writtenOrbitalNL;
       for (dftfe::Int i = 1; i <= xmlNodeChildCount(pswfc_tag, file_path_in);
            i++)
         {
@@ -719,18 +725,28 @@ namespace dftfe
             {
               l = '0';
             }
-          if (orbital_string_nl[1] == 'p')
+          else if (orbital_string_nl[1] == 'p')
             {
               l = '1';
             }
-          if (orbital_string_nl[1] == 'd')
+          else if (orbital_string_nl[1] == 'd')
             {
               l = '2';
             }
-          if (orbital_string_nl[1] == 'f')
+          else if (orbital_string_nl[1] == 'f')
             {
               l = '3';
             }
+          else
+            {
+              throw std::invalid_argument("unsupported orbital label " +
+                                          attr_value[index]);
+            }
+          // A fully relativistic UPF carries two PP_CHI entries per (n, l),
+          // one per relativistic j. The atomic initial guess is not j
+          // resolved and reads psi<n><l>.inp, written from the first.
+          if (!writtenOrbitalNL.insert(std::string{n, l}).second)
+            continue;
           std::string  orbital_string = "psi";
           std::fstream file;
           file.open(file_path_out + "/" + orbital_string + n + l + ".inp",
@@ -738,9 +754,9 @@ namespace dftfe
           file << std::setprecision(12);
           if (file.is_open())
             {
-              for (dftfe::Int l = 0; l < chi_values.size(); l++)
+              for (dftfe::Int j = 0; j < chi_values.size(); j++)
                 {
-                  file << radial_coord[l] << " " << chi_values[l] << std::endl;
+                  file << radial_coord[j] << " " << chi_values[j] << std::endl;
                 }
             }
           file.close();

@@ -18,6 +18,7 @@
 //
 #ifndef DFTFE_SPHERICALHARMONICUTILS_H
 #define DFTFE_SPHERICALHARMONICUTILS_H
+#include <dftfe/AtomCenteredSphericalFunctionDeviceUtils.h>
 #include <interpolation.h>
 namespace dftfe
 {
@@ -54,36 +55,18 @@ namespace dftfe
       return;
     }
 
+    /**
+     * @brief atomCenteredSphericalFunctionDeviceUtils::cartesianToSpherical
+     * of (x[0], x[1], x[2]).
+     */
     inline void
     convertCartesianToSpherical(double *x,
                                 double &r,
                                 double &theta,
                                 double &phi)
     {
-      double tolerance = 1e-12;
-      r                = std::sqrt(x[0] * x[0] + x[1] * x[1] + x[2] * x[2]);
-
-      if (std::fabs(r - 0.0) <= tolerance)
-        {
-          theta = 0.0;
-          phi   = 0.0;
-        }
-      else
-        {
-          theta = std::acos(x[2] / r);
-          //
-          // check if theta = 0 or PI (i.e, whether the point is on the Z-axis)
-          // If yes, assign phi = 0.0.
-          // NOTE: In case theta = 0 or PI, phi is undetermined. The actual
-          // value of phi doesn't matter in computing the enriched function
-          // value or its gradient. We assign phi = 0.0 here just as a dummy
-          // value
-          //
-          if (fabs(theta - 0.0) >= tolerance && fabs(theta - M_PI) >= tolerance)
-            phi = std::atan2(x[1], x[0]);
-          else
-            phi = 0.0;
-        }
+      atomCenteredSphericalFunctionDeviceUtils::cartesianToSpherical(
+        x[0], x[1], x[2], r, theta, phi);
     }
   } // end of namespace sphericalHarmonicUtils
 } // end of namespace dftfe

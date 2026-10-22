@@ -94,6 +94,12 @@ namespace dftfe
           "false",
           dealii::Patterns::Bool(),
           "[Advanced] If DFT-FE is linked to ELPA eigensolver library configured to run on GPUs, this parameter toggles the use of ELPA GPU kernels for dense symmetric matrix diagonalization calls in DFT-FE. ELPA version>=2020.11.001 is required for this feature. Default: false.");
+
+        prm.declare_entry(
+          "USE ELPA GPU TWO STAGE SOLVER",
+          "false",
+          dealii::Patterns::Bool(),
+          "[Advanced] Use the ELPA two-stage solver (ELPA2) instead of the one-stage solver (ELPA1) when USE ELPA GPU KERNEL is set to true; no effect on the CPU path, which always uses ELPA2. Prior to ELPA 2026, ELPA2 is not fully supported on GPUs when ELPA is built with GPU streams (the default), so set this to true only with ELPA 2026 or newer, or with an older ELPA configured with --enable-gpu-streams=no. Default: false.");
       }
       prm.leave_subsection();
 
@@ -492,16 +498,58 @@ namespace dftfe
           "0",
           dealii::Patterns::Integer(0, 24),
           "[Standard] The degree of the finite-element interpolating polynomial for the electrostatics part of the Kohn-Sham Hamiltonian. It is automatically set to POLYNOMIAL ORDER if POLYNOMIAL ORDER ELECTROSTATICS set to default value of zero.");
+
+        prm.declare_entry(
+          "NON LOCAL PSP QUADRATURE ORDER",
+          "0",
+          dealii::Patterns::Integer(0, 40),
+          "[Advanced] The quadrature rule used for the nonlocal potential projectors or orbital data. The default value of zero selects 14 if USE HIGH QUADRATURE RULE is true and 10 otherwise.");
+
+        prm.declare_entry(
+          "NON LOCAL PSP QUADRATURE COPY",
+          "0",
+          dealii::Patterns::Integer(0, 10),
+          "[Advanced] The number of copies of the quadrature rule used for the nonlocal potential projectors or orbital data. The default value of zero selects 1.");
+
+        prm.declare_entry(
+          "NUCLEAR CHARGE QUADRATURE ORDER",
+          "0",
+          dealii::Patterns::Integer(0, 40),
+          "[Advanced] The quadrature rule used for the smeared charge or compensation charge. The default value of zero selects 10.");
+
+        prm.declare_entry(
+          "NUCLEAR CHARGE QUADRATURE COPY",
+          "0",
+          dealii::Patterns::Integer(0, 10),
+          "[Advanced] The number of copies of the quadrature rule used for the smeared charge or compensation charge. The default value of zero selects 5 if CELL STRESS is true, 3 if MESH SIZE AROUND ATOM exceeds 2.2, and 2 otherwise.");
+
+        prm.declare_entry(
+          "LOCAL POTENTIAL QUADRATURE ORDER",
+          "0",
+          dealii::Patterns::Integer(0, 40),
+          "[Advanced] The quadrature rule used for the atom data local potentials. The default value of zero selects 14 if USE HIGH QUADRATURE RULE is true and 10 otherwise.");
+
+        prm.declare_entry(
+          "LOCAL POTENTIAL QUADRATURE COPY",
+          "0",
+          dealii::Patterns::Integer(0, 10),
+          "[Advanced] The number of copies of the quadrature rule used for the atom data local potentials. The default value of zero selects 1.");
+
+        prm.declare_entry(
+          "USE HIGH QUADRATURE RULE",
+          "false",
+          dealii::Patterns::Bool(),
+          "[Advanced] Selects the quadrature rule that NON LOCAL PSP QUADRATURE ORDER and LOCAL POTENTIAL QUADRATURE ORDER take when left at zero: 14 if true, 10 if false. Recommended for MD simulations with hard pseudopotentials. Default: false.");
         prm.declare_entry(
           "POLYNOMIAL ORDER DENSITY NODAL",
           "0",
           dealii::Patterns::Integer(0, 24),
-          "[Standard] The degree of the finite-element interpolating polynomial for interpolating electron density. It is automatically set to max of POLYNOMIAL ORDER+2 and POLYNOMIAL ORDER ELECTROSTATICS  if POLYNOMIAL ORDER DENSITY NODAL set to default value of zero.");
+          "[Standard] The degree of the finite-element interpolating polynomial for interpolating electron density. It is automatically set to max of POLYNOMIAL ORDER+2 and POLYNOMIAL ORDER ELECTROSTATICS  if POLYNOMIAL ORDER DENSITY NODAL set to default value of zero. With NONCOLLINEAR SPIN, a GGA functional and a MIXING METHOD that mixes the nodal density (ANDERSON_WITH_KERKER, ANDERSON_WITH_RESTA, LOW_RANK_DIELECM_PRECOND or ANDERSON_WITH_LDOS) or USE GROUP SYMMETRY, the automatic value is raised to at least 2*POLYNOMIAL ORDER.");
         prm.declare_entry(
           "DENSITY QUADRATURE RULE",
           "0",
           dealii::Patterns::Integer(0, 24),
-          "[Standard] The quadrtaure rule used for computing the electron density. It is automatically set to 16 for MGGA exchange-correlation functional or max of POLYNOMIAL ORDER DENSITY NODAL +1 for other exchange-correlation functionals if DENSITY QUADTRATURE RULE set to default value of zero.");
+          "[Standard] The quadrtaure rule used for computing the electron density. It is automatically set to 16 for MGGA exchange-correlation functional or max of POLYNOMIAL ORDER DENSITY NODAL +1 for other exchange-correlation functionals if DENSITY QUADTRATURE RULE set to default value of zero. With NONCOLLINEAR SPIN and a GGA functional, a value below 2*POLYNOMIAL ORDER+1, automatic or given, is raised to 2*POLYNOMIAL ORDER+1.");
         prm.declare_entry(
           "INTERMEDIATE DENSITY QUADRATURE RULE",
           "0",
@@ -1491,6 +1539,7 @@ namespace dftfe
     reuseLanczosUpperBoundFromFirstCall            = false;
     allowMultipleFilteringPassesAfterFirstScf      = true;
     useELPADeviceKernel                            = false;
+    useELPADeviceTwoStageSolver                    = false;
     // New Paramters for moleculardyynamics class
     startingTempBOMD           = 300;
     thermostatTimeConstantBOMD = 100;
@@ -1537,6 +1586,14 @@ namespace dftfe
     confiningWParam      = 1.0;
     confiningCParam      = 1.0;
 
+    // 0 selects the automatic rule of setAutoParameters
+    QuadratureOrderNonLocalPSP    = 0;
+    QuadratureCopyNonLocalPSP     = 0;
+    QuadratureOrderNuclearCharge  = 0;
+    QuadratureCopyNuclearCharge   = 0;
+    QuadratureOrderLocalPotential = 0;
+    QuadratureCopyLocalPotential  = 0;
+    highQuadRule                  = false;
 
     writeStructreEnergyForcesFileForPostProcess = false;
   }
@@ -1580,6 +1637,8 @@ namespace dftfe
         useDevice && prm.get_bool("USE GPUDIRECT MPI ALL REDUCE");
       useDCCL             = useDevice && prm.get_bool("USE DCCL");
       useELPADeviceKernel = useDevice && prm.get_bool("USE ELPA GPU KERNEL");
+      useELPADeviceTwoStageSolver =
+        useDevice && prm.get_bool("USE ELPA GPU TWO STAGE SOLVER");
     }
     prm.leave_subsection();
 
@@ -1697,8 +1756,23 @@ namespace dftfe
         prm.get_integer("POLYNOMIAL ORDER ELECTROSTATICS") == 0 ?
           prm.get_integer("POLYNOMIAL ORDER") :
           prm.get_integer("POLYNOMIAL ORDER ELECTROSTATICS");
+      QuadratureOrderNonLocalPSP =
+        prm.get_integer("NON LOCAL PSP QUADRATURE ORDER");
+      QuadratureCopyNonLocalPSP =
+        prm.get_integer("NON LOCAL PSP QUADRATURE COPY");
+      QuadratureOrderNuclearCharge =
+        prm.get_integer("NUCLEAR CHARGE QUADRATURE ORDER");
+      QuadratureCopyNuclearCharge =
+        prm.get_integer("NUCLEAR CHARGE QUADRATURE COPY");
+      QuadratureOrderLocalPotential =
+        prm.get_integer("LOCAL POTENTIAL QUADRATURE ORDER");
+      QuadratureCopyLocalPotential =
+        prm.get_integer("LOCAL POTENTIAL QUADRATURE COPY");
+      highQuadRule = prm.get_bool("USE HIGH QUADRATURE RULE");
+      densityNodalOrderIsDefault =
+        prm.get_integer("POLYNOMIAL ORDER DENSITY NODAL") == 0;
       finiteElementPolynomialOrderRhoNodal =
-        prm.get_integer("POLYNOMIAL ORDER DENSITY NODAL") == 0 ?
+        densityNodalOrderIsDefault ?
           (finiteElementPolynomialOrder + 2 >
                finiteElementPolynomialOrderElectrostatics ?
              finiteElementPolynomialOrder + 2 :
@@ -2011,6 +2085,20 @@ namespace dftfe
         mixingMethod != "LOW_RANK_DIELECM_PRECOND",
         dealii::ExcMessage(
           "DFT-FE Error: LRDM mixing scheme for noncollinear magnetism and spin-orbit coupling is not implemented yet."));
+    // Time-reversal maps a spinor state onto one with the same charge density
+    // but the opposite spin density.  The reduced-BZ reconstruction doubles the
+    // weight of the retained k-point without reversing the magnetization, so it
+    // manufactures a spurious moment as soon as the four-component density is
+    // built -- including for a nonmagnetic material, whose per-k spin texture
+    // is nonzero even though the full-BZ sum vanishes.  With SPIN-ORBIT
+    // COUPLING alone (noncolin == false) only the charge density is assembled
+    // and Veff is spin independent, so Kramers symmetry holds and the reduction
+    // stays exact.
+    if (noncolin)
+      AssertThrow(
+        !timeReversal,
+        dealii::ExcMessage(
+          "DFT-FE Error: USE TIME REVERSAL SYMMETRY cannot be used with NONCOLLINEAR SPIN. The reduced k-point reconstruction does not reverse the magnetization of the time-reversed spinor."));
     if (numberEigenValues != 0)
       AssertThrow(
         nbandGrps <= numberEigenValues,
@@ -2102,6 +2190,15 @@ namespace dftfe
             "DFT-FE Error: Non-collinear magnetism and spin-orbit coupling with MGGA functional is not implemented yet."));
       }
 
+    // atomCenteredPostProcessing indexes the wavefunction array as
+    // [dof][band] with no spinor factor, so it supports neither noncollinear
+    // magnetism nor spin-orbit coupling.
+    if (writePdosFile)
+      AssertThrow(
+        !(noncolin || hasSOC),
+        dealii::ExcMessage(
+          "DFT-FE Error: WRITE PROJECTED DENSITY OF STATES is not implemented for noncollinear magnetism or spin-orbit coupling."));
+
     bool isHubbard = (XCType.substr(XCType.size() - 2) == "+U");
     if (isHubbard)
       AssertThrow(
@@ -2175,6 +2272,16 @@ namespace dftfe
           }
       }
   }
+
+  bool
+  dftParameters::usesNodalDensity() const
+  {
+    return mixingMethod == "ANDERSON_WITH_KERKER" ||
+           mixingMethod == "ANDERSON_WITH_RESTA" ||
+           mixingMethod == "LOW_RANK_DIELECM_PRECOND" ||
+           mixingMethod == "ANDERSON_WITH_LDOS" || useSymm;
+  }
+
 
   void
   dftParameters::setAutoParameters(const MPI_Comm &mpi_comm_parent)
@@ -2299,6 +2406,14 @@ namespace dftfe
             "DFT-FE Error: GS is not implemented on GPUs. Use Auto option."));
       }
 
+    // The GS path scales the wavefunctions by the mass vector using the spinor
+    // row count (2 x owned dofs) against a vector of length owned dofs.
+    if (orthogType == "GS")
+      AssertThrow(
+        !(noncolin || hasSOC),
+        dealii::ExcMessage(
+          "DFT-FE Error: ORTHOGONALIZATION TYPE = GS is not implemented for noncollinear magnetism and spin-orbit coupling. Use CGS/Auto."));
+
     if (algoType == "FAST")
       {
         useMixedPrecXtOX                    = true;
@@ -2316,12 +2431,14 @@ namespace dftfe
 #endif
 
 #ifndef DFTFE_WITH_DEVICE
-    useDevice           = false;
-    useELPADeviceKernel = false;
+    useDevice                   = false;
+    useELPADeviceKernel         = false;
+    useELPADeviceTwoStageSolver = false;
 #endif
 #if defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-    useDCCL             = false;
-    useELPADeviceKernel = false;
+    useDCCL                     = false;
+    useELPADeviceKernel         = false;
+    useELPADeviceTwoStageSolver = false;
 #endif
 
     if (scalapackBlockSize == 0)
@@ -2389,6 +2506,81 @@ namespace dftfe
         densityQuadratureRule = XCType.substr(0, 4) == "MGGA" ?
                                   16 :
                                   finiteElementPolynomialOrderRhoNodal + 1;
+      }
+
+    // Pseudopotential quadrature rules left at 0: order 14 with USE HIGH
+    // QUADRATURE RULE, 10 otherwise, and one copy.
+    if (QuadratureOrderNonLocalPSP == 0)
+      QuadratureOrderNonLocalPSP = highQuadRule ? 14 : 10;
+
+    if (QuadratureCopyNonLocalPSP == 0)
+      QuadratureCopyNonLocalPSP = 1;
+
+    if (QuadratureOrderLocalPotential == 0)
+      QuadratureOrderLocalPotential = highQuadRule ? 14 : 10;
+
+    if (QuadratureCopyLocalPotential == 0)
+      QuadratureCopyLocalPotential = 1;
+
+    // Smeared nuclear charge rule left at 0: order 10, with 5 copies for the
+    // cell stress, 3 for MESH SIZE AROUND ATOM > 2.2 and 2 otherwise.
+    if (QuadratureOrderNuclearCharge == 0)
+      QuadratureOrderNuclearCharge = 10;
+
+    if (QuadratureCopyNuclearCharge == 0)
+      QuadratureCopyNuclearCharge = isCellStress              ? 5 :
+                                    (meshSizeOuterBall > 2.2) ? 3 :
+                                                                2;
+
+    // Non-collinear GGA: the White-Bird construction differentiates the
+    // density through the Gauss-point Lagrange collocation basis, so the
+    // cell-local density rho = psi* psi, of degree
+    // 2 * finiteElementPolynomialOrder, must be exactly representable in that
+    // basis.  This requires
+    //
+    //     densityQuadratureRule >= 2 * finiteElementPolynomialOrder + 1
+    //
+    // which is what makes d(grad rho)_q / d(rho_p) equal D_qp, and hence the
+    // Hamiltonian the derivative of the evaluated discrete E_xc.
+    if (noncolin && XCType.substr(0, 3) == "GGA")
+      {
+        const dftfe::uInt requiredDensityQuadratureRule =
+          2 * finiteElementPolynomialOrder + 1;
+
+        // Mixing schemes that route the density through the nodal field (see
+        // src/dft/density.cc) replace rho by its interpolant of degree
+        // finiteElementPolynomialOrderRhoNodal before it reaches E_xc, so that
+        // order must also reach 2 * finiteElementPolynomialOrder to preserve
+        // the content the quadrature rule above requires.  Raised only when
+        // left at the default; a user-supplied order is honoured as given.
+        if (usesNodalDensity() && densityNodalOrderIsDefault &&
+            finiteElementPolynomialOrderRhoNodal <
+              2 * finiteElementPolynomialOrder)
+          {
+            if (verbosity >= 1 &&
+                dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0)
+              std::cout
+                << "Setting POLYNOMIAL ORDER DENSITY NODAL to "
+                << 2 * finiteElementPolynomialOrder
+                << " for noncollinear magnetism with a GGA functional and a nodal density mixing scheme."
+                << std::endl;
+            finiteElementPolynomialOrderRhoNodal =
+              2 * finiteElementPolynomialOrder;
+          }
+
+        if (densityQuadratureRule < requiredDensityQuadratureRule)
+          {
+            if (verbosity >= 1 &&
+                dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0)
+              std::cout
+                << "Setting DENSITY QUADRATURE RULE to "
+                << requiredDensityQuadratureRule
+                << " for noncollinear magnetism with a GGA functional; the requested value of "
+                << densityQuadratureRule
+                << " cannot represent the density exactly in the collocation basis."
+                << std::endl;
+            densityQuadratureRule = requiredDensityQuadratureRule;
+          }
       }
 
     if (useIntermediateDensityQuadrature)

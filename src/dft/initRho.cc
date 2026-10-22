@@ -26,6 +26,8 @@
 #include <dftfe/dftUtils.h>
 #include <dftfe/fileReaders.h>
 #include <dftfe/vectorUtilities.h>
+#include <dftfe/atomicInitKernels.h>
+#include <dftfe/atomTypeSplineTables.h>
 #include <cmath>
 
 namespace dftfe
@@ -124,7 +126,7 @@ namespace dftfe
       }
 
     // Initialize electron density table storage for rhoIn
-    d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId, false);
+    d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId);
     const dftfe::uInt n_q_points = d_basisOperationsPtrHost->nQuadsPerCell();
     const dftfe::uInt nCells     = d_basisOperationsPtrHost->nCells();
     const dftfe::uInt nDensityComponents =
@@ -161,11 +163,7 @@ namespace dftfe
     // Initialize electron density table storage for rhoOut only for Anderson
     // with Kerker for other mixing schemes it is done in density.cc as we need
     // to do this initialization every SCF
-    if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
-        d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA" ||
-        d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND" ||
-        d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_LDOS" ||
-        d_dftParamsPtr->useSymm)
+    if (d_dftParamsPtr->usesNodalDensity())
       {
         d_densityOutQuadValues.resize(nDensityComponents);
         if (isGradDensityDataDependent)
@@ -190,11 +188,109 @@ namespace dftfe
     const dftfe::Int numberGlobalCharges = atomLocations.size();
 
 
-    if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
-        d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA" ||
-        d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND" ||
-        d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_LDOS" ||
-        d_dftParamsPtr->useSymm)
+
+    // Atoms and their periodic images whose density tail can reach a
+    // locally owned point, with the per-center density and magnetization
+    // factors of the initial guess; shared by the nodal and quadrature
+    // initializations below.
+    const dftfe::uInt      numberMagComponents = nDensityComponents - 1;
+    dealii::BoundingBox<3> boundingBoxTria(
+      vectorTools::createBoundingBoxTriaLocallyOwned(d_dofHandlerRhoNodal));
+    dealii::Tensor<1, 3, double> tempDisp;
+    tempDisp[0] = maxRhoTail;
+    tempDisp[1] = maxRhoTail;
+    tempDisp[2] = maxRhoTail;
+
+    std::vector<double> atomsImagesPositions;
+    std::vector<double> atomsImagesChargeIds;
+    for (dftfe::uInt iAtom = 0;
+         iAtom < numberGlobalCharges + numberImageCharges;
+         iAtom++)
+      {
+        dealii::Point<3> atomCoord;
+        dftfe::Int       chargeId;
+        if (iAtom < numberGlobalCharges)
+          {
+            atomCoord[0] = atomLocations[iAtom][2];
+            atomCoord[1] = atomLocations[iAtom][3];
+            atomCoord[2] = atomLocations[iAtom][4];
+            chargeId     = iAtom;
+          }
+        else
+          {
+            const dftfe::uInt iImageCharge = iAtom - numberGlobalCharges;
+            atomCoord[0] = d_imagePositionsTrunc[iImageCharge][0];
+            atomCoord[1] = d_imagePositionsTrunc[iImageCharge][1];
+            atomCoord[2] = d_imagePositionsTrunc[iImageCharge][2];
+            chargeId     = d_imageIdsTrunc[iImageCharge];
+          }
+
+        std::pair<dealii::Point<3, double>, dealii::Point<3, double>>
+          boundaryPoints;
+        boundaryPoints.first  = atomCoord - tempDisp;
+        boundaryPoints.second = atomCoord + tempDisp;
+        dealii::BoundingBox<3> boundingBoxAroundAtom(boundaryPoints);
+
+        // centers beyond maxRhoTail of every locally owned point
+        // contribute nothing to the superposition
+        if (boundingBoxTria.get_neighbor_type(boundingBoxAroundAtom) !=
+            dealii::NeighborType::not_neighbors)
+          {
+            atomsImagesPositions.push_back(atomCoord[0]);
+            atomsImagesPositions.push_back(atomCoord[1]);
+            atomsImagesPositions.push_back(atomCoord[2]);
+            atomsImagesChargeIds.push_back(chargeId);
+          }
+      }
+    // per-center quantities, independent of the evaluation point
+    const dftfe::uInt        nCentersRho = atomsImagesChargeIds.size();
+    std::vector<double>      atomsImagesRhoFactor(nCentersRho, 1.0);
+    std::vector<double>      atomsImagesMagZFactor(nCentersRho, 0.0);
+    std::vector<double>      atomsImagesMagYFactor(nCentersRho, 0.0);
+    std::vector<double>      atomsImagesMagXFactor(nCentersRho, 0.0);
+    std::vector<double>      atomsImagesDenCutoff(nCentersRho, 0.0);
+    std::vector<dftfe::uInt> atomsImagesDenZ(nCentersRho, 0);
+    for (dftfe::uInt iAtom = 0; iAtom < nCentersRho; ++iAtom)
+      {
+        const dftfe::Int  chargeId  = atomsImagesChargeIds[iAtom];
+        const auto       &atomLoc   = atomLocations[chargeId];
+        const dftfe::uInt Znum      = atomLoc[0];
+        atomsImagesDenZ[iAtom]      = Znum;
+        atomsImagesDenCutoff[iAtom] = outerMostPointDen[Znum];
+        if (numberMagComponents == 1)
+          {
+            if (atomLoc.size() == 6)
+              atomsImagesMagZFactor[iAtom] = atomLoc[5];
+            else if (atomLoc.size() == 7)
+              {
+                atomsImagesRhoFactor[iAtom]  = atomLoc[6];
+                atomsImagesMagZFactor[iAtom] = atomLoc[5];
+              }
+          }
+        else if (numberMagComponents == 3)
+          {
+            if (atomLoc.size() == 8 || atomLoc.size() == 9)
+              {
+                if (atomLoc.size() == 9)
+                  atomsImagesRhoFactor[iAtom] = atomLoc[8];
+                atomsImagesMagZFactor[iAtom] =
+                  std::cos(M_PI / 180.0 * atomLoc[6]) * atomLoc[5];
+                atomsImagesMagYFactor[iAtom] =
+                  std::sin(M_PI / 180.0 * atomLoc[6]) *
+                  std::sin(M_PI / 180.0 * atomLoc[7]) * atomLoc[5];
+                atomsImagesMagXFactor[iAtom] =
+                  std::sin(M_PI / 180.0 * atomLoc[6]) *
+                  std::cos(M_PI / 180.0 * atomLoc[7]) * atomLoc[5];
+              }
+          }
+        else
+          {
+            if (atomLoc.size() == 6)
+              atomsImagesRhoFactor[iAtom] = atomLoc[5];
+          }
+      }
+
+    if (d_dftParamsPtr->usesNodalDensity())
       {
         const dealii::IndexSet &locallyOwnedSet =
           d_dofHandlerRhoNodal.locally_owned_dofs();
@@ -205,56 +301,6 @@ namespace dftfe
           supportPointsRhoNodal = dealii::DoFTools::map_dofs_to_support_points(
             dealii::MappingQ1<3, 3>(), d_dofHandlerRhoNodal);
 
-        dealii::BoundingBox<3> boundingBoxTria(
-          vectorTools::createBoundingBoxTriaLocallyOwned(d_dofHandlerRhoNodal));
-        dealii::Tensor<1, 3, double> tempDisp;
-        tempDisp[0] = maxRhoTail;
-        tempDisp[1] = maxRhoTail;
-        tempDisp[2] = maxRhoTail;
-
-        std::vector<double> atomsImagesPositions;
-        std::vector<double> atomsImagesChargeIds;
-        for (dftfe::uInt iAtom = 0;
-             iAtom < numberGlobalCharges + numberImageCharges;
-             iAtom++)
-          {
-            dealii::Point<3> atomCoord;
-            dftfe::Int       chargeId;
-            if (iAtom < numberGlobalCharges)
-              {
-                atomCoord[0] = atomLocations[iAtom][2];
-                atomCoord[1] = atomLocations[iAtom][3];
-                atomCoord[2] = atomLocations[iAtom][4];
-                chargeId     = iAtom;
-              }
-            else
-              {
-                const dftfe::uInt iImageCharge = iAtom - numberGlobalCharges;
-                atomCoord[0] = d_imagePositionsTrunc[iImageCharge][0];
-                atomCoord[1] = d_imagePositionsTrunc[iImageCharge][1];
-                atomCoord[2] = d_imagePositionsTrunc[iImageCharge][2];
-                chargeId     = d_imageIdsTrunc[iImageCharge];
-              }
-
-            std::pair<dealii::Point<3, double>, dealii::Point<3, double>>
-              boundaryPoints;
-            boundaryPoints.first  = atomCoord - tempDisp;
-            boundaryPoints.second = atomCoord + tempDisp;
-            dealii::BoundingBox<3> boundingBoxAroundAtom(boundaryPoints);
-
-            if (boundingBoxTria.get_neighbor_type(boundingBoxAroundAtom) !=
-                dealii::NeighborType::not_neighbors)
-              ;
-            {
-              atomsImagesPositions.push_back(atomCoord[0]);
-              atomsImagesPositions.push_back(atomCoord[1]);
-              atomsImagesPositions.push_back(atomCoord[2]);
-              atomsImagesChargeIds.push_back(chargeId);
-            }
-          }
-
-        const dftfe::uInt numberMagComponents =
-          d_densityInNodalValues.size() - 1;
         // kpoint group parallelization data structures
         const dftfe::uInt numberKptGroups =
           dealii::Utilities::MPI::n_mpi_processes(interpoolcomm);
@@ -269,149 +315,208 @@ namespace dftfe
         for (dftfe::uInt iComp = 0; iComp < d_densityInNodalValues.size();
              ++iComp)
           d_densityInNodalValues[iComp] = 0;
-#pragma omp parallel for num_threads(d_nOMPThreads) firstprivate(denSpline)
-        for (dftfe::uInt dof = 0; dof < numberDofs; ++dof)
+        // A pseudopotential run evaluates the valence densities through
+        // atomicInitKernels, one thread or iteration per unconstrained nodal
+        // dof of this k-point group with the centers looped inside; an
+        // all-electron run evaluates its spline fits on the host.
+        if (d_dftParamsPtr->isPseudopotential && numberDofs > 0)
           {
-            if (dof < kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId + 1] &&
-                dof >= kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId])
+            splineHostTableUtils::SplineTableGroup denTables;
+            std::map<dftfe::uInt, dftfe::uInt>     znumToDenSplineId;
+            buildAtomTypeSplineTables(
+              atomTypes,
+              [this](const dftfe::uInt Znum) {
+                return d_oncvClassPtr->getRadialValenceDensityFunction(Znum, 0);
+              },
+              denTables,
+              znumToDenSplineId);
+
+            // compacted so the kernel needs no constraint handling
+            std::vector<double>      unconstrainedCoords;
+            std::vector<dftfe::uInt> unconstrainedDofIndex;
+            unconstrainedCoords.reserve(3 * numberDofs);
+            unconstrainedDofIndex.reserve(numberDofs);
+            for (dftfe::uInt dof = 0; dof < numberDofs; ++dof)
               {
+                if (!(dof <
+                        kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId + 1] &&
+                      dof >= kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId]))
+                  continue;
                 const dealii::types::global_dof_index dofID =
                   locallyOwnedDOFs[dof];
+                if (d_constraintsRhoNodal.is_constrained(dofID))
+                  continue;
                 const dealii::Point<3> &nodalCoor =
                   supportPointsRhoNodal[dofID];
-                if (!d_constraintsRhoNodal.is_constrained(dofID))
+                unconstrainedCoords.push_back(nodalCoor[0]);
+                unconstrainedCoords.push_back(nodalCoor[1]);
+                unconstrainedCoords.push_back(nodalCoor[2]);
+                unconstrainedDofIndex.push_back(dof);
+              }
+            const dftfe::uInt nPointsRho = unconstrainedDofIndex.size();
+
+            std::vector<dftfe::uInt> centerSplineIdHostRho(nCentersRho);
+            for (dftfe::uInt iAtom = 0; iAtom < nCentersRho; ++iAtom)
+              centerSplineIdHostRho[iAtom] =
+                znumToDenSplineId.at(atomsImagesDenZ[iAtom]);
+
+
+            const dftfe::utils::MemoryStorage<double, memorySpace>
+              dPoints = dftfe::utils::memoryStorageFromSTL<double, memorySpace>(
+                unconstrainedCoords),
+              dCenters =
+                dftfe::utils::memoryStorageFromSTL<double, memorySpace>(
+                  atomsImagesPositions),
+              dRhoFac = dftfe::utils::memoryStorageFromSTL<double, memorySpace>(
+                atomsImagesRhoFactor),
+              dMagZFac =
+                dftfe::utils::memoryStorageFromSTL<double, memorySpace>(
+                  atomsImagesMagZFactor),
+              dMagYFac =
+                dftfe::utils::memoryStorageFromSTL<double, memorySpace>(
+                  atomsImagesMagYFactor),
+              dMagXFac =
+                dftfe::utils::memoryStorageFromSTL<double, memorySpace>(
+                  atomsImagesMagXFactor);
+            const dftfe::utils::MemoryStorage<dftfe::uInt, memorySpace>
+              dSplineIdRho =
+                dftfe::utils::memoryStorageFromSTL<dftfe::uInt, memorySpace>(
+                  centerSplineIdHostRho);
+            AtomTypeSplineTables<memorySpace> denTablesMem;
+            denTablesMem.stage(denTables);
+            dftfe::utils::MemoryStorage<double, memorySpace> dRhoOut(
+              nPointsRho),
+              dMagZOut(numberMagComponents >= 1 ? nPointsRho : 0),
+              dMagYOut(numberMagComponents == 3 ? nPointsRho : 0),
+              dMagXOut(numberMagComponents == 3 ? nPointsRho : 0);
+
+            atomicInitKernels::atomicDensityQuadSuperposition<memorySpace>(
+              nPointsRho,
+              nCentersRho,
+              numberMagComponents,
+              d_dftParamsPtr->floatingNuclearCharges,
+              false,
+              0.0,
+              dPoints.data(),
+              dCenters.data(),
+              dSplineIdRho.data(),
+              dRhoFac.data(),
+              dMagZFac.data(),
+              dMagYFac.data(),
+              dMagXFac.data(),
+              denTablesMem.view(),
+              dRhoOut.data(),
+              dMagZOut.data(),
+              dMagYOut.data(),
+              dMagXOut.data(),
+              nullptr,
+              nullptr,
+              nullptr,
+              nullptr,
+              d_nOMPThreads);
+
+            std::vector<double> hRhoOut(nPointsRho), hMagZOut, hMagYOut,
+              hMagXOut;
+            dRhoOut.copyTo(hRhoOut);
+            if (numberMagComponents >= 1)
+              {
+                hMagZOut.resize(nPointsRho);
+                dMagZOut.copyTo(hMagZOut);
+              }
+            if (numberMagComponents == 3)
+              {
+                hMagYOut.resize(nPointsRho);
+                hMagXOut.resize(nPointsRho);
+                dMagYOut.copyTo(hMagYOut);
+                dMagXOut.copyTo(hMagXOut);
+              }
+
+            for (dftfe::uInt iPoint = 0; iPoint < nPointsRho; ++iPoint)
+              {
+                const dftfe::uInt dof = unconstrainedDofIndex[iPoint];
+                d_densityInNodalValues[0].local_element(dof) = hRhoOut[iPoint];
+                if (numberMagComponents >= 1)
+                  d_densityInNodalValues[1].local_element(dof) =
+                    hMagZOut[iPoint];
+                if (numberMagComponents == 3)
                   {
-                    // loop over atoms and superimpose electron-density at a
-                    // given dof from all atoms
-                    double     rhoNodalValue  = 0.0;
-                    double     magZNodalValue = 0.0;
-                    double     magYNodalValue = 0.0;
-                    double     magXNodalValue = 0.0;
-                    dftfe::Int chargeId;
-                    double     distanceToAtom;
-                    double     diffx;
-                    double     diffy;
-                    double     diffz;
-
-
-                    for (dftfe::uInt iAtom = 0;
-                         iAtom < atomsImagesChargeIds.size();
-                         ++iAtom)
+                    d_densityInNodalValues[2].local_element(dof) =
+                      hMagYOut[iPoint];
+                    d_densityInNodalValues[3].local_element(dof) =
+                      hMagXOut[iPoint];
+                  }
+              }
+          }
+        else if (!d_dftParamsPtr->isPseudopotential)
+          {
+#pragma omp parallel for num_threads(d_nOMPThreads) firstprivate(denSpline)
+            for (dftfe::uInt dof = 0; dof < numberDofs; ++dof)
+              {
+                if (dof <
+                      kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId + 1] &&
+                    dof >= kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId])
+                  {
+                    const dealii::types::global_dof_index dofID =
+                      locallyOwnedDOFs[dof];
+                    const dealii::Point<3> &nodalCoor =
+                      supportPointsRhoNodal[dofID];
+                    if (!d_constraintsRhoNodal.is_constrained(dofID))
                       {
-                        diffx =
-                          nodalCoor[0] - atomsImagesPositions[iAtom * 3 + 0];
-                        diffy =
-                          nodalCoor[1] - atomsImagesPositions[iAtom * 3 + 1];
-                        diffz =
-                          nodalCoor[2] - atomsImagesPositions[iAtom * 3 + 2];
+                        // loop over atoms and superimpose electron-density at a
+                        // given dof from all atoms
+                        double rhoNodalValue  = 0.0;
+                        double magZNodalValue = 0.0;
+                        double magYNodalValue = 0.0;
+                        double magXNodalValue = 0.0;
+                        double distanceToAtom;
+                        double diffx;
+                        double diffy;
+                        double diffz;
 
-                        distanceToAtom = std::sqrt(
-                          diffx * diffx + diffy * diffy + diffz * diffz);
+                        for (dftfe::uInt iAtom = 0; iAtom < nCentersRho;
+                             ++iAtom)
+                          {
+                            diffx = nodalCoor[0] -
+                                    atomsImagesPositions[iAtom * 3 + 0];
+                            diffy = nodalCoor[1] -
+                                    atomsImagesPositions[iAtom * 3 + 1];
+                            diffz = nodalCoor[2] -
+                                    atomsImagesPositions[iAtom * 3 + 2];
 
-                        chargeId = atomsImagesChargeIds[iAtom];
+                            distanceToAtom = std::sqrt(
+                              diffx * diffx + diffy * diffy + diffz * diffz);
 
-                        double rhoAtomFactor = 1.0, magZAtomFactor = 0.0,
-                               magYAtomFactor = 0.0, magXAtomFactor = 0.0;
-                        if (numberMagComponents == 1)
-                          {
-                            if (atomLocations[chargeId].size() == 6)
-                              magZAtomFactor = atomLocations[chargeId][5];
-                            else if (atomLocations[chargeId].size() == 7)
+                            if (distanceToAtom <= atomsImagesDenCutoff[iAtom])
                               {
-                                rhoAtomFactor  = atomLocations[chargeId][6];
-                                magZAtomFactor = atomLocations[chargeId][5];
-                              }
-                          }
-                        else if (numberMagComponents == 3)
-                          {
-                            if (atomLocations[chargeId].size() == 8)
-                              {
-                                magZAtomFactor =
-                                  std::cos(M_PI / 180.0 *
-                                           atomLocations[chargeId][6]) *
-                                  atomLocations[chargeId][5];
-                                magYAtomFactor =
-                                  std::sin(M_PI / 180.0 *
-                                           atomLocations[chargeId][6]) *
-                                  std::sin(M_PI / 180.0 *
-                                           atomLocations[chargeId][7]) *
-                                  atomLocations[chargeId][5];
-                                magXAtomFactor =
-                                  std::sin(M_PI / 180.0 *
-                                           atomLocations[chargeId][6]) *
-                                  std::cos(M_PI / 180.0 *
-                                           atomLocations[chargeId][7]) *
-                                  atomLocations[chargeId][5];
-                              }
-                            else if (atomLocations[chargeId].size() == 9)
-                              {
-                                rhoAtomFactor = atomLocations[chargeId][8];
-                                magZAtomFactor =
-                                  std::cos(M_PI / 180.0 *
-                                           atomLocations[chargeId][6]) *
-                                  atomLocations[chargeId][5];
-                                magYAtomFactor =
-                                  std::sin(M_PI / 180.0 *
-                                           atomLocations[chargeId][6]) *
-                                  std::sin(M_PI / 180.0 *
-                                           atomLocations[chargeId][7]) *
-                                  atomLocations[chargeId][5];
-                                magXAtomFactor =
-                                  std::sin(M_PI / 180.0 *
-                                           atomLocations[chargeId][6]) *
-                                  std::cos(M_PI / 180.0 *
-                                           atomLocations[chargeId][7]) *
-                                  atomLocations[chargeId][5];
-                              }
-                          }
-                        else
-                          {
-                            if (atomLocations[chargeId].size() == 6)
-                              rhoAtomFactor = atomLocations[chargeId][5];
-                          }
-
-                        if (distanceToAtom <=
-                            outerMostPointDen[atomLocations[chargeId][0]])
-                          {
-                            if (!d_dftParamsPtr->isPseudopotential)
-                              {
-                                double tempRhoValue =
-                                  rhoAtomFactor *
+                                const double tempRhoValue =
+                                  atomsImagesRhoFactor[iAtom] *
                                   alglib::spline1dcalc(
-                                    denSpline[atomLocations[chargeId][0]],
+                                    denSpline[atomsImagesDenZ[iAtom]],
                                     distanceToAtom);
                                 rhoNodalValue += tempRhoValue;
-                                magZNodalValue += magZAtomFactor * tempRhoValue;
-                                magYNodalValue += magYAtomFactor * tempRhoValue;
-                                magXNodalValue += magXAtomFactor * tempRhoValue;
-                              }
-                            else
-                              {
-                                double tempRhoValue =
-                                  rhoAtomFactor *
-                                  d_oncvClassPtr->getRadialValenceDensity(
-                                    atomLocations[chargeId][0], distanceToAtom);
-                                rhoNodalValue += tempRhoValue;
-                                magZNodalValue += magZAtomFactor * tempRhoValue;
-                                magYNodalValue += magYAtomFactor * tempRhoValue;
-                                magXNodalValue += magXAtomFactor * tempRhoValue;
+                                magZNodalValue +=
+                                  atomsImagesMagZFactor[iAtom] * tempRhoValue;
+                                magYNodalValue +=
+                                  atomsImagesMagYFactor[iAtom] * tempRhoValue;
+                                magXNodalValue +=
+                                  atomsImagesMagXFactor[iAtom] * tempRhoValue;
                               }
                           }
-                      }
 
-                    d_densityInNodalValues[0].local_element(dof) =
-                      std::abs(rhoNodalValue);
-                    if (numberMagComponents == 1)
-                      d_densityInNodalValues[1].local_element(dof) =
-                        magZNodalValue;
-                    if (numberMagComponents == 3)
-                      {
-                        d_densityInNodalValues[1].local_element(dof) =
-                          magZNodalValue;
-                        d_densityInNodalValues[2].local_element(dof) =
-                          magYNodalValue;
-                        d_densityInNodalValues[3].local_element(dof) =
-                          magXNodalValue;
+                        d_densityInNodalValues[0].local_element(dof) =
+                          std::abs(rhoNodalValue);
+                        if (numberMagComponents == 1)
+                          d_densityInNodalValues[1].local_element(dof) =
+                            magZNodalValue;
+                        if (numberMagComponents == 3)
+                          {
+                            d_densityInNodalValues[1].local_element(dof) =
+                              magZNodalValue;
+                            d_densityInNodalValues[2].local_element(dof) =
+                              magYNodalValue;
+                            d_densityInNodalValues[3].local_element(dof) =
+                              magXNodalValue;
+                          }
                       }
                   }
               }
@@ -449,6 +554,7 @@ namespace dftfe
                                  d_densityInNodalValues[0])
                   << std::endl;
           }
+
         for (dftfe::uInt iComp = 0; iComp < d_densityInNodalValues.size();
              ++iComp)
           d_basisOperationsPtrElectroHost->interpolate(
@@ -527,277 +633,167 @@ namespace dftfe
       }
     else
       {
-        const dftfe::uInt numberMagComponents =
-          d_densityInQuadValues.size() - 1;
-        // loop over elements
-#pragma omp parallel for num_threads(d_nOMPThreads) firstprivate(denSpline)
-        for (auto iCell = 0; iCell < nCells; ++iCell)
+        // A pseudopotential run evaluates the valence densities through
+        // atomicInitKernels, one thread or iteration per quadrature point
+        // with the centers looped inside; a device run dispatches to the
+        // device specialization and a CPU run to the host one. An
+        // all-electron run evaluates its spline fits on the host.
+        if (d_dftParamsPtr->isPseudopotential)
           {
-            auto    cellid = d_basisOperationsPtrHost->cellID(iCell);
-            double *rhoInValuesPtr =
-              &(d_densityInQuadValues[0][iCell * n_q_points]);
+            splineHostTableUtils::SplineTableGroup denTables;
+            std::map<dftfe::uInt, dftfe::uInt>     znumToDenSplineId;
+            buildAtomTypeSplineTables(
+              atomTypes,
+              [this](const dftfe::uInt Znum) {
+                return d_oncvClassPtr->getRadialValenceDensityFunction(Znum, 0);
+              },
+              denTables,
+              znumToDenSplineId);
+            std::vector<dftfe::uInt> centerSplineIdHost(nCentersRho);
+            for (dftfe::uInt iAtom = 0; iAtom < nCentersRho; ++iAtom)
+              centerSplineIdHost[iAtom] =
+                znumToDenSplineId.at(atomsImagesDenZ[iAtom]);
 
-            double *magZInValuesPtr, *magXInValuesPtr, *magYInValuesPtr;
-            if (d_dftParamsPtr->spinPolarized == 1)
+            AtomTypeSplineTables<memorySpace> denTablesMem;
+            denTablesMem.stage(denTables);
+            const dftfe::utils::MemoryStorage<double, memorySpace>
+              dCenters =
+                dftfe::utils::memoryStorageFromSTL<double, memorySpace>(
+                  atomsImagesPositions),
+              dRhoFac = dftfe::utils::memoryStorageFromSTL<double, memorySpace>(
+                atomsImagesRhoFactor),
+              dMagZFac =
+                dftfe::utils::memoryStorageFromSTL<double, memorySpace>(
+                  atomsImagesMagZFactor),
+              dMagYFac =
+                dftfe::utils::memoryStorageFromSTL<double, memorySpace>(
+                  atomsImagesMagYFactor),
+              dMagXFac =
+                dftfe::utils::memoryStorageFromSTL<double, memorySpace>(
+                  atomsImagesMagXFactor);
+            const dftfe::utils::MemoryStorage<dftfe::uInt, memorySpace>
+              dSplineId =
+                dftfe::utils::memoryStorageFromSTL<dftfe::uInt, memorySpace>(
+                  centerSplineIdHost);
+            dftfe::utils::MemoryStorage<double, memorySpace> dQuad;
+            // one per density component, in the order of
+            // d_densityInQuadValues: rho, magZ, magY, magX
+            std::vector<dftfe::utils::MemoryStorage<double, memorySpace>> dOut(
+              nDensityComponents),
+              dGradOut(isGradDensityDataDependent ? nDensityComponents : 0);
+
+            const bool applyConstraintMag =
+              d_dftParamsPtr->spinPolarized == 1 &&
+              d_dftParamsPtr->constraintMagnetization &&
+              !d_dftParamsPtr->useAtomicMagnetizationGuessConstraintMag &&
+              !d_dftParamsPtr->noncolin;
+
+            // block over cells so the device transient stays bounded. Each
+            // point stages three coordinates and returns every density
+            // component, and for GGA three gradient values per component.
+            const dftfe::uInt cellsBlockSize = std::max<dftfe::uInt>(
+              1,
+              atomicInitKernels::maxBlockBytes /
+                (std::size_t)((3 + nDensityComponents *
+                                     (isGradDensityDataDependent ? 4 : 1)) *
+                              n_q_points * sizeof(double)));
+            for (dftfe::uInt cellBlockStart = 0; cellBlockStart < nCells;
+                 cellBlockStart += cellsBlockSize)
               {
-                magZInValuesPtr =
-                  &(d_densityInQuadValues[1][iCell * n_q_points]);
-              }
-            if (d_dftParamsPtr->noncolin)
-              {
-                magXInValuesPtr =
-                  &(d_densityInQuadValues[3][iCell * n_q_points]);
-                magYInValuesPtr =
-                  &(d_densityInQuadValues[2][iCell * n_q_points]);
-                magZInValuesPtr =
-                  &(d_densityInQuadValues[1][iCell * n_q_points]);
-              }
-            const double *quadPointPtr =
-              d_basisOperationsPtrHost->quadPoints().data() +
-              iCell * n_q_points * 3;
-            for (dftfe::uInt q = 0; q < n_q_points; ++q)
-              {
-                const dealii::Point<3> quadPoint(quadPointPtr[q * 3],
-                                                 quadPointPtr[q * 3 + 1],
-                                                 quadPointPtr[q * 3 + 2]);
-                double                 rhoValueAtQuadPt  = 0.0;
-                double                 magZValueAtQuadPt = 0.0;
-                double                 magYValueAtQuadPt = 0.0;
-                double                 magXValueAtQuadPt = 0.0;
-
-                // loop over atoms
-                for (dftfe::uInt n = 0; n < atomLocations.size(); n++)
+                const dftfe::uInt nCellsInBlock =
+                  std::min(cellsBlockSize, nCells - cellBlockStart);
+                const std::size_t nPointsInBlock =
+                  (std::size_t)nCellsInBlock * n_q_points;
+                const std::size_t blockOffset =
+                  (std::size_t)cellBlockStart * n_q_points;
+                dQuad.resize(nPointsInBlock * 3);
+                dQuad.template copyFrom<dftfe::utils::MemorySpace::HOST>(
+                  d_basisOperationsPtrHost->quadPoints().data() +
+                  blockOffset * 3);
+                for (dftfe::uInt iComp = 0; iComp < nDensityComponents; ++iComp)
                   {
-                    dealii::Point<3> atom(atomLocations[n][2],
-                                          atomLocations[n][3],
-                                          atomLocations[n][4]);
-                    double           distanceToAtom = quadPoint.distance(atom);
-                    double           rhoAtomFactor = 1.0, magZAtomFactor = 0.0,
-                           magYAtomFactor = 0.0, magXAtomFactor = 0.0;
-                    if (numberMagComponents == 1)
-                      {
-                        if (atomLocations[n].size() == 6)
-                          magZAtomFactor = atomLocations[n][5];
-                        else if (atomLocations[n].size() == 7)
-                          {
-                            rhoAtomFactor  = atomLocations[n][6];
-                            magZAtomFactor = atomLocations[n][5];
-                          }
-                      }
-                    else if (numberMagComponents == 3)
-                      {
-                        if (atomLocations[n].size() == 8)
-                          {
-                            magZAtomFactor =
-                              std::cos(M_PI / 180.0 * atomLocations[n][6]) *
-                              atomLocations[n][5];
-                            magYAtomFactor =
-                              std::sin(M_PI / 180.0 * atomLocations[n][6]) *
-                              std::sin(M_PI / 180.0 * atomLocations[n][7]) *
-                              atomLocations[n][5];
-                            magXAtomFactor =
-                              std::sin(M_PI / 180.0 * atomLocations[n][6]) *
-                              std::cos(M_PI / 180.0 * atomLocations[n][7]) *
-                              atomLocations[n][5];
-                          }
-                        else if (atomLocations[n].size() == 9)
-                          {
-                            rhoAtomFactor = atomLocations[n][8];
-                            magZAtomFactor =
-                              std::cos(M_PI / 180.0 * atomLocations[n][6]) *
-                              atomLocations[n][5];
-                            magYAtomFactor =
-                              std::sin(M_PI / 180.0 * atomLocations[n][6]) *
-                              std::sin(M_PI / 180.0 * atomLocations[n][7]) *
-                              atomLocations[n][5];
-                            magXAtomFactor =
-                              std::sin(M_PI / 180.0 * atomLocations[n][6]) *
-                              std::cos(M_PI / 180.0 * atomLocations[n][7]) *
-                              atomLocations[n][5];
-                          }
-                      }
-                    else
-                      {
-                        if (atomLocations[n].size() == 6)
-                          rhoAtomFactor = atomLocations[n][5];
-                      }
-
-                    if (distanceToAtom <=
-                        outerMostPointDen[atomLocations[n][0]])
-                      {
-                        if (!d_dftParamsPtr->isPseudopotential)
-                          {
-                            double tempRhoValue =
-                              rhoAtomFactor *
-                              alglib::spline1dcalc(
-                                denSpline[atomLocations[n][0]], distanceToAtom);
-                            rhoValueAtQuadPt += tempRhoValue;
-                            magZValueAtQuadPt += magZAtomFactor * tempRhoValue;
-                            magYValueAtQuadPt += magYAtomFactor * tempRhoValue;
-                            magXValueAtQuadPt += magXAtomFactor * tempRhoValue;
-                          }
-                        else
-                          {
-                            double tempRhoValue =
-                              rhoAtomFactor *
-                              d_oncvClassPtr->getRadialValenceDensity(
-                                atomLocations[n][0], distanceToAtom);
-                            rhoValueAtQuadPt += tempRhoValue;
-                            magZValueAtQuadPt += magZAtomFactor * tempRhoValue;
-                            magYValueAtQuadPt += magYAtomFactor * tempRhoValue;
-                            magXValueAtQuadPt += magXAtomFactor * tempRhoValue;
-                          }
-                      }
+                    dOut[iComp].resize(nPointsInBlock);
+                    if (isGradDensityDataDependent)
+                      dGradOut[iComp].resize(nPointsInBlock * 3);
                   }
+                auto outPtr = [&](const dftfe::uInt iComp) {
+                  return iComp < nDensityComponents ? dOut[iComp].data() :
+                                                      nullptr;
+                };
+                auto gradOutPtr = [&](const dftfe::uInt iComp) {
+                  return isGradDensityDataDependent &&
+                             iComp < nDensityComponents ?
+                           dGradOut[iComp].data() :
+                           nullptr;
+                };
 
-                // loop over image charges
-                for (dftfe::Int iImageCharge = 0;
-                     iImageCharge < numberImageCharges;
-                     ++iImageCharge)
-                  {
-                    dealii::Point<3> imageAtom(
-                      d_imagePositionsTrunc[iImageCharge][0],
-                      d_imagePositionsTrunc[iImageCharge][1],
-                      d_imagePositionsTrunc[iImageCharge][2]);
-                    double     distanceToAtom = quadPoint.distance(imageAtom);
-                    dftfe::Int masterAtomId   = d_imageIdsTrunc[iImageCharge];
-                    double     rhoAtomFactor = 1.0, magZAtomFactor = 0.0,
-                           magYAtomFactor = 0.0, magXAtomFactor = 0.0;
-                    if (numberMagComponents == 1)
-                      {
-                        if (atomLocations[masterAtomId].size() == 6)
-                          magZAtomFactor = atomLocations[masterAtomId][5];
-                        else if (atomLocations[masterAtomId].size() == 7)
-                          {
-                            rhoAtomFactor  = atomLocations[masterAtomId][6];
-                            magZAtomFactor = atomLocations[masterAtomId][5];
-                          }
-                      }
-                    else if (numberMagComponents == 3)
-                      {
-                        if (atomLocations[masterAtomId].size() == 8)
-                          {
-                            magZAtomFactor =
-                              std::cos(M_PI / 180.0 *
-                                       atomLocations[masterAtomId][6]) *
-                              atomLocations[masterAtomId][5];
-                            magYAtomFactor =
-                              std::sin(M_PI / 180.0 *
-                                       atomLocations[masterAtomId][6]) *
-                              std::sin(M_PI / 180.0 *
-                                       atomLocations[masterAtomId][7]) *
-                              atomLocations[masterAtomId][5];
-                            magXAtomFactor =
-                              std::sin(M_PI / 180.0 *
-                                       atomLocations[masterAtomId][6]) *
-                              std::cos(M_PI / 180.0 *
-                                       atomLocations[masterAtomId][7]) *
-                              atomLocations[masterAtomId][5];
-                          }
-                        else if (atomLocations[masterAtomId].size() == 9)
-                          {
-                            rhoAtomFactor = atomLocations[masterAtomId][8];
-                            magZAtomFactor =
-                              std::cos(M_PI / 180.0 *
-                                       atomLocations[masterAtomId][6]) *
-                              atomLocations[masterAtomId][5];
-                            magYAtomFactor =
-                              std::sin(M_PI / 180.0 *
-                                       atomLocations[masterAtomId][6]) *
-                              std::sin(M_PI / 180.0 *
-                                       atomLocations[masterAtomId][7]) *
-                              atomLocations[masterAtomId][5];
-                            magXAtomFactor =
-                              std::sin(M_PI / 180.0 *
-                                       atomLocations[masterAtomId][6]) *
-                              std::cos(M_PI / 180.0 *
-                                       atomLocations[masterAtomId][7]) *
-                              atomLocations[masterAtomId][5];
-                          }
-                      }
-                    else
-                      {
-                        if (atomLocations[masterAtomId].size() == 6)
-                          rhoAtomFactor = atomLocations[masterAtomId][5];
-                      }
+                atomicInitKernels::atomicDensityQuadSuperposition<memorySpace>(
+                  nPointsInBlock,
+                  nCentersRho,
+                  numberMagComponents,
+                  d_dftParamsPtr->floatingNuclearCharges,
+                  applyConstraintMag,
+                  d_dftParamsPtr->tot_magnetization,
+                  dQuad.data(),
+                  dCenters.data(),
+                  dSplineId.data(),
+                  dRhoFac.data(),
+                  dMagZFac.data(),
+                  dMagYFac.data(),
+                  dMagXFac.data(),
+                  denTablesMem.view(),
+                  outPtr(0),
+                  outPtr(1),
+                  outPtr(2),
+                  outPtr(3),
+                  gradOutPtr(0),
+                  gradOutPtr(1),
+                  gradOutPtr(2),
+                  gradOutPtr(3),
+                  d_nOMPThreads);
 
-                    if (distanceToAtom <=
-                        outerMostPointDen[atomLocations[masterAtomId][0]])
-                      {
-                        if (!d_dftParamsPtr->isPseudopotential)
-                          {
-                            double tempRhoValue =
-                              rhoAtomFactor *
-                              alglib::spline1dcalc(
-                                denSpline[atomLocations[masterAtomId][0]],
-                                distanceToAtom);
-                            rhoValueAtQuadPt += tempRhoValue;
-                            magZValueAtQuadPt += magZAtomFactor * tempRhoValue;
-                            magYValueAtQuadPt += magYAtomFactor * tempRhoValue;
-                            magXValueAtQuadPt += magXAtomFactor * tempRhoValue;
-                          }
-                        else
-                          {
-                            double tempRhoValue =
-                              rhoAtomFactor *
-                              d_oncvClassPtr->getRadialValenceDensity(
-                                atomLocations[masterAtomId][0], distanceToAtom);
-                            rhoValueAtQuadPt += tempRhoValue;
-                            magZValueAtQuadPt += magZAtomFactor * tempRhoValue;
-                            magYValueAtQuadPt += magYAtomFactor * tempRhoValue;
-                            magXValueAtQuadPt += magXAtomFactor * tempRhoValue;
-                          }
-                      }
-                  }
-
-                rhoInValuesPtr[q] = std::abs(rhoValueAtQuadPt);
-                if (d_dftParamsPtr->spinPolarized == 1)
+                for (dftfe::uInt iComp = 0; iComp < nDensityComponents; ++iComp)
                   {
-                    if (d_dftParamsPtr->constraintMagnetization &&
-                        !d_dftParamsPtr
-                           ->useAtomicMagnetizationGuessConstraintMag)
-                      magZInValuesPtr[q] = (d_dftParamsPtr->tot_magnetization) *
-                                           (std::abs(rhoValueAtQuadPt));
-                    else
-                      magZInValuesPtr[q] = magZValueAtQuadPt;
-                  }
-                if (d_dftParamsPtr->noncolin)
-                  {
-                    magXInValuesPtr[q] = magXValueAtQuadPt;
-                    magYInValuesPtr[q] = magYValueAtQuadPt;
-                    magZInValuesPtr[q] = magZValueAtQuadPt;
+                    dOut[iComp]
+                      .template copyTo<dftfe::utils::MemorySpace::HOST>(
+                        d_densityInQuadValues[iComp].data(),
+                        nPointsInBlock,
+                        0,
+                        blockOffset);
+                    if (isGradDensityDataDependent)
+                      dGradOut[iComp]
+                        .template copyTo<dftfe::utils::MemorySpace::HOST>(
+                          d_gradDensityInQuadValues[iComp].data(),
+                          nPointsInBlock * 3,
+                          0,
+                          blockOffset * 3);
                   }
               }
           }
-
-
-        // loop over elements
-        if (isGradDensityDataDependent)
+        else
           {
+            // loop over elements
 #pragma omp parallel for num_threads(d_nOMPThreads) firstprivate(denSpline)
-            for (dftfe::uInt iCell = 0;
-                 iCell < d_basisOperationsPtrHost->nCells();
-                 ++iCell)
+            for (auto iCell = 0; iCell < nCells; ++iCell)
               {
                 auto    cellid = d_basisOperationsPtrHost->cellID(iCell);
-                double *gradRhoInValuesPtr =
-                  &(d_gradDensityInQuadValues[0][3 * iCell * n_q_points]);
+                double *rhoInValuesPtr =
+                  &(d_densityInQuadValues[0][iCell * n_q_points]);
 
-                double *gradMagZInValuesPtr, *gradMagYInValuesPtr,
-                  *gradMagXInValuesPtr;
+                double *magZInValuesPtr, *magXInValuesPtr, *magYInValuesPtr;
                 if (d_dftParamsPtr->spinPolarized == 1)
                   {
-                    gradMagZInValuesPtr =
-                      &(d_gradDensityInQuadValues[1][3 * iCell * n_q_points]);
+                    magZInValuesPtr =
+                      &(d_densityInQuadValues[1][iCell * n_q_points]);
                   }
                 if (d_dftParamsPtr->noncolin)
                   {
-                    gradMagZInValuesPtr =
-                      &(d_gradDensityInQuadValues[1][3 * iCell * n_q_points]);
-                    gradMagYInValuesPtr =
-                      &(d_gradDensityInQuadValues[2][3 * iCell * n_q_points]);
-                    gradMagXInValuesPtr =
-                      &(d_gradDensityInQuadValues[3][3 * iCell * n_q_points]);
+                    magXInValuesPtr =
+                      &(d_densityInQuadValues[3][iCell * n_q_points]);
+                    magYInValuesPtr =
+                      &(d_densityInQuadValues[2][iCell * n_q_points]);
+                    magZInValuesPtr =
+                      &(d_densityInQuadValues[1][iCell * n_q_points]);
                   }
                 const double *quadPointPtr =
                   d_basisOperationsPtrHost->quadPoints().data() +
@@ -807,18 +803,11 @@ namespace dftfe
                     const dealii::Point<3> quadPoint(quadPointPtr[q * 3],
                                                      quadPointPtr[q * 3 + 1],
                                                      quadPointPtr[q * 3 + 2]);
-                    double                 gradRhoXValueAtQuadPt  = 0.0;
-                    double                 gradRhoYValueAtQuadPt  = 0.0;
-                    double                 gradRhoZValueAtQuadPt  = 0.0;
-                    double                 gradMagZXValueAtQuadPt = 0.0;
-                    double                 gradMagZYValueAtQuadPt = 0.0;
-                    double                 gradMagZZValueAtQuadPt = 0.0;
-                    double                 gradMagYXValueAtQuadPt = 0.0;
-                    double                 gradMagYYValueAtQuadPt = 0.0;
-                    double                 gradMagYZValueAtQuadPt = 0.0;
-                    double                 gradMagXXValueAtQuadPt = 0.0;
-                    double                 gradMagXYValueAtQuadPt = 0.0;
-                    double                 gradMagXZValueAtQuadPt = 0.0;
+                    double                 rhoValueAtQuadPt  = 0.0;
+                    double                 magZValueAtQuadPt = 0.0;
+                    double                 magYValueAtQuadPt = 0.0;
+                    double                 magXValueAtQuadPt = 0.0;
+
                     // loop over atoms
                     for (dftfe::uInt n = 0; n < atomLocations.size(); n++)
                       {
@@ -876,70 +865,21 @@ namespace dftfe
                               rhoAtomFactor = atomLocations[n][5];
                           }
 
-                        if (d_dftParamsPtr->floatingNuclearCharges &&
-                            distanceToAtom < 1.0e-3)
-                          continue;
-
                         if (distanceToAtom <=
                             outerMostPointDen[atomLocations[n][0]])
                           {
-                            double value, radialDensityFirstDerivative,
-                              radialDensitySecondDerivative;
-                            if (!d_dftParamsPtr->isPseudopotential)
-                              {
-                                alglib::spline1ddiff(
-                                  denSpline[atomLocations[n][0]],
-                                  distanceToAtom,
-                                  value,
-                                  radialDensityFirstDerivative,
-                                  radialDensitySecondDerivative);
-                              }
-                            else
-                              {
-                                std::vector<double> Vec;
-                                d_oncvClassPtr->getRadialValenceDensity(
-                                  atomLocations[n][0], distanceToAtom, Vec);
-                                value                         = Vec[0];
-                                radialDensityFirstDerivative  = Vec[1];
-                                radialDensitySecondDerivative = Vec[2];
-                              }
-                            double tempGradRhoXValueAtQuadPt =
-                              rhoAtomFactor * radialDensityFirstDerivative *
-                              ((quadPoint[0] - atomLocations[n][2]) /
-                               distanceToAtom);
-                            double tempGradRhoYValueAtQuadPt =
-                              rhoAtomFactor * radialDensityFirstDerivative *
-                              ((quadPoint[1] - atomLocations[n][3]) /
-                               distanceToAtom);
-                            double tempGradRhoZValueAtQuadPt =
-                              rhoAtomFactor * radialDensityFirstDerivative *
-                              ((quadPoint[2] - atomLocations[n][4]) /
-                               distanceToAtom);
-                            gradRhoXValueAtQuadPt += tempGradRhoXValueAtQuadPt;
-                            gradRhoYValueAtQuadPt += tempGradRhoYValueAtQuadPt;
-                            gradRhoZValueAtQuadPt += tempGradRhoZValueAtQuadPt;
-
-                            gradMagZXValueAtQuadPt +=
-                              magZAtomFactor * tempGradRhoXValueAtQuadPt;
-                            gradMagZYValueAtQuadPt +=
-                              magZAtomFactor * tempGradRhoYValueAtQuadPt;
-                            gradMagZZValueAtQuadPt +=
-                              magZAtomFactor * tempGradRhoZValueAtQuadPt;
-                            gradMagYXValueAtQuadPt +=
-                              magYAtomFactor * tempGradRhoXValueAtQuadPt;
-                            gradMagYYValueAtQuadPt +=
-                              magYAtomFactor * tempGradRhoYValueAtQuadPt;
-                            gradMagYZValueAtQuadPt +=
-                              magYAtomFactor * tempGradRhoZValueAtQuadPt;
-                            gradMagXXValueAtQuadPt +=
-                              magXAtomFactor * tempGradRhoXValueAtQuadPt;
-                            gradMagXYValueAtQuadPt +=
-                              magXAtomFactor * tempGradRhoYValueAtQuadPt;
-                            gradMagXZValueAtQuadPt +=
-                              magXAtomFactor * tempGradRhoZValueAtQuadPt;
+                            double tempRhoValue =
+                              rhoAtomFactor *
+                              alglib::spline1dcalc(
+                                denSpline[atomLocations[n][0]], distanceToAtom);
+                            rhoValueAtQuadPt += tempRhoValue;
+                            magZValueAtQuadPt += magZAtomFactor * tempRhoValue;
+                            magYValueAtQuadPt += magYAtomFactor * tempRhoValue;
+                            magXValueAtQuadPt += magXAtomFactor * tempRhoValue;
                           }
                       }
 
+                    // loop over image charges
                     for (dftfe::Int iImageCharge = 0;
                          iImageCharge < numberImageCharges;
                          ++iImageCharge)
@@ -948,12 +888,7 @@ namespace dftfe
                           d_imagePositionsTrunc[iImageCharge][0],
                           d_imagePositionsTrunc[iImageCharge][1],
                           d_imagePositionsTrunc[iImageCharge][2]);
-                        double distanceToAtom = quadPoint.distance(imageAtom);
-
-                        if (d_dftParamsPtr->floatingNuclearCharges &&
-                            distanceToAtom < 1.0e-3)
-                          continue;
-
+                        double distanceToAtom   = quadPoint.distance(imageAtom);
                         dftfe::Int masterAtomId = d_imageIdsTrunc[iImageCharge];
                         double     rhoAtomFactor = 1.0, magZAtomFactor = 0.0,
                                magYAtomFactor = 0.0, magXAtomFactor = 0.0;
@@ -1018,111 +953,403 @@ namespace dftfe
                         if (distanceToAtom <=
                             outerMostPointDen[atomLocations[masterAtomId][0]])
                           {
-                            double value, radialDensityFirstDerivative,
-                              radialDensitySecondDerivative;
-                            if (!d_dftParamsPtr->isPseudopotential)
+                            double tempRhoValue =
+                              rhoAtomFactor *
+                              alglib::spline1dcalc(
+                                denSpline[atomLocations[masterAtomId][0]],
+                                distanceToAtom);
+                            rhoValueAtQuadPt += tempRhoValue;
+                            magZValueAtQuadPt += magZAtomFactor * tempRhoValue;
+                            magYValueAtQuadPt += magYAtomFactor * tempRhoValue;
+                            magXValueAtQuadPt += magXAtomFactor * tempRhoValue;
+                          }
+                      }
+
+                    rhoInValuesPtr[q] = std::abs(rhoValueAtQuadPt);
+                    if (d_dftParamsPtr->spinPolarized == 1)
+                      {
+                        if (d_dftParamsPtr->constraintMagnetization &&
+                            !d_dftParamsPtr
+                               ->useAtomicMagnetizationGuessConstraintMag)
+                          magZInValuesPtr[q] =
+                            (d_dftParamsPtr->tot_magnetization) *
+                            (std::abs(rhoValueAtQuadPt));
+                        else
+                          magZInValuesPtr[q] = magZValueAtQuadPt;
+                      }
+                    if (d_dftParamsPtr->noncolin)
+                      {
+                        magXInValuesPtr[q] = magXValueAtQuadPt;
+                        magYInValuesPtr[q] = magYValueAtQuadPt;
+                        magZInValuesPtr[q] = magZValueAtQuadPt;
+                      }
+                  }
+              }
+
+
+            // loop over elements
+            if (isGradDensityDataDependent)
+              {
+#pragma omp parallel for num_threads(d_nOMPThreads) firstprivate(denSpline)
+                for (dftfe::uInt iCell = 0;
+                     iCell < d_basisOperationsPtrHost->nCells();
+                     ++iCell)
+                  {
+                    auto    cellid = d_basisOperationsPtrHost->cellID(iCell);
+                    double *gradRhoInValuesPtr =
+                      &(d_gradDensityInQuadValues[0][3 * iCell * n_q_points]);
+
+                    double *gradMagZInValuesPtr, *gradMagYInValuesPtr,
+                      *gradMagXInValuesPtr;
+                    if (d_dftParamsPtr->spinPolarized == 1)
+                      {
+                        gradMagZInValuesPtr = &(
+                          d_gradDensityInQuadValues[1][3 * iCell * n_q_points]);
+                      }
+                    if (d_dftParamsPtr->noncolin)
+                      {
+                        gradMagZInValuesPtr = &(
+                          d_gradDensityInQuadValues[1][3 * iCell * n_q_points]);
+                        gradMagYInValuesPtr = &(
+                          d_gradDensityInQuadValues[2][3 * iCell * n_q_points]);
+                        gradMagXInValuesPtr = &(
+                          d_gradDensityInQuadValues[3][3 * iCell * n_q_points]);
+                      }
+                    const double *quadPointPtr =
+                      d_basisOperationsPtrHost->quadPoints().data() +
+                      iCell * n_q_points * 3;
+                    for (dftfe::uInt q = 0; q < n_q_points; ++q)
+                      {
+                        const dealii::Point<3> quadPoint(
+                          quadPointPtr[q * 3],
+                          quadPointPtr[q * 3 + 1],
+                          quadPointPtr[q * 3 + 2]);
+                        double gradRhoXValueAtQuadPt  = 0.0;
+                        double gradRhoYValueAtQuadPt  = 0.0;
+                        double gradRhoZValueAtQuadPt  = 0.0;
+                        double gradMagZXValueAtQuadPt = 0.0;
+                        double gradMagZYValueAtQuadPt = 0.0;
+                        double gradMagZZValueAtQuadPt = 0.0;
+                        double gradMagYXValueAtQuadPt = 0.0;
+                        double gradMagYYValueAtQuadPt = 0.0;
+                        double gradMagYZValueAtQuadPt = 0.0;
+                        double gradMagXXValueAtQuadPt = 0.0;
+                        double gradMagXYValueAtQuadPt = 0.0;
+                        double gradMagXZValueAtQuadPt = 0.0;
+                        // loop over atoms
+                        for (dftfe::uInt n = 0; n < atomLocations.size(); n++)
+                          {
+                            dealii::Point<3> atom(atomLocations[n][2],
+                                                  atomLocations[n][3],
+                                                  atomLocations[n][4]);
+                            double distanceToAtom = quadPoint.distance(atom);
+                            double rhoAtomFactor = 1.0, magZAtomFactor = 0.0,
+                                   magYAtomFactor = 0.0, magXAtomFactor = 0.0;
+                            if (numberMagComponents == 1)
                               {
+                                if (atomLocations[n].size() == 6)
+                                  magZAtomFactor = atomLocations[n][5];
+                                else if (atomLocations[n].size() == 7)
+                                  {
+                                    rhoAtomFactor  = atomLocations[n][6];
+                                    magZAtomFactor = atomLocations[n][5];
+                                  }
+                              }
+                            else if (numberMagComponents == 3)
+                              {
+                                if (atomLocations[n].size() == 8)
+                                  {
+                                    magZAtomFactor =
+                                      std::cos(M_PI / 180.0 *
+                                               atomLocations[n][6]) *
+                                      atomLocations[n][5];
+                                    magYAtomFactor =
+                                      std::sin(M_PI / 180.0 *
+                                               atomLocations[n][6]) *
+                                      std::sin(M_PI / 180.0 *
+                                               atomLocations[n][7]) *
+                                      atomLocations[n][5];
+                                    magXAtomFactor =
+                                      std::sin(M_PI / 180.0 *
+                                               atomLocations[n][6]) *
+                                      std::cos(M_PI / 180.0 *
+                                               atomLocations[n][7]) *
+                                      atomLocations[n][5];
+                                  }
+                                else if (atomLocations[n].size() == 9)
+                                  {
+                                    rhoAtomFactor = atomLocations[n][8];
+                                    magZAtomFactor =
+                                      std::cos(M_PI / 180.0 *
+                                               atomLocations[n][6]) *
+                                      atomLocations[n][5];
+                                    magYAtomFactor =
+                                      std::sin(M_PI / 180.0 *
+                                               atomLocations[n][6]) *
+                                      std::sin(M_PI / 180.0 *
+                                               atomLocations[n][7]) *
+                                      atomLocations[n][5];
+                                    magXAtomFactor =
+                                      std::sin(M_PI / 180.0 *
+                                               atomLocations[n][6]) *
+                                      std::cos(M_PI / 180.0 *
+                                               atomLocations[n][7]) *
+                                      atomLocations[n][5];
+                                  }
+                              }
+                            else
+                              {
+                                if (atomLocations[n].size() == 6)
+                                  rhoAtomFactor = atomLocations[n][5];
+                              }
+
+                            if (d_dftParamsPtr->floatingNuclearCharges &&
+                                distanceToAtom < 1.0e-3)
+                              continue;
+
+                            if (distanceToAtom <=
+                                outerMostPointDen[atomLocations[n][0]])
+                              {
+                                double value, radialDensityFirstDerivative,
+                                  radialDensitySecondDerivative;
+                                alglib::spline1ddiff(
+                                  denSpline[atomLocations[n][0]],
+                                  distanceToAtom,
+                                  value,
+                                  radialDensityFirstDerivative,
+                                  radialDensitySecondDerivative);
+                                double tempGradRhoXValueAtQuadPt =
+                                  rhoAtomFactor * radialDensityFirstDerivative *
+                                  ((quadPoint[0] - atomLocations[n][2]) /
+                                   distanceToAtom);
+                                double tempGradRhoYValueAtQuadPt =
+                                  rhoAtomFactor * radialDensityFirstDerivative *
+                                  ((quadPoint[1] - atomLocations[n][3]) /
+                                   distanceToAtom);
+                                double tempGradRhoZValueAtQuadPt =
+                                  rhoAtomFactor * radialDensityFirstDerivative *
+                                  ((quadPoint[2] - atomLocations[n][4]) /
+                                   distanceToAtom);
+                                gradRhoXValueAtQuadPt +=
+                                  tempGradRhoXValueAtQuadPt;
+                                gradRhoYValueAtQuadPt +=
+                                  tempGradRhoYValueAtQuadPt;
+                                gradRhoZValueAtQuadPt +=
+                                  tempGradRhoZValueAtQuadPt;
+
+                                gradMagZXValueAtQuadPt +=
+                                  magZAtomFactor * tempGradRhoXValueAtQuadPt;
+                                gradMagZYValueAtQuadPt +=
+                                  magZAtomFactor * tempGradRhoYValueAtQuadPt;
+                                gradMagZZValueAtQuadPt +=
+                                  magZAtomFactor * tempGradRhoZValueAtQuadPt;
+                                gradMagYXValueAtQuadPt +=
+                                  magYAtomFactor * tempGradRhoXValueAtQuadPt;
+                                gradMagYYValueAtQuadPt +=
+                                  magYAtomFactor * tempGradRhoYValueAtQuadPt;
+                                gradMagYZValueAtQuadPt +=
+                                  magYAtomFactor * tempGradRhoZValueAtQuadPt;
+                                gradMagXXValueAtQuadPt +=
+                                  magXAtomFactor * tempGradRhoXValueAtQuadPt;
+                                gradMagXYValueAtQuadPt +=
+                                  magXAtomFactor * tempGradRhoYValueAtQuadPt;
+                                gradMagXZValueAtQuadPt +=
+                                  magXAtomFactor * tempGradRhoZValueAtQuadPt;
+                              }
+                          }
+
+                        for (dftfe::Int iImageCharge = 0;
+                             iImageCharge < numberImageCharges;
+                             ++iImageCharge)
+                          {
+                            dealii::Point<3> imageAtom(
+                              d_imagePositionsTrunc[iImageCharge][0],
+                              d_imagePositionsTrunc[iImageCharge][1],
+                              d_imagePositionsTrunc[iImageCharge][2]);
+                            double distanceToAtom =
+                              quadPoint.distance(imageAtom);
+
+                            if (d_dftParamsPtr->floatingNuclearCharges &&
+                                distanceToAtom < 1.0e-3)
+                              continue;
+
+                            dftfe::Int masterAtomId =
+                              d_imageIdsTrunc[iImageCharge];
+                            double rhoAtomFactor = 1.0, magZAtomFactor = 0.0,
+                                   magYAtomFactor = 0.0, magXAtomFactor = 0.0;
+                            if (numberMagComponents == 1)
+                              {
+                                if (atomLocations[masterAtomId].size() == 6)
+                                  magZAtomFactor =
+                                    atomLocations[masterAtomId][5];
+                                else if (atomLocations[masterAtomId].size() ==
+                                         7)
+                                  {
+                                    rhoAtomFactor =
+                                      atomLocations[masterAtomId][6];
+                                    magZAtomFactor =
+                                      atomLocations[masterAtomId][5];
+                                  }
+                              }
+                            else if (numberMagComponents == 3)
+                              {
+                                if (atomLocations[masterAtomId].size() == 8)
+                                  {
+                                    magZAtomFactor =
+                                      std::cos(M_PI / 180.0 *
+                                               atomLocations[masterAtomId][6]) *
+                                      atomLocations[masterAtomId][5];
+                                    magYAtomFactor =
+                                      std::sin(M_PI / 180.0 *
+                                               atomLocations[masterAtomId][6]) *
+                                      std::sin(M_PI / 180.0 *
+                                               atomLocations[masterAtomId][7]) *
+                                      atomLocations[masterAtomId][5];
+                                    magXAtomFactor =
+                                      std::sin(M_PI / 180.0 *
+                                               atomLocations[masterAtomId][6]) *
+                                      std::cos(M_PI / 180.0 *
+                                               atomLocations[masterAtomId][7]) *
+                                      atomLocations[masterAtomId][5];
+                                  }
+                                else if (atomLocations[masterAtomId].size() ==
+                                         9)
+                                  {
+                                    rhoAtomFactor =
+                                      atomLocations[masterAtomId][8];
+                                    magZAtomFactor =
+                                      std::cos(M_PI / 180.0 *
+                                               atomLocations[masterAtomId][6]) *
+                                      atomLocations[masterAtomId][5];
+                                    magYAtomFactor =
+                                      std::sin(M_PI / 180.0 *
+                                               atomLocations[masterAtomId][6]) *
+                                      std::sin(M_PI / 180.0 *
+                                               atomLocations[masterAtomId][7]) *
+                                      atomLocations[masterAtomId][5];
+                                    magXAtomFactor =
+                                      std::sin(M_PI / 180.0 *
+                                               atomLocations[masterAtomId][6]) *
+                                      std::cos(M_PI / 180.0 *
+                                               atomLocations[masterAtomId][7]) *
+                                      atomLocations[masterAtomId][5];
+                                  }
+                              }
+                            else
+                              {
+                                if (atomLocations[masterAtomId].size() == 6)
+                                  rhoAtomFactor =
+                                    atomLocations[masterAtomId][5];
+                              }
+
+                            if (distanceToAtom <=
+                                outerMostPointDen[atomLocations[masterAtomId]
+                                                               [0]])
+                              {
+                                double value, radialDensityFirstDerivative,
+                                  radialDensitySecondDerivative;
                                 alglib::spline1ddiff(
                                   denSpline[atomLocations[masterAtomId][0]],
                                   distanceToAtom,
                                   value,
                                   radialDensityFirstDerivative,
                                   radialDensitySecondDerivative);
+                                double tempGradRhoXValueAtQuadPt =
+                                  rhoAtomFactor * radialDensityFirstDerivative *
+                                  ((quadPoint[0] -
+                                    d_imagePositionsTrunc[iImageCharge][0]) /
+                                   distanceToAtom);
+                                double tempGradRhoYValueAtQuadPt =
+                                  rhoAtomFactor * radialDensityFirstDerivative *
+                                  ((quadPoint[1] -
+                                    d_imagePositionsTrunc[iImageCharge][1]) /
+                                   distanceToAtom);
+                                double tempGradRhoZValueAtQuadPt =
+                                  rhoAtomFactor * radialDensityFirstDerivative *
+                                  ((quadPoint[2] -
+                                    d_imagePositionsTrunc[iImageCharge][2]) /
+                                   distanceToAtom);
+
+                                gradRhoXValueAtQuadPt +=
+                                  tempGradRhoXValueAtQuadPt;
+                                gradRhoYValueAtQuadPt +=
+                                  tempGradRhoYValueAtQuadPt;
+                                gradRhoZValueAtQuadPt +=
+                                  tempGradRhoZValueAtQuadPt;
+
+                                gradMagZXValueAtQuadPt +=
+                                  magZAtomFactor * tempGradRhoXValueAtQuadPt;
+                                gradMagZYValueAtQuadPt +=
+                                  magZAtomFactor * tempGradRhoYValueAtQuadPt;
+                                gradMagZZValueAtQuadPt +=
+                                  magZAtomFactor * tempGradRhoZValueAtQuadPt;
+                                gradMagYXValueAtQuadPt +=
+                                  magYAtomFactor * tempGradRhoXValueAtQuadPt;
+                                gradMagYYValueAtQuadPt +=
+                                  magYAtomFactor * tempGradRhoYValueAtQuadPt;
+                                gradMagYZValueAtQuadPt +=
+                                  magYAtomFactor * tempGradRhoZValueAtQuadPt;
+                                gradMagXXValueAtQuadPt +=
+                                  magXAtomFactor * tempGradRhoXValueAtQuadPt;
+                                gradMagXYValueAtQuadPt +=
+                                  magXAtomFactor * tempGradRhoYValueAtQuadPt;
+                                gradMagXZValueAtQuadPt +=
+                                  magXAtomFactor * tempGradRhoZValueAtQuadPt;
+                              }
+                          }
+
+                        dftfe::Int signRho = 0;
+                        /*
+                           if (std::abs((*rhoInValues)[cellid][q] )
+                           > 1.0E-7) signRho =
+                           (*rhoInValues)[cellid][q]>0.0?1:-1;
+                         */
+                        if (std::abs(
+                              d_densityInQuadValues[0][iCell * n_q_points +
+                                                       q]) > 1.0E-8)
+                          signRho =
+                            d_densityInQuadValues[0][iCell * n_q_points + q] /
+                            std::abs(
+                              d_densityInQuadValues[0][iCell * n_q_points + q]);
+
+                        // KG: the fact that we are forcing gradRho to zero
+                        // whenever rho is zero is valid. Because rho is always
+                        // positive, so whenever it is zero, it must have a
+                        // local minima.
+                        //
+                        gradRhoInValuesPtr[3 * q + 0] =
+                          signRho * gradRhoXValueAtQuadPt;
+                        gradRhoInValuesPtr[3 * q + 1] =
+                          signRho * gradRhoYValueAtQuadPt;
+                        gradRhoInValuesPtr[3 * q + 2] =
+                          signRho * gradRhoZValueAtQuadPt;
+                        if (d_dftParamsPtr->spinPolarized == 1)
+                          {
+                            if (d_dftParamsPtr->constraintMagnetization &&
+                                !d_dftParamsPtr
+                                   ->useAtomicMagnetizationGuessConstraintMag)
+                              {
+                                gradMagZInValuesPtr[3 * q + 0] =
+                                  d_dftParamsPtr->tot_magnetization *
+                                  gradRhoXValueAtQuadPt;
+                                gradMagZInValuesPtr[3 * q + 1] =
+                                  d_dftParamsPtr->tot_magnetization *
+                                  gradRhoYValueAtQuadPt;
+                                gradMagZInValuesPtr[3 * q + 2] =
+                                  d_dftParamsPtr->tot_magnetization *
+                                  gradRhoZValueAtQuadPt;
                               }
                             else
                               {
-                                std::vector<double> Vec;
-                                d_oncvClassPtr->getRadialValenceDensity(
-                                  atomLocations[masterAtomId][0],
-                                  distanceToAtom,
-                                  Vec);
-                                value                         = Vec[0];
-                                radialDensityFirstDerivative  = Vec[1];
-                                radialDensitySecondDerivative = Vec[2];
+                                gradMagZInValuesPtr[3 * q + 0] =
+                                  gradMagZXValueAtQuadPt;
+                                gradMagZInValuesPtr[3 * q + 1] =
+                                  gradMagZYValueAtQuadPt;
+                                gradMagZInValuesPtr[3 * q + 2] =
+                                  gradMagZZValueAtQuadPt;
                               }
-                            double tempGradRhoXValueAtQuadPt =
-                              rhoAtomFactor * radialDensityFirstDerivative *
-                              ((quadPoint[0] -
-                                d_imagePositionsTrunc[iImageCharge][0]) /
-                               distanceToAtom);
-                            double tempGradRhoYValueAtQuadPt =
-                              rhoAtomFactor * radialDensityFirstDerivative *
-                              ((quadPoint[1] -
-                                d_imagePositionsTrunc[iImageCharge][1]) /
-                               distanceToAtom);
-                            double tempGradRhoZValueAtQuadPt =
-                              radialDensityFirstDerivative *
-                              ((quadPoint[2] -
-                                d_imagePositionsTrunc[iImageCharge][2]) /
-                               distanceToAtom);
-
-                            gradRhoXValueAtQuadPt += tempGradRhoXValueAtQuadPt;
-                            gradRhoYValueAtQuadPt += tempGradRhoYValueAtQuadPt;
-                            gradRhoZValueAtQuadPt += tempGradRhoZValueAtQuadPt;
-
-                            gradMagZXValueAtQuadPt +=
-                              magZAtomFactor * tempGradRhoXValueAtQuadPt;
-                            gradMagZYValueAtQuadPt +=
-                              magZAtomFactor * tempGradRhoYValueAtQuadPt;
-                            gradMagZZValueAtQuadPt +=
-                              magZAtomFactor * tempGradRhoZValueAtQuadPt;
-                            gradMagYXValueAtQuadPt +=
-                              magYAtomFactor * tempGradRhoXValueAtQuadPt;
-                            gradMagYYValueAtQuadPt +=
-                              magYAtomFactor * tempGradRhoYValueAtQuadPt;
-                            gradMagYZValueAtQuadPt +=
-                              magYAtomFactor * tempGradRhoZValueAtQuadPt;
-                            gradMagXXValueAtQuadPt +=
-                              magXAtomFactor * tempGradRhoXValueAtQuadPt;
-                            gradMagXYValueAtQuadPt +=
-                              magXAtomFactor * tempGradRhoYValueAtQuadPt;
-                            gradMagXZValueAtQuadPt +=
-                              magXAtomFactor * tempGradRhoZValueAtQuadPt;
                           }
-                      }
-
-                    dftfe::Int signRho = 0;
-                    /*
-                       if (std::abs((*rhoInValues)[cellid][q] )
-                       > 1.0E-7) signRho =
-                       (*rhoInValues)[cellid][q]>0.0?1:-1;
-                     */
-                    if (std::abs(
-                          d_densityInQuadValues[0][iCell * n_q_points + q]) >
-                        1.0E-8)
-                      signRho =
-                        d_densityInQuadValues[0][iCell * n_q_points + q] /
-                        std::abs(
-                          d_densityInQuadValues[0][iCell * n_q_points + q]);
-
-                    // KG: the fact that we are forcing gradRho to zero
-                    // whenever rho is zero is valid. Because rho is always
-                    // positive, so whenever it is zero, it must have a
-                    // local minima.
-                    //
-                    gradRhoInValuesPtr[3 * q + 0] =
-                      signRho * gradRhoXValueAtQuadPt;
-                    gradRhoInValuesPtr[3 * q + 1] =
-                      signRho * gradRhoYValueAtQuadPt;
-                    gradRhoInValuesPtr[3 * q + 2] =
-                      signRho * gradRhoZValueAtQuadPt;
-                    if (d_dftParamsPtr->spinPolarized == 1)
-                      {
-                        if (d_dftParamsPtr->constraintMagnetization &&
-                            !d_dftParamsPtr
-                               ->useAtomicMagnetizationGuessConstraintMag)
-                          {
-                            gradMagZInValuesPtr[3 * q + 0] =
-                              d_dftParamsPtr->tot_magnetization *
-                              gradRhoXValueAtQuadPt;
-                            gradMagZInValuesPtr[3 * q + 1] =
-                              d_dftParamsPtr->tot_magnetization *
-                              gradRhoYValueAtQuadPt;
-                            gradMagZInValuesPtr[3 * q + 2] =
-                              d_dftParamsPtr->tot_magnetization *
-                              gradRhoZValueAtQuadPt;
-                          }
-                        else
+                        if (d_dftParamsPtr->noncolin)
                           {
                             gradMagZInValuesPtr[3 * q + 0] =
                               gradMagZXValueAtQuadPt;
@@ -1130,19 +1357,19 @@ namespace dftfe
                               gradMagZYValueAtQuadPt;
                             gradMagZInValuesPtr[3 * q + 2] =
                               gradMagZZValueAtQuadPt;
+                            gradMagYInValuesPtr[3 * q + 0] =
+                              gradMagYXValueAtQuadPt;
+                            gradMagYInValuesPtr[3 * q + 1] =
+                              gradMagYYValueAtQuadPt;
+                            gradMagYInValuesPtr[3 * q + 2] =
+                              gradMagYZValueAtQuadPt;
+                            gradMagXInValuesPtr[3 * q + 0] =
+                              gradMagXXValueAtQuadPt;
+                            gradMagXInValuesPtr[3 * q + 1] =
+                              gradMagXYValueAtQuadPt;
+                            gradMagXInValuesPtr[3 * q + 2] =
+                              gradMagXZValueAtQuadPt;
                           }
-                      }
-                    if (d_dftParamsPtr->noncolin)
-                      {
-                        gradMagZInValuesPtr[3 * q + 0] = gradMagZXValueAtQuadPt;
-                        gradMagZInValuesPtr[3 * q + 1] = gradMagZYValueAtQuadPt;
-                        gradMagZInValuesPtr[3 * q + 2] = gradMagZZValueAtQuadPt;
-                        gradMagYInValuesPtr[3 * q + 0] = gradMagYXValueAtQuadPt;
-                        gradMagYInValuesPtr[3 * q + 1] = gradMagYYValueAtQuadPt;
-                        gradMagYInValuesPtr[3 * q + 2] = gradMagYZValueAtQuadPt;
-                        gradMagXInValuesPtr[3 * q + 0] = gradMagXXValueAtQuadPt;
-                        gradMagXInValuesPtr[3 * q + 1] = gradMagXYValueAtQuadPt;
-                        gradMagXInValuesPtr[3 * q + 2] = gradMagXZValueAtQuadPt;
                       }
                   }
               }
@@ -1841,7 +2068,7 @@ namespace dftfe
     pcout << "Loading Density data from Quadrature checkpoint......"
           << std::endl;
     // Initialize electron density table storage for rhoIn
-    d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId, false);
+    d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId);
     const dftfe::uInt n_q_points = d_basisOperationsPtrHost->nQuadsPerCell();
     const dftfe::uInt nCells     = d_basisOperationsPtrHost->nCells();
     const dftfe::uInt nDensityComponents =
@@ -1867,11 +2094,7 @@ namespace dftfe
     // Initialize electron density table storage for rhoOut only for Anderson
     // with Kerker for other mixing schemes it is done in density.cc as we need
     // to do this initialization every SCF
-    if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
-        d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA" ||
-        d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND" ||
-        d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_LDOS" ||
-        d_dftParamsPtr->useSymm)
+    if (d_dftParamsPtr->usesNodalDensity())
       {
         d_densityOutQuadValues.resize(nDensityComponents);
 
@@ -2055,11 +2278,7 @@ namespace dftfe
     if (d_dftParamsPtr->verbosity >= 1)
       pcout << "Total charge from quadrature data input: "
             << integralChargeFromQuadDataInput << std::endl;
-    if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
-        d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA" ||
-        d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND" ||
-        d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_LDOS" ||
-        d_dftParamsPtr->useSymm)
+    if (d_dftParamsPtr->usesNodalDensity())
       {
         for (dftfe::uInt iComp = 0; iComp < d_densityInQuadValues.size();
              ++iComp)

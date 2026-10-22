@@ -384,6 +384,17 @@ namespace dftfe
 
     std::vector<dftfe::Int> sparsityPattern(numberElements, -1);
 
+    // per-cell bounding spheres: a center farther from the centroid than
+    // (cell radius + maximum interaction radius) has no quadrature point in
+    // range, so the exact tests below can be skipped for that pair
+    std::vector<dealii::Point<3>> cellCentroids;
+    std::vector<double>           cellRadii;
+    dftUtils::computeCellBoundingSpheres(quadraturePointsVector.data(),
+                                         numberElements,
+                                         numberQuadraturePoints,
+                                         cellCentroids,
+                                         cellRadii);
+
     for (dftfe::Int iAtom = 0; iAtom < numberAtomsOfInterest; ++iAtom)
       {
         //
@@ -406,6 +417,26 @@ namespace dftfe
         // std::cout<<" totalLocallyOwnedCells = "<<totalLocallyOwnedCells<<"
         // numberQuadraturePoints = "<<numberQuadraturePoints<<"\n";
 
+        // radial-function lookups and the largest radius at which any of
+        // them can trip the sparsity criterion
+        std::vector<std::shared_ptr<AtomCenteredSphericalFunctionBase>>
+               sphericalFunctionsOfAtom(numberSphericalFunctions);
+        double maxInteractionRadius = 0.0;
+        for (dftfe::uInt iPsp = 0; iPsp < numberSphericalFunctions; ++iPsp)
+          {
+            sphericalFunctionsOfAtom[iPsp] =
+              d_sphericalFunctionsContainer.find(std::make_pair(Znum, iPsp))
+                ->second;
+            // cutOffType 1 tests r against cutOffVal directly; type 0
+            // relies on the radial function vanishing past its own cutoff
+            const double rcFn =
+              cutOffType == 1 ?
+                cutOffVal :
+                sphericalFunctionsOfAtom[iPsp]->getRadialCutOff();
+            if (rcFn > maxInteractionRadius)
+              maxInteractionRadius = rcFn;
+          }
+
         dftfe::uInt imageIdsSize = d_periodicImageCoord[iAtom].size() / 3;
 
         //
@@ -419,20 +450,10 @@ namespace dftfe
 
         for (dftfe::Int iCell = 0; iCell < d_locallyOwnedCells; iCell++)
           {
-            double              maxR = 0.0;
-            std::vector<double> quadPoints(numberQuadraturePoints * 3, 0.0);
-            for (dftfe::Int iQuad = 0; iQuad < numberQuadraturePoints; iQuad++)
-              {
-                quadPoints[iQuad * 3 + 0] =
-                  quadraturePointsVector[iCell * (numberQuadraturePoints * 3) +
-                                         iQuad * 3 + 0];
-                quadPoints[iQuad * 3 + 1] =
-                  quadraturePointsVector[iCell * (numberQuadraturePoints * 3) +
-                                         iQuad * 3 + 1];
-                quadPoints[iQuad * 3 + 2] =
-                  quadraturePointsVector[iCell * (numberQuadraturePoints * 3) +
-                                         iQuad * 3 + 2];
-              }
+            double        maxR = 0.0;
+            const double *quadPoints =
+              quadraturePointsVector.data() +
+              static_cast<size_t>(iCell) * numberQuadraturePoints * 3;
             sparseFlag = 0;
             for (dftfe::Int iImageAtomCount = 0; iImageAtomCount < imageIdsSize;
                  ++iImageAtomCount)
@@ -455,18 +476,18 @@ namespace dftfe
                       d_periodicImageCoord[iAtom][3 * iImageAtomCount + 2];
                   }
 
-                // if(iCell == 0)
-                //   std::cout<<"DEBUG coordinates: "<<iAtom<<"
-                //   "<<chargePoint[0]<<" "<<chargePoint[1]<<"
-                //   "<<chargePoint[2]<<std::endl;
+                // bounding-sphere rejection
+                if (cellCentroids[iCell].distance(chargePoint) -
+                      cellRadii[iCell] >
+                    maxInteractionRadius +
+                      dftUtils::cellBoundingSphereTolerance)
+                  continue;
 
                 for (dftfe::uInt iPsp = 0; iPsp < numberSphericalFunctions;
                      ++iPsp)
                   {
-                    std::shared_ptr<AtomCenteredSphericalFunctionBase>
-                      SphericalFunction =
-                        d_sphericalFunctionsContainer[std::make_pair(Znum,
-                                                                     iPsp)];
+                    const std::shared_ptr<AtomCenteredSphericalFunctionBase>
+                          &SphericalFunction = sphericalFunctionsOfAtom[iPsp];
                     double radialProjVal;
                     for (dftfe::Int iQuadPoint = 0;
                          iQuadPoint < numberQuadraturePoints;

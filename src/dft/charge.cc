@@ -634,7 +634,7 @@ namespace dftfe
                                                         &rhoQuadValues,
     const std::map<dealii::CellId, std::vector<double>> *bQuadValues)
   {
-    basisOperationsPtr->reinit(0, 0, densityQuadratureId, false);
+    basisOperationsPtr->reinit(0, 0, densityQuadratureId);
     const dftfe::uInt nQuadsPerCellDensity =
       basisOperationsPtr->nQuadsPerCell();
     auto matrixFreeDataObject = basisOperationsPtr->matrixFreeData();

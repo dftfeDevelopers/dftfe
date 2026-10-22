@@ -42,6 +42,10 @@ namespace dftfe
       offsetFlagZ;
     dftfe::uInt densityQuadratureRule, intermediateDensityQuadratureRule;
     bool        useIntermediateDensityQuadrature;
+    /// True when POLYNOMIAL ORDER DENSITY NODAL was left at its default, so
+    /// that the non-collinear GGA representation requirement may raise it.  A
+    /// value supplied by the user is always honoured as given.
+    bool        densityNodalOrderIsDefault = true;
     dftfe::uInt chebyshevOrder, numPass, numSCFIterations,
       maxLinearSolverIterations, mixingHistory, npool, numLevels,
       maxLinearSolverIterationsHelmholtz;
@@ -186,6 +190,7 @@ namespace dftfe
     bool        allowMultipleFilteringPassesAfterFirstScf;
     dftfe::uInt highestStateOfInterestForChebFiltering;
     bool        useELPADeviceKernel;
+    bool        useELPADeviceTwoStageSolver;
     bool        memOptMode;
     bool        approxOverlapMatrix;
     bool        useReformulatedChFSI;
@@ -215,6 +220,15 @@ namespace dftfe
     double      thermostatTimeConstantBOMD;
     std::string tempControllerTypeBOMD;
     dftfe::Int  MDTrack;
+
+    // Quadrature data as inputs from user
+    dftfe::uInt QuadratureOrderNonLocalPSP;
+    dftfe::uInt QuadratureCopyNonLocalPSP;
+    dftfe::uInt QuadratureOrderNuclearCharge;
+    dftfe::uInt QuadratureCopyNuclearCharge;
+    dftfe::uInt QuadratureOrderLocalPotential;
+    dftfe::uInt QuadratureCopyLocalPotential;
+    bool        highQuadRule;
 
     bool writeStructreEnergyForcesFileForPostProcess;
 
@@ -250,6 +264,13 @@ namespace dftfe
      */
     void
     setAutoParameters(const MPI_Comm &mpi_comm_parent);
+
+    /**
+     * @brief Whether the mixing scheme, or the symmetrization, routes the
+     * density through its nodal field.
+     */
+    bool
+    usesNodalDensity() const;
 
   }; // class dftParameters
 

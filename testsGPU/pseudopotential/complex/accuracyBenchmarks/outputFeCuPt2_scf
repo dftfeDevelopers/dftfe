@@ -3,7 +3,7 @@ number of atoms types: 3
 Total number of k-points 12
 Found 0 GPUs
 MPI rank 0 uses GPU #3
-Found 0 GPUs
+Found -647638336 GPUs
 MPI rank 0 uses GPU #0
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
 v1 : 7.488597237999999656e+00 0.000000000000000000e+00 0.000000000000000000e+00
@@ -24,8 +24,8 @@ FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 2
 FE interpolating polynomial order for electrostatics solve: 2
 FE interpolating polynomial order for nodal electron density computation: 4
 quadrature rule for electron density and kinetic energy density computation: 5
-number of elements: 800
-number of degrees of freedom for the Kohn-Sham eigenvalue problem : 7497
+number of elements: 965
+number of degrees of freedom for the Kohn-Sham eigenvalue problem : 9137
 -------------------------------------------------
 
 Setting initial guess for wavefunctions....
@@ -45,8 +45,8 @@ Saving Quad data in progress...
 Saving Quad data completed...
 Saving Quad data in progress...
 Saving Quad data completed...
-SCF iterations converged to the specified tolerance after: 20 iterations.
+SCF iterations converged to the specified tolerance after: 22 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:        -571.30183736
+             Total energy:        -573.62502530

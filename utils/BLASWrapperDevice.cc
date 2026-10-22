@@ -17,6 +17,7 @@
 
 #include <dftfe/config.h>
 #include <dftfe/BLASWrapper.h>
+#include <dftfe/Exceptions.h>
 #include <dftfe/deviceKernelsGeneric.h>
 #include <dftfe/DeviceTypeConfig.h>
 #include <dftfe/DeviceKernelLauncherHelpers.h>
@@ -2504,6 +2505,102 @@ namespace dftfe
                           dftfe::utils::makeDataTypeDeviceCompatible(X),
                           numberofVectors,
                           sizeOfVector);
+    }
+
+
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::dzgemmStridedBatched(
+      const char                  transA,
+      const char                  transB,
+      const dftfe::uInt           m,
+      const dftfe::uInt           n,
+      const dftfe::uInt           k,
+      const std::complex<double> *alpha,
+      const std::complex<double> *A,
+      const dftfe::uInt           lda,
+      long long int               strideA,
+      const double               *B,
+      const dftfe::uInt           ldb,
+      long long int               strideB,
+      const std::complex<double> *beta,
+      std::complex<double>       *C,
+      const dftfe::uInt           ldc,
+      long long int               strideC,
+      const dftfe::Int            batchCount)
+    {
+      dftfe::utils::throwException(
+        transA == 'N' && transB == 'N',
+        "DFT-FE Error: dzgemmStridedBatched requires transA == transB == 'N'.");
+      dftfe::utils::throwException(
+        alpha->imag() == 0.0 && beta->imag() == 0.0,
+        "DFT-FE Error: dzgemmStridedBatched requires real alpha and beta.");
+
+      // std::complex<double> is layout compatible with double[2], so A and C
+      // viewed as real arrays carry 2*m rows with doubled leading dimensions
+      // and strides.  B is untouched: its indices are the column index of A
+      // and the column index of C.
+      const double      alphaReal = alpha->real();
+      const double      betaReal  = beta->real();
+      const dftfe::uInt mReal     = 2 * m;
+      const dftfe::uInt ldaReal   = 2 * lda;
+      const dftfe::uInt ldcReal   = 2 * ldc;
+
+      xgemmStridedBatched(transA,
+                          transB,
+                          mReal,
+                          n,
+                          k,
+                          &alphaReal,
+                          reinterpret_cast<const double *>(A),
+                          ldaReal,
+                          2 * strideA,
+                          B,
+                          ldb,
+                          strideB,
+                          &betaReal,
+                          reinterpret_cast<double *>(C),
+                          ldcReal,
+                          2 * strideC,
+                          batchCount);
+    }
+
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::dzgemmStridedBatched(
+      const char        transA,
+      const char        transB,
+      const dftfe::uInt m,
+      const dftfe::uInt n,
+      const dftfe::uInt k,
+      const double     *alpha,
+      const double     *A,
+      const dftfe::uInt lda,
+      long long int     strideA,
+      const double     *B,
+      const dftfe::uInt ldb,
+      long long int     strideB,
+      const double     *beta,
+      double           *C,
+      const dftfe::uInt ldc,
+      long long int     strideC,
+      const dftfe::Int  batchCount)
+    {
+      xgemmStridedBatched(transA,
+                          transB,
+                          m,
+                          n,
+                          k,
+                          alpha,
+                          A,
+                          lda,
+                          strideA,
+                          B,
+                          ldb,
+                          strideB,
+                          beta,
+                          C,
+                          ldc,
+                          strideC,
+                          batchCount);
     }
 
 #include "./BLASWrapperDevice.inst.cc"

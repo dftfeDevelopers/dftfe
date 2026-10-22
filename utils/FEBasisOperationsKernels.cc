@@ -110,6 +110,7 @@ namespace dftfe
         ValueTypeBasisCoeff                      *quadratureGradients,
         const std::pair<dftfe::uInt, dftfe::uInt> cellRange) const
     {
+      ensureCellNodalData();
       for (dftfe::uInt iCell = cellRange.first; iCell < cellRange.second;
            iCell += d_cellsBlockSize)
         {
@@ -172,6 +173,8 @@ namespace dftfe
 
       if (quadratureGradients != NULL)
         {
+          if (!areAllCellsCartesian)
+            ensureQuadratureGradientsData();
           d_BLASWrapperPtr->xgemmStridedBatched(
             'N',
             'N',
@@ -226,6 +229,7 @@ namespace dftfe
             }
           else
             {
+              ensureQuadratureGradientsDataNonAffine();
               d_BLASWrapperPtr->xgemmStridedBatched(
                 'N',
                 'N',
@@ -284,14 +288,10 @@ namespace dftfe
     {
       const ValueTypeBasisCoeff scalarCoeffAlpha = ValueTypeBasisCoeff(1.0),
                                 scalarCoeffBeta  = ValueTypeBasisCoeff(0.0);
+      ensureCellNodalData();
       if (quadratureValues != NULL)
         {
-          auto shapePtr = d_shapeFunctionData.find(d_quadratureID)->second;
-
-
-          auto jxwHost = d_JxWData.find(d_quadratureID)->second;
-
-
+          ensureCellValuesBlockCoeff();
           d_BLASWrapperPtr->stridedBlockScaleCopy(
             d_nVectors,
             d_nQuadsPerCell[d_quadratureIndex] *
@@ -328,6 +328,7 @@ namespace dftfe
         {
           std::cout
             << " integrate with shape function is not tested with gradients \n";
+          ensureQuadratureGradientsData();
           if (areAllCellsCartesian)
             {
               tempQuadratureGradientsData.template copyFrom<memorySpace>(
@@ -369,6 +370,7 @@ namespace dftfe
             }
           else
             {
+              ensureQuadratureGradientsDataNonAffine();
               if (memorySpace == dftfe::utils::MemorySpace::HOST)
                 dftfe::basis::FEBasisOperationsKernelsInternal::
                   reshapeToNonAffineLayoutHost(

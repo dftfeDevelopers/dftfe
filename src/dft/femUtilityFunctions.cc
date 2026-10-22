@@ -86,7 +86,7 @@ namespace dftfe
                               &quadratureValueData,
     distributedCPUVec<double> &nodalField)
   {
-    basisOperationsPtr->reinit(0, 0, quadratureId, false);
+    basisOperationsPtr->reinit(0, 0, quadratureId);
     const dftfe::uInt nQuadsPerCell = basisOperationsPtr->nQuadsPerCell();
     std::function<dealii::VectorizedArray<double>(const dftfe::uInt cell,
                                                   const dftfe::uInt q)>

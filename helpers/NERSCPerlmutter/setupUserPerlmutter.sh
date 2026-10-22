@@ -54,10 +54,6 @@ device_architectures="80" # set DCMAKE_CXX_CUDA/HIP_ARCHITECTURES
                            #(only applicable for withGPU=ON)
 
 
-#Option to compile with default or higher order quadrature for storing pseudopotential data
-#ON is recommended for MD simulations with hard pseudopotentials
-withHigherQuadPSP=OFF
-
 # build type: "Release" or "Debug"
 build_type=Release
 
@@ -89,7 +85,7 @@ function cmake_real() {
     -DWITH_COMPLEX=OFF -DWITH_GPU=$withGPU -DGPU_LANG=$gpuLang -DGPU_VENDOR=$gpuVendor -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_CUDA_FLAGS="$device_flags" -DCMAKE_CUDA_ARCHITECTURES="$device_architectures"\
     -DCMAKE_SHARED_LINKER_FLAGS="-L$MPICH_DIR/lib -lmpich"\
     -DWITH_TESTING=$testing \
-    -DHIGHERQUAD_PSP=$withHigherQuadPSP -DUSE_64BIT_INT=$useInt64 $1
+    -DUSE_64BIT_INT=$useInt64 $1
   elif [ "$gpuLang" = "hip" ]; then
     cmake -DCMAKE_CXX_STANDARD=14 -DCMAKE_CXX_COMPILER=$cxx_compiler\
     -DCMAKE_CXX_FLAGS="$cxx_flags"\
@@ -102,7 +98,7 @@ function cmake_real() {
     -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH"\
     -DWITH_COMPLEX=OFF -DWITH_GPU=$withGPU -DGPU_LANG=$gpuLang -DGPU_VENDOR=$gpuVendor -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_HIP_FLAGS="$device_flags" -DCMAKE_HIP_ARCHITECTURES="$device_architectures"\
     -DWITH_TESTING=$testing \
-    -DHIGHERQUAD_PSP=$withHigherQuadPSP -DUSE_64BIT_INT=$useInt64 $1
+    -DUSE_64BIT_INT=$useInt64 $1
   else
     cmake -DCMAKE_CXX_STANDARD=14 -DCMAKE_CXX_COMPILER=$cxx_compiler\
     -DCMAKE_CXX_FLAGS="$cxx_flags"\
@@ -115,7 +111,7 @@ function cmake_real() {
     -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH"\
     -DWITH_COMPLEX=OFF\
     -DWITH_TESTING=$testing \
-    -DHIGHERQUAD_PSP=$withHigherQuadPSP -DUSE_64BIT_INT=$useInt64 $1    
+    -DUSE_64BIT_INT=$useInt64 $1    
   fi
 }
 
@@ -134,7 +130,7 @@ function cmake_cplx() {
     -DWITH_COMPLEX=ON -DWITH_GPU=$withGPU -DGPU_LANG=$gpuLang -DGPU_VENDOR=$gpuVendor -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_CUDA_FLAGS="$device_flags" -DCMAKE_CUDA_ARCHITECTURES="$device_architectures"\
     -DCMAKE_SHARED_LINKER_FLAGS="-L$MPICH_DIR/lib -lmpich"\
     -DWITH_TESTING=$testing \
-    -DHIGHERQUAD_PSP=$withHigherQuadPSP $1
+    $1
   elif [ "$gpuLang" = "hip" ]; then
     cmake -DCMAKE_CXX_STANDARD=14 -DCMAKE_CXX_COMPILER=$cxx_compiler\
     -DCMAKE_CXX_FLAGS="$cxx_flags"\
@@ -147,7 +143,7 @@ function cmake_cplx() {
     -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH"\
     -DWITH_COMPLEX=ON -DWITH_GPU=$withGPU -DGPU_LANG=$gpuLang -DGPU_VENDOR=$gpuVendor -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_HIP_FLAGS="$device_flags" -DCMAKE_HIP_ARCHITECTURES="$device_architectures"\
     -DWITH_TESTING=$testing \
-    -DHIGHERQUAD_PSP=$withHigherQuadPSP $1
+    $1
   else
     cmake -DCMAKE_CXX_STANDARD=14 -DCMAKE_CXX_COMPILER=$cxx_compiler\
     -DCMAKE_CXX_FLAGS="$cxx_flags"\
@@ -160,7 +156,7 @@ function cmake_cplx() {
     -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH"\
     -DWITH_COMPLEX=ON \
     -DWITH_TESTING=$testing \
-    -DHIGHERQUAD_PSP=$withHigherQuadPSP $1    
+    $1    
   fi
 }
 

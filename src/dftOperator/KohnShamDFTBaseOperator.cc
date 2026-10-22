@@ -832,7 +832,7 @@ namespace dftfe
         nDofsPerCell * nDofsPerCell * nCells *
         (d_dftParamsPtr->noncolin ? 4 : 1));
 
-    d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureID, false);
+    d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureID);
     const dftfe::uInt numberQuadraturePointsPerCell =
       d_basisOperationsPtrHost->nQuadsPerCell();
 
@@ -1015,10 +1015,6 @@ namespace dftfe
                               numberQuadraturePointsPerCell :
                             0,
                           0.0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      d_VeffGGA(isGGA ? totalLocallyOwnedCells * numberQuadraturePointsPerCell :
-                        0,
-                0.0);
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       d_BeffxGGA(isGGA && d_dftParamsPtr->noncolin ?
                    totalLocallyOwnedCells * numberQuadraturePointsPerCell :
@@ -1579,7 +1575,7 @@ namespace dftfe
   KohnShamDFTBaseOperator<memorySpace>::computeVEffExternalPotCorr(
     const std::map<dealii::CellId, std::vector<double>> &externalPotCorrValues)
   {
-    d_basisOperationsPtrHost->reinit(0, 0, d_lpspQuadratureID, false);
+    d_basisOperationsPtrHost->reinit(0, 0, d_lpspQuadratureID);
     const dftfe::uInt nCells        = d_basisOperationsPtrHost->nCells();
     const dftfe::Int  nQuadsPerCell = d_basisOperationsPtrHost->nQuadsPerCell();
 #if defined(DFTFE_WITH_DEVICE)
@@ -1615,7 +1611,7 @@ namespace dftfe
   void
   KohnShamDFTBaseOperator<memorySpace>::setVEffExternalPotCorrToZero()
   {
-    d_basisOperationsPtrHost->reinit(0, 0, d_lpspQuadratureID, false);
+    d_basisOperationsPtrHost->reinit(0, 0, d_lpspQuadratureID);
     const dftfe::uInt nCells        = d_basisOperationsPtrHost->nCells();
     const dftfe::Int  nQuadsPerCell = d_basisOperationsPtrHost->nQuadsPerCell();
 #if defined(DFTFE_WITH_DEVICE)
@@ -1759,9 +1755,7 @@ namespace dftfe
 
     d_basisOperationsPtr->reinit(numWaveFunctions,
                                  d_cellsBlockSizeHX,
-                                 d_densityQuadratureID,
-                                 false,
-                                 false);
+                                 d_densityQuadratureID);
 
     // TODO extend to MGGA if required
     if ((d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
@@ -1863,9 +1857,11 @@ namespace dftfe
   {
     d_basisOperationsPtr->reinit(0,
                                  d_cellsBlockSizeHamiltonianConstruction,
-                                 d_lpspQuadratureID,
-                                 false,
-                                 true);
+                                 d_lpspQuadratureID);
+    // Single-shot use of the LPSP quadrature, with (order x copies)^3 points
+    // per cell; the scope releases the scratch here.
+    auto scratch = d_basisOperationsPtr->scopedScratch();
+
     const dftfe::uInt nCells       = d_basisOperationsPtr->nCells();
     const dftfe::uInt nDofsPerCell = d_basisOperationsPtr->nDofsPerCell();
     d_cellHamiltonianMatrixExtPot.resize(nCells * nDofsPerCell * nDofsPerCell);
@@ -1898,9 +1894,11 @@ namespace dftfe
     const double      scalarCoeffHalf  = 0.5;
     d_basisOperationsPtr->reinit(0,
                                  d_cellsBlockSizeHamiltonianConstruction,
-                                 d_densityQuadratureID,
-                                 false,
-                                 true);
+                                 d_densityQuadratureID);
+    // Scratch is sized on the first iteration and reused by the rest; the scope
+    // releases it once the loop is done.
+    auto scratch = d_basisOperationsPtr->scopedScratch();
+
     for (dftfe::uInt iCell = 0; iCell < nCells;
          iCell += d_cellsBlockSizeHamiltonianConstruction)
       {
@@ -2090,9 +2088,7 @@ namespace dftfe
     if (d_basisOperationsPtr->d_nVectors != numberWavefunctions * spinorFactor)
       d_basisOperationsPtr->reinit(numberWavefunctions * spinorFactor,
                                    d_cellsBlockSizeHX,
-                                   d_densityQuadratureID,
-                                   false,
-                                   false);
+                                   d_densityQuadratureID);
     d_BLASWrapperPtr->axpby(src.locallyOwnedSize() * src.numVectors(),
                             scalarX,
                             src.data(),
@@ -2156,8 +2152,9 @@ namespace dftfe
           ->applyAllReduceOnCconjtransX(
             d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec);
         d_pseudopotentialNonLocalOperatorSinglePrec->applyVOnCconjtransX(
-          d_dftParamsPtr->hasSOC ? CouplingStructure::blockDiagonal :
-                                   CouplingStructure::diagonal,
+          d_pseudopotentialClassPtr->hasSOC() ?
+            CouplingStructure::blockDiagonal :
+            CouplingStructure::diagonal,
           d_pseudopotentialClassPtr->getCouplingMatrixSinglePrec(),
           d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec,
           true);
@@ -2292,9 +2289,7 @@ namespace dftfe
     if (d_basisOperationsPtr->d_nVectors != numberWavefunctions * spinorFactor)
       d_basisOperationsPtr->reinit(numberWavefunctions * spinorFactor,
                                    d_cellsBlockSizeHX,
-                                   d_densityQuadratureID,
-                                   false,
-                                   false);
+                                   d_densityQuadratureID);
     d_BLASWrapperPtr->axpby(src.locallyOwnedSize() * src.numVectors(),
                             scalarX,
                             src.data(),
@@ -2353,8 +2348,9 @@ namespace dftfe
         d_pseudopotentialNonLocalOperator->applyAllReduceOnCconjtransX(
           d_pseudopotentialNonLocalProjectorTimesVectorBlock);
         d_pseudopotentialNonLocalOperator->applyVOnCconjtransX(
-          d_dftParamsPtr->hasSOC ? CouplingStructure::blockDiagonal :
-                                   CouplingStructure::diagonal,
+          d_pseudopotentialClassPtr->hasSOC() ?
+            CouplingStructure::blockDiagonal :
+            CouplingStructure::diagonal,
           d_pseudopotentialClassPtr->getCouplingMatrix(),
           d_pseudopotentialNonLocalProjectorTimesVectorBlock,
           true);
@@ -2481,9 +2477,7 @@ namespace dftfe
     if (d_basisOperationsPtr->d_nVectors != numberWavefunctions * spinorFactor)
       d_basisOperationsPtr->reinit(numberWavefunctions * spinorFactor,
                                    d_cellsBlockSizeHX,
-                                   d_densityQuadratureID,
-                                   false,
-                                   false);
+                                   d_densityQuadratureID);
 
     d_BLASWrapperPtr->axpby(src.locallyOwnedSize() * src.numVectors(),
                             scalarX,
@@ -2549,8 +2543,9 @@ namespace dftfe
         d_pseudopotentialNonLocalOperator->applyAllReduceOnCconjtransX(
           d_pseudopotentialNonLocalProjectorTimesVectorBlock);
         d_pseudopotentialNonLocalOperator->applyVOnCconjtransX(
-          d_dftParamsPtr->hasSOC ? CouplingStructure::blockDiagonal :
-                                   CouplingStructure::diagonal,
+          d_pseudopotentialClassPtr->hasSOC() ?
+            CouplingStructure::blockDiagonal :
+            CouplingStructure::diagonal,
           d_pseudopotentialClassPtr->getCouplingMatrix(),
           d_pseudopotentialNonLocalProjectorTimesVectorBlock,
           true);

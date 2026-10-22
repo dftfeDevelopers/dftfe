@@ -634,6 +634,8 @@ namespace dftfe
         (d_dftParamsPtr->writeWfcSolutionFields ||
          d_dftParamsPtr->writeLdosFile || d_dftParamsPtr->writePdosFile))
       d_eigenVectorsFlattenedDevice.copyTo(d_eigenVectorsFlattenedHost);
+    if constexpr (dftfe::utils::MemorySpace::DEVICE == memorySpace)
+      d_subspaceIterationSolverDevice.releaseScratchMemory();
 #endif
 
     // #ifdef USE_COMPLEX

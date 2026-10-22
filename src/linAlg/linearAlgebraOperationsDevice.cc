@@ -3401,10 +3401,11 @@ namespace dftfe
       const MPI_Comm                                      &interBandGroupComm,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-                          &BLASWrapperPtr,
-      std::vector<double> &residualNorm,
-      const dftParameters &dftParams,
-      const bool           useBandParal)
+                                       &BLASWrapperPtr,
+      std::vector<double>              &residualNorm,
+      const dftParameters              &dftParams,
+      DeviceNumberScratchMemoryStorage &scratchMemoryStorage,
+      const bool                        useBandParal)
     {
       // band group parallelization data structures
       const dftfe::uInt numberBandGroups =
@@ -3414,14 +3415,13 @@ namespace dftfe
       std::vector<dftfe::uInt> bandGroupLowHighPlusOneIndices;
       dftUtils::createBandParallelizationIndices(
         interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
-
-
-      const dftfe::uInt vectorsBlockSize = dftParams.wfcBlockSize;
+      const dftfe::uInt vectorsBlockSize = std::min(dftParams.wfcBlockSize, N);
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
-        residualNormSquareDevice(N, 0);
-      dftfe::utils::MemoryStorage<dataTypes::number,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        HXBlockFull(vectorsBlockSize * M, dataTypes::number(0));
+           residualNormSquareDevice(N, 0);
+      auto HXBlockFullScratch =
+        scratchMemoryStorage.acquire(vectorsBlockSize * M,
+                                     dataTypes::number(0));
+      auto &HXBlockFull = *HXBlockFullScratch;
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
         residualSqDevice(vectorsBlockSize * M, 0);
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>

@@ -82,29 +82,7 @@ namespace dftfe
              (5.0 * M_PI * rc8);
     }
 
-    inline double
-    smearedPot(double r, double rc)
-    {
-      if (r > rc)
-        return 1.0 / r;
-
-      const double r2  = r * r;
-      const double r4  = r2 * r2;
-      const double r5  = r4 * r;
-      const double r6  = r5 * r;
-      const double r7  = r6 * r;
-      const double rc2 = rc * rc;
-      const double rc4 = rc2 * rc2;
-      const double rc5 = rc4 * rc;
-      const double rc7 = rc5 * rc2;
-      const double rc8 = rc4 * rc4;
-
-      return (9.0 * r7 - 30.0 * r6 * rc + 28.0 * r5 * rc2 - 14.0 * r2 * rc5 +
-              12.0 * rc7) /
-             (5.0 * rc8);
-    }
-
-    // derivative w.r.t r
+    // derivative w.r.t r of atomicInitKernels::smearedPot
     inline double
     smearedPotDr(double r, double rc)
     {
@@ -276,6 +254,32 @@ namespace dftfe
      */
     void
     printCurrentMemoryUsage(const MPI_Comm &mpiComm, const std::string message);
+
+    /**
+     * @brief Margin of the bounding-sphere rejection of
+     * computeCellBoundingSpheres against floating-point rounding of the
+     * triangle inequality.
+     */
+    constexpr double cellBoundingSphereTolerance = 1e-9;
+
+    /**
+     * @brief Bounding sphere of the quadrature points of each cell, so that a
+     * cell can be rejected without visiting its points: no point of cell
+     * iCell lies within radius R of x when
+     * |x - centroids[iCell]| - radii[iCell] > R + cellBoundingSphereTolerance.
+     *
+     * @param[in] quadPoints point coordinates, nCells * nQuadPointsPerCell * 3
+     * @param[in] nCells number of cells
+     * @param[in] nQuadPointsPerCell number of points of each cell
+     * @param[out] centroids centroid of the points of each cell
+     * @param[out] radii largest distance from the centroid to a point
+     */
+    void
+    computeCellBoundingSpheres(const double     *quadPoints,
+                               const dftfe::uInt nCells,
+                               const dftfe::uInt nQuadPointsPerCell,
+                               std::vector<dealii::Point<3>> &centroids,
+                               std::vector<double>           &radii);
 
     /**
      * A class to split the given communicator into a number of pools

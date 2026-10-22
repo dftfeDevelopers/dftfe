@@ -228,8 +228,7 @@ namespace dftfe
 #endif
                   basisOperationsPtr->reinit(currentBlockSize,
                                              cellsBlockSize,
-                                             quadratureIndex,
-                                             false);
+                                             quadratureIndex);
 
 
                   for (dftfe::uInt icomp = 0;

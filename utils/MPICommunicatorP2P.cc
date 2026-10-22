@@ -50,7 +50,8 @@ namespace dftfe
         if (memorySpace == MemorySpace::DEVICE)
           d_commProtocol = communicationProtocol::mpiDevice;
 #endif
-#if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
+#if defined(DFTFE_WITH_DCCL_P2P) && \
+  (defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL))
         if (memorySpace == MemorySpace::DEVICE &&
             dftfe::utils::DeviceCCLWrapper::dcclCommInit)
           d_commProtocol = communicationProtocol::dccl;
@@ -562,7 +563,8 @@ namespace dftfe
                     sendArrayStartPtr = d_sendRecvBufferHostPinnedPtr->begin();
                   }
               }
-#  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
+#  if defined(DFTFE_WITH_DCCL_P2P) && \
+    (defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL))
             if constexpr (memorySpace == MemorySpace::DEVICE)
               if (d_commProtocol == communicationProtocol::dccl)
                 {
@@ -746,7 +748,8 @@ namespace dftfe
                       d_sendRecvBufferSinglePrecHostPinnedPtr->begin();
                   }
               }
-#  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
+#  if defined(DFTFE_WITH_DCCL_P2P) && \
+    (defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL))
             if constexpr (memorySpace == MemorySpace::DEVICE)
               if (d_commProtocol == communicationProtocol::dccl)
                 {
@@ -935,7 +938,8 @@ namespace dftfe
                   }
               }
 
-#  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
+#  if defined(DFTFE_WITH_DCCL_P2P) && \
+    (defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL))
             if constexpr (memorySpace == MemorySpace::DEVICE)
               if (d_commProtocol == communicationProtocol::dccl)
                 {
@@ -1128,7 +1132,8 @@ namespace dftfe
                   }
               }
 
-#  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
+#  if defined(DFTFE_WITH_DCCL_P2P) && \
+    (defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL))
             if constexpr (memorySpace == MemorySpace::DEVICE)
               if (d_commProtocol == communicationProtocol::dccl)
                 {
@@ -1237,7 +1242,8 @@ namespace dftfe
           "updateGhostValuesEnd() was called without a matching "
           "updateGhostValuesBegin().");
         // wait for all send and recv requests to be completed
-#if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
+#if defined(DFTFE_WITH_DCCL_P2P) && \
+  (defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL))
         if constexpr (memorySpace == MemorySpace::DEVICE)
           if (d_commProtocol == communicationProtocol::dccl)
             dftfe::utils::deviceStreamSynchronize(
@@ -1478,7 +1484,8 @@ namespace dftfe
 
                   sendArrayStartPtr = d_ghostDataCopyHostPinnedPtr->begin();
                 }
-#  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
+#  if defined(DFTFE_WITH_DCCL_P2P) && \
+    (defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL))
             if constexpr (memorySpace == MemorySpace::DEVICE)
               if (d_commProtocol == communicationProtocol::dccl)
                 {
@@ -1659,7 +1666,8 @@ namespace dftfe
                       d_ghostDataCopySinglePrecHostPinnedPtr->begin();
                   }
               }
-#  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
+#  if defined(DFTFE_WITH_DCCL_P2P) && \
+    (defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL))
             if constexpr (memorySpace == MemorySpace::DEVICE)
               if (d_commProtocol == communicationProtocol::dccl)
                 {
@@ -1848,7 +1856,8 @@ namespace dftfe
                       d_ghostDataCopyHalfPrecHostPinnedPtr->begin();
                   }
               }
-#  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
+#  if defined(DFTFE_WITH_DCCL_P2P) && \
+    (defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL))
             if constexpr (memorySpace == MemorySpace::DEVICE)
               if (d_commProtocol == communicationProtocol::dccl)
                 {
@@ -2040,7 +2049,8 @@ namespace dftfe
                       d_ghostDataCopyCompressHostPinnedPtr->begin();
                   }
               }
-#  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
+#  if defined(DFTFE_WITH_DCCL_P2P) && \
+    (defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL))
             if constexpr (memorySpace == MemorySpace::DEVICE)
               if (d_commProtocol == communicationProtocol::dccl)
                 {
@@ -2153,7 +2163,8 @@ namespace dftfe
           "accumulateAddLocallyOwnedBegin().");
 
         // wait for all send and recv requests to be completed
-#if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
+#if defined(DFTFE_WITH_DCCL_P2P) && \
+  (defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL))
         if constexpr (memorySpace == MemorySpace::DEVICE)
           if (d_commProtocol == communicationProtocol::dccl)
             dftfe::utils::deviceStreamSynchronize(
@@ -2430,7 +2441,8 @@ namespace dftfe
 
                   sendArrayStartPtr = d_ghostDataCopyHostPinnedPtr->begin();
                 }
-#  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
+#  if defined(DFTFE_WITH_DCCL_P2P) && \
+    (defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL))
             if constexpr (memorySpace == MemorySpace::DEVICE)
               if (d_commProtocol == communicationProtocol::dccl)
                 {
@@ -2612,7 +2624,8 @@ namespace dftfe
                       d_ghostDataCopySinglePrecHostPinnedPtr->begin();
                   }
               }
-#  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
+#  if defined(DFTFE_WITH_DCCL_P2P) && \
+    (defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL))
             if constexpr (memorySpace == MemorySpace::DEVICE)
               if (d_commProtocol == communicationProtocol::dccl)
                 {
@@ -2726,7 +2739,8 @@ namespace dftfe
           "accumulateInsertLocallyOwnedEnd() was called without a matching "
           "accumulateInsertLocallyOwnedBegin().");
         // wait for all send and recv requests to be completed
-#if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
+#if defined(DFTFE_WITH_DCCL_P2P) && \
+  (defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL))
         if constexpr (memorySpace == MemorySpace::DEVICE)
           if (d_commProtocol == communicationProtocol::dccl)
             dftfe::utils::deviceStreamSynchronize(

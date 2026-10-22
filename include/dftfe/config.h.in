@@ -13,9 +13,6 @@
 /* PETSc/SLEPc support (derived from deal.II configuration) */
 #cmakedefine USE_PETSC 1
 
-/* Higher-order quadrature for PSP */
-#cmakedefine DFTFE_WITH_HIGHERQUAD_PSP 1
-
 /* 64-bit integer indices */
 #cmakedefine DFTFE_WITH_64BIT_INT 1
 
@@ -31,6 +28,7 @@
 #cmakedefine DFTFE_WITH_DEVICE_AWARE_MPI 1
 #cmakedefine DFTFE_WITH_CUDA_NCCL 1
 #cmakedefine DFTFE_WITH_HIP_RCCL 1
+#cmakedefine DFTFE_WITH_DCCL_P2P 1
 
 /* HIP platform selection */
 #cmakedefine __HIP_PLATFORM_AMD__ 1

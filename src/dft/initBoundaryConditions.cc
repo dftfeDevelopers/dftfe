@@ -219,16 +219,14 @@ namespace dftfe
     std::vector<dealii::Quadrature<1>> quadratureVector;
     quadratureVector.push_back(
       dealii::QGauss<1>(d_dftParamsPtr->densityQuadratureRule));
-    quadratureVector.push_back(
-      dealii::QIterated<1>(dealii::QGauss<1>(C_num1DQuadNLPSP(
-                             d_dftParamsPtr->finiteElementPolynomialOrder)),
-                           C_numCopies1DQuadNLPSP()));
+    quadratureVector.push_back(dealii::QIterated<1>(
+      dealii::QGauss<1>(d_dftParamsPtr->QuadratureOrderNonLocalPSP),
+      d_dftParamsPtr->QuadratureCopyNonLocalPSP));
     quadratureVector.push_back(dealii::QGaussLobatto<1>(
       d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal + 1));
-    quadratureVector.push_back(
-      dealii::QIterated<1>(dealii::QGauss<1>(C_num1DQuadLPSP(
-                             d_dftParamsPtr->finiteElementPolynomialOrder)),
-                           C_numCopies1DQuadLPSP()));
+    quadratureVector.push_back(dealii::QIterated<1>(
+      dealii::QGauss<1>(d_dftParamsPtr->QuadratureOrderLocalPotential),
+      d_dftParamsPtr->QuadratureCopyLocalPotential));
     quadratureVector.push_back(dealii::QGauss<1>(
       C_num1DQuad(d_dftParamsPtr->finiteElementPolynomialOrder)));
     // SparsityPattern VEctor
@@ -304,15 +302,17 @@ namespace dftfe
                                            d_densityDofHandlerIndex,
                                            quadratureIndices,
                                            updateFlags);
-            d_basisOperationsPtrHost->computeCellStiffnessMatrix(
-              d_feOrderPlusOneQuadratureId, 1, true, false);
-            if (std::is_same<dataTypes::number, std::complex<double>>::value ||
-                !d_dftParamsPtr->approxOverlapMatrix)
+            // Only the basis operations object held by the Kohn-Sham operator
+            // is read, which is the device one in a device run; init(src) does
+            // not copy these two matrices from the host.
+            if (!d_dftParamsPtr->useDevice)
+              d_basisOperationsPtrHost->computeCellStiffnessMatrix(
+                d_feOrderPlusOneQuadratureId, 1, true, false);
+            if (!d_dftParamsPtr->useDevice &&
+                (std::is_same<dataTypes::number, std::complex<double>>::value ||
+                 !d_dftParamsPtr->approxOverlapMatrix))
               d_basisOperationsPtrHost->computeCellMassMatrix(
-                d_feOrderPlusOneQuadratureId,
-                1,
-                true,
-                !d_dftParamsPtr->approxOverlapMatrix);
+                d_feOrderPlusOneQuadratureId, 1);
             d_basisOperationsPtrHost->computeInverseSqrtMassVector(true, false);
             if (d_dftParamsPtr->useIntermediateDensityQuadrature)
               {
@@ -401,10 +401,7 @@ namespace dftfe
             if (std::is_same<dataTypes::number, std::complex<double>>::value ||
                 !d_dftParamsPtr->approxOverlapMatrix)
               d_basisOperationsPtrDevice->computeCellMassMatrix(
-                d_feOrderPlusOneQuadratureId,
-                50,
-                true,
-                !d_dftParamsPtr->approxOverlapMatrix);
+                d_feOrderPlusOneQuadratureId, 50);
             d_basisOperationsPtrDevice->computeInverseSqrtMassVector(true,
                                                                      false);
           }

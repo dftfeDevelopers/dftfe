@@ -60,10 +60,6 @@ device_architectures="70" # set DCMAKE_CXX_CUDA_ARCHITECTURES
                            #(only applicable for withGPU=ON)
 
 
-#Option to compile with default or higher order quadrature for storing pseudopotential data
-#ON is recommended for MD simulations with hard pseudopotentials
-withHigherQuadPSP=OFF
-
 # build type: "Release" or "Debug"
 build_type=Release
 
@@ -94,7 +90,7 @@ function cmake_configure() {
     -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH;$dftdpath;$numdiffdir"\
     -DWITH_COMPLEX=$withComplex -DWITH_GPU=$withGPU -DGPU_LANG=$gpuLang -DGPU_VENDOR=$gpuVendor -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_CUDA_FLAGS="$device_flags" -DCMAKE_CUDA_ARCHITECTURES="$device_architectures"\
     -DWITH_TESTING=$testing \
-    -DHIGHERQUAD_PSP=$withHigherQuadPSP -DBUILD_SHARED_LIBS=ON -DUSE_64BIT_INT=$useInt64 $1
+    -DBUILD_SHARED_LIBS=ON -DUSE_64BIT_INT=$useInt64 $1
   elif [ "$gpuLang" = "hip" ]; then
     cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=TRUE -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_COMPILER=$cxx_compiler\
     -DCMAKE_CXX_FLAGS="$cxx_flags"\
@@ -108,7 +104,7 @@ function cmake_configure() {
     -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH;$dftdpath;$numdiffdir"\
     -DWITH_COMPLEX=$withComplex -DWITH_GPU=$withGPU -DGPU_LANG=$gpuLang -DGPU_VENDOR=$gpuVendor -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_HIP_FLAGS="$device_flags" -DCMAKE_HIP_ARCHITECTURES="$device_architectures"\
     -DWITH_TESTING=$testing \
-    -DHIGHERQUAD_PSP=$withHigherQuadPSP -DBUILD_SHARED_LIBS=ON -DUSE_64BIT_INT=$useInt64 $1
+    -DBUILD_SHARED_LIBS=ON -DUSE_64BIT_INT=$useInt64 $1
   else
     cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=TRUE -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_COMPILER=$cxx_compiler\
     -DCMAKE_CXX_FLAGS="$cxx_flags"\
@@ -122,7 +118,7 @@ function cmake_configure() {
     -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH;$dftdpath;$numdiffdir"\
     -DWITH_COMPLEX=$withComplex \
     -DWITH_TESTING=$testing \
-    -DHIGHERQUAD_PSP=$withHigherQuadPSP -DBUILD_SHARED_LIBS=ON -DUSE_64BIT_INT=$useInt64 $1    
+    -DBUILD_SHARED_LIBS=ON -DUSE_64BIT_INT=$useInt64 $1    
   fi
 }
 

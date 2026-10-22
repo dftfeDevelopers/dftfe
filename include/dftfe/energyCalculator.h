@@ -368,6 +368,70 @@ namespace dftfe
 
 
   private:
+    /**
+     * @brief Adds the exchange and correlation energies of the locally owned
+     * cells, evaluated from a density in its XC representation, to
+     * exchangeEnergy and correlationEnergy.
+     *
+     * @param[in] basisOperationsPtr basis of the density quadrature
+     * @param[in] quadratureId the density quadrature
+     * @param[in] excManagerPtr the XC functional
+     * @param[in] auxDensityXCRepresentationPtr the density
+     * @param[in,out] exchangeEnergy accumulated exchange energy
+     * @param[in,out] correlationEnergy accumulated correlation energy
+     */
+    void
+    accumulateXCEnergies(
+      const std::shared_ptr<
+        dftfe::basis::FEBasisOperations<dataTypes::number,
+                                        double,
+                                        dftfe::utils::MemorySpace::HOST>>
+                                                    &basisOperationsPtr,
+      const dftfe::uInt                              quadratureId,
+      const std::shared_ptr<excManager<memorySpace>> excManagerPtr,
+      std::shared_ptr<AuxDensityMatrix<memorySpace>>
+              auxDensityXCRepresentationPtr,
+      double &exchangeEnergy,
+      double &correlationEnergy) const;
+
+    /**
+     * @brief Exact directional derivative of the discrete non-collinear XC energy
+     * along the density residual.
+     *
+     * The residual cross term is contracted against the discrete XC field the
+     * eigensolver used, B_xc = b_in * m_hat_in, giving a magnetic contribution
+     * of b_in * (m_hat_in . dm).  For GGA the gradient contribution is taken
+     * through the collocation shape-function gradient, the same White-Bird
+     * operator the Hamiltonian applies, and only the longitudinal projection
+     * of dm is retained to match it.
+     *
+     * @param[in] basisOperationsPtr basis of the density quadrature
+     * @param[in] quadratureId the density quadrature
+     * @param[in] excManagerPtr the XC functional
+     * @param[in] densityInValues input density n, m_z, m_y, m_x
+     * @param[in] densityOutValues output density, in the same layout
+     * @param[in] auxDensityXCInRepresentationPtr the input density in the XC
+     * representation, which defines b_in and m_hat_in
+     * @return the contribution of the locally owned cells
+     */
+    double
+    computeNonCollinearXCDirectionalDerivative(
+      const std::shared_ptr<
+        dftfe::basis::FEBasisOperations<dataTypes::number,
+                                        double,
+                                        dftfe::utils::MemorySpace::HOST>>
+                                                    &basisOperationsPtr,
+      const dftfe::uInt                              quadratureId,
+      const std::shared_ptr<excManager<memorySpace>> excManagerPtr,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &densityInValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &densityOutValues,
+      std::shared_ptr<AuxDensityMatrix<memorySpace>>
+        auxDensityXCInRepresentationPtr);
+
     const MPI_Comm d_mpiCommParent;
     const MPI_Comm mpi_communicator;
     const MPI_Comm interpoolcomm;

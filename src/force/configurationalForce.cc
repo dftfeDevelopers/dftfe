@@ -22,116 +22,13 @@
 #include <dftfe/ExcDFTPlusU.h>
 #include <dftfe/feevaluationWrapper.h>
 #include <dftfe/dftUtils.h>
+#include <dftfe/atomicInitKernels.h>
+#include <dftfe/noncollinearDensityUtils.h>
 #include <algorithm>
 #include <array>
 #include <set>
 namespace dftfe
 {
-  namespace internalForce
-  {
-    template <typename T>
-    void
-    transformNonColinDensityToSpinPolarizedDensity(
-      const std::shared_ptr<
-        dftfe::basis::
-          FEBasisOperations<T, double, dftfe::utils::MemorySpace::HOST>>
-                        &basisOperationsPtr,
-      const unsigned int quadratureId,
-      bool               isGGA,
-      const std::vector<
-        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-        &nonColinDensityValues,
-      const std::vector<
-        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-        &nonColinGradDensityValues,
-      std::vector<
-        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-        &spinPolarizedDensityValues,
-      std::vector<
-        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-        &spinPolarizedGradDensityValues)
-    {
-      spinPolarizedDensityValues.clear();
-      spinPolarizedGradDensityValues.clear();
-      spinPolarizedDensityValues.resize(2);
-      spinPolarizedGradDensityValues.resize(isGGA ? 2 : 0);
-      spinPolarizedDensityValues[0] = nonColinDensityValues[0];
-      spinPolarizedDensityValues[1].resize(spinPolarizedDensityValues[0].size(),
-                                           0.0);
-      if (isGGA)
-        {
-          spinPolarizedGradDensityValues[0] = nonColinGradDensityValues[0];
-          spinPolarizedGradDensityValues[1].resize(
-            spinPolarizedGradDensityValues[0].size(), 0.0);
-        }
-      basisOperationsPtr->reinit(0, 0, quadratureId, false);
-      const unsigned int  nQuadsPerCell = basisOperationsPtr->nQuadsPerCell();
-      std::vector<double> cellMagAxisVals(isGGA ? nQuadsPerCell * 3 : 0, 0.0);
-      for (unsigned int iCell = 0; iCell < basisOperationsPtr->nCells();
-           ++iCell)
-        {
-          const double *cellRhoValues =
-            nonColinDensityValues[0].data() + iCell * nQuadsPerCell;
-          const double *cellMagZValues =
-            nonColinDensityValues[1].data() + iCell * nQuadsPerCell;
-          const double *cellMagYValues =
-            nonColinDensityValues[2].data() + iCell * nQuadsPerCell;
-          const double *cellMagXValues =
-            nonColinDensityValues[3].data() + iCell * nQuadsPerCell;
-          double *cellMagNormValues =
-            spinPolarizedDensityValues[1].data() + iCell * nQuadsPerCell;
-
-          for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
-            cellMagNormValues[iQuad] =
-              std::sqrt(cellMagZValues[iQuad] * cellMagZValues[iQuad] +
-                        cellMagYValues[iQuad] * cellMagYValues[iQuad] +
-                        cellMagXValues[iQuad] * cellMagXValues[iQuad]);
-          if (isGGA)
-            {
-              const double *cellGradRhoValues =
-                nonColinGradDensityValues[0].data() + 3 * iCell * nQuadsPerCell;
-              const double *cellGradMagZValues =
-                nonColinGradDensityValues[1].data() + 3 * iCell * nQuadsPerCell;
-              const double *cellGradMagYValues =
-                nonColinGradDensityValues[2].data() + 3 * iCell * nQuadsPerCell;
-              const double *cellGradMagXValues =
-                nonColinGradDensityValues[3].data() + 3 * iCell * nQuadsPerCell;
-              double *cellGradMagNormValues =
-                spinPolarizedGradDensityValues[1].data() +
-                3 * iCell * nQuadsPerCell;
-              double *cellMagAxisValues = cellMagAxisVals.data();
-              for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
-                {
-                  if (cellMagNormValues[iQuad] > 1e-12)
-                    {
-                      cellMagAxisValues[3 * iQuad + 0] =
-                        cellMagXValues[iQuad] / cellMagNormValues[iQuad];
-                      cellMagAxisValues[3 * iQuad + 1] =
-                        cellMagYValues[iQuad] / cellMagNormValues[iQuad];
-                      cellMagAxisValues[3 * iQuad + 2] =
-                        cellMagZValues[iQuad] / cellMagNormValues[iQuad];
-                    }
-                  else
-                    {
-                      cellMagAxisValues[3 * iQuad + 0] = 0.0;
-                      cellMagAxisValues[3 * iQuad + 1] = 0.0;
-                      cellMagAxisValues[3 * iQuad + 2] = 0.0;
-                    }
-                  for (unsigned int idim = 0; idim < 3; ++idim)
-                    {
-                      cellGradMagNormValues[iQuad * 3 + idim] =
-                        cellMagAxisValues[3 * iQuad + 2] *
-                          cellGradMagZValues[3 * iQuad + idim] +
-                        cellMagAxisValues[3 * iQuad + 1] *
-                          cellGradMagYValues[3 * iQuad + idim] +
-                        cellMagAxisValues[3 * iQuad + 0] *
-                          cellGradMagXValues[3 * iQuad + idim];
-                    }
-                }
-            }
-        }
-    }
-  } // namespace internalForce
   template <dftfe::utils::MemorySpace memorySpace>
   configurationalForceClass<memorySpace>::configurationalForceClass(
     std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
@@ -322,7 +219,6 @@ namespace dftfe
       auxDensityXCOutRepresentationPtr,
     const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
     const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues,
-    const std::map<dealii::CellId, std::vector<double>> &hessianRhoCoreValues,
     const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
       &gradRhoCoreAtoms,
     const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
@@ -417,7 +313,7 @@ namespace dftfe
       }
     if (d_dftParams.noncolin)
       {
-        internalForce::transformNonColinDensityToSpinPolarizedDensity(
+        noncollinearDensityUtils::transformToSpinPolarizedDensity(
           d_basisOperationsPtrElectroHost,
           d_densityQuadratureIdElectro,
           isIntegrationByPartsGradDensityDependenceVxc,
@@ -1154,8 +1050,7 @@ namespace dftfe
                     d_basisOperationsPtr->reinit(currentBlockSize *
                                                    spinorFactor,
                                                  cellsBlockSize,
-                                                 d_densityQuadratureId,
-                                                 true);
+                                                 d_densityQuadratureId);
 
                     flattenedArrayBlock->updateGhostValues();
                     d_basisOperationsPtr->distribute(*(flattenedArrayBlock));
@@ -2760,7 +2655,8 @@ namespace dftfe
                   const double phiG =
                     dist > atomWidth ?
                       coulomb :
-                      -atomCharge * dftUtils::smearedPot(dist, atomWidth);
+                      -atomCharge *
+                        atomicInitKernels::smearedPot(dist, atomWidth);
                   const double localCorrection =
                     (pseudoCellValues == nullptr ? coulomb :
                                                    (*pseudoCellValues)[iQuad]) -
@@ -2804,7 +2700,7 @@ namespace dftfe
                         dist > atomWidth ?
                           coulomb :
                           -imageCharges[iImage] *
-                            dftUtils::smearedPot(dist, atomWidth);
+                            atomicInitKernels::smearedPot(dist, atomWidth);
                       const double localCorrection =
                         (pseudoImageCellValues == nullptr ?
                            coulomb :
@@ -3052,9 +2948,8 @@ namespace dftfe
 
 
     dealii::QIterated<3 - 1> faceQuadrature(
-      dealii::QGauss<1>(C_num1DQuadLPSP(
-        d_dftParams.finiteElementPolynomialOrderElectrostatics)),
-      C_numCopies1DQuadLPSP());
+      dealii::QGauss<1>(d_dftParams.QuadratureOrderLocalPotential),
+      d_dftParams.QuadratureCopyLocalPotential);
     dealii::FEFaceValues<3> feFaceValuesElectro(
       dofHandlerRhoNodal.get_fe(),
       faceQuadrature,
@@ -4345,8 +4240,7 @@ namespace dftfe
                     d_basisOperationsPtr->reinit(currentBlockSize *
                                                    spinorFactor,
                                                  cellsBlockSize,
-                                                 d_nlpspQuadratureId,
-                                                 true);
+                                                 d_nlpspQuadratureId);
 
                     d_BLASWrapperPtr->rightDiagonalScale(
                       flattenedArrayBlock->numVectors() / spinorFactor,
@@ -4770,6 +4664,10 @@ namespace dftfe
                                 for (dftfe::uInt iQuad = 0;
                                      iQuad < nQuadsPerCell;
                                      ++iQuad)
+                                  // the Bloch phase derivative i k_iDim
+                                  // takes the place of the gradient index
+                                  // iDim of the term above, paired with the
+                                  // distance component jDim
                                   for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
                                     for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
                                       StressNlocContrib[3 * iDim + jDim] -=
@@ -4780,12 +4678,12 @@ namespace dftfe
                                                nQuadsPerCell * 3 +
                                              startingPseudoWfcIdFlattened * 3 +
                                              iPseudoWave * nQuadsPerCell * 3 +
-                                             iQuad * 3 + iDim] *
+                                             iQuad * 3 + jDim] *
                                         nlpContractionPsiQuadsContributionHost
                                           [startingPseudoWfcIdFlattened +
                                            iPseudoWave * nQuadsPerCell +
                                            iQuad] *
-                                        kCoordHost[jDim] * JxWValues[iQuad];
+                                        kCoordHost[iDim] * JxWValues[iQuad];
 #endif
                         } // non-trivial cell check
                     }     // cell loop
@@ -5087,8 +4985,7 @@ namespace dftfe
                     d_basisOperationsPtr->reinit(currentBlockSize *
                                                    spinorFactor,
                                                  cellsBlockSize,
-                                                 d_nlpspQuadratureId,
-                                                 false);
+                                                 d_nlpspQuadratureId);
 
                     d_BLASWrapperPtr->rightDiagonalScale(
                       flattenedArrayBlock->numVectors() / spinorFactor,
@@ -5241,10 +5138,10 @@ namespace dftfe
                                   for (dftfe::uInt jDim = 0; jDim < 3; jDim++)
                                     StressNlocContrib[3 * iDim + jDim] -=
                                       dataTypes::number(
-                                        kCoordHost[iDim] *
+                                        kCoordHost[jDim] *
                                         std::complex<double>(0.0, 1.0) *
                                         generatorAtAtomsNlocContribStress
-                                          [3 * iAtom + jDim]);
+                                          [3 * iAtom + iDim]);
                             }
                         }
 #endif

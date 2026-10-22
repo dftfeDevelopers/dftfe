@@ -20,9 +20,12 @@
 
 // source file for energy computations
 #include <dftfe/config.h>
+#include <dftfe/BLASWrapper.h>
 #include <dftfe/constants.h>
 #include <dftfe/dftUtils.h>
 #include <dftfe/energyCalculator.h>
+#include <dftfe/KohnShamDFTOperatorKernels.h>
+#include <dftfe/noncollinearDensityUtils.h>
 
 namespace dftfe
 {
@@ -41,7 +44,7 @@ namespace dftfe
         &densityQuadValues)
     {
       double result = 0.0;
-      basisOperationsPtr->reinit(0, 0, quadratureId, false);
+      basisOperationsPtr->reinit(0, 0, quadratureId);
       const dftfe::uInt nQuadsPerCell = basisOperationsPtr->nQuadsPerCell();
       for (dftfe::uInt iCell = 0; iCell < basisOperationsPtr->nCells(); ++iCell)
         {
@@ -70,7 +73,7 @@ namespace dftfe
         &densityQuadValuesOut)
     {
       double result = 0.0;
-      basisOperationsPtr->reinit(0, 0, quadratureId, false);
+      basisOperationsPtr->reinit(0, 0, quadratureId);
       const dftfe::uInt nQuadsPerCell = basisOperationsPtr->nQuadsPerCell();
       for (dftfe::uInt iCell = 0; iCell < basisOperationsPtr->nCells(); ++iCell)
         {
@@ -99,7 +102,7 @@ namespace dftfe
         &densityQuadValues)
     {
       double result = 0.0;
-      basisOperationsPtr->reinit(0, 0, quadratureId, false);
+      basisOperationsPtr->reinit(0, 0, quadratureId);
       const dftfe::uInt nQuadsPerCell = basisOperationsPtr->nQuadsPerCell();
       for (dftfe::uInt iCell = 0; iCell < basisOperationsPtr->nCells(); ++iCell)
         {
@@ -127,7 +130,7 @@ namespace dftfe
         &densityQuadValuesOut)
     {
       double result = 0.0;
-      basisOperationsPtr->reinit(0, 0, quadratureId, false);
+      basisOperationsPtr->reinit(0, 0, quadratureId);
       const dftfe::uInt nQuadsPerCell = basisOperationsPtr->nQuadsPerCell();
       for (dftfe::uInt iCell = 0; iCell < basisOperationsPtr->nCells(); ++iCell)
         {
@@ -140,108 +143,6 @@ namespace dftfe
         }
       return result;
     }
-    template <typename T>
-    void
-    transformNonColinDensityToSpinPolarizedDensity(
-      const std::shared_ptr<
-        dftfe::basis::
-          FEBasisOperations<T, double, dftfe::utils::MemorySpace::HOST>>
-                       &basisOperationsPtr,
-      const dftfe::uInt quadratureId,
-      bool              isGGA,
-      const std::vector<
-        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-        &nonColinDensityValues,
-      const std::vector<
-        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-        &nonColinGradDensityValues,
-      std::vector<
-        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-        &spinPolarizedDensityValues,
-      std::vector<
-        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-        &spinPolarizedGradDensityValues)
-    {
-      spinPolarizedDensityValues.clear();
-      spinPolarizedGradDensityValues.clear();
-      spinPolarizedDensityValues.resize(2);
-      spinPolarizedGradDensityValues.resize(isGGA ? 2 : 0);
-      spinPolarizedDensityValues[0] = nonColinDensityValues[0];
-      spinPolarizedDensityValues[1].resize(spinPolarizedDensityValues[0].size(),
-                                           0.0);
-      if (isGGA)
-        {
-          spinPolarizedGradDensityValues[0] = nonColinGradDensityValues[0];
-          spinPolarizedGradDensityValues[1].resize(
-            spinPolarizedGradDensityValues[0].size(), 0.0);
-        }
-      basisOperationsPtr->reinit(0, 0, quadratureId, false);
-      const dftfe::uInt   nQuadsPerCell = basisOperationsPtr->nQuadsPerCell();
-      std::vector<double> cellMagAxisVals(isGGA ? nQuadsPerCell * 3 : 0, 0.0);
-      for (dftfe::uInt iCell = 0; iCell < basisOperationsPtr->nCells(); ++iCell)
-        {
-          const double *cellRhoValues =
-            nonColinDensityValues[0].data() + iCell * nQuadsPerCell;
-          const double *cellMagZValues =
-            nonColinDensityValues[1].data() + iCell * nQuadsPerCell;
-          const double *cellMagYValues =
-            nonColinDensityValues[2].data() + iCell * nQuadsPerCell;
-          const double *cellMagXValues =
-            nonColinDensityValues[3].data() + iCell * nQuadsPerCell;
-          double *cellMagNormValues =
-            spinPolarizedDensityValues[1].data() + iCell * nQuadsPerCell;
-
-          for (dftfe::uInt iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
-            cellMagNormValues[iQuad] =
-              std::sqrt(cellMagZValues[iQuad] * cellMagZValues[iQuad] +
-                        cellMagYValues[iQuad] * cellMagYValues[iQuad] +
-                        cellMagXValues[iQuad] * cellMagXValues[iQuad]);
-          if (isGGA)
-            {
-              const double *cellGradRhoValues =
-                nonColinGradDensityValues[0].data() + 3 * iCell * nQuadsPerCell;
-              const double *cellGradMagZValues =
-                nonColinGradDensityValues[1].data() + 3 * iCell * nQuadsPerCell;
-              const double *cellGradMagYValues =
-                nonColinGradDensityValues[2].data() + 3 * iCell * nQuadsPerCell;
-              const double *cellGradMagXValues =
-                nonColinGradDensityValues[3].data() + 3 * iCell * nQuadsPerCell;
-              double *cellGradMagNormValues =
-                spinPolarizedGradDensityValues[1].data() +
-                3 * iCell * nQuadsPerCell;
-              double *cellMagAxisValues = cellMagAxisVals.data();
-              for (dftfe::uInt iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
-                {
-                  if (cellMagNormValues[iQuad] > 1e-12)
-                    {
-                      cellMagAxisValues[3 * iQuad + 0] =
-                        cellMagXValues[iQuad] / cellMagNormValues[iQuad];
-                      cellMagAxisValues[3 * iQuad + 1] =
-                        cellMagYValues[iQuad] / cellMagNormValues[iQuad];
-                      cellMagAxisValues[3 * iQuad + 2] =
-                        cellMagZValues[iQuad] / cellMagNormValues[iQuad];
-                    }
-                  else
-                    {
-                      cellMagAxisValues[3 * iQuad + 0] = 0.0;
-                      cellMagAxisValues[3 * iQuad + 1] = 0.0;
-                      cellMagAxisValues[3 * iQuad + 2] = 0.0;
-                    }
-                  for (dftfe::uInt idim = 0; idim < 3; ++idim)
-                    {
-                      cellGradMagNormValues[iQuad * 3 + idim] =
-                        cellMagAxisValues[3 * iQuad + 2] *
-                          cellGradMagZValues[3 * iQuad + idim] +
-                        cellMagAxisValues[3 * iQuad + 1] *
-                          cellGradMagYValues[3 * iQuad + idim] +
-                        cellMagAxisValues[3 * iQuad + 0] *
-                          cellGradMagXValues[3 * iQuad + idim];
-                    }
-                }
-            }
-        }
-    }
-
     void
     printEnergy(const double                      bandEnergy,
                 const double                      totalkineticEnergy,
@@ -779,14 +680,20 @@ namespace dftfe
        densityFamilyType::GGA);
     if (d_dftParams.noncolin)
       {
-        internalEnergy::transformNonColinDensityToSpinPolarizedDensity(
+        noncollinearDensityUtils::transformToSpinPolarizedDensity(
           basisOperationsPtr,
           densityQuadratureID,
           isIntegrationByPartsGradDensityDependenceVxc,
           densityOutValues,
           gradDensityOutValues,
           densityOutQuadValuesSpinPolarized,
-          gradDensityOutQuadValuesSpinPolarized);
+          gradDensityOutQuadValuesSpinPolarized,
+          // Kohn-Sham double counting: the Hamiltonian applied
+          // B_xc = b_in m_hat_in, so the quantity removed from the band energy
+          // is b_in (m_hat_in . m_out).  These arrays feed only the
+          // excCorrPotentialTimesRho accumulation; the exchange and correlation
+          // energy densities come from auxDensityXCOutRepresentationPtr.
+          &densityInValues);
       }
     else if (d_dftParams.spinPolarized == 0)
       {
@@ -993,124 +900,139 @@ namespace dftfe
                                                 phiTotRhoInValues,
                                                 densityInValues[0]));
 
-    std::vector<
-      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-      densityInQuadValuesSpinPolarized = densityInValues;
-    std::vector<
-      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-      densityOutQuadValuesSpinPolarized = densityOutValues;
-    std::vector<
-      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-      gradDensityInQuadValuesSpinPolarized;
-    std::vector<
-      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-      gradDensityOutQuadValuesSpinPolarized;
-
-    std::vector<
-      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-      tauInQuadValuesSpinPolarized;
-    std::vector<
-      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-      tauOutQuadValuesSpinPolarized;
-
-    bool isIntegrationByPartsGradDensityDependenceVxc =
-      (excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
-       densityFamilyType::GGA);
-
-    const bool isTauMGGA =
-      (excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
-       ExcFamilyType::TauMGGA);
-
-    if (isIntegrationByPartsGradDensityDependenceVxc)
-      {
-        gradDensityInQuadValuesSpinPolarized  = gradDensityInValues;
-        gradDensityOutQuadValuesSpinPolarized = gradDensityOutValues;
-      }
-    if (isTauMGGA)
-      {
-        tauInQuadValuesSpinPolarized  = tauInValues;
-        tauOutQuadValuesSpinPolarized = tauOutValues;
-      }
-
+    // For a noncollinear density the XC cross term is the exact directional
+    // derivative of the discrete XC energy along the density residual, its
+    // magnetic channel contracted against the field the Hamiltonian applied,
+    // B_xc = b_in * m_hat_in, so only the exchange and correlation energies
+    // of the two densities are evaluated besides it.
     if (d_dftParams.noncolin)
       {
-        internalEnergy::transformNonColinDensityToSpinPolarizedDensity(
+        accumulateXCEnergies(basisOperationsPtr,
+                             densityQuadratureID,
+                             excManagerPtr,
+                             auxDensityXCInRepresentationPtr,
+                             exchangeEnergy,
+                             correlationEnergy);
+        exchangeEnergy *= -1.0;
+        correlationEnergy *= -1.0;
+        accumulateXCEnergies(basisOperationsPtr,
+                             densityQuadratureID,
+                             excManagerPtr,
+                             auxDensityXCOutRepresentationPtr,
+                             exchangeEnergy,
+                             correlationEnergy);
+        excCorrPotentialTimesRho = computeNonCollinearXCDirectionalDerivative(
           basisOperationsPtr,
           densityQuadratureID,
-          isIntegrationByPartsGradDensityDependenceVxc,
+          excManagerPtr,
           densityInValues,
-          gradDensityInValues,
-          densityInQuadValuesSpinPolarized,
-          gradDensityInQuadValuesSpinPolarized);
-        internalEnergy::transformNonColinDensityToSpinPolarizedDensity(
-          basisOperationsPtr,
-          densityQuadratureID,
-          isIntegrationByPartsGradDensityDependenceVxc,
           densityOutValues,
-          gradDensityOutValues,
-          densityOutQuadValuesSpinPolarized,
-          gradDensityOutQuadValuesSpinPolarized);
+          auxDensityXCInRepresentationPtr);
       }
-    else if (d_dftParams.spinPolarized == 0)
+    else
       {
-        densityInQuadValuesSpinPolarized.push_back(
-          dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>(
-            densityInValues[0].size(), 0.0));
-        densityOutQuadValuesSpinPolarized.push_back(
-          dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>(
-            densityOutValues[0].size(), 0.0));
+        std::vector<
+          dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+          densityInQuadValuesSpinPolarized = densityInValues;
+        std::vector<
+          dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+          densityOutQuadValuesSpinPolarized = densityOutValues;
+        std::vector<
+          dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+          gradDensityInQuadValuesSpinPolarized;
+        std::vector<
+          dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+          gradDensityOutQuadValuesSpinPolarized;
+
+        std::vector<
+          dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+          tauInQuadValuesSpinPolarized;
+        std::vector<
+          dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+          tauOutQuadValuesSpinPolarized;
+
+        bool isIntegrationByPartsGradDensityDependenceVxc =
+          (excManagerPtr->getExcSSDFunctionalObj()
+             ->getDensityBasedFamilyType() == densityFamilyType::GGA);
+
+        const bool isTauMGGA =
+          (excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
+           ExcFamilyType::TauMGGA);
 
         if (isIntegrationByPartsGradDensityDependenceVxc)
           {
-            gradDensityInQuadValuesSpinPolarized.push_back(
-              dftfe::utils::MemoryStorage<double,
-                                          dftfe::utils::MemorySpace::HOST>(
-                gradDensityInValues[0].size(), 0.0));
-            gradDensityOutQuadValuesSpinPolarized.push_back(
-              dftfe::utils::MemoryStorage<double,
-                                          dftfe::utils::MemorySpace::HOST>(
-                gradDensityOutValues[0].size(), 0.0));
+            gradDensityInQuadValuesSpinPolarized  = gradDensityInValues;
+            gradDensityOutQuadValuesSpinPolarized = gradDensityOutValues;
           }
         if (isTauMGGA)
           {
-            tauInQuadValuesSpinPolarized.push_back(
-              dftfe::utils::MemoryStorage<double,
-                                          dftfe::utils::MemorySpace::HOST>(
-                tauInValues[0].size(), 0.0));
-            tauOutQuadValuesSpinPolarized.push_back(
-              dftfe::utils::MemoryStorage<double,
-                                          dftfe::utils::MemorySpace::HOST>(
-                tauOutValues[0].size(), 0.0));
+            tauInQuadValuesSpinPolarized  = tauInValues;
+            tauOutQuadValuesSpinPolarized = tauOutValues;
           }
+
+        if (d_dftParams.spinPolarized == 0)
+          {
+            densityInQuadValuesSpinPolarized.push_back(
+              dftfe::utils::MemoryStorage<double,
+                                          dftfe::utils::MemorySpace::HOST>(
+                densityInValues[0].size(), 0.0));
+            densityOutQuadValuesSpinPolarized.push_back(
+              dftfe::utils::MemoryStorage<double,
+                                          dftfe::utils::MemorySpace::HOST>(
+                densityOutValues[0].size(), 0.0));
+
+            if (isIntegrationByPartsGradDensityDependenceVxc)
+              {
+                gradDensityInQuadValuesSpinPolarized.push_back(
+                  dftfe::utils::MemoryStorage<double,
+                                              dftfe::utils::MemorySpace::HOST>(
+                    gradDensityInValues[0].size(), 0.0));
+                gradDensityOutQuadValuesSpinPolarized.push_back(
+                  dftfe::utils::MemoryStorage<double,
+                                              dftfe::utils::MemorySpace::HOST>(
+                    gradDensityOutValues[0].size(), 0.0));
+              }
+            if (isTauMGGA)
+              {
+                tauInQuadValuesSpinPolarized.push_back(
+                  dftfe::utils::MemoryStorage<double,
+                                              dftfe::utils::MemorySpace::HOST>(
+                    tauInValues[0].size(), 0.0));
+                tauOutQuadValuesSpinPolarized.push_back(
+                  dftfe::utils::MemoryStorage<double,
+                                              dftfe::utils::MemorySpace::HOST>(
+                    tauOutValues[0].size(), 0.0));
+              }
+          }
+
+        computeXCEnergyTermsSpinPolarized(basisOperationsPtr,
+                                          densityQuadratureID,
+                                          excManagerPtr,
+                                          densityInQuadValuesSpinPolarized,
+                                          gradDensityInQuadValuesSpinPolarized,
+                                          tauInQuadValuesSpinPolarized,
+                                          auxDensityXCInRepresentationPtr,
+                                          auxDensityXCInRepresentationPtr,
+                                          exchangeEnergy,
+                                          correlationEnergy,
+                                          excCorrPotentialTimesRho);
+
+
+        excCorrPotentialTimesRho *= -1.0;
+        exchangeEnergy *= -1.0;
+        correlationEnergy *= -1.0;
+        computeXCEnergyTermsSpinPolarized(basisOperationsPtr,
+                                          densityQuadratureID,
+                                          excManagerPtr,
+                                          densityOutQuadValuesSpinPolarized,
+                                          gradDensityOutQuadValuesSpinPolarized,
+                                          tauOutQuadValuesSpinPolarized,
+                                          auxDensityXCInRepresentationPtr,
+                                          auxDensityXCOutRepresentationPtr,
+                                          exchangeEnergy,
+                                          correlationEnergy,
+                                          excCorrPotentialTimesRho);
       }
-
-    computeXCEnergyTermsSpinPolarized(basisOperationsPtr,
-                                      densityQuadratureID,
-                                      excManagerPtr,
-                                      densityInQuadValuesSpinPolarized,
-                                      gradDensityInQuadValuesSpinPolarized,
-                                      tauInQuadValuesSpinPolarized,
-                                      auxDensityXCInRepresentationPtr,
-                                      auxDensityXCInRepresentationPtr,
-                                      exchangeEnergy,
-                                      correlationEnergy,
-                                      excCorrPotentialTimesRho);
-
-
-    excCorrPotentialTimesRho *= -1.0;
-    exchangeEnergy *= -1.0;
-    correlationEnergy *= -1.0;
-    computeXCEnergyTermsSpinPolarized(basisOperationsPtr,
-                                      densityQuadratureID,
-                                      excManagerPtr,
-                                      densityOutQuadValuesSpinPolarized,
-                                      gradDensityOutQuadValuesSpinPolarized,
-                                      tauOutQuadValuesSpinPolarized,
-                                      auxDensityXCInRepresentationPtr,
-                                      auxDensityXCOutRepresentationPtr,
-                                      exchangeEnergy,
-                                      correlationEnergy,
-                                      excCorrPotentialTimesRho);
     const double potentialTimesRho =
       excCorrPotentialTimesRho + electrostaticPotentialTimesRho;
     const double nuclearElectrostaticEnergy =
@@ -1133,6 +1055,266 @@ namespace dftfe
     double totalEnergy = dealii::Utilities::MPI::sum(energy, mpi_communicator);
 
     return std::abs(totalEnergy);
+  }
+
+  template <dftfe::utils::MemorySpace memorySpace>
+  double
+  energyCalculator<memorySpace>::computeNonCollinearXCDirectionalDerivative(
+    const std::shared_ptr<
+      dftfe::basis::FEBasisOperations<dataTypes::number,
+                                      double,
+                                      dftfe::utils::MemorySpace::HOST>>
+                                                  &basisOperationsPtr,
+    const dftfe::uInt                              quadratureId,
+    const std::shared_ptr<excManager<memorySpace>> excManagerPtr,
+    const std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &densityInValues,
+    const std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &densityOutValues,
+    std::shared_ptr<AuxDensityMatrix<memorySpace>>
+      auxDensityXCInRepresentationPtr)
+  {
+    AssertThrow(densityInValues.size() >= 4 && densityOutValues.size() >= 4,
+                dealii::ExcMessage(
+                  "The noncollinear density must have four components."));
+
+    basisOperationsPtr->reinit(0, 0, quadratureId);
+    const dftfe::uInt numberCells = basisOperationsPtr->nCells();
+    const dftfe::uInt numberQuadraturePointsPerCell =
+      basisOperationsPtr->nQuadsPerCell();
+    const dftfe::uInt numberQuadraturePoints =
+      numberCells * numberQuadraturePointsPerCell;
+    for (dftfe::uInt component = 0; component < 4; ++component)
+      AssertThrow(densityInValues[component].size() == numberQuadraturePoints &&
+                    densityOutValues[component].size() ==
+                      numberQuadraturePoints,
+                  dealii::ExcMessage(
+                    "Inconsistent noncollinear density component size."));
+
+    const bool isGGA =
+      excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
+      densityFamilyType::GGA;
+
+    // density residual and, per Cartesian component, m_hat_in times the
+    // residual of m along m_hat_in, the fields whose collocation gradients
+    // enter the GGA term
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      densityResidual(isGGA ? numberQuadraturePoints : 0, 0.0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      magnetizationDirectionalChangeComponents(
+        isGGA ? 3 * numberQuadraturePoints : 0, 0.0);
+    // inverse Jacobian times the GGA sigma derivatives times JxW, the density
+    // part and the magnetization part times each m_hat_in component, as the
+    // Hamiltonian assembles them
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      invJacDensityTerm(isGGA ? 3 * numberQuadraturePoints : 0, 0.0);
+    std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      invJacMagnetizationTerm(
+        3,
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>(
+          isGGA ? 3 * numberQuadraturePoints : 0, 0.0));
+
+    std::unordered_map<
+      xcRemainderOutputDataAttributes,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      exchangeData;
+    std::unordered_map<
+      xcRemainderOutputDataAttributes,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+          correlationData;
+    auto &exchangeDerivativeSpinUp =
+      exchangeData[xcRemainderOutputDataAttributes::pdeDensitySpinUp];
+    auto &exchangeDerivativeSpinDown =
+      exchangeData[xcRemainderOutputDataAttributes::pdeDensitySpinDown];
+    auto &correlationDerivativeSpinUp =
+      correlationData[xcRemainderOutputDataAttributes::pdeDensitySpinUp];
+    auto &correlationDerivativeSpinDown =
+      correlationData[xcRemainderOutputDataAttributes::pdeDensitySpinDown];
+    if (isGGA)
+      {
+        exchangeData[xcRemainderOutputDataAttributes::pdeSigma];
+        correlationData[xcRemainderOutputDataAttributes::pdeSigma];
+      }
+
+    const auto &JxW                   = basisOperationsPtr->JxWBasisData();
+    double      directionalDerivative = 0.0;
+
+    for (dftfe::uInt cell = 0; cell < numberCells; ++cell)
+      {
+        const auto cellRange =
+          std::make_pair(cell * numberQuadraturePointsPerCell,
+                         (cell + 1) * numberQuadraturePointsPerCell);
+        excManagerPtr->getExcSSDFunctionalObj()->computeRhoTauDependentXCData(
+          *auxDensityXCInRepresentationPtr,
+          cellRange,
+          exchangeData,
+          correlationData);
+
+        std::unordered_map<
+          DensityDescriptorDataAttributes,
+          dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+              densityData;
+        auto &magnetizationAxis =
+          densityData[DensityDescriptorDataAttributes::magAxisValues];
+        if (isGGA)
+          {
+            densityData[DensityDescriptorDataAttributes::gradValuesSpinUp];
+            densityData[DensityDescriptorDataAttributes::gradValuesSpinDown];
+          }
+        auxDensityXCInRepresentationPtr->applyLocalOperations(cellRange,
+                                                              densityData);
+
+        for (dftfe::uInt q = 0; q < numberQuadraturePointsPerCell; ++q)
+          {
+            const dftfe::uInt index = cell * numberQuadraturePointsPerCell + q;
+            const double      densityChange =
+              densityOutValues[0][index] - densityInValues[0][index];
+            const double magnetizationMagnitudeDirectionalChange =
+              magnetizationAxis[3 * q + 0] *
+                (densityOutValues[3][index] - densityInValues[3][index]) +
+              magnetizationAxis[3 * q + 1] *
+                (densityOutValues[2][index] - densityInValues[2][index]) +
+              magnetizationAxis[3 * q + 2] *
+                (densityOutValues[1][index] - densityInValues[1][index]);
+
+            const double derivativeSpinUp =
+              exchangeDerivativeSpinUp[q] + correlationDerivativeSpinUp[q];
+            const double derivativeSpinDown =
+              exchangeDerivativeSpinDown[q] + correlationDerivativeSpinDown[q];
+            directionalDerivative +=
+              0.5 * JxW[index] *
+              ((derivativeSpinUp + derivativeSpinDown) * densityChange +
+               (derivativeSpinUp - derivativeSpinDown) *
+                 magnetizationMagnitudeDirectionalChange);
+
+            if (isGGA)
+              {
+                densityResidual[index] = densityChange;
+                for (dftfe::uInt component = 0; component < 3; ++component)
+                  magnetizationDirectionalChangeComponents
+                    [(component * numberCells + cell) *
+                       numberQuadraturePointsPerCell +
+                     q] = magnetizationAxis[3 * q + component] *
+                          magnetizationMagnitudeDirectionalChange;
+              }
+          }
+
+        if (isGGA)
+          dftfe::internal::
+            computeInvJacderExcWithSigmaTimesGradRhoMagJxWEntries(
+              std::make_pair(cell, cell + 1),
+              numberQuadraturePointsPerCell,
+              0,
+              basisOperationsPtr->cellsTypeFlag(),
+              correlationData.at(xcRemainderOutputDataAttributes::pdeSigma),
+              exchangeData.at(xcRemainderOutputDataAttributes::pdeSigma),
+              magnetizationAxis,
+              JxW,
+              basisOperationsPtr->inverseJacobiansBasisData(),
+              densityData.at(DensityDescriptorDataAttributes::gradValuesSpinUp),
+              densityData.at(
+                DensityDescriptorDataAttributes::gradValuesSpinDown),
+              invJacDensityTerm,
+              invJacMagnetizationTerm[0],
+              invJacMagnetizationTerm[1],
+              invJacMagnetizationTerm[2]);
+      }
+
+    if (isGGA)
+      {
+        // reference gradients through the collocation shape-function
+        // gradient, the operator the Hamiltonian applies
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+                     residualGradientReference(3 * numberQuadraturePoints, 0.0);
+        const double one  = 1.0;
+        const double zero = 0.0;
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>
+             blasWrapper;
+        auto collocationGradient = [&](const double *field) {
+          blasWrapper.xgemm('N',
+                            'N',
+                            3 * numberQuadraturePointsPerCell,
+                            numberCells,
+                            numberQuadraturePointsPerCell,
+                            &one,
+                            basisOperationsPtr
+                              ->collocationShapeFunctionGradientBasisData()
+                              .data(),
+                            3 * numberQuadraturePointsPerCell,
+                            field,
+                            numberQuadraturePointsPerCell,
+                            &zero,
+                            residualGradientReference.data(),
+                            3 * numberQuadraturePointsPerCell);
+        };
+
+        collocationGradient(densityResidual.data());
+        for (dftfe::uInt i = 0; i < 3 * numberQuadraturePoints; ++i)
+          directionalDerivative +=
+            invJacDensityTerm[i] * residualGradientReference[i];
+
+        for (dftfe::uInt component = 0; component < 3; ++component)
+          {
+            collocationGradient(
+              magnetizationDirectionalChangeComponents.data() +
+              component * numberQuadraturePoints);
+            for (dftfe::uInt i = 0; i < 3 * numberQuadraturePoints; ++i)
+              directionalDerivative += invJacMagnetizationTerm[component][i] *
+                                       residualGradientReference[i];
+          }
+      }
+
+    return directionalDerivative;
+  }
+
+  template <dftfe::utils::MemorySpace memorySpace>
+  void
+  energyCalculator<memorySpace>::accumulateXCEnergies(
+    const std::shared_ptr<
+      dftfe::basis::FEBasisOperations<dataTypes::number,
+                                      double,
+                                      dftfe::utils::MemorySpace::HOST>>
+                                                  &basisOperationsPtr,
+    const dftfe::uInt                              quadratureId,
+    const std::shared_ptr<excManager<memorySpace>> excManagerPtr,
+    std::shared_ptr<AuxDensityMatrix<memorySpace>>
+            auxDensityXCRepresentationPtr,
+    double &exchangeEnergy,
+    double &correlationEnergy) const
+  {
+    basisOperationsPtr->reinit(0, 0, quadratureId);
+    const dftfe::uInt nCells        = basisOperationsPtr->nCells();
+    const dftfe::uInt nQuadsPerCell = basisOperationsPtr->nQuadsPerCell();
+
+    std::unordered_map<
+      xcRemainderOutputDataAttributes,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      xDataOut, cDataOut;
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &xEnergyDensity = xDataOut[xcRemainderOutputDataAttributes::e];
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &cEnergyDensity = cDataOut[xcRemainderOutputDataAttributes::e];
+
+    for (dftfe::uInt iCell = 0; iCell < nCells; ++iCell)
+      {
+        excManagerPtr->getExcSSDFunctionalObj()->computeRhoTauDependentXCData(
+          *auxDensityXCRepresentationPtr,
+          std::make_pair(iCell * nQuadsPerCell, (iCell + 1) * nQuadsPerCell),
+          xDataOut,
+          cDataOut);
+        for (dftfe::uInt iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
+          {
+            exchangeEnergy +=
+              xEnergyDensity[iQuad] *
+              basisOperationsPtr->JxWBasisData()[iCell * nQuadsPerCell + iQuad];
+            correlationEnergy +=
+              cEnergyDensity[iQuad] *
+              basisOperationsPtr->JxWBasisData()[iCell * nQuadsPerCell + iQuad];
+          }
+      }
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
@@ -1162,7 +1344,7 @@ namespace dftfe
     double &correlationEnergy,
     double &excCorrPotentialTimesRho)
   {
-    basisOperationsPtr->reinit(0, 0, quadratureId, false);
+    basisOperationsPtr->reinit(0, 0, quadratureId);
     const dftfe::uInt nCells        = basisOperationsPtr->nCells();
     const dftfe::uInt nQuadsPerCell = basisOperationsPtr->nQuadsPerCell();
 
@@ -1437,6 +1619,10 @@ namespace dftfe
     const bool                              isConstraintMagnetization,
     const double                            temperature) const
   {
+    // occupancy of an eigenstate when not spin polarized: 2 for a
+    // spin-degenerate collinear state, 1 for a two-component spinor
+    const double spinDegeneracy =
+      (d_dftParams.noncolin || d_dftParams.hasSOC) ? 1.0 : 2.0;
     // computation of entropic term only for one k-pt
     double            entropy = 0.0;
     const dftfe::uInt numEigenValues =
@@ -1504,7 +1690,7 @@ namespace dftfe
                   oneminusfTimeslogoneminusf =
                     (1.0 - partialOccupancy) * log(1.0 - partialOccupancy);
                 }
-              entropy += -2.0 * C_kb * kPointWeights[kPoint] *
+              entropy += -spinDegeneracy * C_kb * kPointWeights[kPoint] *
                          (fTimeslogf + oneminusfTimeslogoneminusf);
             }
         }

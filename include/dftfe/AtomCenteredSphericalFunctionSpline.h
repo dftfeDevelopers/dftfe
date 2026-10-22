@@ -49,6 +49,16 @@ namespace dftfe
     double
     getrMinVal() const;
 
+
+    /**
+     * @brief The underlying alglib spline object.
+     */
+    const alglib::spline1dinterpolant &
+    getRadialSplineObject() const
+    {
+      return d_radialSplineObject;
+    }
+
   protected:
     double d_rMin;
 

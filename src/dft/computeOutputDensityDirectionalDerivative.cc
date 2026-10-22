@@ -353,7 +353,7 @@ namespace dftfe
 
 
     // initialize variables to be used later
-    d_basisOperationsPtrHost->reinit(0, 0, d_gllQuadratureId, false);
+    d_basisOperationsPtrHost->reinit(0, 0, d_gllQuadratureId);
     const dftfe::uInt numLocallyOwnedCells = d_basisOperationsPtrHost->nCells();
     const dftfe::uInt dofs_per_cell =
       d_dofHandlerRhoNodal.get_fe().dofs_per_cell;

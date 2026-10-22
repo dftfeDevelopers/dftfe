@@ -45,6 +45,8 @@ withGPUAwareMPI=OFF #Please use this option with care
 
 #Option to link to DCCL library (Only for GPU compilation)
 withDCCL=OFF
+#Option to use DCCL for P2P Communication (default is ON).
+withDCCLP2P=ON
 withMDI=OFF
 withTorch=OFF
 withCustomizedDealii=OFF
@@ -58,10 +60,6 @@ device_flags="-arch=sm_70 -ccbin=mpicxx" # set DCMAKE_CXX_CUDA_FLAGS
 device_architectures="70" # set DCMAKE_CXX_CUDA_ARCHITECTURES 
                            #(only applicable for withGPU=ON)
 
-
-#Option to compile with default or higher order quadrature for storing pseudopotential data
-#ON is recommended for MD simulations with hard pseudopotentials
-withHigherQuadPSP=OFF
 
 # build type: "Release" or "Debug"
 build_type=Release
@@ -90,10 +88,10 @@ function cmake_configure() {
     -DXML_INCLUDE_DIR=$xmlIncludeDir \
     -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath -DWITH_TORCH=$withTorch -DTORCH_DIR=$torchDir\
     -DWITH_CUSTOMIZED_DEALII=$withCustomizedDealii\
-    -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH;$dftdpath;$numdiffdir"\
+    -DWITH_DCCL=$withDCCL -DWITH_DCCL_P2P=$withDCCLP2P -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH;$dftdpath;$numdiffdir"\
     -DWITH_COMPLEX=$withComplex -DWITH_GPU=$withGPU -DGPU_LANG=$gpuLang -DGPU_VENDOR=$gpuVendor -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_CUDA_FLAGS="$device_flags" -DCMAKE_CUDA_ARCHITECTURES="$device_architectures"\
     -DWITH_TESTING=$testing \
-    -DHIGHERQUAD_PSP=$withHigherQuadPSP -DUSE_64BIT_INT=$useInt64  $1
+    -DUSE_64BIT_INT=$useInt64  $1
   elif [ "$gpuLang" = "hip" ]; then
     cmake -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_COMPILER=$cxx_compiler\
     -DCMAKE_CXX_FLAGS="$cxx_flags"\
@@ -104,10 +102,10 @@ function cmake_configure() {
     -DXML_INCLUDE_DIR=$xmlIncludeDir\
     -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath -DWITH_TORCH=$withTorch -DTORCH_DIR=$torchDir\
     -DWITH_CUSTOMIZED_DEALII=$withCustomizedDealii\
-    -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH;$dftdpath;$numdiffdir"\
+    -DWITH_DCCL=$withDCCL -DWITH_DCCL_P2P=$withDCCLP2P -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH;$dftdpath;$numdiffdir"\
     -DWITH_COMPLEX=$withComplex -DWITH_GPU=$withGPU -DGPU_LANG=$gpuLang -DGPU_VENDOR=$gpuVendor -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_HIP_FLAGS="$device_flags" -DCMAKE_HIP_ARCHITECTURES="$device_architectures"\
     -DWITH_TESTING=$testing \
-    -DHIGHERQUAD_PSP=$withHigherQuadPSP -DUSE_64BIT_INT=$useInt64  $1
+    -DUSE_64BIT_INT=$useInt64  $1
   else
     cmake -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_COMPILER=$cxx_compiler\
     -DCMAKE_CXX_FLAGS="$cxx_flags"\
@@ -118,10 +116,10 @@ function cmake_configure() {
     -DXML_INCLUDE_DIR=$xmlIncludeDir\
     -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath -DWITH_TORCH=$withTorch -DTORCH_DIR=$torchDir\
     -DWITH_CUSTOMIZED_DEALII=$withCustomizedDealii\
-    -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH;$dftdpath;$numdiffdir"\
+    -DWITH_DCCL=$withDCCL -DWITH_DCCL_P2P=$withDCCLP2P -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH;$dftdpath;$numdiffdir"\
     -DWITH_COMPLEX=$withComplex \
     -DWITH_TESTING=$testing \
-    -DHIGHERQUAD_PSP=$withHigherQuadPSP -DUSE_64BIT_INT=$useInt64  $1    
+    -DUSE_64BIT_INT=$useInt64  $1    
   fi
 }
 

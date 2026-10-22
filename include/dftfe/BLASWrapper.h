@@ -514,6 +514,61 @@ namespace dftfe
                           long long int     strideC,
                           const dftfe::Int  batchCount);
 
+      /**
+       * @brief Batched gemm C = alpha * A * B + beta * C for a REAL B against a
+       * possibly complex A and C, without a complex copy of B.
+       *
+       * B holds real values, so
+       * A * B = (Re A) * B + i (Im A) * B, and with the complex operands
+       * interleaved and their fast index contiguous, A and C viewed as real
+       * arrays of 2*m rows give exactly that from one real gemm.  This halves
+       * the flops of the equivalent complex gemm, whose other half multiplies
+       * zero imaginary parts, and lets the caller keep only the real B.
+       *
+       * transA and transB must be 'N', and alpha and beta must be real: the
+       * mapping relies on the row index of A and C being the interleaved one,
+       * and on beta scaling the real view of C.  Both are checked.
+       */
+      void
+      dzgemmStridedBatched(const char                  transA,
+                           const char                  transB,
+                           const dftfe::uInt           m,
+                           const dftfe::uInt           n,
+                           const dftfe::uInt           k,
+                           const std::complex<double> *alpha,
+                           const std::complex<double> *A,
+                           const dftfe::uInt           lda,
+                           long long int               strideA,
+                           const double               *B,
+                           const dftfe::uInt           ldb,
+                           long long int               strideB,
+                           const std::complex<double> *beta,
+                           std::complex<double>       *C,
+                           const dftfe::uInt           ldc,
+                           long long int               strideC,
+                           const dftfe::Int            batchCount);
+
+      /// Real build: B is already the same type as A and C, so this forwards to
+      /// xgemmStridedBatched unchanged.
+      void
+      dzgemmStridedBatched(const char        transA,
+                           const char        transB,
+                           const dftfe::uInt m,
+                           const dftfe::uInt n,
+                           const dftfe::uInt k,
+                           const double     *alpha,
+                           const double     *A,
+                           const dftfe::uInt lda,
+                           long long int     strideA,
+                           const double     *B,
+                           const dftfe::uInt ldb,
+                           long long int     strideB,
+                           const double     *beta,
+                           double           *C,
+                           const dftfe::uInt ldc,
+                           long long int     strideC,
+                           const dftfe::Int  batchCount);
+
       template <typename ValueTypeComplex, typename ValueTypeReal>
       void
       copyComplexArrToRealArrs(const dftfe::uInt       size,
@@ -1186,6 +1241,61 @@ namespace dftfe
                           const dftfe::uInt ldc,
                           long long int     strideC,
                           const dftfe::Int  batchCount);
+
+      /**
+       * @brief Batched gemm C = alpha * A * B + beta * C for a REAL B against a
+       * possibly complex A and C, without a complex copy of B.
+       *
+       * B holds real values, so
+       * A * B = (Re A) * B + i (Im A) * B, and with the complex operands
+       * interleaved and their fast index contiguous, A and C viewed as real
+       * arrays of 2*m rows give exactly that from one real gemm.  This halves
+       * the flops of the equivalent complex gemm, whose other half multiplies
+       * zero imaginary parts, and lets the caller keep only the real B.
+       *
+       * transA and transB must be 'N', and alpha and beta must be real: the
+       * mapping relies on the row index of A and C being the interleaved one,
+       * and on beta scaling the real view of C.  Both are checked.
+       */
+      void
+      dzgemmStridedBatched(const char                  transA,
+                           const char                  transB,
+                           const dftfe::uInt           m,
+                           const dftfe::uInt           n,
+                           const dftfe::uInt           k,
+                           const std::complex<double> *alpha,
+                           const std::complex<double> *A,
+                           const dftfe::uInt           lda,
+                           long long int               strideA,
+                           const double               *B,
+                           const dftfe::uInt           ldb,
+                           long long int               strideB,
+                           const std::complex<double> *beta,
+                           std::complex<double>       *C,
+                           const dftfe::uInt           ldc,
+                           long long int               strideC,
+                           const dftfe::Int            batchCount);
+
+      /// Real build: B is already the same type as A and C, so this forwards to
+      /// xgemmStridedBatched unchanged.
+      void
+      dzgemmStridedBatched(const char        transA,
+                           const char        transB,
+                           const dftfe::uInt m,
+                           const dftfe::uInt n,
+                           const dftfe::uInt k,
+                           const double     *alpha,
+                           const double     *A,
+                           const dftfe::uInt lda,
+                           long long int     strideA,
+                           const double     *B,
+                           const dftfe::uInt ldb,
+                           long long int     strideB,
+                           const double     *beta,
+                           double           *C,
+                           const dftfe::uInt ldc,
+                           long long int     strideC,
+                           const dftfe::Int  batchCount);
 
       template <typename ValueTypeComplex, typename ValueTypeReal>
       void

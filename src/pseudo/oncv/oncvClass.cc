@@ -519,6 +519,9 @@ namespace dftfe
             memorySpace>::createAtomCenteredSphericalFunctionsForProjectors()
   {
     d_atomicProjectorFnsVector.clear();
+    d_atomicProjectorFnsljmValues.clear();
+    d_atomTypeSOCFlagMap.clear();
+    d_hasSOC = false;
     for (std::set<dftfe::uInt>::iterator it = d_atomTypes.begin();
          it != d_atomTypes.end();
          ++it)
@@ -540,7 +543,10 @@ namespace dftfe
         std::string          readLine;
         std::set<dftfe::Int> radFunctionIds;
         dftfe::uInt          maxCount = socFlag == 1 ? 4 : 3;
-        d_hasSOC                      = socFlag == 1;
+        // Per species; d_hasSOC is the system-wide disjunction and selects
+        // only the coupling layout.
+        d_atomTypeSOCFlagMap[Znum] = socFlag == 1;
+        d_hasSOC                   = d_hasSOC || socFlag == 1;
         for (dftfe::uInt i = 0; i < numberOfProjectors; ++i)
           {
             std::getline(readPseudoDataFileNames, readLine);
@@ -794,6 +800,13 @@ namespace dftfe
   oncvClass<ValueType, memorySpace>::getCouplingMatrix(
     CouplingType couplingtype)
   {
+    // Only the Hamiltonian coupling is implemented; its layout follows the
+    // pseudopotential's SOC state, not this argument.
+    AssertThrow(
+      couplingtype == CouplingType::HamiltonianEntries,
+      dealii::ExcMessage(
+        "DFT-FE Error: oncvClass::getCouplingMatrix only implements CouplingType::HamiltonianEntries."));
+
     std::vector<ValueType> Entries;
     if (!d_HamiltonianCouplingMatrixEntriesUpdated)
       {
@@ -802,83 +815,105 @@ namespace dftfe
         std::vector<dftfe::uInt> atomicNumber =
           d_atomicProjectorFnsContainer->getAtomicNumbers();
         d_couplingMatrixEntries.clear();
-        if constexpr (std::is_same<dataTypes::number,
-                                   std::complex<double>>::value)
-          if (d_hasSOC)
-            {
-              dftfe::uInt numberRadialSphericalFunctions =
-                d_atomicProjectorFnsContainer
-                  ->getTotalNumberOfSphericalFunctionsInCurrentProcessor();
+        if (d_hasSOC)
+          {
+            if constexpr (std::is_same<dataTypes::number,
+                                       std::complex<double>>::value)
               for (dftfe::Int iAtom = 0; iAtom < atomIdsInProcessor.size();
                    iAtom++)
                 {
                   dftfe::uInt atomId = atomIdsInProcessor[iAtom];
                   dftfe::uInt Znum   = atomicNumber[atomId];
-                  dftfe::uInt numberRadialSphericalFunctionsPerAtom =
-                    d_atomicProjectorFnsContainer
-                      ->getTotalNumberOfRadialSphericalFunctionsPerAtom(Znum);
                   dftfe::uInt numberSphericalFunctionsPerAtom =
                     d_atomicProjectorFnsContainer
                       ->getTotalNumberOfSphericalFunctionsPerAtom(Znum);
+                  // All atoms share one buffer walked with a single
+                  // CouplingStructure, so when any species carries SOC every
+                  // atom contributes a full (2N)x(2N) spin block, indexed as
+                  // (2 * sphericalFunctionIndex + spin).
                   std::vector<ValueType> entriesCurrentAtom(
                     numberSphericalFunctionsPerAtom *
                       numberSphericalFunctionsPerAtom * 4,
                     0.0);
-                  for (dftfe::uInt alpha = 0;
-                       alpha < numberSphericalFunctionsPerAtom;
-                       alpha++)
-                    for (dftfe::uInt beta = 0;
-                         beta < numberSphericalFunctionsPerAtom;
-                         beta++)
-                      for (dftfe::uInt spinAlpha = 0; spinAlpha < 2;
-                           ++spinAlpha)
-                        for (dftfe::uInt spinBeta = 0; spinBeta < 2; ++spinBeta)
-                          {
-                            const dftfe::Int radialIndexAlpha =
-                              d_atomicProjectorFnsljmValues[Znum][alpha][0];
-                            const dftfe::Int lQuantumNumberAlpha =
-                              d_atomicProjectorFnsljmValues[Znum][alpha][1];
-                            const double jQuantumNumberAlpha =
-                              d_atomicProjectorFnsljmValues[Znum][alpha][2];
-                            const dftfe::Int mQuantumNumberAlpha =
-                              d_atomicProjectorFnsljmValues[Znum][alpha][3];
+                  if (!d_atomTypeSOCFlagMap.at(Znum))
+                    {
+                      // Scalar-relativistic coupling is D_alpha times the
+                      // 2x2 identity, so only the spin diagonal is populated.
+                      // d_atomicProjectorFnsljmValues holds fully
+                      // relativistic species only.
+                      for (dftfe::uInt alpha = 0;
+                           alpha < numberSphericalFunctionsPerAtom;
+                           alpha++)
+                        for (dftfe::uInt spin = 0; spin < 2; ++spin)
+                          entriesCurrentAtom
+                            [4 * numberSphericalFunctionsPerAtom * alpha +
+                             2 * numberSphericalFunctionsPerAtom * spin +
+                             2 * alpha + spin] =
+                              ValueType(d_atomicNonLocalPseudoPotentialConstants
+                                          [Znum][alpha]);
+                    }
+                  else
+                    for (dftfe::uInt alpha = 0;
+                         alpha < numberSphericalFunctionsPerAtom;
+                         alpha++)
+                      for (dftfe::uInt beta = 0;
+                           beta < numberSphericalFunctionsPerAtom;
+                           beta++)
+                        for (dftfe::uInt spinAlpha = 0; spinAlpha < 2;
+                             ++spinAlpha)
+                          for (dftfe::uInt spinBeta = 0; spinBeta < 2;
+                               ++spinBeta)
+                            {
+                              const dftfe::Int radialIndexAlpha =
+                                d_atomicProjectorFnsljmValues[Znum][alpha][0];
+                              const dftfe::Int lQuantumNumberAlpha =
+                                d_atomicProjectorFnsljmValues[Znum][alpha][1];
+                              const double jQuantumNumberAlpha =
+                                d_atomicProjectorFnsljmValues[Znum][alpha][2];
+                              const dftfe::Int mQuantumNumberAlpha =
+                                d_atomicProjectorFnsljmValues[Znum][alpha][3];
 
-                            const dftfe::Int radialIndexBeta =
-                              d_atomicProjectorFnsljmValues[Znum][beta][0];
-                            const dftfe::Int lQuantumNumberBeta =
-                              d_atomicProjectorFnsljmValues[Znum][beta][1];
-                            const double jQuantumNumberBeta =
-                              d_atomicProjectorFnsljmValues[Znum][beta][2];
-                            const dftfe::Int mQuantumNumberBeta =
-                              d_atomicProjectorFnsljmValues[Znum][beta][3];
-                            if (radialIndexAlpha == radialIndexBeta)
-                              if (lQuantumNumberAlpha == lQuantumNumberBeta)
-                                if (std::abs(jQuantumNumberAlpha -
-                                             jQuantumNumberBeta) < 1e-8)
-                                  {
-                                    entriesCurrentAtom
-                                      [4 * numberSphericalFunctionsPerAtom *
-                                         beta +
-                                       2 * numberSphericalFunctionsPerAtom *
-                                         spinBeta +
-                                       2 * alpha + spinAlpha] =
-                                        dftfe::internal::computefcoeff(
-                                          jQuantumNumberAlpha,
-                                          lQuantumNumberBeta,
-                                          mQuantumNumberAlpha,
-                                          mQuantumNumberBeta,
-                                          spinAlpha == 1,
-                                          spinBeta == 1) *
-                                        d_atomicNonLocalPseudoPotentialConstants
-                                          [Znum][alpha];
-                                  }
-                          }
+                              const dftfe::Int radialIndexBeta =
+                                d_atomicProjectorFnsljmValues[Znum][beta][0];
+                              const dftfe::Int lQuantumNumberBeta =
+                                d_atomicProjectorFnsljmValues[Znum][beta][1];
+                              const double jQuantumNumberBeta =
+                                d_atomicProjectorFnsljmValues[Znum][beta][2];
+                              const dftfe::Int mQuantumNumberBeta =
+                                d_atomicProjectorFnsljmValues[Znum][beta][3];
+                              if (radialIndexAlpha == radialIndexBeta)
+                                if (lQuantumNumberAlpha == lQuantumNumberBeta)
+                                  if (std::abs(jQuantumNumberAlpha -
+                                               jQuantumNumberBeta) < 1e-8)
+                                    {
+                                      entriesCurrentAtom
+                                        [4 * numberSphericalFunctionsPerAtom *
+                                           beta +
+                                         2 * numberSphericalFunctionsPerAtom *
+                                           spinBeta +
+                                         2 * alpha + spinAlpha] =
+                                          dftfe::internal::computefcoeff(
+                                            jQuantumNumberAlpha,
+                                            lQuantumNumberBeta,
+                                            mQuantumNumberAlpha,
+                                            mQuantumNumberBeta,
+                                            spinAlpha == 1,
+                                            spinBeta == 1) *
+                                          d_atomicNonLocalPseudoPotentialConstants
+                                            [Znum][alpha];
+                                    }
+                            }
                   Entries.insert(Entries.end(),
                                  entriesCurrentAtom.begin(),
                                  entriesCurrentAtom.end());
                 }
-            }
-        if (!d_hasSOC)
+            else
+              AssertThrow(
+                false,
+                dealii::ExcMessage(
+                  "DFT-FE Error: a fully relativistic (spin-orbit) pseudopotential requires the complex executable; the real build cannot represent the spin-orbit coupling matrix."));
+          }
+        else
           {
             for (dftfe::Int iAtom = 0; iAtom < atomIdsInProcessor.size();
                  iAtom++)

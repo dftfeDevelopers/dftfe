@@ -12,6 +12,7 @@
 
 #include <dftfe/headers.h>
 #include <dftfe/MemorySpaceType.h>
+#include <dftfe/FEBasisOperations.h>
 
 #include <array>
 #include <cstddef>
@@ -34,22 +35,26 @@ namespace dftfe
   public:
     /** Rebuild all ASC data after atom positions, cell, or mesh change. */
     void
-    initialize(const std::vector<std::vector<double>> &atomLocations,
-               const std::vector<dftfe::Int>          &imageIds,
-               const std::vector<double>              &imageCharges,
-               const std::vector<std::vector<double>> &imagePositions,
-               const std::vector<std::vector<double>> &meshSizes,
-               const std::vector<std::vector<double>> &domainBoundingVectors,
-               const double                            minDist,
-               const double                            pspCutOffTrunc,
-               const std::shared_ptr<oncvClass<dataTypes::number, memorySpace>>
-                                                   &oncvClassPtr,
-               const dealii::DoFHandler<3>         &dofHandlerPRefined,
-               const dealii::MatrixFree<3, double> &matrixFreeDataPRefined,
-               const dftfe::uInt                    smearedChargeQuadratureId,
-               const MPI_Comm                      &mpiCommunicator,
-               const dftParameters                 &dftParams,
-               dealii::ConditionalOStream          &pcout);
+    initialize(
+      const std::vector<std::vector<double>> &atomLocations,
+      const std::vector<dftfe::Int>          &imageIds,
+      const std::vector<double>              &imageCharges,
+      const std::vector<std::vector<double>> &imagePositions,
+      const std::vector<std::vector<double>> &meshSizes,
+      const std::vector<std::vector<double>> &domainBoundingVectors,
+      const double                            minDist,
+      const double                            pspCutOffTrunc,
+      const std::shared_ptr<oncvClass<dataTypes::number, memorySpace>>
+                                  &oncvClassPtr,
+      const dealii::DoFHandler<3> &dofHandlerPRefined,
+      const std::shared_ptr<
+        dftfe::basis::
+          FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
+                                 &basisOperationsPtrElectro,
+      const dftfe::uInt           smearedChargeQuadratureId,
+      const MPI_Comm             &mpiCommunicator,
+      const dftParameters        &dftParams,
+      dealii::ConditionalOStream &pcout);
 
     const std::vector<double> &
     smearedChargeWidths() const;

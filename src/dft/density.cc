@@ -39,11 +39,7 @@ namespace dftfe
     const dftfe::uInt numDensityComponents =
       d_dftParamsPtr->noncolin ? 4 :
                                  (d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
-    if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
-        d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA" ||
-        d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND" ||
-        d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_LDOS" ||
-        d_dftParamsPtr->useSymm)
+    if (d_dftParamsPtr->usesNodalDensity())
       {
         computeRhoNodalFromPSI();
 
@@ -73,10 +69,7 @@ namespace dftfe
 
         if (isTauMGGA || (d_dftParamsPtr->printKE && isGroundState))
           {
-            d_basisOperationsPtrHost->reinit(0,
-                                             0,
-                                             d_densityQuadratureId,
-                                             false);
+            d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId);
             const dftfe::uInt nQuadsPerCell =
               d_basisOperationsPtrHost->nQuadsPerCell();
             const dftfe::uInt nCells = d_basisOperationsPtrHost->nCells();
@@ -174,7 +167,7 @@ namespace dftfe
       }
     else
       {
-        d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId, false);
+        d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId);
         const dftfe::uInt nQuadsPerCell =
           d_basisOperationsPtrHost->nQuadsPerCell();
         const dftfe::uInt nCells = d_basisOperationsPtrHost->nCells();
@@ -439,11 +432,7 @@ namespace dftfe
         d_tauInQuadValues = d_tauOutQuadValues;
       }
 
-    if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
-        d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA" ||
-        d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND" ||
-        d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_LDOS" ||
-        d_dftParamsPtr->useSymm)
+    if (d_dftParamsPtr->usesNodalDensity())
       {
         d_densityInNodalValues = d_densityOutNodalValues;
 
@@ -644,7 +633,7 @@ namespace dftfe
             }
           groupSymmetryPtr->symmetrizeScalarFieldFromLocalValues(
             d_densityOutNodalValues[0], d_dofHandlerRhoNodal);
-          groupSymmetryPtr->symmetrizeVectorFieldFromLocalValues(
+          groupSymmetryPtr->symmetrizeAxialVectorFieldFromLocalValues(
             d_densityOutNodalValues[3],
             d_densityOutNodalValues[2],
             d_densityOutNodalValues[1],

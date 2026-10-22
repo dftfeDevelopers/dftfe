@@ -472,8 +472,7 @@ namespace dftfe
 #endif
                     basisOperationsPtr->reinit(currentBlockSize,
                                                cellsBlockSize,
-                                               quadratureIndex,
-                                               false);
+                                               quadratureIndex);
 
                     flattenedArrayBlock->updateGhostValues();
                     basisOperationsPtr->distribute(*(flattenedArrayBlock));

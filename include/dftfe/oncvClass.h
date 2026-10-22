@@ -146,6 +146,22 @@ namespace dftfe
     double
     getRmaxValenceDensity(dftfe::uInt Znum);
 
+    /**
+     * @brief The atomic valence-density radial function of an atomic number, for callers
+     * that resolve it once outside a loop.
+     *
+     * @param[in] Znum atomic number
+     * @param[in] threadId OpenMP thread whose copy is returned; a thread id
+     * beyond the stored copies selects that of thread 0
+     * @return the function, or nullptr when Znum is not an atom type
+     */
+    const AtomCenteredSphericalFunctionBase *
+    getRadialValenceDensityFunction(dftfe::uInt Znum,
+                                    dftfe::uInt threadId) const
+    {
+      return findRadialFunction(d_atomicValenceDensityVector, Znum, threadId);
+    }
+
     void
     getRadialCoreDensity(dftfe::uInt          Znum,
                          double               rad,
@@ -157,8 +173,38 @@ namespace dftfe
     double
     getRmaxCoreDensity(dftfe::uInt Znum);
 
+    /**
+     * @brief The atomic core-density radial function of an atomic number, for callers
+     * that resolve it once outside a loop.
+     *
+     * @param[in] Znum atomic number
+     * @param[in] threadId OpenMP thread whose copy is returned; a thread id
+     * beyond the stored copies selects that of thread 0
+     * @return the function, or nullptr when Znum is not an atom type
+     */
+    const AtomCenteredSphericalFunctionBase *
+    getRadialCoreDensityFunction(dftfe::uInt Znum, dftfe::uInt threadId) const
+    {
+      return findRadialFunction(d_atomicCoreDensityVector, Znum, threadId);
+    }
+
     double
     getRadialLocalPseudo(dftfe::uInt Znum, double rad);
+
+    /**
+     * @brief The local-pseudopotential radial function of an atomic number, for callers
+     * that resolve it once outside a loop.
+     *
+     * @param[in] Znum atomic number
+     * @param[in] threadId OpenMP thread whose copy is returned; a thread id
+     * beyond the stored copies selects that of thread 0
+     * @return the function, or nullptr when Znum is not an atom type
+     */
+    const AtomCenteredSphericalFunctionBase *
+    getRadialLocalPseudoFunction(dftfe::uInt Znum, dftfe::uInt threadId) const
+    {
+      return findRadialFunction(d_atomicLocalPotVector, Znum, threadId);
+    }
 
     double
     getRmaxLocalPot(dftfe::uInt Znum);
@@ -209,6 +255,25 @@ namespace dftfe
 
 
   private:
+    /**
+     * @brief The function of Znum in the per-thread copies perThreadFunctions,
+     * as returned by the getRadial*Function accessors.
+     */
+    static const AtomCenteredSphericalFunctionBase *
+    findRadialFunction(
+      const std::vector<
+        std::map<dftfe::uInt,
+                 std::shared_ptr<AtomCenteredSphericalFunctionBase>>>
+                       &perThreadFunctions,
+      const dftfe::uInt Znum,
+      const dftfe::uInt threadId)
+    {
+      const auto &mapForThread =
+        perThreadFunctions[threadId < perThreadFunctions.size() ? threadId : 0];
+      const auto it = mapForThread.find(Znum);
+      return it == mapForThread.end() ? nullptr : it->second.get();
+    }
+
     /**
      * @brief Converts the periodic image data structure to relevant form for the container class
      * @param[in] atomLocations atomic Coordinates
@@ -326,7 +391,13 @@ namespace dftfe
     std::map<unsigned int, std::map<unsigned int, std::array<double, 4>>>
          d_atomicProjectorFnsljmValues;
     bool d_reproducible_output;
+    /// True if any atom type carries a fully relativistic (spin-orbit)
+    /// pseudopotential.  It selects the non-local coupling layout, which is
+    /// global to the concatenated coupling buffer.  Per-species SOC is in
+    /// d_atomTypeSOCFlagMap, which selects the data each block is built from.
     bool d_hasSOC;
+    /// Per-atom-type SOC flag, as read from each species' PseudoAtomDat.
+    std::map<dftfe::uInt, bool> d_atomTypeSOCFlagMap;
     /// FIXME: eventually it should be a map of atomic number to struct-
     /// {valence number, mesh input etc}
     std::map<dftfe::uInt, dftfe::uInt> d_atomTypeAtributes;

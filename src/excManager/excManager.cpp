@@ -211,6 +211,17 @@ namespace dftfe
             }
         }
 
+      // Guard libxc against a non-positive spin channel.  For a locally
+      // collinear noncollinear run rho^down = (n - |m|)/2, and a mixed density
+      // need not satisfy |m| <= n even though a physical spinor density does.
+      // The XC input is clamped where it is built; this threshold keeps any
+      // channel that still arrives non-positive inside libxc's small-density
+      // branch.
+      if (funcXPtr != nullptr)
+        xc_func_set_dens_threshold(funcXPtr.get(), 1e-14);
+      if (funcCPtr != nullptr)
+        xc_func_set_dens_threshold(funcCPtr.get(), 1e-14);
+
       if (printXCInfo)
         {
           for (int i = 0; i < 1; i++)

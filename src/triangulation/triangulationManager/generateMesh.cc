@@ -310,6 +310,18 @@ namespace dftfe
     //
     dealii::Point<3> basisVectors[3] = {vector1, vector2, vector3};
 
+    // build the cells with the smallest of the three cell sizes |a_i| / n_i
+    const double domainBoundingVectorMags[3] = {domainBoundingVectorMag1,
+                                                domainBoundingVectorMag2,
+                                                domainBoundingVectorMag3};
+    double       minCellSize = std::numeric_limits<double>::max();
+    for (dftfe::uInt i = 0; i < 3; i++)
+      minCellSize = std::min(minCellSize,
+                             domainBoundingVectorMags[i] /
+                               std::round(numberIntervalsEachDirection[i]));
+    for (dftfe::uInt i = 0; i < 3; i++)
+      numberIntervalsEachDirection[i] =
+        domainBoundingVectorMags[i] / minCellSize;
 
     for (dftfe::uInt i = 0; i < 3; i++)
       {
@@ -501,7 +513,7 @@ namespace dftfe
 
                 if (inOuterAtomBall &&
                     (currentMeshSize >
-                     1.2 * meshSizeAroundAtomLocalAtoms[closestId]))
+                     1.1 * meshSizeAroundAtomLocalAtoms[closestId]))
                   cellRefineFlag = true;
 
                 bool inInnerAtomBall = false;
@@ -510,7 +522,7 @@ namespace dftfe
                   inInnerAtomBall = true;
 
                 if (inInnerAtomBall &&
-                    currentMeshSize > 1.2 * d_dftParams.meshSizeInnerBall)
+                    currentMeshSize > 1.1 * d_dftParams.meshSizeInnerBall)
                   cellRefineFlag = true;
               }
             else
@@ -522,7 +534,8 @@ namespace dftfe
                   inOuterAtomBall = true;
 
                 if (inOuterAtomBall &&
-                    (currentMeshSize > meshSizeAroundAtomLocalAtoms[closestId]))
+                    (currentMeshSize >
+                     1.1 * meshSizeAroundAtomLocalAtoms[closestId]))
                   cellRefineFlag = true;
 
                 bool inInnerAtomBall = false;
@@ -531,7 +544,7 @@ namespace dftfe
                   inInnerAtomBall = true;
 
                 if (inInnerAtomBall &&
-                    currentMeshSize > d_dftParams.meshSizeInnerBall)
+                    currentMeshSize > 1.1 * d_dftParams.meshSizeInnerBall)
                   cellRefineFlag = true;
               }
 
@@ -558,9 +571,9 @@ namespace dftfe
                   dealii::GeometryInfo<3>::distance_to_unit_cell(p_cell);
 
                 if (dist < 1e-08 &&
-                    ((currentMeshSize > d_dftParams.meshSizeInnerBall) ||
+                    ((currentMeshSize > 1.1 * d_dftParams.meshSizeInnerBall) ||
                      (currentMeshSize >
-                      1.2 * meshSizeAroundAtomLocalAtoms[closestId])))
+                      1.1 * meshSizeAroundAtomLocalAtoms[closestId])))
                   cellRefineFlag = true;
               }
             catch (dealii::MappingQ1<3>::ExcTransformationFailed)

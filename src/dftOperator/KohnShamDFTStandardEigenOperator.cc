@@ -93,9 +93,7 @@ namespace dftfe
     if (d_basisOperationsPtr->d_nVectors != numberWavefunctions)
       d_basisOperationsPtr->reinit(numberWavefunctions,
                                    d_cellsBlockSizeHX,
-                                   d_densityQuadratureID,
-                                   false,
-                                   false);
+                                   d_densityQuadratureID);
 
     d_BLASWrapperPtr->axpby(src.locallyOwnedSize() * src.numVectors(),
                             scalarX,
@@ -117,7 +115,9 @@ namespace dftfe
       {
         src.updateGhostValues();
         d_basisOperationsPtr->distribute(src);
-        const dataTypes::number scalarCoeffAlpha = scalarOX,
+        // scalarOX is applied once, by the axpy that accumulates the cell
+        // blocks into dst, matching the useApproximateMatrixEntries branch.
+        const dataTypes::number scalarCoeffAlpha = one,
                                 scalarCoeffBeta  = dataTypes::number(0.0);
         if (!d_dftParamsPtr->memOptMode)
           {
@@ -155,7 +155,10 @@ namespace dftfe
                     cellRange.first * numDoFsPerCell);
               }
 
-            d_BLASWrapperPtr->xgemmStridedBatched(
+            // The cell mass matrix is real, so only cellMassMatrixBasisData()
+            // is kept; dzgemmStridedBatched applies it to the complex
+            // wavefunctions without a complex copy.
+            d_BLASWrapperPtr->dzgemmStridedBatched(
               'N',
               'N',
               numberWavefunctions,
@@ -168,7 +171,7 @@ namespace dftfe
                    cellRange.first * numDoFsPerCell * numberWavefunctions),
               numberWavefunctions,
               numDoFsPerCell * numberWavefunctions,
-              d_basisOperationsPtr->cellMassMatrix().data() +
+              d_basisOperationsPtr->cellMassMatrixBasisData().data() +
                 cellRange.first * numDoFsPerCell * numDoFsPerCell,
               numDoFsPerCell,
               numDoFsPerCell * numDoFsPerCell,
@@ -299,9 +302,7 @@ namespace dftfe
     if (d_basisOperationsPtr->d_nVectors != numberWavefunctions * spinorFactor)
       d_basisOperationsPtr->reinit(numberWavefunctions * spinorFactor,
                                    d_cellsBlockSizeHX,
-                                   d_densityQuadratureID,
-                                   false,
-                                   false);
+                                   d_densityQuadratureID);
     const bool hasNonlocalComponents =
       d_dftParamsPtr->isPseudopotential &&
       (d_pseudopotentialNonLocalOperator
@@ -394,8 +395,9 @@ namespace dftfe
             d_pseudopotentialNonLocalProjectorTimesVectorBlock
               .updateGhostValuesEnd();
             d_pseudopotentialNonLocalOperator->applyVOnCconjtransX(
-              d_dftParamsPtr->hasSOC ? CouplingStructure::blockDiagonal :
-                                       CouplingStructure::diagonal,
+              d_pseudopotentialClassPtr->hasSOC() ?
+                CouplingStructure::blockDiagonal :
+                CouplingStructure::diagonal,
               d_pseudopotentialClassPtr->getCouplingMatrix(),
               d_pseudopotentialNonLocalProjectorTimesVectorBlock,
               true);
@@ -558,9 +560,7 @@ namespace dftfe
     if (d_basisOperationsPtr->d_nVectors != numberWavefunctions * spinorFactor)
       d_basisOperationsPtr->reinit(numberWavefunctions * spinorFactor,
                                    d_cellsBlockSizeHX,
-                                   d_densityQuadratureID,
-                                   false,
-                                   false);
+                                   d_densityQuadratureID);
     const bool hasNonlocalComponents =
       d_dftParamsPtr->isPseudopotential &&
       (d_pseudopotentialNonLocalOperatorSinglePrec
@@ -650,8 +650,9 @@ namespace dftfe
             d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec
               .updateGhostValuesEnd();
             d_pseudopotentialNonLocalOperatorSinglePrec->applyVOnCconjtransX(
-              d_dftParamsPtr->hasSOC ? CouplingStructure::blockDiagonal :
-                                       CouplingStructure::diagonal,
+              d_pseudopotentialClassPtr->hasSOC() ?
+                CouplingStructure::blockDiagonal :
+                CouplingStructure::diagonal,
               d_pseudopotentialClassPtr->getCouplingMatrixSinglePrec(),
               d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec,
               true);
